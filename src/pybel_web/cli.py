@@ -146,7 +146,13 @@ def load(ctx, file):
         u = ds.find_user(email=email)
 
         if not u:
-            u = ds.create_user(email=email, first_name=first, last_name=last, password=password)
+            u = ds.create_user(
+                email=email,
+                first_name=first,
+                last_name=last,
+                password=password,
+                confirmed_at=datetime.datetime.now()
+            )
             log.info('added %s', u)
             ds.commit()
         for role_name in roles.strip().split(','):
