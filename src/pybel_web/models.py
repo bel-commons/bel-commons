@@ -6,11 +6,10 @@ from flask_security import RoleMixin, UserMixin
 from sqlalchemy import Column, Integer, ForeignKey, DateTime, Boolean, Text, Binary, Table, String
 from sqlalchemy.orm import relationship, backref
 
+import pybel_tools.query
 from pybel.manager import Base
 from pybel.manager.models import NETWORK_TABLE_NAME
-
-import pybel_tools.query
-from pybel_tools import pipeline
+from pybel.struct import union
 
 EXPERIMENT_TABLE_NAME = 'pybel_experiment'
 REPORT_TABLE_NAME = 'pybel_report'
@@ -141,9 +140,17 @@ class Assembly(Base):
 
     networks = relationship('Network', secondary=assembly_network, backref=backref('assemblies', lazy='dynamic'))
 
+    def as_bel(self):
+        """Returns a merged instance of all of the contained networks
+
+        :return: A merged BEL graph
+        :rtype: pybel.BELGraph
+        """
+        return union(network.as_bel() for network in self.networks)
+
 
 class Query(Base):
-    """Describes a :class:`pybel_tools.pipeline.Query`"""
+    """Describes a :class:`pybel_tools.query.Query`"""
     __tablename__ = QUERY_TABLE_NAME
 
     id = Column(Integer(), primary_key=True)
@@ -151,7 +158,8 @@ class Query(Base):
     user_id = Column(Integer, ForeignKey('{}.id'.format(USER_TABLE_NAME)), doc='The user who created the query')
     user = relationship('User', backref=backref('queries', lazy='dynamic'))
 
-    assembly_id = Column(Integer, ForeignKey('{}.id'.format(ASSEMBLY_TABLE_NAME)), doc='The network assembly used in this query')
+    assembly_id = Column(Integer, ForeignKey('{}.id'.format(ASSEMBLY_TABLE_NAME)),
+                         doc='The network assembly used in this query')
     assembly = relationship('Assembly')
 
     seeding = Column(Text, doc="List representation of the seeding")
@@ -162,17 +170,18 @@ class Query(Base):
 
     @property
     def data(self):
-        """Converts this object to a :class:`pybel_tools.pipeline.Query` object
+        """Converts this object to a :class:`pybel_tools.query.Query` object
 
         :rtype: pybel_tools.query.Query
         """
         return pybel_tools.query.Query.from_jsons(self.dump)
 
-    def run(self, api):
-        """A wrapper around the :meth:`pybel_tools.pipeline.Query.run` function of the enclosed
+    def __call__(self, manager):
+        """A wrapper around the :meth:`pybel_tools.query.Query.run` function of the enclosed
         :class:`pybel_tools.pipeline.Query` object.
 
-        :param pybel_tools.api.DatabaseService api:
+        :param pybel.cache.manager.CacheManager manager:
+        :return: The result of this query
         :rtype: pybel.BELGraph
         """
-        return self.data.run(api)
+        return self.data(manager)
