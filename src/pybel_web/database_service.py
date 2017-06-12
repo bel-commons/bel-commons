@@ -741,7 +741,7 @@ def get_pipeline():
         dump=json.dumps(q.to_json()),
         assembly=asm,
         seeding=str(q.seeds),
-        pipeline_protocol=str(q.protocol),
+        pipeline_protocol=str(q.pipeline),
 
     )
 
