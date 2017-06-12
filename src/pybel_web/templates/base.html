@@ -1,0 +1,149 @@
+{% extends "bootstrap/base.html" %}
+
+{% block styles %}
+    {{ super() }}
+    <link rel="shortcut icon" href="{{ url_for('static', filename='img/PyBEL-square-100.png') }}">
+    <style>
+
+        /* from charlie */
+        nav div.container-fluid {
+            padding-left: 45px;
+            padding-right: 45px;
+        }
+
+        /* from https://codepen.io/bootstrapped/pen/KwYGwq */
+
+        .navbar-brand {
+            padding: 0;
+        }
+
+        .navbar-brand {
+            height: 50px;
+        }
+
+        .nav > li > a:hover, .navbar-brand:hover {
+            background-color: rgba(0, 150, 127, 0.11);
+        }
+
+        .navbar-brand > img {
+            height: 100%;
+            padding: 10px;
+            width: auto;
+        }
+
+        .navbar {
+            border-bottom: rgba(0, 150, 127, 0.11) solid 1px;
+        }
+
+        .nav > li > a {
+            padding-top: 15px;
+            padding-bottom: 15px;
+        }
+
+        .navbar-toggle {
+            padding: 10px;
+            margin: 25px 15px 25px 0;
+            background-color: #eeeeee;
+        }
+
+        .navbar-toggle > .icon-bar {
+            background-color: #00967f;
+        }
+
+        #nav-scai-logo {
+            padding: 10px;
+            /*border-left: 1px solid rgba(0, 150, 127, 0.11);*/
+            margin-left: 5px;
+        }
+
+        #nav-scai-logo > img {
+            height: 30px;
+        }
+
+        .btn-primary {
+            background-color: #00967f;
+        }
+
+        .btn-primary:hover {
+            background-color: #006e57;
+        }
+    </style>
+{% endblock %}
+
+{% block head %}
+    {{ super() }}
+    {{ fixes.ie8() }}
+    {% include "google_analytics.html" %}
+{% endblock %}
+
+{% block navbar %}
+    {{ super() }}
+    <nav class="navbar navbar-static-top" role="navigation">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <button aria-controls="navbar" aria-expanded="false" class="navbar-toggle collapsed"
+                        data-target="#485848c5cd0b7dabdf24f858e4f3abbf21fdb984" data-toggle="collapse" type="button">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="{{ url_for('home') }}">
+                    <img alt="PyBEL Web" src="{{ url_for('static', filename='img/PyBEL-square-100.png') }}"></a>
+            </div>
+            <div class="navbar-collapse collapse" id="485848c5cd0b7dabdf24f858e4f3abbf21fdb984">
+                <ul class="nav navbar-nav">
+                    <li class="dropdown">
+                        <a class="dropdown-toggle nav-header" data-toggle="dropdown" role="button" aria-haspopup="true"
+                           aria-expanded="false">Getting Started <span class="caret"></span></a>
+                        <ul class="dropdown-menu">
+                            <li><a class="nav-header" href="http://belief.scai.fraunhofer.de/BeliefDashboard/home/bel">Introduction
+                                to BEL</a></li>
+                            <li><a class="nav-header" href="{{ url_for('view_about') }}">About PyBEL Web</a></li>
+                        </ul>
+                    </li>
+                    <li class="dropdown">
+                        <a class="dropdown-toggle nav-header" data-toggle="dropdown" role="button" aria-haspopup="true"
+                           aria-expanded="false">SCAI Resources <span class="caret"></span></a>
+                        <ul class="dropdown-menu">
+                            <li><a class="nav-header"
+                                   href="http://belief.scai.fraunhofer.de/BeliefDashboard">BELIEF</a></li>
+                            <li><a class="nav-header" href="http://neurommsig.scai.fraunhofer.de/">NeuroMMSigDB</a></li>
+                            <li><a class="nav-header" href="https://arty.scai.fraunhofer.de/artifactory/bel/">BEL
+                                Resources</a></li>
+                        </ul>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('view_imprint') }}" title="Imprint">Imprint</a>
+                    </li>
+                </ul>
+
+                <ul class="nav navbar-nav navbar-right no-collapse">
+                    {% if current_user.is_authenticated %}
+                        <li class="dropdown">
+                            <a class="dropdown-toggle nav-header" data-toggle="dropdown" role="button"
+                               aria-haspopup="true"
+                               aria-expanded="false">{{ current_user.email }} <span class="caret"></span></a>
+                            <ul class="dropdown-menu">
+                                {% if current_user.admin %}
+                                    <li><a class="nav-header" href="{{ url_for('admin.index') }}">Admin</a></li>
+                                {% endif %}
+                                <li><a href="{{ url_for('view_current_user_activity') }}">My Profile</a></li>
+                                <li><a class="nav-header" href="{{ url_for('security.logout') }}">Log Out</a></li>
+                            </ul>
+                        </li>
+                    {% else %}
+                        <li><a href="{{ url_for('security.login') }}">Log In</a></li>
+                    {% endif %}
+                    <li>
+                        <a id="nav-scai-logo"
+                           href="https://www.scai.fraunhofer.de/en/business-research-areas/bioinformatics.html">
+                            <img alt="Fraunhofer SCAI"
+                                 src="https://www.scai.fraunhofer.de/content/dam/scai/scai_logo.svg">
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+{% endblock %}

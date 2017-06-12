@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% import "bootstrap/wtf.html" as wtf %}
+{% import "bootstrap/fixes.html" as fixes %}
+{% import "bootstrap/utils.html" as util %}
+
+{% block title %}Results{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div class="page-header">
+            <h1>Analyses</h1>
+        </div>
+
+        {{ util.flashed_messages(dismissible=True, container=False) }}
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Candidate Mechanism Perturbation Analyses</h3>
+            </div>
+            <div class="panel-body">
+                <p>Analyses are listed here, in chronological order. Additional analyses can be run by navigating
+                    to a network through the <a href="{{ url_for('view_networks') }}">network list</a>.</p>
+            </div>
+            <table class="table table-striped">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th></th>
+                    <th></th>
+                    <th>Network</th>
+                    <th>Version</th>
+                    <th>Source Data</th>
+                    <th>Description</th>
+                    <th>Permutations</th>
+                    <th>Created</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for experiment in experiments if experiment.network is not none %}
+                    <tr>
+                        <td>{{ experiment.id }} </td>
+                        <td><a href="{{ url_for('analysis.view_analysis_results', analysis_id=experiment.id) }}"><span
+                                class="glyphicon glyphicon-eye-open"
+                                aria-hidden="true"></span></a></td>
+                        <td><a href="{{ url_for('dbs.download_analysis', analysis_id=experiment.id) }}"><span
+                                class="glyphicon glyphicon-download" aria-hidden="true"></span></a></td>
+                        <td>
+                            <a href="{{ url_for('view_summary', network_id=experiment.network.id) }}">{{ experiment.network.name }}</a>
+                        </td>
+                        <td>{{ experiment.network.version }}</td>
+                        <td>{{ experiment.source_name }}</td>
+                        <td>{{ experiment.description }}</td>
+                        <td>{{ experiment.permutations }}</td>
+                        <td>{{ experiment.created }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {% include "footer.html" %}
+{% endblock %}

@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% import "bootstrap/wtf.html" as wtf %}
+{% import "bootstrap/fixes.html" as fixes %}
+{% import "bootstrap/utils.html" as util %}
+
+{% block title %}Reporting{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div class="page-header">
+            <h1>Reporting</h1>
+        </div>
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Upload Reports</h3>
+            </div>
+            <div class="panel-body">
+                <p>The history of parsing and uploads provides insight to curation activities.</p>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                    <tr>
+                        <th></th>
+                        <th></th>
+                        <th>Network</th>
+                        <th>Version</th>
+                        <th>Nodes</th>
+                        <th>Edges</th>
+                        <th>Warnings</th>
+                        <th>Uploader</th>
+                        <th>Format</th>
+                        <th>Time</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for report in reports if report.network is not none %}
+                        <tr>
+                            <td>{{ report.network.id }}</td>
+                            <td>
+                                <a href="{{ url_for('view_summary', network_id=report.network.id) }}"><span
+                                        class="glyphicon glyphicon-eye-open" aria-hidden="true"></span></a>
+                            </td>
+                            <td>{{ report.network.name }}</td>
+                            <td>{{ report.network.version }}</td>
+                            <td>{{ report.number_nodes }}</td>
+                            <td>{{ report.number_edges }}</td>
+                            <td>{{ report.number_warnings }}</td>
+                            <td>{{ report.user.email }}</td>
+                            <td>{{ 'Pickle' if report.precompiled else 'BEL' }}</td>
+                            <td>{{ report.created.strftime('%Y-%m-%d %H:%M') }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    {% include "footer.html" %}
+{% endblock %}
+
+

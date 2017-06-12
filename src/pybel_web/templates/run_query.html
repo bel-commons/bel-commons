@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% import "bootstrap/wtf.html" as wtf %}
+{% import "bootstrap/fixes.html" as fixes %}
+{% import "bootstrap/utils.html" as util %}
+
+{% block title %}Query Builder{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div class="page-header">
+            <h1>Query</h1>
+        </div>
+
+        {{ util.flashed_messages(dismissible=True, container=False) }}
+
+        <div class="panel panel-default">
+            <div class="panel-body">
+                <h4>Query stored</h4>
+                <p>Your query has the identifier <code>{{ query.id }}</code></p>
+                <h4>What to do next?</h4>
+                <p><a href="{{ url_for('view_explorer', query=query.id) }}">Explore</a> the results your query</p>
+                <p><a href="{{ url_for('view_current_user_activity') }}">Check my activity</a></p>
+
+            </div>
+        </div>
+    </div>
+
+    {% include "footer.html" %}
+{% endblock %}
+

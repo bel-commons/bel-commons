@@ -1,0 +1,27 @@
+{
+  "name": "d3-context-menu",
+  "main": [
+    "js/d3-context-menu.js",
+    "css/d3-context-menu.css"
+  ],
+  "ignore": [
+    ".jshintrc",
+    "**/*.txt",
+    "examples",
+    "README.md"
+  ],
+  "dependencies": {
+    "d3": "3"
+  },
+  "homepage": "https://github.com/patorjk/d3-context-menu",
+  "_release": "bb96b821e2",
+  "_resolution": {
+    "type": "branch",
+    "branch": "master",
+    "commit": "bb96b821e2241a94b6f622906118fc4b8c774566"
+  },
+  "_source": "https://github.com/patorjk/d3-context-menu.git",
+  "_target": "*",
+  "_originalSource": "d3-context-menu",
+  "_direct": true
+}

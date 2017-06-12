@@ -1,0 +1,227 @@
+{% extends "base.html" %}
+
+{% import "bootstrap/wtf.html" as wtf %}
+{% import "bootstrap/fixes.html" as fixes %}
+{% import "bootstrap/utils.html" as util %}
+
+{% block title %}Network Store{% endblock %}
+
+{% block head %}
+    {{ super() }}
+
+    <script type="text/javascript"
+            src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.8.3/modernizr.js"></script>
+    <script type="text/javascript"
+            src="https://npmcdn.com/tether@1.2.4/dist/js/tether.min.js"></script>
+{% endblock %}
+
+{% block styles %}
+    {{ super() }}
+    <link rel="stylesheet" type="text/css" href='https://code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css'/>
+    <link rel="stylesheet" type="text/css"
+          href='https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/css/select2.min.css'/>
+{% endblock %}
+
+{% block scripts %}
+    {{ super() }}
+    {% if current_user.admin %}
+        <script src="{{ url_for('static', filename='js/bootstrap-confirmation.min.js') }}"></script>
+        <script>
+            $('[data-toggle=confirmation]').confirmation({
+                rootSelector: '[data-toggle=confirmation]',
+                // other options
+            });
+        </script>
+    {% endif %}
+
+    <script type="text/javascript"
+            src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/js/select2.full.min.js"></script>
+    <script type="text/javascript"
+            src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+    <script type="text/javascript"
+            src="{{ url_for('static', filename='js/home_controller/home_controller.js') }}"></script>
+{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div class="page-header">
+            <h1>Network Store</h1>
+        </div>
+
+        {{ util.flashed_messages(dismissible=True, container=False) }}
+
+        {% if current_user.is_authenticated and current_user.admin %}
+            <div class="panel panel-info" id="admin-panel">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Admin
+                        <button type="button" class="close" data-target="#admin-panel" data-dismiss="alert">
+                            <span aria-hidden="true">&times;</span><span class="sr-only">Close</span>
+                        </button>
+                    </h3>
+                </div>
+                <div class="panel-body">
+                    <h4>Actions</h4>
+                    <p>
+                        <a class="btn btn-info" href="{{ url_for('reporting.view_reports') }}" role="button">View Pretty
+                            Reporting</a>
+                        <a class="btn btn-info" href="{{ url_for('dbs.list_reporting') }}" role="button">View Reporting
+                            Log</a>
+                        <a class="btn btn-success" href="{{ url_for('run_reload') }}" role="button">Reload Networks</a>
+                        <a class="btn btn-danger" href="{{ url_for('dbs.drop_networks') }}" role="button"
+                           data-toggle="confirmation" data-btn-ok-icon="glyphicon glyphicon-share-alt"
+                           data-btn-ok-class="btn-success" data-btn-cancel-icon="glyphicon glyphicon-ban-circle"
+                           data-btn-cancel-class="btn-danger">Drop All Networks</a>
+                    </p>
+                    <h4>Ensure Remote BEL Documents</h4>
+                    <p>
+                        <a class="btn btn-success" href="{{ url_for('ensure_simple') }}" role="button">Simple</a>
+                        <a class="btn btn-success" href="{{ url_for('ensure_gfam') }}" role="button">Gene Families</a>
+                    </p>
+                    <h4>Ensure BMS BEL Documents</h4>
+                    <p>
+                        <a class="btn btn-info" href="{{ url_for('list_bms_pickles') }}" role="button">List BMS
+                            Pickles</a>
+                        <a class="btn btn-warning" href="{{ url_for('upload_aetionomy') }}" role="button">Upload
+                            Aetionomy Pickles</a>
+                        <a class="btn btn-warning" href="{{ url_for('upload_selventa') }}" role="button">Upload Selventa
+                            Pickles</a>
+                        <a class="btn btn-danger" href="{{ url_for('ensure_aetionomy') }}" role="button">Compile BMS -
+                            AETIONOMY</a>
+                    </p>
+                </div>
+            </div>
+        {% endif %}
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Curated Networks</h3>
+            </div>
+            <div class="panel-body">
+                <p>Each curated network is backed by a BEL script. Below are options to summarize the networks'
+                    contents, explore them with an in-browser navigator, or run analyses with data sets such as
+                    differential gene expression data. Upload more networks
+                    <a href="{{ url_for('parser.view_parser') }}">here</a>.</p>
+            </div>
+            <div class="list-group">
+                {% for network in networks %}
+                    <div class="list-group-item">
+                        <h4 class="list-group-item-heading">{{ network.name }}
+                            <small class="text-muted">{{ network.version }}</small>
+                        </h4>
+                        <div class="list-group-item-text">
+                            <p>{{ network.description }}</p>
+                            <ul class="list-inline">
+                                {% if current_user.is_authenticated and current_user.admin %}
+                                    <li><span class="btn btn-info">{{ network.id }}</span></li>
+                                {% endif %}
+                                <li><a href="{{ url_for('view_summary', network_id=network.id) }}"
+                                       class="btn btn-default">Summarize</a>
+                                </li>
+                                <li><a href="{{ url_for('view_explorer', network_id=network.id) }}"
+                                       class="btn btn-default">Explore</a>
+                                </li>
+                                {% if analysis_enabled %}
+                                    <li>
+                                        <a href="{{ url_for('analysis.view_analysis_uploader', network_id=network.id) }}"
+                                           class="btn btn-default">Analyze</a></li>
+                                    <li><a href="{{ url_for('analysis.view_analyses', network_id=network.id) }}"
+                                           class="btn btn-default">Results</a></li>
+                                {% endif %}
+                                {% if current_user.is_authenticated %}
+                                    {% if current_user.admin %}
+                                        <li><a class="btn btn-danger" role="button"
+                                               href="{{ url_for('dbs.drop_network', network_id=network.id) }}">Drop</a></li>
+                                    {% elif network.report and network.report.user == current_user %}
+                                        <li><a class="btn btn-danger" role="button"
+                                               href="{{ url_for('dbs.drop_user_network', network_id=network.id, user_id=current_user.id) }}">Drop</a>
+                                        </li>
+                                    {% endif %}
+                                    {% if network.report and network.report.user == current_user %}
+                                        {% if not network.report.public %}
+                                            <li>
+                                                <a href="{{ url_for('dbs.make_user_network_public', user_id=current_user.id, network_id=network.id) }}"
+                                                   class="btn btn-success" role="button">Make Public</a></li>
+                                        {% else %}
+                                            <li>
+                                                <a href="{{ url_for('dbs.make_user_network_private', user_id=current_user.id, network_id=network.id) }}"
+                                                   class="btn btn-warning" role="button">Make Private</a></li>
+                                        {% endif %}
+                                    {% elif current_user.has_role('scai') or current_user.admin %}
+                                        {% if network.report and not network.report.public %}
+                                            <li><a href="{{ url_for('dbs.make_network_public', network_id=network.id) }}"
+                                                   class="btn btn-danger" role="button">Make Public</a></li>
+                                        {% elif network.report and network.report.public %}
+                                            <li><a href="{{ url_for('dbs.make_network_private', network_id=network.id) }}"
+                                                   class="btn btn-danger" role="button">Make Private</a></li>
+                                        {% endif %}
+
+                                    {% endif %}
+                                {% endif %}
+                            </ul>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        <a id="seedNodePanel"></a>
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Network Seeding by Nodes</h3>
+            </div>
+            <div class="panel-body">
+                <p>This method of seeding will acquire the given nodes and expand around them using given seed
+                    method.
+                </p>
+                <p><strong>Use Case:</strong> The leukemia drug, <a
+                        href="https://www.ebi.ac.uk/chembl/compound/inspect/CHEMBL255863">nilotinib</a>, triggers cells
+                    to get rid of faulty components - including the ones associated with several brain diseases. In
+                    2015, Georgetown University Medical Center <a
+                            href="http://content.iospress.com/articles/journal-of-parkinsons-disease/jpd160867">published</a>
+                    findings that the drug had a helpful effect on patients in
+                    Alzheimer's and Parkinson's diseases. Though it is currently unknown, a search of the paths between
+                    this drug and these diseases could provide insight to nilotinib's mechanism of action.</p>
+                <form class="form-horizontal">
+                    <div class="form-group form-horizontal">
+                        <label class="col-md-2 control-label">Nodes</label>
+                        <div class="col-md-10">
+                            <select style="width: 100%" multiple="multiple"
+                                    id="node_selection"></select>
+                        </div>
+                    </div>
+                </form>
+
+                {{ wtf.quick_form(subgraph_form, id='subgraph_form', form_type='horizontal', button_map={'submit_button': 'btn btn-primary'}) }}
+            </div>
+        </div>
+        <a id="seedProvenancePanel"></a>
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Network Seeding by Provenance</h3>
+            </div>
+            <div class="panel-body">
+                <p>This method of seeding will acquire nodes and edges asserted in the given citations and by the given
+                    authors, then expand around the neighborhood of these nodes to show all peripheral knowledge.</p>
+                <p><strong>Use Case:</strong> Users may be interested in the representation of their own work, their
+                    colleagues' work, and their favorite publications in the knowledge assembly. For users that are new
+                    to a given field, this is an excellent research tool to identify what papers to read next.</p>
+                <form class="form-horizontal">
+                    <div class="form-group form-horizontal">
+                        <label class="col-md-2 control-label">PubMed Identifiers</label>
+                        <div class="col-md-10">
+                            <select style="width: 100%" multiple="multiple" id="pubmed_selection"></select>
+                        </div>
+                    </div>
+                    <div class="form-group form-horizontal">
+                        <label class="col-md-2 control-label">Authors</label>
+                        <div class="col-md-10">
+                            <select style="width: 100%;" multiple="multiple" id="author_selection"></select>
+                        </div>
+                    </div>
+                </form>
+                {{ wtf.quick_form(provenance_form, id='provenance_form', form_type='horizontal', button_map={'submit_button': 'btn btn-primary'}) }}
+            </div>
+        </div>
+    </div>
+
+    {% include "footer.html" %}
+{% endblock %}

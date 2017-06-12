@@ -1,0 +1,18 @@
+graft src
+graft tests
+
+recursive-include docs/source *.py
+recursive-include docs/source *.rst
+recursive-include docs Makefile
+global-exclude docs/*
+
+global-exclude *.py[cod] __pycache__ *.so *.dylib .DS_Store
+
+exclude .bumpversion.cfg
+include *.rst *.txt LICENSE tox.ini *.yml docs/Makefile .coveragerc .codecov.yml .codeclimate.yml alembic.ini
+
+include Dockerfile
+global-exclude examples *.owl
+
+global-exclude alembic alembic/*
+global-exclude scripts scripts/*

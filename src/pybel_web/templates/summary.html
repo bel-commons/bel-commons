@@ -1,0 +1,1120 @@
+{% extends "base.html" %}
+
+{% import "bootstrap/wtf.html" as wtf %}
+{% import "bootstrap/fixes.html" as fixes %}
+{% import "bootstrap/utils.html" as util %}
+
+{% block styles %}
+    {{ super() }}
+    <link href="{{ url_for('static', filename='css/c3.min.css') }}" rel="stylesheet" type="text/css"/>
+{% endblock %}
+
+{% block head %}
+    {{ super() }}
+
+    <script src="{{ url_for('static', filename='js/d3.3.5.17.min.js') }}" charset="utf-8"></script>
+    <script src="{{ url_for('static', filename='js/c3.min.js') }}"></script>
+    <script src="//code.jquery.com/jquery-1.12.4.js"></script>
+    <script src="https://cdn.datatables.net/1.10.13/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.10.13/js/dataTables.bootstrap.min.js"></script>
+{% endblock %}
+
+{% block title %}Summary{% endblock %}
+
+{% block content %}
+    <a id="top"></a>
+    <div class="container">
+        <div class="page-header">
+            <h1>Summary of {{ graph.name }}
+                <small class="text-muted">{{ graph.version }}</small>
+            </h1>
+        </div>
+
+        {{ util.flashed_messages(dismissible=True, container=False) }}
+
+        <div class="panel panel-default">
+            <div class="panel-body">
+                <a class="btn btn-primary" href="{{ url_for('view_networks') }}" role="button">List Networks</a>
+                <a class="btn btn-default" href="{{ url_for('view_explorer', network_id=network_id) }}"
+                   role="button">Explore</a>
+                <a class="btn btn-default"
+                   href="{{ url_for('analysis.view_analysis_uploader', network_id=network_id) }}"
+                   role="button">Analyze</a>
+                <a class="btn btn-default" href="{{ url_for('analysis.view_analyses', network_id=network_id) }}"
+                   role="button">Results</a>
+                <a class="btn btn-default" href="{{ url_for('dbs.get_network', network_id=network_id, format='bel') }}"
+                   role="button"><span class="glyphicon glyphicon-download" aria-hidden="true"></span> BEL Script</a>
+                <a class="btn btn-default" href="{{ url_for('dbs.get_network', network_id=network_id, format='json') }}"
+                   role="button"><span class="glyphicon glyphicon-download" aria-hidden="true"></span> Nodelink JSON</a>
+                <a class="btn btn-default" href="{{ url_for('dbs.get_network', network_id=network_id, format='cx') }}"
+                   role="button"><span class="glyphicon glyphicon-download" aria-hidden="true"></span> CX JSON</a>
+
+                {% if current_user.admin %}
+                    <a class="btn btn-danger" href="{{ url_for('dbs.drop_network', network_id=network_id) }}"
+                       role="button">Drop</a>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if network_versions is defined and network_versions|length > 1 %}
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Versions
+                        <span class="badge">{{ network_versions|length }}</span>
+                        <a class="pull-right" href="#top"><span class="glyphicon glyphicon-arrow-up"
+                                                                aria-hidden="true"></span></a>
+                    </h3>
+                </div>
+                <div class="panel-body">
+                    <ul class="list-inline">
+                        {% for network_version in network_versions %}
+                            {% if network_version.id == network_id %}
+                                <li>
+                                    <a class="btn btn-info" role="button"
+                                       href="{{ url_for('view_summary', network_id=network_version.id) }}">{{ network_version.version }}</a>
+                                </li>
+                            {% else %}
+                                <li>
+                                    <a class="btn btn-default" role="button"
+                                       href="{{ url_for('view_summary', network_id=network_version.id) }}">{{ network_version.version }}</a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        {% endif %}
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Table of Contents</h3>
+            </div>
+            <div class="panel-body">
+                <ol>
+                    <li><a href="#provenance">Provenance</a></li>
+                    <li><a href="#network-statistics">Network Statistics</a></li>
+                    <li><a href="#content-statistics">Content Statistics</a></li>
+                    {% if unused_namespaces is defined and unused_namespaces|length > 0 %}
+                        <li><a href="#unused-namespaces">Unused Namespaces</a></li>
+                    {% endif %}
+                    {% if unused_annotations is defined and unused_annotations|length > 0 %}
+                        <li><a href="#unused-annotations">Unused Annotations</a></li>
+                    {% endif %}
+                    {% if unused_list_annotation_values is defined and unused_list_annotation_values|length > 0 %}
+                        <li><a href="#unused-list-annotations">Unused List Annotations</a></li>
+                    {% endif %}
+                    {% if graph.warnings|length > 0 %}
+                        <li><a href="#graph-warnings">Graph Warnings</a></li>
+                    {% endif %}
+                    {% if error_groups is defined and error_groups|length > 0 %}
+                        <li><a href="#error-groups">Top Warnings</a></li>
+                    {% endif %}
+                    {% if undefined_namespaces is defined and undefined_namespaces|length > 0 %}
+                        <li><a href="#undefined-namespaces">Undefined Namespaces</a></li>
+                    {% endif %}
+                    {% if undefined_annotation is defined and undefined_annotations|length > 0 %}
+                        <li><a href="#undefined-annotations">Undefined Annotations</a></li>
+                    {% endif %}
+                    {% if namespaces_with_incorrect_names is defined and namespaces_with_incorrect_names|length > 0 %}
+                        <li><a href="#incorrect-namespaces">Namespaces with Incorrect Names</a></li>
+                    {% endif %}
+                    {% if contradictions is defined and contradictions|length > 0 %}
+                        <li><a href="#contradictory-pairs">Contradictory Pairs</a></li>
+                    {% endif %}
+                    {% if unstable_pairs is defined and unstable_pairs|length > 0 %}
+                        <li><a href="#unstable-pairs">Unstable Pairs</a></li>
+                    {% endif %}
+                    {% if contradictory_triplets is defined and contradictory_triplets|length > 0 %}
+                        <li><a href="#contradictory-triplets">Contradictory Triplets</a></li>
+                    {% endif %}
+                    {% if unstable_triplets is defined and unstable_triplets|length > 0 %}
+                        <li><a href="#unstable-triplets">Unstable Triplets</a></li>
+                    {% endif %}
+                    {% if causal_pathologies is defined and causal_pathologies|length > 0 %}
+                        <li><a href="#causal-pathologies">Causal Pathologies</a></li>
+                    {% endif %}
+                    {% if undefined_families is defined and undefined_families|length > 0 %}
+                        <li><a href="#undefined-families">Undefined Families</a></li>
+                    {% endif %}
+                </ol>
+            </div>
+        </div>
+
+        <a id="provenance"></a>
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Provenance
+                    <a class="pull-right" href="#top"><span class="glyphicon glyphicon-arrow-up"
+                                                            aria-hidden="true"></span></a>
+                </h3>
+            </div>
+            <div class="panel-body">
+                <dl class="dl-horizontal">
+                    <dt>Authors</dt>
+                    <dd>{{ graph.document['authors'] }}</dd>
+                    <dt>Contact</dt>
+                    <dd>{{ graph.document['contact'] }}</dd>
+                    <dt>Description</dt>
+                    <dd>{{ graph.description }}</dd>
+                    <dt>License</dt>
+                    <dd>{{ graph.document['licenses'] }}</dd>
+                    <dt>Copyright</dt>
+                    <dd>{{ graph.document['copyright'] }}</dd>
+                </dl>
+            </div>
+        </div>
+
+        <a id="network-statistics"></a>
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Network Statistics
+                    <a class="pull-right" href="#top"><span class="glyphicon glyphicon-arrow-up"
+                                                            aria-hidden="true"></span></a></h3>
+            </div>
+            <div class="panel-body">
+                <dl class="dl-horizontal">
+                    {% for key, value in info_list %}
+                        <dt>{{ key }}</dt>
+                        <dd>{{ value }}</dd>
+                    {% endfor %}
+                </dl>
+            </div>
+        </div>
+
+        <a id="content-statistics"></a>
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Content Statistics
+                    <a class="pull-right" href="#top"><span class="glyphicon glyphicon-arrow-up"
+                                                            aria-hidden="true"></span></a>
+                </h3>
+            </div>
+            <div class="panel-body">
+                {% if time is not none %}
+                    <p>Processing took {{ time }} seconds</p>
+                {% endif %}
+                <div class="row">
+                    <div class="col-md-4">
+                        <div id="chart3"></div>
+                    </div>
+                    <div class="col-md-4">
+                        <div id="chart1"></div>
+                    </div>
+                    <div class="col-md-4">
+                        <div id="chart2"></div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div id="chart4"></div>
+                    </div>
+                    <div class="col-md-4">
+                        <div id="chart5"></div>
+                    </div>
+                    <div class="col-md-4">
+                        <div id="chart6"></div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div id="chart7"></div>
+                    </div>
+                    <div class="col-md-4">
+                        <div id="chart8"></div>
+                    </div>
+                    <div class="col-md-4">
+                        <div id="chart9"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Warnings -->
+
+        {% if unused_namespaces is defined and unused_namespaces|length > 0 %}
+            <a id="unused-namespaces"></a>
+            <div class="panel panel-warning">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Unused Namespaces
+                        <span class="badge">{{ unused_namespaces|length }}</span>
+                        <a class="pull-right" href="#top"><span class="glyphicon glyphicon-arrow-up"
+                                                                aria-hidden="true"></span></a>
+                    </h3>
+                </div>
+                <div class="panel-body">
+                    <p>The source BEL script contained references to the following namespaces, but they were never
+                        used. It is suggested to delete their definitions from the BEL script to improve readability
+                        and parsing speed.</p>
+                    <ul>
+                        {% for unused_namespace in unused_namespaces %}
+                            <li>{{ unused_namespace }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        {% endif %}
+
+        {% if unused_annotations is defined and unused_annotations|length > 0 %}
+            <a id="unused-annotations"></a>
+            <div class="panel panel-warning">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Unused Annotations
+                        <span class="badge">{{ unused_annotations|length }}</span>
+                        <a class="pull-right" href="#top"><span class="glyphicon glyphicon-arrow-up"
+                                                                aria-hidden="true"></span></a>
+                    </h3>
+                </div>
+                <div class="panel-body">
+                    <p>The source BEL script contained references to the following annotations, but they were never
+                        used. It is suggested to delete their definitions from the BEL script to improve readability
+                        and parsing speed.</p>
+                    <p><strong>Note:</strong> this may be due to errors occurring in all statements with these
+                        annotations.</p>
+                    <ul>
+                        {% for unused_annotation in unused_annotations %}
+                            <li>{{ unused_annotation }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        {% endif %}
+
+        {% if unused_list_annotation_values is defined and unused_list_annotation_values|length > 0 %}
+            <a id="unused-list-annotations"></a>
+            <div class="panel panel-warning">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Unused List Annotation Values
+                        <span class="badge">{{ unused_list_annotation_values|length }}</span>
+                        <a class="pull-right" href="#top"><span class="glyphicon glyphicon-arrow-up"
+                                                                aria-hidden="true"></span></a>
+                    </h3>
+                </div>
+                <div class="panel-body">
+                    <p>The source BEL script contained the following list annotations, but no references to the
+                        following values. It is suggested to prune these values from the list definitions. </p>
+                    <p><strong>Note:</strong> this may be due to errors occurring in all statements with these
+                        annotations.</p>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                            <tr>
+                                <th>Annotation</th>
+                                <th>Values</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for annotation, values in unused_list_annotation_values %}
+                                <tr>
+                                    <td>{{ annotation }}</td>
+                                    <td>{{ values }}</td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- BEL Parser Errors -->
+
+        {% if graph.warnings|length > 0 %}
+            <a id="graph-warnings"></a>
+            <div class="panel panel-danger panel-table">
+                <div class="panel-heading">
+                    <h3 class="panel-title">All Warnings
+                        <span class="badge">{{ graph.warnings|length }}</span>
+                        <a class="pull-right" href="#top"><span class="glyphicon glyphicon-arrow-up"
+                                                                aria-hidden="true"></span></a>
+                    </h3>
+                </div>
+                <div class="panel-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                            <tr>
+                                <th>Line</th>
+                                <th>BEL</th>
+                                <th>Message</th>
+                            </tr>
+                            </thead>
+                            <tbody id="myTable">
+                            {% for number, line, exc, _ in graph.warnings %}
+                                <tr>
+                                    <td>{{ number }}</td>
+                                    <td><code>{{ line }}</code></td>
+                                    <td>{{ exc }}</td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="panel-footer">
+                    <ul class="pagination pagination pagination-sm" style="margin:0;" id="myPager"></ul>
+                </div>
+            </div>
+        {% endif %}
+
+        {% if error_groups is defined and error_groups|length > 0 %}
+            <a id="error-groups"></a>
+            <div class="panel panel-danger panel-table">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Top Warnings
+                        <a class="pull-right" href="#top"><span class="glyphicon glyphicon-arrow-up"
+                                                                aria-hidden="true"></span></a>
+                    </h3>
+                </div>
+                <div class="panel-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                            <tr>
+                                <th>Error</th>
+                                <th>Frequency</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for k, v in error_groups %}
+                                <tr>
+                                    <td><code>{{ k }}</code></td>
+                                    <td>{{ v }}</td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
+        {% if undefined_namespaces is defined and undefined_namespaces|length > 0 %}
+            <a id="undefined-namespaces"></a>
+            <div class="panel panel-danger">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Undefined Namespaces
+                        <span class="badge">{{ undefined_namespaces|length }}</span>
+                        <a class="pull-right" href="#top"><span class="glyphicon glyphicon-arrow-up"
+                                                                aria-hidden="true"></span></a>
+                    </h3>
+                </div>
+                <div class="panel-body">
+                    <p>The source BEL script contained references to the following namespaces, but they were never
+                        defined. Click the links to download them as enumerated namespaces, and update the BEL script
+                        accordingly.</p>
+                    <ul>
+                        {% for undefined_namespace in undefined_namespaces %}
+                            <li>
+                                <a href="{{ url_for('dbs.download_undefined_namespace', network_id=network_id, namespace=undefined_namespace) }}">{{ undefined_namespace }}</a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        {% endif %}
+
+        {% if undefined_annotation is defined and undefined_annotations|length > 0 %}
+            <a id="undefined-annotations"></a>
+            <div class="panel panel-danger">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Undefined Annotations
+                        <span class="badge">{{ undefined_annotations|length }}</span>
+                        <a class="pull-right" href="#top"><span class="glyphicon glyphicon-arrow-up"
+                                                                aria-hidden="true"></span></a>
+                    </h3>
+                </div>
+                <div class="panel-body">
+                    <p>The source BEL script contained references to the following annotations, but they were never
+                        defined.
+                    </p>
+                    <ul>
+                        {% for undefined_annotation in undefined_annotations %}
+                            <li>{{ undefined_annotation }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        {% endif %}
+
+        {% if namespaces_with_incorrect_names is defined and namespaces_with_incorrect_names|length > 0 %}
+            <a id="incorrect-namespaces"></a>
+            <div class="panel panel-danger">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Namespaces with Incorrect Names
+                        <span class="badge">{{ namespaces_with_incorrect_names|length }}</span>
+                        <a class="pull-right" href="#top"><span class="glyphicon glyphicon-arrow-up"
+                                                                aria-hidden="true"></span></a>
+                    </h3>
+                </div>
+                <div class="panel-body">
+                    <ul>
+                        {% for namespace in namespaces_with_incorrect_names %}
+                            <li>
+                                <a href="{{ url_for('dbs.download_missing_namespace', network_id=network_id, namespace=namespace) }}">{{ namespace }}</a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- Biogrammar -->
+
+        {% if contradictions is defined and contradictions|length > 0 %}
+            <a id="contradictory-pairs"></a>
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Contradictory Edges
+                        <span class="badge">{{ contradictions|length }}</span>
+                        <a class="pull-right" href="#top"><span class="glyphicon glyphicon-arrow-up"
+                                                                aria-hidden="true"></span></a>
+                    </h3>
+                </div>
+                <div class="panel-body">
+                    <p>These pairs of nodes have a contradiction in their causal relationships, meaning they have more
+                        than one of <code>INCREASES</code>, <code>DECREASES</code>, or <code>CAUSES NO CHANGE</code>.
+                        This may be due to different experimental conditions, so these edges need to be carefully
+                        considered in analyses.
+                    </p>
+                </div>
+                <table class="table table-hover table-responsive">
+                    <thead>
+                    <tr>
+                        <th></th>
+                        <th>Source</th>
+                        <th>Relations</th>
+                        <th>Target</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for source, aid, target, bid, relations in contradictions %}
+                        <tr>
+                            <td>
+                                <a href="{{ url_for('view_explorer', network_id=network_id, seed_method='induction', nodes=[aid, bid], autoload='yes') }}"><span
+                                        class="glyphicon glyphicon-eye-open" aria-hidden="true"></span></a></td>
+                            <td>{{ source }}</td>
+                            <td>{{ ', '.join(relations) }}</td>
+                            <td>{{ target }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+
+        {% if unstable_pairs is defined and unstable_pairs|length > 0 %}
+            <a id="unstable-pairs"></a>
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Unstable Pairs
+                        <span class="badge">{{ unstable_pairs|length }}</span>
+                        <a class="pull-right" href="#top"><span class="glyphicon glyphicon-arrow-up"
+                                                                aria-hidden="true"></span></a>
+                    </h3>
+                </div>
+                <div class="panel-body">
+                    <dl>
+                        <dt>Chaotic Pairs</dt>
+                        <dd>Nodes that mutually increase each other, such as when both <code>A increases B</code> and
+                            <code>B
+                                increases A</code>.
+                        </dd>
+                        <dt>Dampened Pairs</dt>
+                        <dd>Nodes that mutually decrease each other, such as when both <code>A decreases B</code> and
+                            <code>B
+                                decreases A</code>.
+                        </dd>
+                    </dl>
+                    <p>While neither chaotic nor dampened pairs are biologically invalid, they require additional
+                        context to understand their regulation.</p>
+                </div>
+                <table class="table table-hover table-responsive">
+                    <thead>
+                    <tr>
+                        <th></th>
+                        <th>Type</th>
+                        <th>Node A</th>
+                        <th>Node B</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for a, aid, b, bid, label in unstable_pairs %}
+                        <tr>
+                            <td>
+                                <a href="{{ url_for('view_explorer', network_id=network_id, seed_method='induction', nodes=[aid, bid], autoload='yes') }}"><span
+                                        class="glyphicon glyphicon-eye-open" aria-hidden="true"></span></a></td>
+                            <td>{{ label }}</td>
+                            <td>{{ a }}</td>
+                            <td>{{ b }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+
+        {% if contradictory_triplets is defined and contradictory_triplets|length > 0 %}
+            <a id="contradictory-triplets"></a>
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Contradictory Triplets
+                        <span class="badge">{{ contradictory_triplets|length }}</span>
+                        <a class="pull-right" href="#top"><span class="glyphicon glyphicon-arrow-up"
+                                                                aria-hidden="true"></span></a>
+                    </h3>
+                </div>
+                <div class="panel-body">
+                    <p>Analysis of triple stability comes from a deep graph theoretic background. It identifies
+                        triangles within the graph that have logically inconsistent relations.</p>
+                    <dl>
+                        <dt>Separately Unstable Triplet</dt>
+                        <dd>When both <code>A positiveCorrelation B</code>, <code>B negativeCorrelation C</code>, but
+                            <code>C positiveCorrelation A</code>.
+                        </dd>
+                        <dt>Mutually Unstable Triplets</dt>
+                        <dd>When both <code>A negativeCorrelation B</code>, <code>B negativeCorrelation C</code>, and
+                            <code>C negativeCorrelation A</code>.
+                        </dd>
+                        <dt>Jens Contradictory Triplet</dt>
+                        <dd>When <code>A increases B</code>, <code>A decreases C</code>, and <code>C positiveCorrelation
+                            A</code>.
+                        </dd>
+                        <dt>Increase Mismatch Triplet</dt>
+                        <dd>When <code>A increases B</code>, <code>A increases C</code>, and <code>C negativeCorrelation
+                            A</code>.
+                        </dd>
+                        <dt>Decrease Mismatch Triplet</dt>
+                        <dd>When <code>A decreases B</code>, <code>A decreases C</code>, and <code>C negativeCorrelation
+                            A</code>.
+                        </dd>
+                    </dl>
+                </div>
+                <table class="table table-hover table-responsive">
+                    <thead>
+                    <tr>
+                        <th></th>
+                        <th>Type</th>
+                        <th>Node A</th>
+                        <th>Node B</th>
+                        <th>Node C</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for a, aid, b, bid, c, cid, label in contradictory_triplets %}
+                        <tr>
+                            <td>
+                                <a href="{{ url_for('view_explorer', network_id=network_id, seed_method='induction', nodes=[aid, bid, cid], autoload='yes') }}"><span
+                                        class="glyphicon glyphicon-eye-open" aria-hidden="true"></span></a></td>
+                            <td>{{ label }}</td>
+                            <td>{{ a }}</td>
+                            <td>{{ b }}</td>
+                            <td>{{ c }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+
+        {% if unstable_triplets is defined and unstable_triplets|length > 0 %}
+            <a id="unstable-triplets"></a>
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Unstable Triplets
+                        <span class="badge">{{ unstable_triplets|length }}</span>
+                        <a class="pull-right" href="#top"><span class="glyphicon glyphicon-arrow-up"
+                                                                aria-hidden="true"></span></a>
+                    </h3>
+                </div>
+                <div class="panel-body">
+                    <p>Like unstable pairs, unstable triplets require additional context to understand their
+                        mechanisms of regulation.</p>
+                    <dl>
+                        <dt>Chaotic Triplets</dt>
+                        <dd>A triplet of nodes that mutually increase each other, such as when <code>A increases
+                            B</code>,
+                            <code>B increases C</code>, and <code>C increases A</code>.
+                        </dd>
+                        <dt>Dampened Triplets</dt>
+                        <dd>A triplet of nodes that mutually decreases each other, such as when <code>A decreases
+                            B</code>,
+                            <code>B decreases C</code>, and <code>C decreases A</code>.
+                        </dd>
+                    </dl>
+                </div>
+                <table class="table table-hover table-responsive">
+                    <thead>
+                    <tr>
+                        <th></th>
+                        <th>Type</th>
+                        <th>Node A</th>
+                        <th>Node B</th>
+                        <th>Node C</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for a, aid, b, bid, c, cid, label in unstable_triplets %}
+                        <tr>
+                            <td>
+                                <a href="{{ url_for('view_explorer', network_id=network_id, seed_method='induction', nodes=[aid, bid, cid], autoload='yes') }}"><span
+                                        class="glyphicon glyphicon-eye-open" aria-hidden="true"></span></a></td>
+                            <td>{{ label }}</td>
+                            <td>{{ a }}</td>
+                            <td>{{ b }}</td>
+                            <td>{{ c }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+
+        {% if causal_pathologies is defined and causal_pathologies|length > 0 %}
+            <a id="causal-pathologies"></a>
+            <div class="panel panel-warning">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Causal Pathologies
+                        <span class="badge">{{ causal_pathologies|length }}</span>
+                        <a class="pull-right" href="#top"><span class="glyphicon glyphicon-arrow-up"
+                                                                aria-hidden="true"></span></a>
+                    </h3>
+                </div>
+                <div class="panel-body">
+                    <p>Pathologies are the result of molecular and physical processes, and do not make sense as
+                        the subject of causal statements.
+                    </p>
+                </div>
+                <table class="table table-hover table-responsive">
+                    <thead>
+                    <tr>
+                        <th></th>
+                        <th>Source</th>
+                        <th>Relation</th>
+                        <th>Target</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for source, source_id, relation, target, target_id in causal_pathologies %}
+                        <tr>
+                            <td>
+                                <a href="{{ url_for('view_explorer', network_id=network_id, seed_method='induction', nodes=[source_id, target_id], autoload='yes') }}"><span
+                                        class="glyphicon glyphicon-eye-open" aria-hidden="true"></span></a></td>
+                            <td>{{ source }}</td>
+                            <td>{{ relation }}</td>
+                            <td>{{ target }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+
+        {% if undefined_families is defined and undefined_families|length > 0 %}
+            <a id="undefined-families"></a>
+            <div class="panel panel-warning">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Undefined Families
+                        <span class="badge">{{ undefined_families|length }}</span>
+                        <a class="pull-right" href="#top"><span class="glyphicon glyphicon-arrow-up"
+                                                                aria-hidden="true"></span></a>
+                    </h3>
+                </div>
+                <div class="panel-body">
+                    <p>Families that are referenced without definition are problematic for analysis. Consider
+                        additional steps during compilation for integrating information, or more thoughtful curation.
+                    </p>
+                </div>
+                <table class="table table-hover table-responsive">
+                    <thead>
+                    <tr>
+                        <th></th>
+                        <th>Node</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for source, source_id in undefined_families %}
+                        <tr>
+                            <td>
+                                <a href="{{ url_for('view_explorer', network_id=network_id, seed_method='neighbors', nodes=[source_id], autoload='yes') }}"><span
+                                        class="glyphicon glyphicon-eye-open" aria-hidden="true"></span></a></td>
+                            <td><code>{{ source }}</code></td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+
+    </div>
+
+    {% include "footer.html" %}
+{% endblock %}
+
+{% block scripts %}
+    {{ super() }}
+
+    <script>
+        $.fn.pageMe = function (opts) {
+            var $this = this,
+                defaults = {
+                    perPage: 7,
+                    showPrevNext: false,
+                    hidePageNumbers: false
+                },
+                settings = $.extend(defaults, opts);
+
+            var listElement = $this;
+            var perPage = settings.perPage;
+            var children = listElement.children();
+            var pager = $('.pager');
+
+            if (typeof settings.childSelector != "undefined") {
+                children = listElement.find(settings.childSelector);
+            }
+
+            if (typeof settings.pagerSelector != "undefined") {
+                pager = $(settings.pagerSelector);
+            }
+
+            var numItems = children.size();
+            var numPages = Math.ceil(numItems / perPage);
+
+            pager.data("curr", 0);
+
+            if (settings.showPrevNext) {
+                $('<li><a href="#" class="prev_link">«</a></li>').appendTo(pager);
+            }
+
+            var curr = 0;
+            while (numPages > curr && (settings.hidePageNumbers === false)) {
+                $('<li><a href="#" class="page_link">' + (curr + 1) + '</a></li>').appendTo(pager);
+                curr++;
+            }
+
+            if (settings.showPrevNext) {
+                $('<li><a href="#" class="next_link">»</a></li>').appendTo(pager);
+            }
+
+            pager.find('.page_link:first').addClass('active');
+            pager.find('.prev_link').hide();
+            if (numPages <= 1) {
+                pager.find('.next_link').hide();
+            }
+            pager.children().eq(1).addClass("active");
+
+            children.hide();
+            children.slice(0, perPage).show();
+
+            pager.find('li .page_link').click(function () {
+                var clickedPage = $(this).html().valueOf() - 1;
+                goTo(clickedPage, perPage);
+                return false;
+            });
+            pager.find('li .prev_link').click(function () {
+                previous();
+                return false;
+            });
+            pager.find('li .next_link').click(function () {
+                next();
+                return false;
+            });
+
+            function previous() {
+                var goToPage = parseInt(pager.data("curr")) - 1;
+                goTo(goToPage);
+            }
+
+            function next() {
+                goToPage = parseInt(pager.data("curr")) + 1;
+                goTo(goToPage);
+            }
+
+            function goTo(page) {
+                var startAt = page * perPage,
+                    endOn = startAt + perPage;
+
+                children.css('display', 'none').slice(startAt, endOn).show();
+
+                if (page >= 1) {
+                    pager.find('.prev_link').show();
+                }
+                else {
+                    pager.find('.prev_link').hide();
+                }
+
+                if (page < (numPages - 1)) {
+                    pager.find('.next_link').show();
+                }
+                else {
+                    pager.find('.next_link').hide();
+                }
+
+                pager.data("curr", page);
+                pager.children().removeClass("active");
+                pager.children().eq(page + 1).addClass("active");
+
+            }
+        };
+
+        $(document).ready(function () {
+
+            $('#myTable').pageMe({pagerSelector: '#myPager', showPrevNext: true, hidePageNumbers: false, perPage: 20});
+
+        });
+    </script>
+
+    <script>
+        var chart1 = c3.generate({
+            padding: {
+                top: 15,
+                left: 100
+            },
+            size: {
+                height: 350
+            },
+            bindto: '#chart1',
+            data: {
+                x: 'x',
+                columns: {{ chart_1_data|safe}},
+                type: 'bar'
+            },
+            title: {
+                text: 'Nodes'
+            },
+            axis: {
+                rotated: true,
+                x: {
+                    type: 'category'
+                }
+            },
+            legend: {
+                show: false
+            }
+        });
+
+        var chart2 = c3.generate({
+            padding: {
+                top: 15,
+                left: 100
+            },
+            size: {
+                height: 350
+            },
+            bindto: '#chart2',
+            data: {
+                x: 'x',
+                columns: {{ chart_2_data|safe}},
+                type: 'bar'
+            },
+            title: {
+                text: 'Edges'
+            },
+            axis: {
+                rotated: true,
+                x: {
+                    type: 'category'
+                }
+            },
+            legend: {
+                show: false
+            }
+        });
+
+        var chart3 = c3.generate({
+            padding: {
+                top: 15,
+                left: 100
+            },
+            size: {
+                height: 350
+            },
+            bindto: '#chart3',
+            data: {
+                x: 'x',
+                columns: {{ chart_3_data|safe}},
+                type: 'bar'
+            },
+            title: {
+                text: 'Warnings'
+            },
+            axis: {
+                rotated: true,
+                x: {
+                    type: 'category'
+                }
+            },
+            legend: {
+                show: false
+            }
+        });
+
+        var chart4 = c3.generate({
+            padding: {
+                top: 15,
+                left: 100
+            },
+            size: {
+                height: 350
+            },
+            bindto: '#chart4',
+            data: {
+                x: 'x',
+                columns: {{ chart_4_data|safe}},
+                type: 'bar'
+            },
+            title: {
+                text: 'Node Transformations'
+            },
+            axis: {
+                rotated: true,
+                x: {
+                    type: 'category'
+                }
+            },
+            legend: {
+                show: false
+            }
+        });
+
+        var chart5 = c3.generate({
+            padding: {
+                top: 15,
+                left: 100
+            },
+            size: {
+                height: 350
+            },
+            bindto: '#chart5',
+            data: {
+                x: 'x',
+                columns: {{ chart_5_data|safe}},
+                type: 'bar'
+            },
+            title: {
+                text: 'Node Modifications'
+            },
+            axis: {
+                rotated: true,
+                x: {
+                    type: 'category'
+                }
+            },
+            legend: {
+                show: false
+            }
+        });
+
+        var chart6 = c3.generate({
+            padding: {
+                top: 15,
+                left: 100
+            },
+            size: {
+                height: 350
+            },
+            bindto: '#chart6',
+            data: {
+                x: 'x',
+                columns: {{ chart_6_data|safe}},
+                type: 'bar'
+            },
+            title: {
+                text: 'Namespace Usage'
+            },
+            axis: {
+                rotated: true,
+                x: {
+                    type: 'category'
+                }
+            },
+            legend: {
+                show: false
+            }
+        });
+
+        var chart7 = c3.generate({
+            padding: {
+                top: 15,
+                left: 100
+            },
+            size: {
+                height: 350
+            },
+            bindto: '#chart7',
+            data: {
+                x: 'x',
+                columns: {{ chart_7_data|safe}},
+                type: 'bar'
+            },
+            title: {
+                text: 'Top Hub Nodes'
+            },
+            axis: {
+                rotated: true,
+                x: {
+                    type: 'category'
+                }
+            },
+            legend: {
+                show: false
+            }
+        });
+
+        var chart8 = c3.generate({
+            padding: {
+                top: 15,
+                left: 100
+            },
+            size: {
+                height: 350
+            },
+            bindto: '#chart8',
+            data: {
+                x: 'x',
+                columns: {{ chart_8_data|safe}},
+                type: 'bar'
+            },
+            title: {
+                text: 'Most Central Nodes'
+            },
+            axis: {
+                rotated: true,
+                x: {
+                    type: 'category'
+                }
+            },
+            legend: {
+                show: false
+            }
+        });
+
+        var chart9 = c3.generate({
+            padding: {
+                top: 15,
+                left: 100
+            },
+            size: {
+                height: 350
+            },
+            bindto: '#chart9',
+            data: {
+                x: 'x',
+                columns: {{ chart_9_data|safe}},
+                type: 'bar'
+            },
+            title: {
+                text: 'Diseases'
+            },
+            axis: {
+                rotated: true,
+                x: {
+                    type: 'category'
+                }
+            },
+            legend: {
+                show: false
+            }
+        });
+
+    </script>
+{% endblock %}

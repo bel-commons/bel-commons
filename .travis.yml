@@ -1,0 +1,44 @@
+sudo: false
+cache: pip
+
+language: python
+
+python:
+    - "2.7"
+    - "3.6"
+env:
+    - TOXENV=manifest
+    - TOXENV=docs
+    - TOXENV=py
+
+matrix:
+    allow_failures:
+    - python: "2.7"
+
+before_install:
+    - pip install --upgrade pip
+    - pip install codecov
+
+install:
+    - pip install tox
+
+script:
+    - tox
+
+after_success:
+    - tox -e coverage-report
+    - codecov
+
+notifications:
+  slack: pybel:n2KbWKBum3musnBg3L76gGwq
+
+deploy:
+    provider: pypi
+    user: cthoyt
+    on:
+        tags: true
+        distributions: "sdist bdist_wheel"
+        repo: pybel/pybel-tools
+        branch: master
+    password:
+        secure: YzajKb5ACb23VbE3TSudddPq2T385Yhhqr+gvtwaHGaFfQYjcuo5A+PL4Yj/zx263XMHlzbKbkRDXJi2oZoCM21lPsPzPo+HAX7rRsMkczgtz0XReEY7mkGIJ4VPqjSaUccyQPvv2jYaRL6MY3MzhDTwK4giQb3DVPgQbrhBRHts1CRbxQq8ZzvQ9GEW+a6JZoV+MrtpM4Rg7b2MAIUrSpB2Umk6iVF6kgVz8FkaKRit5rFzadEy92kvyaX8WnAtlLkGIHbGomHAg4oefpxg/Pw8ScrsOQ2a/pqQbvWf+QgJkxR2rv2/fwjtw83gnvkmdIwEVWkESEqfHfl51wIOleloaIeMeB0LyLANVw0kKrkaxD5Ila4OVPwNAtOu0ERbaPnCjA/H32aCdABGSVEa+EaIDHdnjDAxu1b1lZ0WogioBqH5j1cE6znB4ioFF6/MpacO3D0hGSnOmQQt890HyT3nYnn1iM7sKXldczUkvud5tui5uVBw2SXRWUmOY0/ulNJ1BWJyDMgB+DWlPKePP8sT2T7ng7NUAfkLAqKzqgWq/WMaXTfiJr8ghuuLSDbPucBNgUu5yOZiln8NJTkpMzWEkXfLMMz+uPcccX999VUytnFQF7aBI0jTAWc7axgFfeVXnt7vWbTalgYlPvPtQmrax6S6fP3lMWIO/VGFews=

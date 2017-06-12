@@ -1,0 +1,260 @@
+{% extends "base.html" %}
+
+{% import "bootstrap/wtf.html" as wtf %}
+{% import "bootstrap/fixes.html" as fixes %}
+{% import "bootstrap/utils.html" as util %}
+
+{% block title %}Network Store{% endblock %}
+
+{% block head %}
+    {{ super() }}
+
+    <script type="text/javascript"
+            src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.8.3/modernizr.js"></script>
+    <script type="text/javascript"
+            src="https://npmcdn.com/tether@1.2.4/dist/js/tether.min.js"></script>
+{% endblock %}
+
+{% block styles %}
+    {{ super() }}
+    <style>
+
+        .select2-selection--multiple .select2-search--inline .select2-search__field {
+            width: auto !important;
+        }
+    </style>
+    <link rel="stylesheet" type="text/css" href='https://code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css'/>
+    <link rel="stylesheet" type="text/css"
+          href='https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/css/select2.min.css'/>
+    <link rel="stylesheet" type="text/css"
+          href='https://cdnjs.cloudflare.com/ajax/libs/select2-bootstrap-theme/0.1.0-beta.10/select2-bootstrap.min.css'/>
+{% endblock %}
+
+{% block scripts %}
+    {{ super() }}
+    <link rel="stylesheet"
+          href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css'/>
+    <script type="text/javascript"
+            src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/js/select2.full.min.js"></script>
+    <script type="text/javascript"
+            src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+    <script type="text/javascript"
+            src="{{ url_for('static', filename='js/home_controller/query_builder_controller.js') }}"></script>
+{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div class="page-header">
+            <h1>PyBEL Query Builder</h1>
+        </div>
+
+        {{ util.flashed_messages(dismissible=True, container=False) }}
+
+        <form id="query-form" method="post" action="{{ url_for('dbs.get_pipeline') }}">
+
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Networks</h3>
+                </div>
+                <div class="panel-body">
+                    <p>Please choose the networks that you want to query.</p>
+                    {% for network in networks %}
+                        <div>
+                            <label><input type="checkbox" name="network_ids[]"
+                                          value="{{ network.id }}"/>{{ network.name }}
+                            </label>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Seeding type</h3>
+                </div>
+                <div class="panel-body">
+                    <p>Please choose the seeding type your want to use for the query. Note that it is also possible to
+                        use
+                        multiple seeding types.</p>
+
+                    <div id="seed-selection" class="btn-group">
+                        <a data-toggle="tab" href="#node-panel">
+                            <button type="button" class="btn btn-primary">Nodes</button>
+                        </a>
+                        <a data-toggle="tab" href="#pubmed-panel">
+                            <button type="button" class="btn btn-primary" value="pmids">PubMeds</button>
+                        </a>
+                        <a data-toggle="tab" href="#author-panel">
+                            <button type="button" class="btn btn-primary" value="authors">Authors</button>
+                        </a>
+                        <a data-toggle="tab" href="#annotation-panel">
+                            <button type="button" class="btn btn-primary" value="annotations">Annotations</button>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-content">
+                <div class="panel panel-default tab-pane fade" id="node-panel">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">Network Seeding by Nodes</h3>
+                    </div>
+                    <div class="panel-body">
+                        <p>This method of seeding will acquire the given nodes and expand around them using given seed
+                            method.
+                        </p>
+                        <p><strong>Use Case:</strong> The leukemia drug, <a
+                                href="https://www.ebi.ac.uk/chembl/compound/inspect/CHEMBL255863">nilotinib</a>,
+                            triggers
+                            cells
+                            to get rid of faulty components - including the ones associated with several brain diseases.
+                            In
+                            2015, Georgetown University Medical Center <a
+                                    href="http://content.iospress.com/articles/journal-of-parkinsons-disease/jpd160867">published</a>
+                            findings that the drug had a helpful effect on patients in
+                            Alzheimer's and Parkinson's diseases. Though it is currently unknown, a search of the paths
+                            between
+                            this drug and these diseases could provide insight to nilotinib's mechanism of action.</p>
+                        <div class="form-group form-horizontal">
+                            <label class="col-md-2 control-label">Nodes</label>
+                            <div class="col-md-10">
+                                <select style="width: 100%" multiple="multiple" name="node_selection[]"
+                                        id="node_selection"></select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="col-lg-offset-2 col-lg-10">
+                                <div class="radio">
+                                    <label>
+                                        <input checked id="seed_method-0" name="seed_method" type="radio"
+                                               value="induction">
+                                        Induce a subgraph over the given nodes
+                                    </label>
+                                </div>
+                                <div class="radio">
+                                    <label>
+                                        <input id="seed_method-1" name="seed_method" type="radio" value="neighbors">
+                                        Induce
+                                        a subgraph over the given nodes and expand to their first neighbors
+                                    </label>
+                                </div>
+                                <div class="radio">
+                                    <label>
+                                        <input id="seed_method-2" name="seed_method" type="radio" value="dneighbors">
+                                        Induce
+                                        a subgraph over the given nodes and expand to their second neighbors
+                                    </label>
+                                </div>
+                                <div class="radio">
+                                    <label>
+                                        <input id="seed_method-3" name="seed_method" type="radio"
+                                               value="shortest_paths">
+                                        Induce a subgraph over the nodes in all shortest paths between the given nodes
+                                    </label>
+                                </div>
+                                <div class="radio">
+                                    <label>
+                                        <input id="seed_method-4" name="seed_method" type="radio" value="upstream">
+                                        Generate
+                                        an upstream candidate mechanism
+                                    </label>
+                                </div>
+                                <div class="radio">
+                                    <label>
+                                        <input id="seed_method-5" name="seed_method" type="radio" value="downstream">
+                                        Generate a downstream candidate mechanism
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel panel-default tab-pane fade" id="author-panel">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">Network Seeding by Authors</h3>
+                    </div>
+                    <div class="panel-body">
+                        <p>This method of seeding will acquire nodes and edges asserted by the given authors, then
+                            expand
+                            around
+                            the neighborhood of these nodes to show all peripheral knowledge.</p>
+                        <div class="form-group form-horizontal">
+                            <label class="col-md-2 control-label">Authors</label>
+                            <div class="col-md-10">
+                                <select style="width: 100%;" multiple="multiple" name="author_selection[]"
+                                        id="author_selection"></select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel panel-default tab-pane fade" id="pubmed-panel">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">Network Seeding by PubMed identifiers</h3>
+                    </div>
+                    <div class="panel-body">
+                        <p>This method of seeding will acquire nodes and edges asserted in the given citations and will
+                            expand
+                            around the neighborhood of these nodes to show all peripheral knowledge.</p>
+                        <div class="form-group form-horizontal">
+                            <label class="col-md-2 control-label">PubMed Identifiers</label>
+                            <div class="col-md-10">
+                                <select style="width: 100%" multiple="multiple" name="pubmed_selection[]"
+                                        id="pubmed_selection"></select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel panel-default tab-pane fade" id="annotation-panel">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">Network Seeding by Annotation</h3>
+                    </div>
+                    <div class="panel-body">
+                        <p>This method of seeding will acquire nodes and edges asserted by the given authors, then
+                            expand
+                            around
+                            the neighborhood of these nodes to show all peripheral knowledge.</p>
+                        <p><strong>Use Case:</strong> Amyloidogenic cascade is one of the proposed mechanisms that is
+                            thought to
+                            trigger Alzheimer's disease. Extracting the amyloidogenic network using annotations will
+                            provide
+                            deeper insight around Amyloid Beta Protein.</p>
+                        <div class="form-group form-horizontal">
+                            <label class="col-md-2 control-label">Annotation Values</label>
+                            <div class="col-md-10">
+                                <select style="width: 100%;" multiple="multiple" name="annotation_selection[]"
+                                        id="annotation_selection"></select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">Filter functions</h3>
+                    </div>
+                    <div class="panel-body">
+                        <p>Please choose any filters you want to apply on the query.</p>
+                        <p><strong>Use Case:</strong> You might want to collapse all nodes from the central dogma (GENE,
+                            RNA, PROTEIN) to PROTEIN.</p>
+                        <div class="multi-input-fields"><!-- Dynamic input form -->
+                            <div class="input-field">
+                                <i class="fa fa-plus-square add-field fa-2x" style="float:initial"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="text-center" style="margin-bottom: 20px">
+                <input class="btn btn-primary btn-lg" id="submit-query" placeholder="Submit Query" type="submit">
+            </div>
+        </form>
+
+    </div>
+
+
+
+    {% include "footer.html" %}
+{% endblock %}

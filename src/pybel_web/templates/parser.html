@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% import "bootstrap/wtf.html" as wtf %}
+{% import "bootstrap/fixes.html" as fixes %}
+{% import "bootstrap/utils.html" as util %}
+
+{% block title %}Parse{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div class="page-header">
+            <h1>PyBEL Web Parser</h1>
+        </div>
+
+        {{ util.flashed_messages(dismissible=True, container=False) }}
+
+        <div class="panel panel-default">
+            <div class="panel-body">
+                <p>This web application is built with PyBEL. It parses BEL scripts and provides helpful output
+                    for fixing errors. Parsing occurs at about 900 lines per second, so be patient!.
+                </p>
+                <p>By using our application, we hope you'll choose the option to make your knowledge assembly public.
+                    For more information on how this app works, see the <a href="http://pybel.readthedocs.io/">PyBEL</a>
+                    and
+                    <a href="http://pybel-tools.readthedocs.io/">PyBEL Tools</a> documentation. For more information
+                    on parser warnings, see the <a href="http://pybel.readthedocs.io/en/latest/logging.html">Logging
+                        Messages</a> documentation.
+                </p>
+            </div>
+        </div>
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Input</h3>
+            </div>
+            <div class="panel-body">
+                {{ wtf.quick_form(form, form_type='horizontal', button_map={'submit_button': 'btn btn-primary'}) }}
+            </div>
+        </div>
+    </div>
+
+    {% include "footer.html" %}
+{% endblock %}
+

@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% import "bootstrap/wtf.html" as wtf %}
+{% import "bootstrap/fixes.html" as fixes %}
+{% import "bootstrap/utils.html" as util %}
+
+{% block title %}About{% endblock %}
+
+{% block scripts %}
+    {{ super() }}
+    <script type="text/javascript">
+        var maxHeight = 0;
+        $(".panel-body").find(".row").find(".col-sm-6").find(".thumbnail").each(function (idx, item) {
+            var height = $(item).height();
+            maxHeight = maxHeight > height ? maxHeight : height;
+        });
+        $(".panel-body").find(".row").find(".col-sm-6").find(".thumbnail").height(maxHeight);
+    </script>
+{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div class="page-header">
+            <h1>About</h1>
+        </div>
+
+        {{ util.flashed_messages(dismissible=True, container=False) }}
+
+        <div class="panel panel-default">
+            <div class="panel-body">
+                <div class="row">
+                    <div class="col-sm-6 col-md-3">
+                        <div class="thumbnail">
+                            <div class="caption">
+                                <h3>RESTFul API</h3>
+                                <p>We provide a RESTful service for querying graphs the same way our service does to
+                                    provide visualization. The definition of this service is given using the
+                                    <a href="https://www.openapis.org/">OpenAPI</a> specification.
+                                </p>
+                                <p>
+                                    <a href="{{ url_for('get_swagger') }}" class="btn btn-primary" role="button">Swagger.json</a>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-md-3">
+                        <div class="thumbnail">
+                            <div class="caption">
+                                <h3>GraphQL API</h3>
+                                <p>In the future we will also provide a <a href="http://graphql.org/learn/">GraphQL</a>
+                                    API using <a href="https://github.com/graphql-python/graphene">graphene</a>.</p>
+                                <p>
+                                    <a href="http://graphql.org/learn/" class="btn btn-primary" role="button">
+                                        Learn More
+                                    </a>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-md-3">
+                        <div class="thumbnail">
+                            <div class="caption">
+                                <h3>Cookbook</h3>
+                                <p>PyBEL Web is built on PyBEL and PyBEL Tools. We have created a repository of Jupyter
+                                    notebooks to demonstrate their programmatic capabilities.
+                                </p>
+                                <p>
+                                    <a href="https://github.com/pybel/pybel-notebooks" class="btn btn-primary"
+                                       role="button">PyBEL Notebooks</a>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-md-3">
+                        <div class="thumbnail">
+                            <div class="caption">
+                                <h3>Dependencies</h3>
+                                <p>PyBEL Web is built with a variety of tools: </p>
+                                <p>
+                                    Python:
+                                    <a href="http://flask.pocoo.org/">Flask</a>,
+                                    <a href="http://docs.python-requests.org/">Requests</a>,
+                                    <a href="https://networkx.github.io/">NetworkX</a>,
+                                    <a href="http://pandas.pydata.org/">Pandas</a>,
+                                    <a href="https://www.sqlalchemy.org/">SQLAlchemy</a>
+                                </p>
+                                <p>
+                                    Web Stack:
+                                    <a href="https://getbootstrap.com/">Bootstrap</a>,
+                                    <a href="https://d3js.org/">D3.js</a>,
+                                    <a href="https://jquery.com/">jQuery</a>
+                                </p>
+                                <p>
+                                    Database:
+                                    <a href="https://www.mysql.com/">MySQL</a>,
+                                    <a href="https://www.sqlite.org/">SQLite</a>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-md-6">
+                        <div class="thumbnail">
+                            <div class="caption">
+                                <h3>References</h3>
+                                <ul>
+                                    <li>Charles Tapley Hoyt, Andrej Konotopez, & Christian Ebeling. (2017, May 28).
+                                        pybel/pybel v0.5.9. Zenodo. <a href="http://doi.org/10.5281/zenodo.583734">http://doi.org/10.5281/zenodo.583734</a>
+                                    </li>
+                                    <li>Charles Tapley Hoyt, Daniel Domingo-Fernandez, Andrej Konotopez, & Christian
+                                        Ebeling. (2017, May 26). pybel/pybel-tools v0.1.11. Zenodo. <a
+                                                href="http://doi.org/10.5281/zenodo.583576">http://doi.org/10.5281/zenodo.583576</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    {% include "footer.html" %}
+{% endblock %}

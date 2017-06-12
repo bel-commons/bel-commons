@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% import "bootstrap/wtf.html" as wtf %}
+{% import "bootstrap/fixes.html" as fixes %}
+{% import "bootstrap/utils.html" as util %}
+
+{% block title %}Analyze{% endblock %}
+
+{% block content %}
+    {{ util.flashed_messages(dismissible=True) }}
+    <div class="container">
+        <div class="page-header">
+            <h1>Analysis</h1>
+        </div>
+
+        {{ util.flashed_messages(dismissible=True, container=False) }}
+
+        <div class="panel panel-default">
+            <div class="panel-body">
+                <p>This form will run an analysis on <code>{{ network_name }}</code> using a variant of the
+                    <a href="https://bmcsystbiol.biomedcentral.com/articles/10.1186/1752-0509-6-54">Network Perturbation
+                        Amplitude</a> algorithm called Candidate Mechanism Perturbation Amplitude to
+                    prioritize biological processes in the context of a differential gene expression experiment.
+                </p>
+                <p>For more information on how this app works, see the <a href="http://pybel.readthedocs.io/">PyBEL</a>
+                    and <a href="http://pybel-tools.readthedocs.io/">PyBEL Tools</a> documentation.
+                </p>
+            </div>
+        </div>
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Input</h3>
+            </div>
+            <div class="panel-body">
+                {{ wtf.quick_form(form, form_type='horizontal', button_map={'submit_button': 'btn btn-primary'}) }}
+            </div>
+        </div>
+    </div>
+
+    {% include "footer.html" %}
+{% endblock %}
+
+{% block head %}
+    {{ super() }}
+    {{ fixes.ie8() }}
+{% endblock %}

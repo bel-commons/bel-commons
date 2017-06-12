@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% import "bootstrap/wtf.html" as wtf %}
+{% import "bootstrap/fixes.html" as fixes %}
+{% import "bootstrap/utils.html" as util %}
+
+{% block title %}Site Map{% endblock %}
+
+{% block content %}
+    <div class="container">
+
+        <div class="page-header">
+            <h1>PyBEL Web</h1>
+        </div>
+
+        <div class="panel panel-default">
+            <div class="panel-body">
+                <p>This web application provides an interface for users to interact with the functions in the Python
+                    software packages: <a href="http://pybel.readthedocs.io/">PyBEL</a> and <a
+                            href="http://pybel-tools.readthedocs.io/">PyBEL Tools</a>.
+                </p>
+                <p>It is maintained by <a href="https://github.com/cthoyt">Charles Tapley Hoyt</a> and Daniel
+                    Domingo-Fernandez at the <a
+                            href="https://www.scai.fraunhofer.de/en/business-research-areas/bioinformatics.html">Fraunhofer
+                        SCAI
+                        Department of Bioinformatics</a> with support from the <a
+                            href="https://www.imi.europa.eu/">IMI</a>
+                    projects, <a href="http://www.aetionomy.eu/>">AETIONOMY</a> and <a
+                            href="http://www.phago.eu/">PHAGO</a>.
+                </p>
+            </div>
+        </div>
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Application Metadata</h3>
+            </div>
+            <div class="list-group">
+                {% for key, value in metadata %}
+                    <div class="list-group-item">
+                        <h4 class="list-group-item-heading">{{ key }}</h4>
+                        <p class="list-group-item-text">{{ value }}</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Web Pages</h3>
+            </div>
+            <ul class="list-group">
+                {% for url, endpoint in links %}
+                    <li class="list-group-item">
+                        <a href="{{ url }}">{{ endpoint }}</a>: {{ url }}
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">API Endpoints</h3>
+            </div>
+            <ul class="list-group">
+                {% for url, endpoint in api_links %}
+                    <li class="list-group-item">
+                        <a href="{{ url }}">{{ endpoint }}</a>: {{ url }}
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+{% endblock %}

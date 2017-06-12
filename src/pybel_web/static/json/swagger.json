@@ -1,0 +1,701 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "version": "0.1.0",
+        "title": "BiNE API",
+        "description": "Application Programming Interface for the Biological Network Explorer from Fraunhofer SCAI."
+    },
+    "host": "api.bine.com",
+    "schemes": [
+        "http"
+    ],
+    "produces": [
+        "application/json"
+    ],
+    "paths": {
+        "/networks": {
+            "get": {
+                "description": "Gets `Network` objects.\n",
+                "tags": [
+                    "Network"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "schema": {
+                            "title": "ArrayOfNetworks",
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/Network"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/namespaces": {
+            "get": {
+                "description": "Gets a list of all `namespaces` in the database.\n",
+                "tags": [
+                    "Context"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "schema": {
+                            "title": "ArrayOfNamespaces",
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/Definition"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/namespaces/by_network/{network_id}": {
+            "get": {
+                "description": "Gets a list of all `namespaces` used in a specific network.\n",
+                "parameters": [
+                    {
+                        "$ref": "#/parameters/NetworkID"
+                    }
+                ],
+                "tags": [
+                    "Context"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "schema": {
+                            "title": "ArrayOfNamespaces",
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/Definition"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/names/{definition_key}": {
+            "get": {
+                "description": "Gets a list of the first 1000 names defined by the given `namespace_key`.\n",
+                "parameters": [
+                    {
+                        "$ref": "#/parameters/DefinitionKey"
+                    }
+                ],
+                "tags": [
+                    "Context"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "schema": {
+                            "title": "Names",
+                            "type": "array",
+                            "items": {
+                                "title": "name",
+                                "type": "string",
+                                "description": "Name defined in the given namespace"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/annotations": {
+            "get": {
+                "description": "Gets a list of all `annotations` in the database.\n",
+                "tags": [
+                    "Context"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "schema": {
+                            "title": "ArrayOfAnnotationKeys",
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/Definition"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/annotations/by_network/{network_id}": {
+            "get": {
+                "description": "Gets a list of all `annotations` used in a specific network.\n",
+                "parameters": [
+                    {
+                        "$ref": "#/parameters/NetworkID"
+                    }
+                ],
+                "tags": [
+                    "Context"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "schema": {
+                            "title": "ArrayOfAnnotationKeys",
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/Definition"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/annos/{definition_key}": {
+            "get": {
+                "description": "Gets a list of the first 1000 annotations defined by the given `annotation_key`.\n",
+                "parameters": [
+                    {
+                        "$ref": "#/parameters/DefinitionKey"
+                    }
+                ],
+                "tags": [
+                    "Context"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "schema": {
+                            "title": "Annotations",
+                            "type": "array",
+                            "items": {
+                                "title": "anno",
+                                "type": "string",
+                                "description": "Annotation defined in the given annotation_key"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/citations": {
+            "get": {
+                "description": "Gets a list of all `citations` in the database.\n",
+                "tags": [
+                    "Context"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "schema": {
+                            "title": "ArrayOfCitations",
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/Citation"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/citations/by_network/{network_id}": {
+            "get": {
+                "description": "Gets a list of all `citatinos` used in a specific network.\n",
+                "parameters": [
+                    {
+                        "$ref": "#/parameters/NetworkID"
+                    }
+                ],
+                "tags": [
+                    "Context"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "schema": {
+                            "title": "ArrayOfCitations",
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/Citation"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/edges/by_network/{network_id}": {
+            "get": {
+                "description": "Get `Edge` objects from a specific network.\n",
+                "parameters": [
+                    {
+                        "$ref": "#/parameters/NetworkID"
+                    }
+                ],
+                "tags": [
+                    "Edge"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "schema": {
+                            "title": "ArrayOfEdges",
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/Edge"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/edges/by_pmid/{pmid_id}": {
+            "get": {
+                "description": "Gets `Network` objects by PubMed identifier.\n",
+                "parameters": [
+                    {
+                        "$ref": "#/parameters/PmidID"
+                    }
+                ],
+                "tags": [
+                    "Network"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "schema": {
+                            "title": "ArrayOfNetworkEdges",
+                            "type": "array",
+                            "items": {
+                                "title": "NetworkEdges",
+                                "type": "object",
+                                "properties": {
+                                    "network_id": {
+                                        "type": "integer",
+                                        "description": "Databaseidentifier of the given network."
+                                    },
+                                    "edges": {
+                                        "type": "array",
+                                        "items": {
+                                            "$ref": "#/definitions/Edge"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/edges/by_author/{author}": {
+            "get": {
+                "description": "Get `Edge` objects filtered by the author of the cited source.\n",
+                "parameters": [
+                    {
+                        "$ref": "#/parameters/Author"
+                    }
+                ],
+                "tags": [
+                    "Edge"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "schema": {
+                            "title": "ArrayOfEdges",
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/Edge"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/edges/by_network_author/{network_id}/{author}": {
+            "get": {
+                "description": "Get `Edge` objects filtered by the network identifier and one author of the cited source.\n",
+                "parameters": [
+                    {
+                        "$ref": "#/parameters/NetworkID"
+                    },
+                    {
+                        "$ref": "#/parameters/Author"
+                    }
+                ],
+                "tags": [
+                    "Edge"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "schema": {
+                            "title": "ArrayOfEdges",
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/Edge"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/edges/by_network_pmid/{network_id}/{pmid_id}": {
+            "get": {
+                "description": "Get `Edge` objects filtered by the network identifier and the PubMed identifier of the cited source.\n",
+                "parameters": [
+                    {
+                        "$ref": "#/parameters/NetworkID"
+                    },
+                    {
+                        "$ref": "#/parameters/PmidID"
+                    }
+                ],
+                "tags": [
+                    "Edge"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "schema": {
+                            "title": "ArrayOfEdges",
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/Edge"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/edges/by_annotation/{definition_key}/{name}": {
+            "get": {
+                "description": "Get `Edge` objects filtered by a specific annotation (interaction context).\n",
+                "parameters": [
+                    {
+                        "$ref": "#/parameters/DefinitionKey"
+                    },
+                    {
+                        "$ref": "#/parameters/Name"
+                    }
+                ],
+                "tags": [
+                    "Edge"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "schema": {
+                            "title": "ArrayOfEdges",
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/Edge"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/edges/by_network_annotation/{network_id}/{definition_key}/{name}": {
+            "get": {
+                "description": "Get `Edge` objects from a specific network filtered by a specific annotation (interaction context).\n",
+                "parameters": [
+                    {
+                        "$ref": "#/parameters/NetworkID"
+                    },
+                    {
+                        "$ref": "#/parameters/DefinitionKey"
+                    },
+                    {
+                        "$ref": "#/parameters/Name"
+                    }
+                ],
+                "tags": [
+                    "Edge"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "schema": {
+                            "title": "ArrayOfEdges",
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/Edge"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/nodes/by_network/{network_id}": {
+            "get": {
+                "description": "Get `Node` objects from a specific network.\n",
+                "parameters": [
+                    {
+                        "$ref": "#/parameters/NetworkID"
+                    }
+                ],
+                "tags": [
+                    "Node"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "schema": {
+                            "title": "ArrayOfNodes",
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/Node"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/path": {
+            "post": {
+                "description": "Gives an ordered list of `nodes` from a path with given start and end node.\n",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Path"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "schema": {
+                            "title": "ArrayOfNodes",
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/NodeIdentifier"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/all_paths": {
+            "post": {
+                "description": "Gives a list of `paths` (ordered lists of `nodes`) from a given start to a given end node.\n",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Path"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "schema": {
+                            "title": "ArrayOfPaths",
+                            "type": "array",
+                            "items": {
+                                "title": "ArrayOfNodes",
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/definitions/NodeIdentifier"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "Edge": {
+            "type": "object",
+            "properties": {
+                "sourceNode": {
+                    "$ref": "#/definitions/NodeIdentifier"
+                },
+                "targetNode": {
+                    "$ref": "#/definitions/NodeIdentifier"
+                },
+                "identifier": {
+                    "type": "integer",
+                    "description": "Identifies weather the given edge was automatically created or extracted from BEL."
+                },
+                "contextData": {
+                    "type": "object",
+                    "properties": {
+                        "relation": {
+                            "type": "string",
+                            "description": "Describes the relation between source and target node."
+                        },
+                        "annotation": {
+                            "type": "string",
+                            "description": "Name of a context annotation (Key)"
+                        },
+                        "annotationName": {
+                            "type": "string",
+                            "description": "The used context. (Value)"
+                        }
+                    }
+                }
+            }
+        },
+        "Node": {
+            "type": "object",
+            "properties": {
+                "nodeIdentifier": {
+                    "$ref": "#/definitions/NodeIdentifier"
+                },
+                "data": {
+                    "type": "object",
+                    "properties": {
+                        "type": {
+                            "type": "string",
+                            "description": "The type of the node given by BEL definition."
+                        },
+                        "namespace": {
+                            "type": "string",
+                            "description": "The namespace that defines the nodes name given by BEL definition."
+                        },
+                        "name": {
+                            "type": "string",
+                            "description": "The name of the node given by BEL defintion."
+                        },
+                        "variants": {
+                            "type": "object",
+                            "description": "optional",
+                            "properties": {
+                                "VariantType": {
+                                    "type": "string",
+                                    "description": "Type of the variant or modification defined by BEL."
+                                },
+                                "VariantString": {
+                                    "type": "string",
+                                    "description": "Description of the given variant."
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "Citation": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "Name of the cited publication."
+                },
+                "reference": {
+                    "type": "string",
+                    "description": "Identifier for the cited publication within the source i.e. PubMed identifier."
+                },
+                "type": {
+                    "type": "string",
+                    "description": "Source of the cited publication i.e. PubMed."
+                }
+            }
+        },
+        "NodeIdentifier": {
+            "type": "object",
+            "properties": {
+                "type": {
+                    "type": "string",
+                    "description": "The type of the node given by BEL definition."
+                },
+                "namespace": {
+                    "type": "string",
+                    "description": "The namespace that defines the nodes name given by BEL definition."
+                },
+                "name": {
+                    "type": "string",
+                    "description": "The name of the node given by BEL defintion."
+                },
+                "modification": {
+                    "type": "object",
+                    "properties": {
+                        "type": {
+                            "type": "string",
+                            "description": "Modification-type given by BEL defintion."
+                        }
+                    }
+                }
+            }
+        },
+        "Network": {
+            "type": "object",
+            "properties": {
+                "identifier": {
+                    "type": "integer",
+                    "description": "Databaseidentifier of the given network."
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Name of the `network` that was extracted from the source BEL file."
+                },
+                "number_of_nodes": {
+                    "type": "integer",
+                    "format": "int32",
+                    "description": "Total number of `nodes` in the given `network`."
+                },
+                "number_of_edges": {
+                    "type": "integer",
+                    "format": "int32",
+                    "description": "Total number of `edges` in the given `network`."
+                },
+                "keywords": {
+                    "type": "array",
+                    "items": {
+                        "title": "keyword",
+                        "type": "string",
+                        "description": "Keyword that describes the given `network`."
+                    }
+                }
+            }
+        },
+        "Definition": {
+            "type": "object",
+            "properties": {
+                "keyword": {
+                    "type": "string",
+                    "description": "Keyword that is used to identify a definition (namespace/annotation)."
+                },
+                "url": {
+                    "type": "string",
+                    "description": "URL to the `.belns` (`namespace`) or the `.belanno` (`annotation`) definition file."
+                }
+            }
+        }
+    },
+    "parameters": {
+        "Author": {
+            "name": "author",
+            "in": "path",
+            "description": "The name of one of the authors of the cited publication.",
+            "required": true,
+            "type": "string"
+        },
+        "NetworkID": {
+            "name": "network_id",
+            "in": "path",
+            "description": "Identifier of the network in the database.",
+            "required": true,
+            "type": "integer"
+        },
+        "PmidID": {
+            "name": "pmid_id",
+            "in": "path",
+            "description": "PubMed identifier of one cited publication.",
+            "required": true,
+            "type": "integer"
+        },
+        "DefinitionKey": {
+            "name": "definition_key",
+            "in": "path",
+            "description": "The key used to identify an `annotation` or a `namespace` definition file.",
+            "required": true,
+            "type": "string"
+        },
+        "Name": {
+            "name": "name",
+            "in": "path",
+            "description": "The name of an entry defined by `annotation` or `namespace`.",
+            "required": true,
+            "type": "string"
+        }
+    }
+}

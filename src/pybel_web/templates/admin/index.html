@@ -1,0 +1,62 @@
+{% extends 'admin/master.html' %}
+
+{% block body %}
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h3 class="panel-title">Summary</h3>
+        </div>
+        <div class="panel-body">
+            <p>PyBEL Admin exposes the underlying database models for mucking and also some tools for dealing with the
+                web app as a whole.</p>
+        </div>
+    </div>
+
+    {% if current_user.is_authenticated and current_user.admin %}
+        <div class="panel panel-info" id="admin-panel">
+            <div class="panel-heading">
+                <h3 class="panel-title">Actions</h3>
+            </div>
+            <div class="panel-body">
+                <p>
+                    <a class="btn btn-info" href="{{ url_for('reporting.view_reports') }}" role="button">View Pretty
+                        Reporting</a>
+                    <a class="btn btn-info" href="{{ url_for('dbs.list_reporting') }}" role="button">View Reporting
+                        Log</a>
+                    <a class="btn btn-success" href="{{ url_for('run_reload') }}" role="button">Reload Networks</a>
+                    <a class="btn btn-danger" href="{{ url_for('dbs.drop_networks') }}" role="button">Drop All Networks</a>
+                </p>
+            </div>
+        </div>
+
+        <div class="panel panel-info" id="admin-panel">
+            <div class="panel-heading">
+                <h3 class="panel-title">Remote BEL Scripts</h3>
+            </div>
+            <div class="panel-body">
+                <p>
+                    <a class="btn btn-success" href="{{ url_for('ensure_simple') }}" role="button">Ensure Simple</a>
+                    <a class="btn btn-success" href="{{ url_for('ensure_gfam') }}" role="button">Ensure Gene
+                        Families</a>
+                </p>
+            </div>
+        </div>
+
+        <div class="panel panel-info" id="admin-panel">
+            <div class="panel-heading">
+                <h3 class="panel-title">BMS BEL Scripts</h3>
+            </div>
+            <div class="panel-body">
+                <p>
+                    <a class="btn btn-info" href="{{ url_for('list_bms_pickles') }}" role="button">List BMS
+                        Pickles</a>
+                    <a class="btn btn-warning" href="{{ url_for('upload_aetionomy') }}" role="button">Upload
+                        Aetionomy Pickles</a>
+                    <a class="btn btn-warning" href="{{ url_for('upload_selventa') }}" role="button">Upload Selventa
+                        Pickles</a>
+                    <a class="btn btn-danger" href="{{ url_for('ensure_aetionomy') }}" role="button">Compile BMS -
+                        AETIONOMY</a>
+                </p>
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}
