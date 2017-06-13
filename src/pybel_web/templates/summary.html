@@ -42,12 +42,18 @@
                    role="button">Analyze</a>
                 <a class="btn btn-default" href="{{ url_for('analysis.view_analyses', network_id=network_id) }}"
                    role="button">Results</a>
-                <a class="btn btn-default" href="{{ url_for('dbs.get_network', network_id=network_id, format='bel') }}"
-                   role="button"><span class="glyphicon glyphicon-download" aria-hidden="true"></span> BEL Script</a>
-                <a class="btn btn-default" href="{{ url_for('dbs.get_network', network_id=network_id, format='json') }}"
-                   role="button"><span class="glyphicon glyphicon-download" aria-hidden="true"></span> Nodelink JSON</a>
-                <a class="btn btn-default" href="{{ url_for('dbs.get_network', network_id=network_id, format='cx') }}"
-                   role="button"><span class="glyphicon glyphicon-download" aria-hidden="true"></span> CX JSON</a>
+
+                {% if current_user.is_authenticated %}
+                    <a class="btn btn-default" role="button"
+                       href="{{ url_for('dbs.get_network', network_id=network_id, format='bel') }}">
+                        <span class="glyphicon glyphicon-download" aria-hidden="true"></span> BEL Script</a>
+                    <a class="btn btn-default" role="button"
+                       href="{{ url_for('dbs.get_network', network_id=network_id, format='json') }}">
+                       <span class="glyphicon glyphicon-download" aria-hidden="true"></span> Node-Link JSON</a>
+                    <a class="btn btn-default" role="button"
+                       href="{{ url_for('dbs.get_network', network_id=network_id, format='cx') }}">
+                       <span class="glyphicon glyphicon-download" aria-hidden="true"></span> CX JSON</a>
+                {% endif %}
 
                 {% if current_user.admin %}
                     <a class="btn btn-danger" href="{{ url_for('dbs.drop_network', network_id=network_id) }}"

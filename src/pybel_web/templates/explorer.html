@@ -76,9 +76,13 @@
                 <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#algorithms">
                     Algorithms
                 </button>
-                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#export">
-                    Export
-                </button>
+
+                {% if current_user.is_authenticated %}
+                    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#export">
+                        Export
+                    </button>
+                {% endif %}
+            
                 <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#controls">
                     Controls
                 </button>
