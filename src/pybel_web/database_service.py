@@ -37,6 +37,7 @@ from pybel_tools.summary import (
     get_pubmed_identifiers,
     get_undefined_namespace_names,
     get_incorrect_names,
+    get_naked_names,
 )
 from . import models
 from .constants import *
@@ -233,6 +234,14 @@ def download_missing_namespace(network_id, namespace):
     graph = api.get_network(network_id)
     names = get_incorrect_names(graph, namespace)
     return _build_namespace_helper(graph, namespace, names)
+
+
+@api_blueprint.route('/api/namespace/builder/naked/<network_id>/')
+def download_naked_names(network_id):
+    """Outputs a namespace built from the naked names in the given namespace"""
+    graph = api.get_network(network_id)
+    names = get_naked_names(graph)
+    return _build_namespace_helper(graph, 'NAKED', names)
 
 
 ####################################

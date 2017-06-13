@@ -37,7 +37,8 @@ from pybel_tools.summary import (
     get_activities,
     count_namespaces,
     group_errors,
-    count_citation_years
+    count_citation_years,
+    get_naked_names,
 )
 from pybel_tools.summary.edge_summary import (
     get_unused_annotations,
@@ -202,6 +203,8 @@ def render_network_summary(network_id, graph, api):
 
     overlaps = api.get_node_overlap(network_id)
 
+    naked_names = get_naked_names(graph)
+
     return render_template(
         'summary.html',
         chart_1_data=prepare_c3(count_functions(graph), 'Entity Type'),
@@ -238,6 +241,7 @@ def render_network_summary(network_id, graph, api):
         undefined_families=undefined_sfam,
         citation_years=citation_years,
         overlaps=overlaps,
+        naked_names=naked_names,
     )
 
 

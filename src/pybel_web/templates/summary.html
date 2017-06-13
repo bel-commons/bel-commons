@@ -115,6 +115,9 @@
                     {% if error_groups is defined and error_groups|length > 0 %}
                         <li><a href="#error-groups">Top Warnings</a></li>
                     {% endif %}
+                    {% if naked_names is defined and naked_names|length > 0 %}
+                        <li><a href="#naked-names">Naked Names</a></li>
+                    {% endif %}
                     {% if undefined_namespaces is defined and undefined_namespaces|length > 0 %}
                         <li><a href="#undefined-namespaces">Undefined Namespaces</a></li>
                     {% endif %}
@@ -390,6 +393,25 @@
                             </tbody>
                         </table>
                     </div>
+                </div>
+            </div>
+        {% endif %}
+
+        {% if naked_names is defined and naked_names|length > 0 %}
+            <a id="naked-names"></a>
+            <div class="panel panel-danger">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Naked Names
+                        <span class="badge">{{ naked_names|length }}</span>
+                        <a class="pull-right" href="#top"><span class="glyphicon glyphicon-arrow-up"
+                                                                aria-hidden="true"></span></a>
+                    </h3>
+                </div>
+                <div class="panel-body">
+                    <p>Names referenced without a namespace are antithetical to reproducible science and data
+                        integration practices. The list of "naked names" can be downloaded
+                        <a href="{{ url_for('dbs.download_naked_names', network_id=network_id) }}">here</a>
+                        for further use with tools to helpfind the appropriate names.</p>
                 </div>
             </div>
         {% endif %}
