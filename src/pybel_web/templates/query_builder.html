@@ -58,13 +58,16 @@
                 </div>
                 <div class="panel-body">
                     <p>Please choose the networks that you want to query.</p>
-                    {% for network in networks %}
-                        <div>
-                            <label><input type="checkbox" name="network_ids[]"
-                                          value="{{ network.id }}"/>{{ network.name }}
-                            </label>
-                        </div>
-                    {% endfor %}
+                    <div class="form-group">
+                        {% for network in networks %}
+                            <div class="checkbox">
+                                <label>
+                                    <input type="checkbox" name="network_ids[]" value="{{ network.id }}"/>
+                                    {{ network.name }}
+                                </label>
+                            </div>
+                        {% endfor %}
+                    </div>
                 </div>
             </div>
 
