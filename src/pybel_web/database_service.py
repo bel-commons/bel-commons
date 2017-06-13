@@ -52,7 +52,7 @@ from .main_service import (
     BLACK_LIST
 )
 from .models import Report, User, Experiment
-from .send_utils import serve_network
+from .send_utils import serve_network, to_json_custom
 from .utils import (
     get_current_api,
     get_current_manager,
@@ -760,6 +760,28 @@ def get_pipeline():
         'run_query.html',
         query=qo
     )
+
+
+@api_blueprint.route('/api/get_query/<int:query_id>', methods=['GET'])
+def query_to_url(query_id):
+    """Converts the query into an PyBEL explorer URL"""
+
+    query = manager.session.query(models.Query).get(query_id)
+
+    if query.user_id != current_user.id:
+        flask.abort(403)
+
+    query = query.data
+
+    network = query(api) # use duck typing, and the api ensures relabeling
+    network.graph['PYBEL_RELABELED'] = True
+
+    print(query.network_ids)
+
+    return jsonify({
+        'network': to_json_custom(network),
+        'network_ids': query.network_ids,
+    })
 
 
 ####################################

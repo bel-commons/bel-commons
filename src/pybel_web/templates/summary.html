@@ -45,13 +45,13 @@
 
                 {% if current_user.is_authenticated %}
                     <a class="btn btn-default" role="button"
-                       href="{{ url_for('dbs.get_network', network_id=network_id, format='bel') }}">
+                       href="{{ url_for('dbs.get_network_by_id', network_id=network_id, format='bel') }}">
                         <span class="glyphicon glyphicon-download" aria-hidden="true"></span> BEL Script</a>
                     <a class="btn btn-default" role="button"
-                       href="{{ url_for('dbs.get_network', network_id=network_id, format='json') }}">
+                       href="{{ url_for('dbs.get_network_by_id', network_id=network_id, format='json') }}">
                         <span class="glyphicon glyphicon-download" aria-hidden="true"></span> Node-Link JSON</a>
                     <a class="btn btn-default" role="button"
-                       href="{{ url_for('dbs.get_network', network_id=network_id, format='cx') }}">
+                       href="{{ url_for('dbs.get_network_by_id', network_id=network_id, format='cx') }}">
                         <span class="glyphicon glyphicon-download" aria-hidden="true"></span> CX JSON</a>
                 {% endif %}
 

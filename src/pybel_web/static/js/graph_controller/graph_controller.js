@@ -285,6 +285,13 @@ $(document).ready(function () {
 
     var URLString = getCurrentURL();
 
+    // Checks if query in URL
+    if ("query" in URLString) {
+
+    } else {
+
+    }
+
     // Set networkid as a global variable
     if ("network_id" in URLString) {
         window.networkID = URLString["network_id"];
@@ -582,7 +589,7 @@ function initD3Force(graph, tree) {
 
     var nodeMenu = [
         {
-            title: "Expand node",
+            title: "Expand node neighbors",
             action: function (elm, d, i) {
                 // Variables explanation:
                 // elm: [object SVGGElement] d: [object Object] i: (#Number)

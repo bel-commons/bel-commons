@@ -36,7 +36,7 @@ PATHS_METHOD = 'paths_method'
 PIPELINE = 'pipeline'
 AUTOLOAD = 'autoload'
 FILTERS = 'filters'
-# TODO: delete once pipeline is ready
+QUERY = 'query'
 FILTER_PATHOLOGIES = 'pathology_filter'
 
 BLACK_LIST = {
@@ -57,4 +57,5 @@ BLACK_LIST = {
     AUTOLOAD,
     FILTERS,
     FILTER_PATHOLOGIES,
+    QUERY
 }

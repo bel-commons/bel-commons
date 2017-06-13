@@ -283,7 +283,7 @@ def build_main_service(app):
             return flask.abort(500)
 
         networks = [
-            api.get_network(int(network_id.strip()))
+            api.get_network_by_id(int(network_id.strip()))
             for network_id in network_ids.split(',')
         ]
 
