@@ -78,8 +78,8 @@ def get_graph_from_request():
 
     if query_id is not None:
         query_id = int(query_id)
-        query = api.manager.session.query(Query).get(query_id)
-        return query.run(api)
+        query = api.manager.session.query(models.Query).get(query_id)
+        return query(manager)
 
     network_id = request.args.get(NETWORK_ID)
 
