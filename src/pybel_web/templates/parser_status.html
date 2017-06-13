@@ -21,7 +21,14 @@
                     feedback as synchronous parsing. Compilation usually is pretty fast, and takes less than 5-10
                     minutes. We'll send you an email when it's done.</p>
                 <h4>Task</h4>
-                <p>Your task has the identifier <code>{{ task.id }}</code></p>
+                <p>
+                    Your task has the identifier <code>{{ task.id }}</code>
+                </p>
+                <p>
+                    <a href="{{ url_for('parser.view_parser') }}" class="btn btn-primary" role="button">Parse
+                        Another</a>
+                    <a href="{{ url_for('view_networks') }}" class="btn btn-primary" role="button">List Networks</a>
+                </p>
             </div>
         </div>
     </div>
