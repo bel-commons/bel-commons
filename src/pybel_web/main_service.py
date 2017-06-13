@@ -7,19 +7,34 @@ import os
 import sys
 import time
 
-import flask
 import pandas as pd
-from flask import current_app, render_template, request, jsonify, url_for, redirect, make_response, send_file
-from flask_security import roles_required, current_user, login_required
+from flask import (
+    current_app,
+    request,
+    jsonify,
+    url_for,
+    redirect,
+    make_response,
+    send_file,
+    flash,
+    render_template,
+    abort
+)
+from flask_security import (
+    roles_required,
+    current_user,
+    login_required
+)
 from six import BytesIO
 
 from pybel import from_bytes
 from pybel import from_url
-from pybel.constants import (
-    FRAUNHOFER_RESOURCES,
-    PYBEL_CONNECTION
+from pybel.constants import FRAUNHOFER_RESOURCES, PYBEL_CONNECTION
+from pybel.manager.models import (
+    Namespace,
+    Annotation,
+    Network,
 )
-from pybel.manager.models import Namespace, Annotation, Network
 from pybel.utils import get_version as get_pybel_version
 from pybel_tools.api import DatabaseService
 from pybel_tools.constants import BMS_BASE
@@ -123,7 +138,7 @@ def build_dictionary_service_admin(app):
         """Parses and stores the AETIONOMY resources from the Biological Model Store repository"""
         celery = create_celery(current_app)
         task = celery.send_task('parse-aetionomy', args=[app.config.get(PYBEL_CONNECTION)])
-        flask.flash('Queued task to parse the AETIONOMY folder: {}'.format(task))
+        flash('Queued task to parse the AETIONOMY folder: {}'.format(task))
         return redirect(url_for('home'))
 
     @app.route('/admin/upload/selventa')
@@ -132,7 +147,7 @@ def build_dictionary_service_admin(app):
         """Uploads the gpickles in the Selventa section of the Biological Model Store repository"""
         celery = create_celery(current_app)
         task = celery.send_task('parse-selventa', args=[app.config.get(PYBEL_CONNECTION)])
-        flask.flash('Queued task to parse the Selventa folder: {}'.format(task))
+        flash('Queued task to parse the Selventa folder: {}'.format(task))
         return redirect(url_for('home'))
 
     @app.route('/admin/list/bms/pickles')
@@ -147,7 +162,7 @@ def build_dictionary_service_admin(app):
         """Uploads the gpickles in the AETIONOMY section of the Biological Model Store repository"""
         t = time.time()
         upload_recursive(os.path.join(os.environ[BMS_BASE], 'aetionomy'), connection=manager)
-        flask.flash('Uploaded the AETIONOMY folder in {:.2f}'.format(time.time() - t))
+        flash('Uploaded the AETIONOMY folder in {:.2f}'.format(time.time() - t))
         return redirect(url_for('home'))
 
     @app.route('/api/database/nuke/')
@@ -160,7 +175,7 @@ def build_dictionary_service_admin(app):
         log.info('restarting dictionary service')
         api.clear()
         log.info('   the dust settles')
-        flask.flash('Nuked the database')
+        flash('Nuked the database')
         return redirect(url_for('home'))
 
     log.info('added dict service admin functions')
@@ -223,7 +238,7 @@ def build_main_service(app):
 
         networks = get_networks_with_permission(api)
 
-        return flask.render_template(
+        return render_template(
             'network_list.html',
             networks=networks,
             provenance_form=seed_provenance_form,
@@ -239,7 +254,7 @@ def build_main_service(app):
 
         networks = get_networks_with_permission(api)
 
-        return flask.render_template(
+        return render_template(
             'query_builder.html',
             networks=networks,
             current_user=current_user,
@@ -248,7 +263,7 @@ def build_main_service(app):
     @app.route('/explore', methods=['GET'])
     def view_explorer():
         """Renders a page for the user to explore a network"""
-        return flask.render_template('explorer.html')
+        return render_template('explorer.html')
 
     @app.route('/summary/<network_id>')
     def view_summary(network_id):
@@ -257,7 +272,7 @@ def build_main_service(app):
             network = manager.get_network_by_id(network_id)
             graph = from_bytes(network.blob, check_version=app.config.get('PYBEL_DS_CHECK_VERSION'))
         except Exception as e:
-            flask.flash("Problem getting graph {}: ({}) {}".format(network_id, type(e), e), category='error')
+            flash("Problem getting graph {}: ({}) {}".format(network_id, type(e), e), category='error')
             return redirect(url_for('view_networks'))
 
         return render_network_summary(network_id, graph, api)
@@ -280,7 +295,7 @@ def build_main_service(app):
 
         network_ids = request.args.get('networks')
         if not network_ids:
-            return flask.abort(500)
+            return abort(500)
 
         networks = [
             api.get_network_by_id(int(network_id.strip()))

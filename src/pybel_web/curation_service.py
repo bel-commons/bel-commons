@@ -5,8 +5,7 @@ import logging
 import re
 import time
 
-from flask import Blueprint
-from flask import render_template, request, make_response
+from flask import Blueprint, render_template, request, make_response
 from flask_security import login_required, current_user
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed

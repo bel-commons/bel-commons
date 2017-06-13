@@ -22,7 +22,12 @@ from requests.compat import unquote
 from six import StringIO
 
 import pybel
-from pybel.constants import METADATA_AUTHORS, METADATA_CONTACT, METADATA_NAME, PYBEL_LOG_DIR
+from pybel.constants import (
+    METADATA_AUTHORS,
+    METADATA_CONTACT,
+    METADATA_NAME,
+    PYBEL_LOG_DIR
+)
 from pybel.manager import Namespace, Annotation, Network
 from pybel_tools import pipeline
 from pybel_tools.analysis.npa import RESULT_LABELS
