@@ -21,7 +21,6 @@ from .main_service import build_main_service
 from .models import Role, User
 from .parser_async_service import parser_async_blueprint
 from .parser_endpoint import build_parser_service
-from .reporting_service import reporting_blueprint
 from .upload_service import upload_blueprint
 
 __version__ = '0.1.0-dev'

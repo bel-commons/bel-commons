@@ -30,7 +30,7 @@ from pybel_tools.utils import get_version as get_pybel_tools_version
 from .application import create_celery
 from .constants import *
 from .forms import SeedProvenanceForm, SeedSubgraphForm
-from .models import User
+from .models import User, Report
 from .utils import (
     render_network_summary,
     try_insert_graph,
@@ -352,5 +352,11 @@ def build_main_service(app):
     def get_swagger():
         """Gets the Swagger definition of this API"""
         return send_file('static/json/swagger.json')
+
+    @app.route('/reporting', methods=['GET'])
+    def view_reports():
+        """Shows the uploading reporting"""
+        reports = manager.session.query(Report).order_by(Report.created).all()
+        return render_template('reporting.html', reports=reports)
 
     log.info('Added main to %s', app)
