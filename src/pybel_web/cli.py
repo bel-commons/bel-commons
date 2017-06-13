@@ -41,7 +41,6 @@ from .main_service import build_main_service
 from .models import Role, User
 from .parser_async_service import parser_async_blueprint
 from .parser_endpoint import build_parser_service
-from .reporting_service import reporting_blueprint
 from .upload_service import upload_blueprint
 from .utils import iterate_user_strings
 
@@ -50,7 +49,8 @@ log = logging.getLogger(__name__)
 datefmt = '%H:%M:%S'
 fmt = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 
-user_dump_path = os.path.join(os.path.expanduser('~'), '.pybel', 'data', 'users.tsv')
+data_path = os.path.join(os.path.expanduser('~'), '.pybel', 'data')
+user_dump_path = os.path.join(data_path, 'users.tsv')
 
 
 def set_debug(level):
@@ -106,7 +106,6 @@ def run(host, port, debug, flask_debug, config):
     app.register_blueprint(curation_blueprint)
     app.register_blueprint(parser_async_blueprint)
     app.register_blueprint(upload_blueprint)
-    app.register_blueprint(reporting_blueprint)
     app.register_blueprint(api_blueprint)
     app.register_blueprint(analysis_blueprint)
 
@@ -245,6 +244,7 @@ def make_admin(ctx, email):
 @click.argument('role')
 @click.pass_context
 def add_role(ctx, email, role):
+    """Adds a role to a user"""
     ds = SQLAlchemyUserDatastore(ctx.obj, User, Role)
     try:
         ds.add_role_to_user(email, role)
