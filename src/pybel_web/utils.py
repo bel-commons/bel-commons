@@ -40,17 +40,23 @@ from pybel_tools.summary import (
     count_namespaces,
     group_errors
 )
-from pybel_tools.summary.edge_summary import count_diseases, get_unused_annotations, get_unused_list_annotation_values
-from pybel_tools.summary.error_summary import get_undefined_namespaces, get_undefined_annotations, \
+from pybel_tools.summary.edge_summary import (
+    count_diseases,
+    get_unused_annotations,
+    get_unused_list_annotation_values
+)
+from pybel_tools.summary.error_summary import (
+    get_undefined_namespaces,
+    get_undefined_annotations,
     get_namespaces_with_incorrect_names
+)
 from pybel_tools.summary.export import info_list
 from pybel_tools.summary.node_properties import count_variants
 from pybel_tools.summary.node_summary import get_unused_namespaces
 from pybel_tools.utils import prepare_c3, count_dict_values, calc_betweenness_centality
 from .application import get_manager, get_api, get_userdatastore
 from .constants import *
-from .models import Report, Experiment
-from .models import User
+from .models import User, Report, Experiment
 
 log = logging.getLogger(__name__)
 
