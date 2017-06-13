@@ -10,7 +10,6 @@ import flask
 import pandas
 from flask import current_app, redirect, url_for, render_template, Blueprint
 from flask_login import login_required, current_user
-from werkzeug.local import LocalProxy
 
 from pybel.constants import GENE, PYBEL_CONNECTION
 from pybel.manager.models import Network
@@ -22,13 +21,11 @@ from pybel_tools.mutation import collapse_by_central_dogma_to_genes, rewire_vari
 from .application import create_celery
 from .forms import DifferentialGeneExpressionForm
 from .models import Experiment
-from .utils import get_current_manager, get_current_api
+from .utils import manager
 
 log = logging.getLogger(__name__)
 
 analysis_blueprint = Blueprint('analysis', __name__)
-manager = LocalProxy(get_current_manager)
-api = LocalProxy(get_current_api)
 
 LABEL = 'dgxp'
 

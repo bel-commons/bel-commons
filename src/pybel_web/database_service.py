@@ -20,7 +20,6 @@ from flask_login import login_required, current_user
 from flask_security import roles_required, roles_accepted
 from requests.compat import unquote
 from six import StringIO
-from werkzeug.local import LocalProxy
 
 import pybel
 from pybel.constants import METADATA_AUTHORS, METADATA_CONTACT, METADATA_NAME, PYBEL_LOG_DIR
@@ -54,19 +53,16 @@ from .main_service import (
 from .models import Report, User, Experiment
 from .send_utils import serve_network, to_json_custom
 from .utils import (
-    get_current_api,
-    get_current_manager,
-    get_current_userdatastore,
     try_insert_graph,
-    get_recent_reports
+    get_recent_reports,
+    manager,
+    api,
+    user_datastore
 )
 
 log = logging.getLogger(__name__)
 
 api_blueprint = Blueprint('dbs', __name__)
-manager = LocalProxy(get_current_manager)
-api = LocalProxy(get_current_api)
-user_datastore = LocalProxy(get_current_userdatastore)
 
 
 def get_graph_from_request():
@@ -773,7 +769,7 @@ def query_to_url(query_id):
 
     query = query.data
 
-    network = query(api) # use duck typing, and the api ensures relabeling
+    network = query(api)  # use duck typing, and the api ensures relabeling
     network.graph['PYBEL_RELABELED'] = True
 
     print(query.network_ids)

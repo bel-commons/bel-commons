@@ -13,6 +13,7 @@ from flask import render_template, redirect, url_for
 from flask_login import current_user
 from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
+from werkzeug.local import LocalProxy
 
 import pybel
 from pybel.canonicalize import decanonicalize_node
@@ -62,28 +63,34 @@ log = logging.getLogger(__name__)
 LABEL = 'dgxa'
 
 
-def get_current_manager():
-    """Gets the manager from the current app
+def get_manager_proxy():
+    """Gets a proxy for the manager in the current app
 
     :rtype: pybel.manager.cache.CacheManager
     """
-    return get_manager(current_app)
+    return LocalProxy(lambda: get_manager(current_app))
 
 
-def get_current_api():
-    """Gets the api from the current app
+def get_api_proxy():
+    """
+    Gets a proxy for the api from the current app
 
     :rtype: pybel_tools.api.DatabaseService
     """
-    return get_api(current_app)
+    return LocalProxy(lambda: get_api(current_app))
 
 
-def get_current_userdatastore():
-    """Gets the user datastore from the current app
+def get_userdatastore_proxy():
+    """Gets a proxy for the user datastore from the current app
 
     :rtype: flask_security.SQLAlchemyUserDataStore
     """
-    return get_userdatastore(current_app)
+    return LocalProxy(lambda: get_userdatastore(current_app))
+
+
+manager = get_manager_proxy()
+api = get_api_proxy()
+user_datastore = get_userdatastore_proxy()
 
 
 def try_insert_graph(manager, graph, api):

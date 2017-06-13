@@ -8,18 +8,16 @@ from flask import flash, redirect, url_for
 from flask import render_template, Blueprint
 from flask_login import login_required, current_user
 from sqlalchemy.exc import IntegrityError
-from werkzeug.local import LocalProxy
 
 from pybel import from_bytes
 from pybel.io.io_exceptions import ImportVersionWarning
 from .constants import integrity_message
 from .forms import UploadForm
-from .utils import add_network_reporting, get_current_manager
+from .utils import add_network_reporting, manager
 
 log = logging.getLogger(__name__)
 
 upload_blueprint = Blueprint('upload', __name__)
-manager = LocalProxy(get_current_manager)
 
 
 @upload_blueprint.route('/upload', methods=['GET', 'POST'])

@@ -11,7 +11,6 @@ from flask import redirect, url_for
 from flask import render_template, Blueprint, flash, current_app
 from flask_login import current_user, login_required
 from sqlalchemy.exc import IntegrityError
-from werkzeug.local import LocalProxy
 
 from pybel import from_lines
 from pybel.parser.parse_exceptions import InconsistentDefinitionError
@@ -21,16 +20,14 @@ from .forms import ParserForm
 from .utils import (
     log_graph,
     add_network_reporting,
-    get_current_manager,
-    get_current_api,
-    render_network_summary
+    render_network_summary,
+    manager,
+    api,
 )
 
 log = logging.getLogger(__name__)
 
 parser_sync_blueprint = Blueprint('parser', __name__)
-manager = LocalProxy(get_current_manager)
-api = LocalProxy(get_current_api)
 
 
 @parser_sync_blueprint.route('/parser', methods=['GET', 'POST'])
