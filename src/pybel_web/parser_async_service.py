@@ -22,7 +22,10 @@ parser_async_blueprint = Blueprint('parser', __name__)
 @login_required
 def view_parser():
     """Renders the form for asynchronous parsing"""
-    form = ParserForm(save_network=True)
+    form = ParserForm(
+        save_network=True,
+        public=(not current_user.has_role('scai')),
+    )
 
     if not form.validate_on_submit():
         flash('Using asynchronous parser service. This service is currently in beta.', category='warning')
