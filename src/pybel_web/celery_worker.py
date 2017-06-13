@@ -101,7 +101,7 @@ def async_parser(lines, connection, current_user_id, current_user_email, public,
             ))
         return message
     except InconsistentDefinitionError as e:
-        message = '{} was defined multiple times.'.format(e.definition)
+        message = 'Parsing failed because {} was redefined on line {}.'.format(e.definition, e.line_number)
         log.exception(message)
         with app.app_context():
             mail.send(Message(
@@ -112,7 +112,7 @@ def async_parser(lines, connection, current_user_id, current_user_email, public,
             ))
         return message
     except Exception as e:
-        message = 'Compilation error: {}'.format(e)
+        message = 'Parsing failed from a general error: {}'.format(e)
         log.exception(message)
         with app.app_context():
             mail.send(Message(
@@ -198,7 +198,7 @@ def run_cmpa(connection, network_id, lines, filename, description, gene_column, 
 def setup_periodic_tasks(sender, **kwargs):
     """Sets up the periodic tasks to be run asynchronously by Celery"""
     recipient = app.config.get('PYBEL_WEB_REPORT_RECIPIENT')
-    log.warning('Recipeint value: %s', recipient)
+    log.warning('Recipient value: %s', recipient)
 
 
 if __name__ == '__main__':
