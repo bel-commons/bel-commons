@@ -5,7 +5,6 @@ import itertools as itt
 import logging
 import pickle
 import time
-from collections import Counter
 
 import flask
 import pandas
@@ -22,7 +21,6 @@ from pybel.manager import Network
 from pybel.struct.filters import filter_edges
 from pybel_tools.analysis import npa
 from pybel_tools.analysis.stability import *
-from pybel_tools.constants import CNAME
 from pybel_tools.filters import remove_nodes_by_namespace
 from pybel_tools.filters.edge_filters import edge_has_pathology_causal
 from pybel_tools.filters.node_filters import iter_undefined_families
@@ -38,10 +36,10 @@ from pybel_tools.summary import (
     get_degradations,
     get_activities,
     count_namespaces,
-    group_errors
+    group_errors,
+    count_citation_years
 )
 from pybel_tools.summary.edge_summary import (
-    count_diseases,
     get_unused_annotations,
     get_unused_list_annotation_values
 )
@@ -53,7 +51,7 @@ from pybel_tools.summary.error_summary import (
 from pybel_tools.summary.export import info_list
 from pybel_tools.summary.node_properties import count_variants
 from pybel_tools.summary.node_summary import get_unused_namespaces
-from pybel_tools.utils import prepare_c3, count_dict_values, calc_betweenness_centality
+from pybel_tools.utils import prepare_c3, count_dict_values
 from .application import get_manager, get_api, get_userdatastore
 from .constants import *
 from .models import User, Report, Experiment
@@ -87,7 +85,7 @@ def get_current_userdatastore():
     return get_userdatastore(current_app)
 
 
-def try_insert_graph(manager, graph, api=None):
+def try_insert_graph(manager, graph, api):
     """Inserts a graph and sends an okay message if success. else renders upload page
     
     :type manager: pybel.manager.cache.CacheManager
@@ -123,72 +121,13 @@ def sanitize_list_of_str(l):
     return [e for e in (e.strip() for e in l) if e]
 
 
-def render_graph_summary_no_api(graph):
-    """Renders the graph summary page if not saving the graph
-    
-    :param pybel.BELGraph graph: A BEL graph
-    :return: A Flask Resposne object
-    """
-    hub_data = {
-        graph.node[node][CNAME]: count
-        for node, count in Counter(graph.degree()).most_common(25)
-    }
-    centrality_data = {
-        graph.node[node][CNAME]: count
-        for node, count in calc_betweenness_centality(graph).most_common(25)
-    }
-    disease_data = {
-        graph.node[node][CNAME]: count
-        for node, count in count_diseases(graph).most_common(25)
-    }
-
-    undefined_namespaces = get_undefined_namespaces(graph)
-    undefined_annotations = get_undefined_annotations(graph)
-    namespaces_with_incorrect_names = get_namespaces_with_incorrect_names(graph)
-
-    unused_namespaces = get_unused_namespaces(graph)
-    unused_annotations = get_unused_annotations(graph)
-    unused_list_annotation_values = get_unused_list_annotation_values(graph)
-
-    return render_template(
-        'summary.html',
-        chart_1_data=prepare_c3(count_functions(graph), 'Entity Type'),
-        chart_2_data=prepare_c3(count_relations(graph), 'Relationship Type'),
-        chart_3_data=prepare_c3(count_error_types(graph), 'Error Type'),
-        chart_4_data=prepare_c3({
-            'Translocations': len(get_translocated(graph)),
-            'Degradations': len(get_degradations(graph)),
-            'Molecular Activities': len(get_activities(graph))
-        }, 'Modifier Type'),
-        chart_5_data=prepare_c3(count_variants(graph), 'Node Variants'),
-        chart_6_data=prepare_c3(count_namespaces(graph), 'Namespaces'),
-        chart_7_data=prepare_c3(hub_data, 'Top Hubs'),
-        chart_8_data=prepare_c3(centrality_data, 'Top Central'),
-        chart_9_data=prepare_c3(disease_data, 'Pathologies'),
-        error_groups=count_dict_values(group_errors(graph)).most_common(20),
-        info_list=info_list(graph),
-        graph=graph,
-        time=None,
-        undefined_namespaces=sorted(undefined_namespaces),
-        unused_namespaces=sorted(unused_namespaces),
-        undefined_annotations=sorted(undefined_annotations),
-        unused_annotations=sorted(unused_annotations),
-        unused_list_annotation_values=sorted(unused_list_annotation_values.items()),
-        current_user=current_user,
-        namespaces_with_incorrect_names=namespaces_with_incorrect_names
-    )
-
-
-def render_network_summary(network_id, graph, api=None):
+def render_network_summary(network_id, graph, api):
     """Renders the graph summary page
     
     :param int network_id: 
     :param pybel.BELGraph graph: 
     :param pybel_tools.api.DatabaseService api:
     """
-    if api is None:
-        return render_graph_summary_no_api(graph)
-
     hub_data = api.get_top_degree(network_id)
     centrality_data = api.get_top_centrality(network_id)
     disease_data = api.get_top_comorbidities(network_id)
@@ -259,6 +198,10 @@ def render_network_summary(network_id, graph, api=None):
         for node in iter_undefined_families(graph, ['SFAM', 'GFAM'])
     ]
 
+    citation_years = count_citation_years(graph)
+
+    overlaps = api.get_node_overlap(network_id)
+
     return render_template(
         'summary.html',
         chart_1_data=prepare_c3(count_functions(graph), 'Entity Type'),
@@ -293,6 +236,8 @@ def render_network_summary(network_id, graph, api=None):
         network_versions=versions,
         causal_pathologies=causal_pathologies,
         undefined_families=undefined_sfam,
+        citation_years=citation_years,
+        overlaps=overlaps,
     )
 
 
