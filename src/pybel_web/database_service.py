@@ -4,7 +4,6 @@
 
 import csv
 import json
-import time
 import logging
 import os
 import pickle
@@ -157,7 +156,7 @@ def receive():
             'error': str(e)
         })
 
-    return try_insert_graph(manager, graph)
+    return try_insert_graph(manager, graph, api)
 
 
 ####################################
