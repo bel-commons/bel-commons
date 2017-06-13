@@ -223,7 +223,7 @@ def _build_namespace_helper(graph, namespace, names):
 @api_blueprint.route('/api/namespace/builder/undefined/<network_id>/<namespace>')
 def download_undefined_namespace(network_id, namespace):
     """Outputs a namespace built for this undefined namespace"""
-    graph = api.get_network(network_id)
+    graph = api.get_network_by_id(network_id)
     names = get_undefined_namespace_names(graph, namespace)
     return _build_namespace_helper(graph, namespace, names)
 
@@ -231,7 +231,7 @@ def download_undefined_namespace(network_id, namespace):
 @api_blueprint.route('/api/namespace/builder/incorrect/<network_id>/<namespace>')
 def download_missing_namespace(network_id, namespace):
     """Outputs a namespace built from the missing names in the given namespace"""
-    graph = api.get_network(network_id)
+    graph = api.get_network_by_id(network_id)
     names = get_incorrect_names(graph, namespace)
     return _build_namespace_helper(graph, namespace, names)
 
@@ -239,7 +239,7 @@ def download_missing_namespace(network_id, namespace):
 @api_blueprint.route('/api/namespace/builder/naked/<network_id>/')
 def download_naked_names(network_id):
     """Outputs a namespace built from the naked names in the given namespace"""
-    graph = api.get_network(network_id)
+    graph = api.get_network_by_id(network_id)
     names = get_naked_names(graph)
     return _build_namespace_helper(graph, 'NAKED', names)
 
@@ -355,7 +355,7 @@ def get_network_list():
 @api_blueprint.route('/api/network/<int:network_id>/summarize')
 def get_number_nodes(network_id):
     """Gets a summary of the given network"""
-    return jsonify(info_json(api.get_network(network_id)))
+    return jsonify(info_json(api.get_network_by_id(network_id)))
 
 
 @api_blueprint.route('/api/network/', methods=['GET'])
@@ -372,7 +372,7 @@ def get_network_name_by_id(network_id):
     if network_id == 0:
         return ''
 
-    graph = api.get_network(network_id)
+    graph = api.get_network_by_id(network_id)
     return jsonify(graph.name)
 
 
