@@ -201,7 +201,11 @@ def render_network_summary(network_id, graph, api):
 
     citation_years = count_citation_years(graph)
 
-    overlaps = api.get_node_overlap(network_id)
+    overlap_counter = api.get_node_overlap(network_id)
+    overlaps = [
+        (api.manager.get_network_by_id(network_id), v)
+        for network_id, v in overlap_counter.most_common(10)
+    ]
 
     naked_names = get_naked_names(graph)
 
