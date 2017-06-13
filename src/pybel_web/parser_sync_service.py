@@ -8,7 +8,7 @@ import time
 
 import requests
 from flask import redirect, url_for
-from flask import render_template, Blueprint, flash
+from flask import render_template, Blueprint, flash, current_app
 from flask_login import current_user, login_required
 from sqlalchemy.exc import IntegrityError
 from werkzeug.local import LocalProxy
@@ -22,6 +22,7 @@ from .utils import (
     log_graph,
     add_network_reporting,
     get_current_manager,
+    get_current_api,
     render_network_summary
 )
 
@@ -29,6 +30,7 @@ log = logging.getLogger(__name__)
 
 parser_sync_blueprint = Blueprint('parser', __name__)
 manager = LocalProxy(get_current_manager)
+api = LocalProxy(get_current_api)
 
 
 @parser_sync_blueprint.route('/parser', methods=['GET', 'POST'])
@@ -68,14 +70,14 @@ def view_parser():
         flash('Compilation error: {}'.format(e))
         return redirect(url_for('view_parser'))
 
-    if app.config.get('PYBEL_WEB_DISABLE_CACHE'):
+    if current_app.config.get('PYBEL_WEB_DISABLE_CACHE'):
         flash('Sorry, graph storage is not currently enabled.', category='warning')
         log_graph(graph, current_user, preparsed=False)
-        return render_network_summary(0, graph)
+        return render_network_summary(0, graph, api)
 
     if not form.save_network.data and not form.save_edge_store.data:
         log_graph(graph, current_user, preparsed=False)
-        return render_network_summary(0, graph)
+        return render_network_summary(0, graph, api)
 
     try:
         network = manager.insert_graph(graph, store_parts=form.save_edge_store.data)
