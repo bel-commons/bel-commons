@@ -17,13 +17,15 @@
             <div class="panel-heading">
                 <h3 class="panel-title">Pipeline </h3>
             </div>
-            <div class="list-group">
-                {% for fname, f in function_dict %}
-                    <div class="list-group-item">
-                    <h4 class="list-group-item-heading">{{ fname }}</h4>
-                    <p class="list-group-item-text">{{ f }}</p>
-                    </div>
-                {% endfor %}
+            <div class="panel-body">
+                <div class="list-group">
+                    {% for fname, f in function_dict %}
+                        <div class="list-group-item">
+                            <h4 class="list-group-item-heading">{{ fname }}</h4>
+                            <p class="list-group-item-text">{{ f }}</p>
+                        </div>
+                    {% endfor %}
+                </div>
             </div>
         </div>
     </div>

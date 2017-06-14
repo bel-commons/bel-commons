@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% import "bootstrap/wtf.html" as wtf %}
+{% import "bootstrap/fixes.html" as fixes %}
+{% import "bootstrap/utils.html" as util %}
+
+{% block title %}How to Use PyBEL Web{% endblock %}
+
+{% block content %}
+    <div class="container">
+
+        <div class="page-header">
+            <h1>How to Use PyBEL Web</h1>
+        </div>
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">PyBEL Web Compiler</h3>
+            </div>
+            <div class="panel-body">
+
+
+            </div>
+        </div>
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">PyBEL Web Query Builder</h3>
+            </div>
+            <div class="panel-body">
+
+            </div>
+        </div>
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">PyBEL Web Explorer</h3>
+            </div>
+            <div class="panel-body">
+                Example 1. Exploring by annotation, finding an interesting node and expand over its neighbors.
+                <img src="{{ url_for('static', filename='img/gif/Explorer_example.gif') }}">
+
+            </div>
+        </div>
+    </div>
+{% endblock %}

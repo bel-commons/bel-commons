@@ -375,6 +375,13 @@ def build_main_service(app):
         reports = manager.session.query(Report).order_by(Report.created).all()
         return render_template('reporting.html', reports=reports)
 
+
+    @app.route('/how_to_use', methods=['GET'])
+    def view_how_to_use():
+        """Shows How to use PyBEL-web"""
+        return render_template('how_to_use.html')
+
+
     @app.route('/pipeline/help', methods=['GET'])
     def view_pipeline_help():
         """View the help info for the functions"""
