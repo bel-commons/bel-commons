@@ -770,14 +770,18 @@ def get_pipeline():
 
 
 @api_blueprint.route('/api/pipeline/query/<int:query_id>/drop', methods=['GET', 'POST'])
-def delete_query(query_id):
+@login_required
+def drop_query_by_id(query_id):
     """Deletes a query"""
-    manager.session.query(models.Query).get(query_id).delete()
+    query = manager.session.query(models.Query).get(query_id)
+
+    if not (current_user.admin or query.user_id == current_user.id):
+        return flask.abort(403)
+
     manager.session.commit()
     flash('Deleted query')
 
     return redirect(url_for('home'))
-
 
 
 @api_blueprint.route('/api/get_query/<int:query_id>', methods=['GET'])
@@ -786,7 +790,7 @@ def query_to_url(query_id):
 
     query = manager.session.query(models.Query).get(query_id)
 
-    if query.user_id != current_user.id:
+    if not (current_user.admin or query.user_id == current_user.id):
         flask.abort(403)
 
     query = query.data

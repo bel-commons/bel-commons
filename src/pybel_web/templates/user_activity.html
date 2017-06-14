@@ -51,7 +51,7 @@
                         </td>
                         <td>{{ query.pipeline_protocol }}</td>
                         <td><a class="btn btn-danger"
-                               href="{{ url_for('dbs.delete_query', query_id=query.id) }}">Drop</a></td>
+                               href="{{ url_for('dbs.drop_query_by_id', query_id=query.id) }}">Drop</a></td>
                     </tr>
                 {% endfor %}
                 </tbody>
