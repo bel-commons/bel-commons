@@ -22,6 +22,26 @@
         .select2-selection--multiple .select2-search--inline .select2-search__field {
             width: auto !important;
         }
+
+        html, body {
+            padding-top: 20px;
+        }
+
+        [data-role="dynamic-fields"] > .form-inline + .form-inline {
+            margin-top: 0.5em;
+        }
+
+        [data-role="dynamic-fields"] > .form-inline [data-role="add"] {
+            display: none;
+        }
+
+        [data-role="dynamic-fields"] > .form-inline:last-child [data-role="add"] {
+            display: inline-block;
+        }
+
+        [data-role="dynamic-fields"] > .form-inline:last-child [data-role="remove"] {
+            display: none;
+        }
     </style>
     <link rel="stylesheet" type="text/css" href='https://code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css'/>
     <link rel="stylesheet" type="text/css"
@@ -243,11 +263,21 @@
                             please see <a href="{{ url_for("view_pipeline_help") }}">here</a>.</p>
                         <p><strong>Use Case:</strong> You might want to collapse all nodes from the central dogma (GENE,
                             RNA, PROTEIN) to PROTEIN.</p>
-                        <div class="multi-input-fields"><!-- Dynamic input form -->
-                            <div class="input-field">
-                                <i class="fa fa-plus-square add-field fa-2x" style="float:initial"></i>
-                            </div>
-                        </div>
+                        <div data-role="dynamic-fields">
+                            <div class="form-inline">
+                                <div class="form-group">
+                                    <label class="sr-only" for="field-name">Pipeline</label>
+                                    <input type="text" class="form-control" name="pipeline[]" id="pipeline"
+                                           placeholder="Please enter the PyBEL function that will be applied to the query">
+                                </div>
+                                <button class="btn btn-danger" data-role="remove">
+                                    <span class="glyphicon glyphicon-remove"></span>
+                                </button>
+                                <button class="btn btn-primary" data-role="add">
+                                    <span class="glyphicon glyphicon-plus"></span>
+                                </button>
+                            </div>  <!-- /div.form-inline -->
+                        </div>  <!-- /div[data-role="dynamic-fields"] -->
                     </div>
                 </div>
             </div>
