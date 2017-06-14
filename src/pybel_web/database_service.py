@@ -11,11 +11,17 @@ from operator import itemgetter
 
 import flask
 import networkx as nx
-from flask import Blueprint, make_response
-from flask import current_app
-from flask import jsonify
-from flask import redirect, url_for, render_template
-from flask import request
+from flask import (
+    Blueprint,
+    make_response,
+    flash,
+    current_app,
+    jsonify,
+    redirect,
+    url_for,
+    render_template,
+    request
+)
 from flask_login import login_required, current_user
 from flask_security import roles_required, roles_accepted
 from requests.compat import unquote
@@ -385,7 +391,7 @@ def drop_network(network_id):
     :param int network_id: The identifier of the network to drop
     """
     manager.drop_graph(network_id)
-    flask.flash('Dropped network {}'.format(network_id))
+    flash('Dropped network {}'.format(network_id))
     return redirect(url_for('view_networks'))
 
 
@@ -402,10 +408,10 @@ def drop_user_network(network_id, user_id):
         manager.session.delete(report.network)
         manager.session.delete(report)
         manager.commit()
-        flask.flash('Dropped network {}'.format(network_id))
+        flash('Dropped network {}'.format(network_id))
     except Exception:
         manager.rollback()
-        flask.flash('Problem dropping network {}'.format(network_id), category='error')
+        flash('Problem dropping network {}'.format(network_id), category='error')
 
     return redirect(url_for('view_networks'))
 
@@ -418,7 +424,7 @@ def make_network_public(network_id):
     report.public = True
     manager.commit()
 
-    flask.flash('Made {} public'.format(report.network))
+    flash('Made {} public'.format(report.network))
     return redirect(url_for('view_networks'))
 
 
@@ -430,7 +436,7 @@ def make_network_private(network_id):
     report.public = False
     manager.commit()
 
-    flask.flash('Made {} private'.format(report.network))
+    flash('Made {} private'.format(report.network))
     return redirect(url_for('view_networks'))
 
 
@@ -445,7 +451,7 @@ def make_user_network_public(user_id, network_id):
     report.public = True
     manager.commit()
 
-    flask.flash('Made {} public'.format(report.network))
+    flash('Made {} public'.format(report.network))
     return redirect(url_for('view_networks'))
 
 
@@ -460,7 +466,7 @@ def make_user_network_private(user_id, network_id):
     report.public = False
     manager.commit()
 
-    flask.flash('Made {} private'.format(report.network))
+    flash('Made {} private'.format(report.network))
     return redirect(url_for('view_networks'))
 
 
@@ -747,10 +753,10 @@ def get_pipeline():
 
     qo = models.Query(
         user=current_user,
-        dump=json.dumps(q.to_json()),
         assembly=asm,
-        seeding=str(q.seeds),
+        seeding=json.dumps(q.seeds),
         pipeline_protocol=str(q.pipeline),
+        dump=json.dumps(q.to_json()),
 
     )
 
@@ -761,6 +767,17 @@ def get_pipeline():
         'run_query.html',
         query=qo
     )
+
+
+@api_blueprint.route('/api/pipeline/query/<int:query_id>/drop', methods=['GET', 'POST'])
+def delete_query(query_id):
+    """Deletes a query"""
+    manager.session.query(models.Query).get(query_id).delete()
+    manager.session.commit()
+    flash('Deleted query')
+
+    return redirect(url_for('home'))
+
 
 
 @api_blueprint.route('/api/get_query/<int:query_id>', methods=['GET'])
@@ -864,7 +881,7 @@ def delete_analysis_results(analysis_id):
     manager.session.commit()
 
     if 'next' in request.args:
-        flask.flash('Dropped Experiment #{}'.format(analysis_id))
+        flash('Dropped Experiment #{}'.format(analysis_id))
         return redirect(request.args['next'])
 
     return jsonify({'status': 200})
