@@ -9,7 +9,7 @@ from flask_security import current_user
 
 from pybel.manager.models import Network, Namespace, Annotation
 from .application import get_manager
-from .models import Report, Experiment, Role, User
+from .models import Report, Experiment, Role, User, Query, Assembly
 
 log = logging.getLogger(__name__)
 
@@ -51,6 +51,8 @@ def build_admin_service(app):
     admin.add_view(NetworkView(Network, manager.session))
     admin.add_view(ModelView(Report, manager.session))
     admin.add_view(ModelView(Experiment, manager.session))
+    admin.add_view(ModelView(Query, manager.session))
+    admin.add_view(ModelView(Assembly, manager.session))
 
     log.info('Added admin service for %s', app)
 
