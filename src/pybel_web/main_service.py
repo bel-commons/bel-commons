@@ -65,12 +65,12 @@ def get_networks_with_permission(api):
     :rtype: list[Network]
     """
     if not current_user.is_authenticated:
-        return api.list_public_graphs()
+        return api.list_public_networks()
 
     if current_user.admin or current_user.has_role('scai'):
-        return api.list_recent_graphs()
+        return api.list_recent_networks()
 
-    networks = api.list_public_graphs()
+    networks = api.list_public_networks()
 
     public_ids = {network.id for network in networks}
 
