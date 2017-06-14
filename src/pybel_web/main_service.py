@@ -53,6 +53,7 @@ from .utils import (
     get_api,
     get_manager
 )
+from pybel_tools.pipeline import no_arguments_map
 
 log = logging.getLogger(__name__)
 
@@ -373,5 +374,19 @@ def build_main_service(app):
         """Shows the uploading reporting"""
         reports = manager.session.query(Report).order_by(Report.created).all()
         return render_template('reporting.html', reports=reports)
+
+    @app.route('/pipeline/help', methods=['GET'])
+    def view_pipeline_help():
+        """View the help info for the functions"""
+
+        data = [
+            (fname.replace('_', ' ').title(), f.__doc__.split('\n\n')[0])
+            for fname, f in no_arguments_map.items()
+        ]
+
+        return render_template(
+            'pipeline_help.html',
+            function_dict=data
+        )
 
     log.info('Added main to %s', app)

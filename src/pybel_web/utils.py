@@ -123,13 +123,14 @@ def try_insert_graph(manager, graph, api):
 
 def create_timeline(year_counter):
     """Completes the Counter timeline
+    
     :param Counter year_counter: counter dict for each year
-    :return: timeline: complete timeline
+    :return: complete timeline
     :rtype: list[tuple]
     """
 
-    until_year = max(year_counter.keys(), key=int)
-    from_year = min(year_counter.keys(), key=int)
+    until_year = datetime.datetime.now().year
+    from_year = min(year_counter)
 
     timeline = [
         (year, year_counter.get(year, 0))
