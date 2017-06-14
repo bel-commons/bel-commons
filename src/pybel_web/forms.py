@@ -68,7 +68,7 @@ class ParserForm(FlaskForm):
     citation_clearing = BooleanField("My document sometimes has evidences before citations - disable citation clearing")
     save_network = BooleanField('Save my knowledge assembly for later viewing')
     save_edge_store = BooleanField('Save my knowledge assembly and cache in edge store for querying and exploration')
-    public = BooleanField('Make my knowledge assembly be made publicly available', default=True)
+    public = BooleanField('Make my knowledge assembly publicly available', default=True)
     encoding = RadioField(
         'Encoding',
         choices=[
@@ -76,7 +76,7 @@ class ParserForm(FlaskForm):
             ('utf_8_sig', 'My document is encoded in UTF-8 with a BOM (for Windows users who are having problems)')
         ],
         default='utf-8')
-    submit = fields.SubmitField('Validate')
+    submit = fields.SubmitField('Upload')
 
 
 class DifferentialGeneExpressionForm(FlaskForm):
