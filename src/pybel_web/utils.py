@@ -5,6 +5,7 @@ import itertools as itt
 import logging
 import pickle
 import time
+import json
 
 import flask
 import pandas
@@ -120,6 +121,24 @@ def try_insert_graph(manager, graph, api):
         return redirect(url_for('home'))
 
 
+def create_timeline(year_counter):
+    """Completes the Counter timeline
+    :param Counter year_counter: counter dict for each year
+    :return: timeline: complete timeline
+    :rtype: list[tuple]
+    """
+
+    until_year = max(year_counter.keys(), key=int)
+    from_year = min(year_counter.keys(), key=int)
+
+    timeline = [
+        (year, year_counter.get(year, 0))
+        for year in range(from_year, until_year)
+    ]
+
+    return timeline
+
+
 def sanitize_list_of_str(l):
     """Strips all strings in a list and filters to the non-empty ones
     
@@ -206,7 +225,7 @@ def render_network_summary(network_id, graph, api):
         for node in iter_undefined_families(graph, ['SFAM', 'GFAM'])
     ]
 
-    citation_years = count_citation_years(graph)
+    citation_years = create_timeline(count_citation_years(graph))
 
     overlap_counter = api.get_node_overlap(network_id)
     overlaps = [
@@ -231,6 +250,7 @@ def render_network_summary(network_id, graph, api):
         chart_7_data=prepare_c3(hub_data, 'Top Hubs'),
         chart_8_data=prepare_c3(centrality_data, 'Top Central'),
         chart_9_data=prepare_c3(disease_data, 'Pathologies'),
+        # chart_10_data=prepare_c3(citation_years, 'Most cited years'),
         error_groups=count_dict_values(group_errors(graph)).most_common(20),
         info_list=info_list(graph),
         contradictions=contradictory_pairs,
@@ -250,7 +270,6 @@ def render_network_summary(network_id, graph, api):
         network_versions=versions,
         causal_pathologies=causal_pathologies,
         undefined_families=undefined_sfam,
-        citation_years=citation_years,
         overlaps=overlaps,
         naked_names=naked_names,
     )
