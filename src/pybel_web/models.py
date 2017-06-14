@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import datetime
+import json
 
 from flask_security import RoleMixin, UserMixin
 from sqlalchemy import Column, Integer, ForeignKey, DateTime, Boolean, Text, Binary, Table, String
@@ -162,7 +163,7 @@ class Query(Base):
                          doc='The network assembly used in this query')
     assembly = relationship('Assembly')
 
-    seeding = Column(Text, doc="List representation of the seeding")
+    seeding = Column(Text, doc="The stringified JSON of the list representation of the seeding")
 
     pipeline_protocol = Column(Text, doc="Protocol list")
 
@@ -175,6 +176,9 @@ class Query(Base):
         :rtype: pybel_tools.query.Query
         """
         return pybel_tools.query.Query.from_jsons(self.dump)
+
+    def seeding_as_json(self):
+        return json.loads(self.seeding)
 
     def __call__(self, manager):
         """A wrapper around the :meth:`pybel_tools.query.Query.run` function of the enclosed
