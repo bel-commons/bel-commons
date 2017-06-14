@@ -26,7 +26,32 @@
 
         {{ util.flashed_messages(dismissible=True, container=False) }}
 
+
         <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Typical Workflow</h3>
+            </div>
+            <div class="panel-body">
+                <h2>Step 1: Upload a BEL Document</h2>
+                <p>Click "Parse BEL", Choose a File, then Click "Upload".</p>
+                <h2>Step 2: Summarize a BEL Document</h2>
+                <p>Click "List Networks" and find your network. Click "Summary".</p>
+                <h2>Step 3: Build a Query</h2>
+                <p>Choose the universe of BEL documents to start with, seed your network, and select
+                    filters/mutators.</p>
+                <h2>Step 4: Explore a Knowledge Assembly</h2>
+                <p>From the query builder, click "View my Network" and begin to interact with the explorer.</p>
+                <p>The explorer contains functions to build further queries.</p>
+                <h2>Step 5: Analyze a Knowledge Assembly</h2>
+                <p>Data sets like differential gene expression can be used to quantify the perturbation amplitude
+                    of biological processes in a network using an randomized algorithm based on NPA. </p>
+            </div>
+        </div>
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Links and Cards</h3>
+            </div>
             <div class="panel-body">
                 <div class="row">
                     <div class="col-sm-6 col-md-3">
