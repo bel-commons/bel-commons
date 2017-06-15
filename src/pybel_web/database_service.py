@@ -289,6 +289,17 @@ def drop_annotations():
     return jsonify({'status': 200})
 
 
+@api_blueprint.route('/api/annotation/suggestion')
+def suggest_annotation():
+    """Creates a suggestion for annotations"""
+    if not request.args['search']:
+        return jsonify([])
+
+    autocompletion_set = api.get_annotations_containing_keyword(request.args['search'])
+
+    return jsonify(autocompletion_set)
+
+
 ####################################
 # NETWORKS
 ####################################
