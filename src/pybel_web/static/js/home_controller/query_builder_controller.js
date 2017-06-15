@@ -111,7 +111,7 @@ $(document).ready(function () {
         theme: "bootstrap",
         minimumInputLength: 2,
         multiple: true,
-        placeholder: "Please type PubMed ids",
+        placeholder: "Please type PubMed identifiers",
         ajax: {
             url: function () {
                 return "/api/pubmed/suggestion/";
@@ -143,7 +143,7 @@ $(document).ready(function () {
         theme: "bootstrap",
         minimumInputLength: 2,
         multiple: true,
-        placeholder: "Please type any Annotation",
+        placeholder: "Please type any annotation",
         ajax: {
             url: function () {
                 return "/api/annotations/suggestion/";

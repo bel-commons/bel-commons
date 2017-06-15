@@ -61,7 +61,7 @@
 {% block content %}
     <div class="container">
         <div class="page-header">
-            <h1>PyBEL Query Builder</h1>
+            <h1>Query Builder</h1>
         </div>
 
         {{ util.flashed_messages(dismissible=True, container=False) }}
@@ -70,10 +70,10 @@
 
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <h3 class="panel-title">Networks</h3>
+                    <h3 class="panel-title">Assembly</h3>
                 </div>
                 <div class="panel-body">
-                    <p>Please choose the networks that you want to query.</p>
+                    <p>Choose networks to assemble for the query.</p>
                     <div class="form-group">
                         {% for network in networks %}
                             <div class="checkbox">
@@ -89,12 +89,11 @@
 
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <h3 class="panel-title">Seeding Type</h3>
+                    <h3 class="panel-title">Seeding</h3>
                 </div>
                 <div class="panel-body">
-                    <p>Please choose the seeding type your want to use for the query. Note that it is also possible to
-                        use
-                        multiple seeding types.</p>
+                    <p>Please choose the seeding type your want to use for the query. Note: it's possible to
+                        use multiple seeding types.</p>
 
                     <div id="seed-selection" class="btn-group">
                         <a data-toggle="tab" href="#node-panel">
@@ -116,24 +115,21 @@
             <div class="tab-content">
                 <div class="panel panel-default tab-pane fade" id="node-panel">
                     <div class="panel-heading">
-                        <h3 class="panel-title">Network Seeding by Nodes</h3>
+                        <h3 class="panel-title">Seeding by Nodes</h3>
                     </div>
                     <div class="panel-body">
                         <p>This method of seeding will acquire the given nodes and expand around them using given seed
                             method.
                         </p>
-                        <p><strong>Use Case:</strong> The leukemia drug, <a
+                        <p>
+                            <strong>Use Case:</strong> The leukemia drug, <a
                                 href="https://www.ebi.ac.uk/chembl/compound/inspect/CHEMBL255863">nilotinib</a>,
-                            triggers
-                            cells
-                            to get rid of faulty components - including the ones associated with several brain diseases.
-                            In
-                            2015, Georgetown University Medical Center <a
-                                    href="http://content.iospress.com/articles/journal-of-parkinsons-disease/jpd160867">published</a>
-                            findings that the drug had a helpful effect on patients in
-                            Alzheimer's and Parkinson's diseases. Though it is currently unknown, a search of the paths
-                            between
-                            this drug and these diseases could provide insight to nilotinib's mechanism of action.</p>
+                            triggers cells to get rid of faulty components - including the ones associated with several
+                            brain diseases. In 2015, Georgetown University Medical Center <a
+                                href="http://content.iospress.com/articles/journal-of-parkinsons-disease/jpd160867">published</a>
+                            findings that the drug had a helpful effect on patients in Alzheimer's and Parkinson's
+                            diseases. Though it is currently unknown, a search of the paths between this drug and these
+                            diseases could provide insight to nilotinib's mechanism of action.</p>
                         <div class="form-group form-horizontal">
                             <label class="col-md-2 control-label">Nodes</label>
                             <div class="col-md-10">
@@ -154,15 +150,13 @@
                                 <div class="radio">
                                     <label>
                                         <input id="seed_method-1" name="seed_method" type="radio" value="neighbors">
-                                        Induce
-                                        a subgraph over the given nodes and expand to their first neighbors
+                                        Induce a subgraph over the given nodes and expand to their first neighbors
                                     </label>
                                 </div>
                                 <div class="radio">
                                     <label>
                                         <input id="seed_method-2" name="seed_method" type="radio" value="dneighbors">
-                                        Induce
-                                        a subgraph over the given nodes and expand to their second neighbors
+                                        Induce a subgraph over the given nodes and expand to their second neighbors
                                     </label>
                                 </div>
                                 <div class="radio">
@@ -175,8 +169,7 @@
                                 <div class="radio">
                                     <label>
                                         <input id="seed_method-4" name="seed_method" type="radio" value="upstream">
-                                        Generate
-                                        an upstream candidate mechanism
+                                        Generate an upstream candidate mechanism
                                     </label>
                                 </div>
                                 <div class="radio">
@@ -192,13 +185,11 @@
 
                 <div class="panel panel-default tab-pane fade" id="author-panel">
                     <div class="panel-heading">
-                        <h3 class="panel-title">Network Seeding by Authors</h3>
+                        <h3 class="panel-title">Seeding by Authorship</h3>
                     </div>
                     <div class="panel-body">
-                        <p>This method of seeding will acquire nodes and edges asserted by the given authors, then
-                            expand
-                            around
-                            the neighborhood of these nodes to show all peripheral knowledge.</p>
+                        <p>This method acquires the nodes and edges asserted by the given authors and
+                            expands around their neighborhoods to show peripheral knowledge.</p>
                         <div class="form-group form-horizontal">
                             <label class="col-md-2 control-label">Authors</label>
                             <div class="col-md-10">
@@ -211,12 +202,11 @@
 
                 <div class="panel panel-default tab-pane fade" id="pubmed-panel">
                     <div class="panel-heading">
-                        <h3 class="panel-title">Network Seeding by PubMed identifiers</h3>
+                        <h3 class="panel-title">Seeding by Citation</h3>
                     </div>
                     <div class="panel-body">
-                        <p>This method of seeding will acquire nodes and edges asserted in the given citations and will
-                            expand
-                            around the neighborhood of these nodes to show all peripheral knowledge.</p>
+                        <p>This method acquires the nodes and edges asserted by the given citations and
+                            expands around their neighborhoods to show peripheral knowledge.</p>
                         <div class="form-group form-horizontal">
                             <label class="col-md-2 control-label">PubMed Identifiers</label>
                             <div class="col-md-10">
@@ -229,18 +219,17 @@
 
                 <div class="panel panel-default tab-pane fade" id="annotation-panel">
                     <div class="panel-heading">
-                        <h3 class="panel-title">Network Seeding by Annotation</h3>
+                        <h3 class="panel-title">Seeding by Annotation</h3>
                     </div>
                     <div class="panel-body">
-                        <p>This method of seeding will acquire nodes and edges asserted by the given authors, then
-                            expand
-                            around
-                            the neighborhood of these nodes to show all peripheral knowledge.</p>
-                        <p><strong>Use Case:</strong> Amyloidogenic cascade is one of the proposed mechanisms that is
-                            thought to
-                            trigger Alzheimer's disease. Extracting the amyloidogenic network using annotations will
-                            provide
-                            deeper insight around Amyloid Beta Protein.</p>
+                        <p>This method of will acquire edges matching any of the given annotations.</p>
+                        <p>
+                            <strong>Use Case:</strong> The <a
+                                href="http://www.nature.com/nrd/journal/v10/n9/full/nrd3505.html">Amyloidogenic
+                            Cascade</a>
+                            is a central to Alzheimer Disease pathology. Using the <a
+                                href="http://neurommsig.scai.fraunhofer.de/">NeuroMMsigDB</a>
+                            functional annotations, this sub-network can be extracted for investigation.</p>
                         <div class="form-group form-horizontal">
                             <label class="col-md-2 control-label">Annotation Values</label>
                             <div class="col-md-10">
@@ -265,7 +254,7 @@
                                     <label class="sr-only" for="pipeline">Pipeline</label>
                                     <input type="text" class="form-control" name="pipeline[]" id="pipeline"
                                            placeholder="Please enter the PyBEL function that will be applied to the query"
-                                    style=" min-width: 500px;">
+                                           style=" min-width: 500px;">
                                 </div>
                                 <button class="btn btn-danger" data-role="remove">
                                     <span class="glyphicon glyphicon-remove"></span>
