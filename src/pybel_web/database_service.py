@@ -626,8 +626,8 @@ def get_pubmed_suggestion():
 @api_blueprint.route('/api/network/query/authors')
 def get_all_authors():
     """Gets a list of all authors in the graph produced by the given URL parameters"""
-    graph = get_network_from_request()
-    return jsonify(sorted(get_authors(graph)))
+    network = get_network_from_request()
+    return jsonify(sorted(get_authors(network)))
 
 
 @api_blueprint.route('/api/authors/suggestion/')
