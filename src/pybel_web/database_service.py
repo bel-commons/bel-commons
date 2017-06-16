@@ -289,7 +289,7 @@ def drop_annotations():
     return jsonify({'status': 200})
 
 
-@api_blueprint.route('/api/annotation/suggestion')
+@api_blueprint.route('/api/annotation/suggestion/')
 def suggest_annotation():
     """Creates a suggestion for annotations"""
     if not request.args['search']:

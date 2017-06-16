@@ -129,7 +129,7 @@ $(document).ready(function () {
                 return {
                     results: data.map(function (item) {
                             return {
-                                id: item.text,
+                                id: item.id,
                                 text: item.text
                             };
                         }
@@ -146,7 +146,7 @@ $(document).ready(function () {
         placeholder: "Please type any annotation",
         ajax: {
             url: function () {
-                return "/api/annotations/suggestion/";
+                return "/api/annotation/suggestion/";
             },
             type: "GET",
             contentType: "application/json; charset=utf-8",
@@ -161,8 +161,8 @@ $(document).ready(function () {
                 return {
                     results: data.map(function (item) {
                             return {
-                                id: item.text,
-                                text: item.text
+                                id: item.annotation + ':' + item.value,
+                                text: item.annotation + ':' + item.value
                             };
                         }
                     )
