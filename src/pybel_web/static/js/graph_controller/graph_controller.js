@@ -80,13 +80,20 @@ function selectNodesInTreeFromURL(tree, url, blackList) {
 
 /**
  * Get all annotations needed to build the tree
- * @param {string} URLString
+ * @param {string} urlObject
  * @returns {object} JSON object coming from the API ready to render the tree
  */
-function getAnnotationForTree(URLString) {
-    if ("network_id" in URLString) {
-        return doAjaxCall("/api/network/tree/?network_id=" + URLString["network_id"]);
-    } else {
+function getAnnotationForTree(urlObject) {
+
+    if ("network_id" in urlObject) {
+        return doAjaxCall("/api/network/tree/?network_id=" + urlObject["network_id"]);
+    }
+    // Might be multiple networks within a query
+    else if (window.process_type === "query") {
+        return doAjaxCall("/api/network/tree/?query="+ urlObject["query"]);
+    }
+    // Tree for Universe
+    else {
         return doAjaxCall("/api/network/tree/");
     }
 }
@@ -136,6 +143,7 @@ function getCurrentURL() {
             query_string[pair[0]].push(decodeURIComponent(pair[1]));
         }
     }
+
     return query_string;
 }
 
@@ -154,9 +162,8 @@ function getFilterParameters(tree) {
         args["append"] = window.expandNodes.join();
     }
 
-    if (window.networkID > 0) {
-        args["network_id"] = window.networkID;
-    }
+    args["network_id"] = window.network_id;
+
     return args
 }
 
@@ -172,6 +179,26 @@ function argumentsInURL(args, arg, url) {
     if (arg in url) {
         args[arg] = url[arg];
     }
+    return args
+}
+
+
+/**
+ * Add query to URL
+ * @param {object} args, default parameters
+ * @param {object} url (object representation of url parameters)
+ * @returns {object}
+ */
+function getQueryFromURL(args, url) {
+
+    args = argumentsInURL(args, "query", url);
+
+    // Checking if methods for pipeline analysis are present
+    args = argumentsInURL(args, "pathology_filter", url);
+
+    // Checking if autoload is present
+    args = argumentsInURL(args, "autoload", url);
+
     return args
 }
 
@@ -202,9 +229,6 @@ function getSeedMethodFromURL(args, url) {
         }
     }
 
-    //TODO: Add to pipeline list
-    args = argumentsInURL(args, "pipeline", url);
-
     // Checking if methods for pipeline analysis are present
     args = argumentsInURL(args, "pathology_filter", url);
 
@@ -219,7 +243,13 @@ function getSeedMethodFromURL(args, url) {
  * @param {InspireTree} tree
  */
 function getDefaultAjaxParameters(tree) {
-    return getSeedMethodFromURL(getFilterParameters(tree), getCurrentURL())
+
+    if (window.process_type === "query") {
+        return getQueryFromURL(getFilterParameters(tree), getCurrentURL())
+    }
+    else {
+        return getSeedMethodFromURL(getFilterParameters(tree), getCurrentURL())
+    }
 }
 
 
@@ -280,29 +310,59 @@ function insertRow(table, row, column1, column2) {
     cell2.innerHTML = column2;
 }
 
+/**
+ * Renders the network from a query
+ * @param {object} urlObject
+ */
+function processQuery(urlObject) {
+    var networkFromQuery = doAjaxCall("/api/get_query/" + urlObject["query"]);
 
-$(document).ready(function () {
+    tree = initTree(urlObject);
 
-    var URLString = getCurrentURL();
+    initD3Force(networkFromQuery, tree);
 
-    // Checks if query in URL
-    if ("query" in URLString) {
+    return tree
 
-    } else {
+}
 
-    }
+
+/**
+ * Renders the network from URL
+ * @param {object} urlObject
+ */
+function processURL(urlObject) {
 
     // Set networkid as a global variable
-    if ("network_id" in URLString) {
-        window.networkID = URLString["network_id"];
+    if ("network_id" in urlObject) {
+        window.network_id = urlObject["network_id"];
     } else {
-        window.networkID = "0";
+        window.network_id = "0";
     }
 
-    var networkName = doAjaxCall("/api/network/" + window.networkID + "/name");
+    var networkName = doAjaxCall("/api/network/" + window.network_id + "/name");
     if (networkName) {
         $("#network-name").html(networkName);
     }
+
+    tree = initTree(urlObject);
+
+    // Loads the network if autoload is an argument in the URL or render empty frame if not
+    if (window.location.search.indexOf("autoload=yes") > -1) {
+        renderNetwork(tree);
+    } else {
+        renderEmptyFrame();
+    }
+
+    return tree
+}
+
+
+/**
+ * Renders tree for annotation filtering
+ * @param {object} urlObject
+ * @return {InspireTree} tree
+ */
+function initTree(urlObject) {
 
     // Initiate the tree and expands it with the annotations given the network_id in URL
     var tree = new InspireTree({
@@ -311,14 +371,14 @@ $(document).ready(function () {
             mode: "checkbox",
             multiple: true
         },
-        data: getAnnotationForTree(URLString)
+        data: getAnnotationForTree(urlObject)
     });
 
     tree.on("model.loaded", function () {
         tree.expand();
     });
 
-    selectNodesInTreeFromURL(tree, URLString, doAjaxCall("/api/meta/blacklist"));
+    selectNodesInTreeFromURL(tree, urlObject, doAjaxCall("/api/meta/blacklist"));
 
     // Enables tree search
     $('#tree-search').on('keyup', function (ev) {
@@ -326,11 +386,21 @@ $(document).ready(function () {
 
     });
 
-    // Loads the network if autoload is an argument in the URL or render empty frame if not
-    if (window.location.search.indexOf("autoload=yes") > -1) {
-        renderNetwork(tree);
+    return tree
+}
+
+
+$(document).ready(function () {
+
+    var urlObject = getCurrentURL();
+
+    // Checks if query in URL
+    if ("query" in urlObject) {
+        window.process_type = "query";
+        tree = processQuery(urlObject);
     } else {
-        renderEmptyFrame();
+        window.process_type = "url";
+        tree = processURL(urlObject);
     }
 
     $("#refresh-network").on("click", function () {
@@ -354,7 +424,7 @@ $(document).ready(function () {
             dataType: "text",
             data: $.param(args, true)
         }).done(function (response) {
-            downloadText(response, "MyGraph.bel")
+            downloadText(response, "MyNetwork.bel")
         });
     });
 
@@ -404,7 +474,7 @@ $(document).ready(function () {
     // Comes back to the network id originally choosen
     $("#reset_all").on("click", function () {
         var args = {};
-        args["network_id"] = window.networkID;
+        args["network_id"] = window.network_id;
         window.history.pushState("BiNE", "BiNE", "/explore?" + $.param(args, true));
     });
 });
@@ -1488,7 +1558,7 @@ function initD3Force(graph, tree) {
             args["source"] = nodeNamesToId[pathForm.find("input[name='source']").val()];
             args["target"] = nodeNamesToId[pathForm.find("input[name='target']").val()];
             args["paths_method"] = $("input[name=paths_method]:checked", pathForm).val();
-            args["network_id"] = window.networkID;
+            args["network_id"] = window.network_id;
 
             var undirected = pathForm.find("input[name='undirectionalize']").is(":checked");
 

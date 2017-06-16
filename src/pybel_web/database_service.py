@@ -486,7 +486,17 @@ def make_user_network_private(user_id, network_id):
 def get_tree_api():
     """Builds the annotation tree data structure for a given graph"""
     network_id = request.args.get(NETWORK_ID)
-    return jsonify(api.get_tree_annotations(network_id))
+
+    if not network_id:  # List of networks
+        query_id = request.args.get(QUERY)
+        query = manager.session.query(models.Query).get(query_id)
+        query = query.data
+        network = query(api)
+
+    else:
+        network = api.get_network_by_id(network_id)
+
+    return jsonify(api.get_tree_annotations(network))
 
 
 ####################################
@@ -810,12 +820,7 @@ def query_to_url(query_id):
     network = query(api)  # use duck typing, and the api ensures relabeling
     network.graph['PYBEL_RELABELED'] = True
 
-    print(query.network_ids)
-
-    return jsonify({
-        'network': to_json_custom(network),
-        'network_ids': query.network_ids,
-    })
+    return jsonify(to_json_custom(network))
 
 
 ####################################
