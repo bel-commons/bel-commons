@@ -40,7 +40,6 @@ from pybel_tools.api import DatabaseService
 from pybel_tools.constants import BMS_BASE
 from pybel_tools.ioutils import upload_recursive, get_paths_recursive
 from pybel_tools.mutation.metadata import fix_pubmed_citations
-from pybel_tools.selection.induce_subgraph import SEED_TYPE_PROVENANCE
 from pybel_tools.utils import get_version as get_pybel_tools_version
 from .application import create_celery
 from .constants import *
@@ -200,6 +199,8 @@ def build_main_service(app):
     @app.route('/networks', methods=['GET', 'POST'])
     def view_networks():
         """Renders a page for the user to choose a network"""
+
+        # TODO: we dont need the forms here anymore, do we?
         seed_subgraph_form = SeedSubgraphForm()
         seed_provenance_form = SeedProvenanceForm()
 
@@ -228,7 +229,7 @@ def build_main_service(app):
             log.info('got prov: %s', dict(authors=authors, pmids=pmids))
             url = url_for('view_explorer', **{
                 NETWORK_ID: '0',
-                SEED_TYPE: SEED_TYPE_PROVENANCE,
+                SEED_TYPE: 'provenance',
                 SEED_DATA_PMIDS: pmids,
                 SEED_DATA_AUTHORS: authors,
                 FILTER_PATHOLOGIES: filter_pathologies,

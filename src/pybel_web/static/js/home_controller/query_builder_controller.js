@@ -129,7 +129,7 @@ $(document).ready(function () {
                 return {
                     results: data.map(function (item) {
                             return {
-                                id: item.id,
+                                id: item.text,
                                 text: item.text
                             };
                         }

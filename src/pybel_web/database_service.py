@@ -40,7 +40,7 @@ from pybel_tools.analysis.npa import RESULT_LABELS
 from pybel_tools.definition_utils import write_namespace
 from pybel_tools.pipeline import query_form_to_dict
 from pybel_tools.query import Query
-from pybel_tools.selection.induce_subgraph import SEED_TYPES, SEED_TYPE_PROVENANCE
+from pybel_tools.selection.induce_subgraph import SEED_TYPES, SEED_TYPE_AUTHOR, SEED_TYPE_PUBMED
 from pybel_tools.summary import (
     info_json,
     get_authors,
@@ -101,7 +101,7 @@ def get_network_from_request():
     if seed_method and seed_method not in SEED_TYPES:
         raise ValueError('Invalid seed method: {}'.format(seed_method))
 
-    if seed_method and seed_method == SEED_TYPE_PROVENANCE:
+    if seed_method and seed_method == SEED_TYPE_AUTHOR or seed_method == SEED_TYPE_PUBMED:
         seed_data = {}
 
         authors = request.args.getlist(SEED_DATA_AUTHORS)
