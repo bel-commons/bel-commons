@@ -789,6 +789,7 @@ def drop_query_by_id(query_id):
     if not (current_user.admin or query.user_id == current_user.id):
         return flask.abort(403)
 
+    manager.session.delete(query)
     manager.session.commit()
     flash('Deleted query')
 
