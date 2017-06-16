@@ -76,8 +76,8 @@ log = logging.getLogger(__name__)
 api_blueprint = Blueprint('dbs', __name__)
 
 
-def get_graph_from_request():
-    """Process the GET request returning the filtered graph
+def get_network_from_request():
+    """Process the GET request returning the filtered network
 
     :return: A BEL graph
     :rtype: pybel.BELGraph
@@ -139,7 +139,7 @@ def get_graph_from_request():
         if k not in BLACK_LIST
     }
 
-    graph = api.query(
+    network = api.query(
         network_id=network_id,
         seed_method=seed_method,
         seed_data=seed_data,
@@ -150,21 +150,21 @@ def get_graph_from_request():
         **annotations
     )
 
-    return graph
+    return network
 
 
 @api_blueprint.route('/api/receive', methods=['POST'])
 def receive():
     """Receives a JSON serialized BEL graph"""
     try:
-        graph = pybel.from_json(request.get_json())
+        network = pybel.from_json(request.get_json())
     except Exception as e:
         return jsonify({
             'status': 'bad',
             'error': str(e)
         })
 
-    return try_insert_graph(manager, graph, api)
+    return try_insert_graph(manager, network, api)
 
 
 ####################################
@@ -230,9 +230,9 @@ def _build_namespace_helper(graph, namespace, names):
 @api_blueprint.route('/api/namespace/builder/undefined/<network_id>/<namespace>')
 def download_undefined_namespace(network_id, namespace):
     """Outputs a namespace built for this undefined namespace"""
-    graph = api.get_network_by_id(network_id)
-    names = get_undefined_namespace_names(graph, namespace)
-    return _build_namespace_helper(graph, namespace, names)
+    network = api.get_network_by_id(network_id)
+    names = get_undefined_namespace_names(network, namespace)
+    return _build_namespace_helper(network, namespace, names)
 
 
 @api_blueprint.route('/api/namespace/builder/incorrect/<network_id>/<namespace>')
@@ -380,8 +380,10 @@ def get_number_nodes(network_id):
 @login_required
 def get_network():
     """Builds a graph from the given network id and sends it in the given format"""
-    graph = get_graph_from_request()
-    return serve_network(graph, request.args.get(FORMAT))
+    network = get_network_from_request()
+    network.graph['PYBEL_RELABELED'] = True
+
+    return serve_network(network, request.args.get(FORMAT))
 
 
 @api_blueprint.route('/api/network/<int:network_id>/name')
@@ -390,8 +392,8 @@ def get_network_name_by_id(network_id):
     if network_id == 0:
         return ''
 
-    graph = api.get_network_by_id(network_id)
-    return jsonify(graph.name)
+    network = api.get_network_by_id(network_id)
+    return jsonify(network.name)
 
 
 @api_blueprint.route('/api/network/<int:network_id>/drop')
@@ -509,7 +511,7 @@ def get_paths_api():
 
     :return: JSON
     """
-    graph = get_graph_from_request()
+    network = get_network_from_request()
 
     if SOURCE_NODE not in request.args:
         raise ValueError('no source')
@@ -528,22 +530,22 @@ def get_paths_api():
 
     log.info('Source: %s, target: %s', source, target)
 
-    if source not in graph or target not in graph:
-        log.info('Source/target node not in graph')
-        log.info('Nodes in graph: %s', graph.nodes())
+    if source not in network or target not in network:
+        log.info('Source/target node not in network')
+        log.info('Nodes in network: %s', network.nodes())
         return flask.abort(500)
 
     if undirected:
-        graph = graph.to_undirected()
+        network = network.to_undirected()
 
     if method == 'all':
         # TODO: Think about increasing the cutoff
-        all_paths = nx.all_simple_paths(graph, source=source, target=target, cutoff=7)
+        all_paths = nx.all_simple_paths(network, source=source, target=target, cutoff=7)
         # all_paths is a generator -> convert to list and create a list of lists (paths)
         return jsonify(list(all_paths))
 
     try:
-        shortest_path = nx.shortest_path(graph, source=source, target=target)
+        shortest_path = nx.shortest_path(network, source=source, target=target)
     except nx.NetworkXNoPath:
         log.debug('No paths between: {} and {}'.format(source, target))
         return 'No paths between the selected nodes'
@@ -554,17 +556,17 @@ def get_paths_api():
 @api_blueprint.route('/api/network/query/centrality/', methods=['GET'])
 def get_nodes_by_betweenness_centrality():
     """Gets a list of nodes with the top betweenness-centrality"""
-    graph = get_graph_from_request()
+    network = get_network_from_request()
 
     try:
         node_numbers = int(request.args.get(NODE_NUMBER))
     except ValueError:
         return 'Please enter a number'
 
-    if node_numbers > nx.number_of_nodes(graph):
+    if node_numbers > nx.number_of_nodes(network):
         return 'The number introduced is bigger than the nodes in the network'
 
-    bw_dict = nx.betweenness_centrality(graph)
+    bw_dict = nx.betweenness_centrality(network)
 
     node_list = [
         i[0]
@@ -576,9 +578,9 @@ def get_nodes_by_betweenness_centrality():
 
 @api_blueprint.route('/api/network/query/pmids')
 def get_all_pmids():
-    """Gets a list of all PubMed identifiers in the graph produced by the given URL parameters"""
-    graph = get_graph_from_request()
-    return jsonify(sorted(get_pubmed_identifiers(graph)))
+    """Gets a list of all PubMed identifiers in the network produced by the given URL parameters"""
+    network = get_network_from_request()
+    return jsonify(sorted(get_pubmed_identifiers(network)))
 
 
 @api_blueprint.route('/api/network/query/nodes/')
@@ -624,7 +626,7 @@ def get_pubmed_suggestion():
 @api_blueprint.route('/api/network/query/authors')
 def get_all_authors():
     """Gets a list of all authors in the graph produced by the given URL parameters"""
-    graph = get_graph_from_request()
+    graph = get_network_from_request()
     return jsonify(sorted(get_authors(graph)))
 
 
@@ -863,7 +865,7 @@ def delete_user(user_id):
 @api_blueprint.route('/api/analysis/<analysis_id>')
 def get_analysis(analysis_id):
     """Returns data from analysis"""
-    graph = get_graph_from_request()
+    graph = get_network_from_request()
     experiment = manager.session.query(Experiment).get(analysis_id)
     data = pickle.loads(experiment.result)
     results = [
@@ -878,7 +880,7 @@ def get_analysis(analysis_id):
 @api_blueprint.route('/api/analysis/<analysis_id>/median')
 def get_analysis_median(analysis_id):
     """Returns data from analysis"""
-    graph = get_graph_from_request()
+    graph = get_network_from_request()
     experiment = manager.session.query(Experiment).get(analysis_id)
     data = pickle.loads(experiment.result)
     # position 3 is the 'median' score
