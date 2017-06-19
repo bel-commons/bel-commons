@@ -63,13 +63,14 @@ from .main_service import (
     BLACK_LIST
 )
 from .models import Report, User, Experiment
-from .send_utils import serve_network, to_json_custom
+from .send_utils import serve_network
 from .utils import (
     try_insert_graph,
     get_recent_reports,
     manager,
     api,
-    user_datastore
+    user_datastore,
+    get_and_run_query
 )
 
 log = logging.getLogger(__name__)
@@ -112,8 +113,8 @@ def get_network_from_request():
 
     if query_id is not None:
         query_id = int(query_id)
-        query = api.manager.session.query(models.Query).get(query_id)
-        network_from_query = query(api)
+        query = manager.session.query(models.Query).get(query_id)
+        network_from_query = query(manager)
 
         # TODO: Nodes expanding not working since the universe is retricted to the query and not to the set of BEL files
         network = get_subgraph(
@@ -511,11 +512,7 @@ def get_tree_api():
     query_id = request.args.get(QUERY)
 
     if query_id and not network_id:  # Tree from query subgraph
-        query = manager.session.query(models.Query).get(query_id)
-        if query is None:
-            return jsonify('Invalid Query ID')
-        query = query.data
-        network = query(api)
+        network = get_and_run_query(query_id)
 
     elif network_id and not query_id:
         network = api.get_network_by_id(network_id)

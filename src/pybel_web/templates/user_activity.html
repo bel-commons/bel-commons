@@ -45,7 +45,15 @@
                         <td>
                             <ul>
                                 {% for seed in query.seeding_as_json() %}
-                                    <li>{{ seed['type'] }} - {{ seed['data'] }}</li>
+                                    <li>
+                                        <span>{{ seed['type']|title }}</span>
+                                        <ul>{% for seed_data in seed['data'] %}
+                                            <li>
+                                                {{ seed_data }}
+                                            </li>
+                                        {% endfor %}
+                                        </ul>
+                                    </li>
                                 {% endfor %}
                             </ul>
                         </td>

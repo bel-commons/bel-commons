@@ -681,7 +681,7 @@ function savePreviousPositions() {
  * Update previous node position given new data (if nodes were previously there)
  * @param {object} jsonData: new node data
  * @param {object} prevPos object created by savePreviousPositions
- * @returns {object}
+ * @returns {object} update d3 JSON + array with new nodes
  */
 function updateNodePosition(jsonData, prevPos) {
 
@@ -708,7 +708,7 @@ function updateNodePosition(jsonData, prevPos) {
 
     });
 
-    return {json: jsonData, new_nodes: newNodesArray}
+    return {json: jsonData, newNodes: newNodesArray}
 }
 
 
@@ -809,6 +809,8 @@ function initD3Force(graph, tree) {
 
                     initD3Force(data["json"], tree);
 
+                    highlightNodeBorder(data["newNodes"]);
+
                     window.history.pushState("BiNE", "BiNE", "/explore?" + $.param(args, true));
 
                 });
@@ -837,6 +839,8 @@ function initD3Force(graph, tree) {
                     clearUsedDivs();
 
                     initD3Force(data["json"], tree);
+
+                    highlightNodeBorder(data["newNodes"]);
 
                     window.history.pushState("BiNE", "BiNE", "/explore?" + $.param(args, true));
 
@@ -1215,6 +1219,23 @@ function initD3Force(graph, tree) {
     }
 
     /**
+     * Highlights nodes in nodeArray
+     * @param {array} nodeArray
+     */
+    function highlightNodeBorder(nodeArray) {
+
+        // console.log(nodeArray)
+        var highlightNodes = svg.selectAll(".node").filter(function (el) {
+            console.log(el.id)
+            return nodeArray.indexOf(el.id) >= 0;
+        });
+
+        // console.log(highlightNodes)
+
+        highlightNodes.style("stroke", "orange");
+    }
+
+    /**
      * Returns nodes that not pass the filter given a node array/property
      * @param {array} nodeArray
      * @param {string} property
@@ -1237,7 +1258,6 @@ function initD3Force(graph, tree) {
         return svg.selectAll(".node").filter(function (el) {
             return nodeArray.indexOf(el[property]) >= 0;
         });
-
     }
 
     /**

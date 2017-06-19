@@ -9,7 +9,7 @@ import json
 
 import flask
 import pandas
-from flask import current_app
+from flask import current_app, jsonify
 from flask import render_template, redirect, url_for
 from flask_login import current_user
 from sqlalchemy import func
@@ -17,6 +17,7 @@ from sqlalchemy.exc import IntegrityError
 from werkzeug.local import LocalProxy
 
 import pybel
+from . import models
 from pybel.canonicalize import decanonicalize_node
 from pybel.constants import RELATION, GENE
 from pybel.manager import Network
@@ -92,6 +93,18 @@ def get_userdatastore_proxy():
 manager = get_manager_proxy()
 api = get_api_proxy()
 user_datastore = get_userdatastore_proxy()
+
+
+def get_and_run_query(query_id):
+    """Gets a query and runs it.
+
+    :param int query_id: The Query's Id
+    """
+    query = manager.session.query(models.Query).get(query_id)
+    if query is None:
+        return jsonify('Invalid Query ID')
+    query = query.data
+    return query(manager)
 
 
 def try_insert_graph(manager, graph, api):
