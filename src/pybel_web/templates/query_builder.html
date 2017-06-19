@@ -78,7 +78,8 @@
                         {% for network in networks %}
                             <div class="checkbox">
                                 <label>
-                                    <input type="checkbox" name="network_ids[]" value="{{ network.id }}"/>
+                                    <input type="checkbox" class="networks" name="network_ids[]"
+                                           value="{{ network.id }}"/>
                                     {{ network.name }}
                                 </label>
                             </div>

@@ -7,74 +7,20 @@
  *
  */
 
-/**
- * Returns array with the properties of selection in a select2Element.
- * @param {object} parameters object
- * @param {string} key of the parameter
- * @param {select2} select2Element
- * @param {string} selectionProperty - text or id
- */
-function addQueryParameters(parameters, key, select2Element, selectionProperty) {
 
-    var selectedElements = [];
-
-    $.each(select2Element, function (index, value) {
-        selectedElements.push(encodeURIComponent(value[selectionProperty]));
-    });
-
-    if (!($.isEmptyObject(selectedElements))) {
-        parameters[key] = selectedElements;
+// Controls that at least a network has been selected
+$('#query-form').on('submit', function (e) {
+    if ($("input[type=checkbox]:checked").length === 0) {
+        e.preventDefault();
+        alert('Please select at least one network in your query.');
+        return false;
     }
-}
-
-/**
- * Adds checkbox parameter
- * @param {object} parameters object
- * @param {string} key
- */
-function addPipelineParameters(parameters, key) {
-
-    var pipeline = [];
-    $("input[name=pipeline]").each(function () {
-
-        var value = $(this).val();
-
-        if (value) {
-            pipeline.push(value);
-        }
-    });
-
-    if (!($.isEmptyObject(pipeline))) {
-        parameters[key] = pipeline;
-    }
-}
-
-
-/**
- * Adds checkbox parameter
- * @param {object} parameters object
- * @param {string} checkboxName
- * @returns {boolean} form validation boolean
- */
-function addCheckboxParameter(parameters, checkboxName) {
-
-    var checkboxSelected = [];
-    $("input:checkbox[name=" + checkboxName + "]:checked").each(function () {
-        checkboxSelected.push($(this).val());
-    });
-    if ($.isEmptyObject(checkboxSelected)) {
-        alert("Please select at least one network");
-        return false
-    } else {
-        parameters[checkboxName] = checkboxSelected;
-    }
-    return true
-}
+});
 
 
 $(document).ready(function () {
 
-
+    // Autocompletion for author seeding
     $("#author_selection").select2({
         theme: "bootstrap",
         minimumInputLength: 2,
@@ -107,6 +53,7 @@ $(document).ready(function () {
         }
     });
 
+    // Autocompletion for pubmeds seeding
     $("#pubmed_selection").select2({
         theme: "bootstrap",
         minimumInputLength: 2,
@@ -139,6 +86,7 @@ $(document).ready(function () {
         }
     });
 
+    // Autocompletion for annotation seeding
     $("#annotation_selection").select2({
         theme: "bootstrap",
         minimumInputLength: 2,
@@ -161,8 +109,8 @@ $(document).ready(function () {
                 return {
                     results: data.map(function (item) {
                             return {
-                                id: item.annotation + ':' + item.value,
-                                text: item.annotation + ':' + item.value
+                                id: item.annotation + ':' + item.value,  // 'Annotation:value'
+                                text: item.annotation + ':' + item.value  //'Annotation:value'
                             };
                         }
                     )
@@ -171,7 +119,7 @@ $(document).ready(function () {
         }
     });
 
-    // Creates node multiselection input
+    // Autocompletion for nodes seeding
     $("#node_selection").select2({
         theme: "bootstrap",
         minimumInputLength: 2,
@@ -194,8 +142,8 @@ $(document).ready(function () {
                 return {
                     results: data.map(function (item) {
                             return {
-                                id: item.id,
-                                text: item.text
+                                id: item.id, // node_id
+                                text: item.text // bel
                             };
                         }
                     )
@@ -214,7 +162,7 @@ $(document).ready(function () {
                     term: request.term
                 },
                 success: function (data) {
-                    response(data);
+                    response(data); // functionName
                 }
             });
         }, minLength: 2
@@ -223,6 +171,10 @@ $(document).ready(function () {
 
 });
 
+
+/**
+ * * Dynamically adds/deletes pipeline inputs
+ */
 $(function () {
     // Remove button click
     $(document).on(
