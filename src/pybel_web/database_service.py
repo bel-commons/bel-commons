@@ -41,6 +41,7 @@ from pybel_tools.definition_utils import write_namespace
 from pybel_tools.pipeline import query_form_to_dict
 from pybel_tools.query import Query
 from pybel_tools.selection.induce_subgraph import SEED_TYPES, SEED_TYPE_AUTHOR, SEED_TYPE_PUBMED
+from pybel_tools.selection import get_subgraph
 from pybel_tools.summary import (
     info_json,
     get_authors,
@@ -82,12 +83,49 @@ def get_network_from_request():
     :return: A BEL graph
     :rtype: pybel.BELGraph
     """
+
+    # Expand/remove nodes + annotations + filter_pathologies are common filters for both query and network_id seeding
+
+    expand_nodes = request.args.get(APPEND_PARAM)
+    remove_nodes = request.args.get(REMOVE_PARAM)
+
+    if expand_nodes:
+        expand_nodes = [api.decode_node(h) for h in expand_nodes.split(',')]
+
+    if remove_nodes:
+        remove_nodes = [api.decode_node(h) for h in remove_nodes.split(',')]
+
+    annotations = {
+        k: request.args.getlist(k)
+        for k in request.args
+        if k not in BLACK_LIST
+    }
+
+    filter_pathologies = request.args.get(FILTER_PATHOLOGIES)
+
+    if filter_pathologies and filter_pathologies in {'True', True}:
+        filter_pathologies = True
+
+    # Query is in the URL
+
     query_id = request.args.get('query')
 
     if query_id is not None:
         query_id = int(query_id)
         query = api.manager.session.query(models.Query).get(query_id)
-        return query(manager)
+        network_from_query = query(api)
+
+        network = get_subgraph(
+            network_from_query,
+            expand_nodes=expand_nodes,
+            remove_nodes=remove_nodes,
+            filter_pathologies=filter_pathologies,
+            **annotations
+        )
+
+        return network
+
+    # network_id is in URL
 
     network_id = request.args.get(NETWORK_ID)
 
@@ -118,26 +156,7 @@ def get_network_from_request():
     else:
         seed_data = None
 
-    expand_nodes = request.args.get(APPEND_PARAM)
-    remove_nodes = request.args.get(REMOVE_PARAM)
     filters = request.args.getlist(FILTERS)
-
-    filter_pathologies = request.args.get(FILTER_PATHOLOGIES)
-
-    if filter_pathologies and filter_pathologies in {'True', True}:
-        filter_pathologies = True
-
-    if expand_nodes:
-        expand_nodes = [api.decode_node(h) for h in expand_nodes.split(',')]
-
-    if remove_nodes:
-        remove_nodes = [api.decode_node(h) for h in remove_nodes.split(',')]
-
-    annotations = {
-        k: request.args.getlist(k)
-        for k in request.args
-        if k not in BLACK_LIST
-    }
 
     network = api.query(
         network_id=network_id,
@@ -865,12 +884,12 @@ def delete_user(user_id):
 @api_blueprint.route('/api/analysis/<analysis_id>')
 def get_analysis(analysis_id):
     """Returns data from analysis"""
-    graph = get_network_from_request()
+    network = get_network_from_request()
     experiment = manager.session.query(Experiment).get(analysis_id)
     data = pickle.loads(experiment.result)
     results = [
         {'node': node, 'data': data[api.nid_node[node]]}
-        for node in graph.nodes_iter()
+        for node in network.nodes_iter()
         if api.nid_node[node] in data
     ]
 
@@ -880,13 +899,13 @@ def get_analysis(analysis_id):
 @api_blueprint.route('/api/analysis/<analysis_id>/median')
 def get_analysis_median(analysis_id):
     """Returns data from analysis"""
-    graph = get_network_from_request()
+    network = get_network_from_request()
     experiment = manager.session.query(Experiment).get(analysis_id)
     data = pickle.loads(experiment.result)
     # position 3 is the 'median' score
     results = {
         node: data[api.nid_node[node]][3]
-        for node in graph.nodes_iter()
+        for node in network.nodes_iter()
         if api.nid_node[node] in data
     }
 

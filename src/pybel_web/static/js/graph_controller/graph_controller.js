@@ -484,8 +484,7 @@ $(document).ready(function () {
 
     // Comes back to the network id originally choosen
     $("#reset_all").on("click", function () {
-        var args = {};
-        args["network_id"] = window.network_id;
+        var args = getDefaultAjaxParameters(tree);
         window.history.pushState("BiNE", "BiNE", "/explore?" + $.param(args, true));
     });
 });
