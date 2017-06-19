@@ -839,7 +839,6 @@ def drop_query_by_id(query_id):
 @api_blueprint.route('/api/get_query/<int:query_id>', methods=['GET'])
 def query_to_network(query_id):
     """Returns network from a given query ID"""
-
     query = manager.session.query(models.Query).get(query_id)
 
     if query is None:

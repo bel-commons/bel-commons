@@ -261,8 +261,9 @@ function getDefaultAjaxParameters(tree) {
 /**
  * Renders the network given default parameters
  * @param {InspireTree} tree
+ * @param {boolean} firstInit
  */
-function renderNetwork(tree) {
+function renderNetwork(tree, firstInit) {
 
     // Next two lines store filtering parameters from tree and global variables (network_id, expand/delete nodes) and
     // store seed methods/ pipeline arguments from URL
@@ -273,7 +274,19 @@ function renderNetwork(tree) {
     var renderParameters = $.param(args, true);
 
     $.getJSON("/api/network/" + "?" + renderParameters, function (data) {
-        initD3Force(data, tree);
+
+        if (firstInit === true && data.nodes.length > 500) { // First time it tries to render the network checks for the size of it
+
+            renderEmptyFrame();
+
+            alert("The network you try to render contains: " + data.nodes.length + " nodes and " +
+                data.links.length + " edges. To avoid crashing your browser, this network will only be rendered " +
+                "after you click in refresh network. " + "Please consider to give a more specific query or apply some " +
+                "filters to it using the right side tree.")
+        }
+        else {
+            initD3Force(data, tree);
+        }
     });
 
     // Update the URL
@@ -317,60 +330,27 @@ function insertRow(table, row, column1, column2) {
     cell2.innerHTML = column2;
 }
 
-/**
- * Renders the network from a query
- * @param {object} urlObject
- */
-function processQuery(urlObject) {
-    window.query = urlObject["query"];
-
-    var networkFromQuery = doAjaxCall("/api/get_query/" + window.query);
-
-    tree = initTree(urlObject);
-
-
-    if (networkFromQuery.nodes.length > 500) {
-        renderEmptyFrame();
-
-        alert("Your query resulted in a network of " + networkFromQuery.nodes.length + " nodes and " +
-            networkFromQuery.links.length + " edges. To avoid crashing your browser, your query will only be rendered " +
-            "after you click in refresh network. " + "Please consider to give a more specific query or apply some " +
-            "filters to it using the right side tree.")
-    }
-    else {
-        initD3Force(networkFromQuery, tree);
-    }
-
-    return tree
-
-}
-
 
 /**
- * Renders the network from URL
+ * Process the URL and modifies the html rendering the graph
  * @param {object} urlObject
  */
 function processURL(urlObject) {
 
-    // Set networkid as a global variable
-    if ("network_id" in urlObject) {
-        window.network_id = urlObject["network_id"];
-    } else {
-        window.network_id = "0";
-    }
-
-    var networkName = doAjaxCall("/api/network/" + window.network_id + "/name");
-    if (networkName) {
-        $("#network-name").html(networkName);
+    if (window.process_type === "url") {
+        var networkName = doAjaxCall("/api/network/" + window.network_id + "/name");
+        if (networkName) {
+            $("#network-name").html(networkName);
+        }
     }
 
     tree = initTree(urlObject);
 
     // Loads the network if autoload is an argument in the URL or render empty frame if not
     if (window.location.search.indexOf("autoload=yes") > -1) {
-        renderNetwork(tree);
+        renderNetwork(tree, false);
     } else {
-        renderEmptyFrame();
+        renderNetwork(tree, true);
     }
 
     return tree
@@ -417,15 +397,23 @@ $(document).ready(function () {
 
     // Checks if query in URL
     if ("query" in urlObject) {
-        window.process_type = "query";
-        tree = processQuery(urlObject);
+        window.process_type = "query"; // initialize process_type
+        window.query = urlObject["query"]; // initialize query global
+
     } else {
-        window.process_type = "url";
-        tree = processURL(urlObject);
+        window.process_type = "url"; // // initialize process_type
+        // Set networkid as a global variable
+        if ("network_id" in urlObject) {
+            window.network_id = urlObject["network_id"];
+        } else {
+            window.network_id = "0";
+        }
     }
 
+    tree = processURL(urlObject);
+
     $("#refresh-network").on("click", function () {
-        renderNetwork(tree);
+        renderNetwork(tree, false);
     });
 
     $("#collapse-tree").on("click", function () {
