@@ -115,6 +115,7 @@ def get_network_from_request():
         query = api.manager.session.query(models.Query).get(query_id)
         network_from_query = query(api)
 
+        # TODO: Nodes expanding not working since the universe is retricted to the query and not to the set of BEL files
         network = get_subgraph(
             network_from_query,
             expand_nodes=expand_nodes,
@@ -507,15 +508,20 @@ def make_user_network_private(user_id, network_id):
 def get_tree_api():
     """Builds the annotation tree data structure for a given graph"""
     network_id = request.args.get(NETWORK_ID)
+    query_id = request.args.get(QUERY)
 
-    if not network_id:  # List of networks
-        query_id = request.args.get(QUERY)
+    if query_id and not network_id:  # Tree from query subgraph
         query = manager.session.query(models.Query).get(query_id)
+        if query is None:
+            return jsonify('Invalid Query ID')
         query = query.data
         network = query(api)
 
-    else:
+    elif network_id and not query_id:
         network = api.get_network_by_id(network_id)
+
+    else:
+        network = api.universe
 
     return jsonify(api.get_tree_annotations(network))
 
@@ -552,7 +558,7 @@ def get_paths_api():
     if source not in network or target not in network:
         log.info('Source/target node not in network')
         log.info('Nodes in network: %s', network.nodes())
-        return flask.abort(500)
+        return flask.abort(500, 'Source/target node not in network')
 
     if undirected:
         network = network.to_undirected()
@@ -817,8 +823,11 @@ def drop_query_by_id(query_id):
     """Deletes a query"""
     query = manager.session.query(models.Query).get(query_id)
 
+    if query is None:
+        return flask.abort(404, 'Invalid Query ID')
+
     if not (current_user.admin or query.user_id == current_user.id):
-        return flask.abort(403)
+        return flask.abort(403, 'Unauthorized user')
 
     manager.session.delete(query)
     manager.session.commit()
@@ -828,10 +837,13 @@ def drop_query_by_id(query_id):
 
 
 @api_blueprint.route('/api/get_query/<int:query_id>', methods=['GET'])
-def query_to_url(query_id):
-    """Converts the query into an PyBEL explorer URL"""
+def query_to_network(query_id):
+    """Returns network from a given query ID"""
 
     query = manager.session.query(models.Query).get(query_id)
+
+    if query is None:
+        return flask.abort(404, 'Invalid Query ID')
 
     if not (current_user.admin or query.user_id == current_user.id):
         flask.abort(403)

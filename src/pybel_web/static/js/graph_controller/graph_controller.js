@@ -153,8 +153,9 @@ function getCurrentURL() {
  * @returns {object}
  */
 function getFilterParameters(tree) {
-    var args = getSelectedNodesFromTree(tree);
+    var args = getSelectedNodesFromTree(tree); // Adds the annotation filters
 
+    // Adds the append/remove nodes
     if (window.deleteNodes.length > 0) {
         args["remove"] = window.deleteNodes.join();
     }
@@ -162,7 +163,13 @@ function getFilterParameters(tree) {
         args["append"] = window.expandNodes.join();
     }
 
-    args["network_id"] = window.network_id;
+    // Adds the query or the network id
+    if (window.process_type === "query") {
+        args["query"] = window.query;
+    }
+    else {
+        args["network_id"] = window.network_id;
+    }
 
     return args
 }
@@ -190,8 +197,6 @@ function argumentsInURL(args, arg, url) {
  * @returns {object}
  */
 function getQueryFromURL(args, url) {
-
-    args = argumentsInURL(args, "query", url);
 
     // Checking if methods for pipeline analysis are present
     args = argumentsInURL(args, "pathology_filter", url);
@@ -289,6 +294,8 @@ function doAjaxCall(url) {
         dataType: "json",
         success: function (data) {
             result = data;
+        }, error: function (request) {
+            alert(request.message);
         },
         data: {},
         async: false
@@ -315,7 +322,9 @@ function insertRow(table, row, column1, column2) {
  * @param {object} urlObject
  */
 function processQuery(urlObject) {
-    var networkFromQuery = doAjaxCall("/api/get_query/" + urlObject["query"]);
+    window.query = urlObject["query"];
+
+    var networkFromQuery = doAjaxCall("/api/get_query/" + window.query);
 
     tree = initTree(urlObject);
 
@@ -401,6 +410,7 @@ function initTree(urlObject) {
 }
 
 
+// Process the URL depending on whether 'query' arg is present or not (default: network_id)
 $(document).ready(function () {
 
     var urlObject = getCurrentURL();
@@ -1568,7 +1578,6 @@ function initD3Force(graph, tree) {
             args["source"] = nodeNamesToId[pathForm.find("input[name='source']").val()];
             args["target"] = nodeNamesToId[pathForm.find("input[name='target']").val()];
             args["paths_method"] = $("input[name=paths_method]:checked", pathForm).val();
-            args["network_id"] = window.network_id;
 
             var undirected = pathForm.find("input[name='undirectionalize']").is(":checked");
 
