@@ -90,7 +90,7 @@ function getAnnotationForTree(urlObject) {
     }
     // Might be multiple networks within a query
     else if (window.process_type === "query") {
-        return doAjaxCall("/api/network/tree/?query="+ urlObject["query"]);
+        return doAjaxCall("/api/network/tree/?query=" + urlObject["query"]);
     }
     // Tree for Universe
     else {
@@ -319,7 +319,18 @@ function processQuery(urlObject) {
 
     tree = initTree(urlObject);
 
-    initD3Force(networkFromQuery, tree);
+
+    if (networkFromQuery.nodes.length > 500) {
+        renderEmptyFrame();
+
+        alert("Your query resulted in a network of " + networkFromQuery.nodes.length + " nodes and " +
+            networkFromQuery.links.length + " edges. To avoid crashing your browser, your query will only be rendered " +
+            "after you click in refresh network. " + "Please consider to give a more specific query or apply some " +
+            "filters to it using the right side tree.")
+    }
+    else {
+        initD3Force(networkFromQuery, tree);
+    }
 
     return tree
 
