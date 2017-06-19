@@ -838,7 +838,7 @@ def drop_query_by_id(query_id):
 
 @api_blueprint.route('/api/get_query/<int:query_id>', methods=['GET'])
 def query_to_network(query_id):
-    """Returns network from a given query ID"""
+    """Returns info from a given query ID"""
     query = manager.session.query(models.Query).get(query_id)
 
     if query is None:
@@ -847,12 +847,13 @@ def query_to_network(query_id):
     if not (current_user.admin or query.user_id == current_user.id):
         flask.abort(403)
 
-    query = query.data
-
-    network = query(api)  # use duck typing, and the api ensures relabeling
-    network.graph['PYBEL_RELABELED'] = True
-
-    return jsonify(to_json_custom(network))
+    return jsonify({
+        "id": query.id,
+        "seeding": str(query.seeding_as_json()),
+        "assembly": str(query.assembly.networks),
+        "pipeline": str(query.pipeline_protocol)
+    }
+    )
 
 
 ####################################

@@ -32,6 +32,118 @@ function getSelectedNodesFromTree(tree) {
 }
 
 /**
+ * Renders node info table
+ * @param {object} node object
+ */
+function displayNodeInfo(node) {
+
+    var dynamicTable = document.getElementById('info-table');
+
+    while (dynamicTable.rows.length > 0) {
+        dynamicTable.deleteRow(0);
+    }
+
+    var nodeObject = {};
+
+    if (node.cname) {
+        nodeObject["Node"] = node.cname + " (ID: " + node.id + ")";
+    }
+    if (node.name) {
+        nodeObject["Name"] = node.cname;
+    }
+    if (node.function) {
+        nodeObject["Function"] = node.function;
+    }
+    if (node.namespace) {
+        nodeObject["Namespace"] = node.namespace;
+    }
+    if (node.label) {
+        nodeObject["Label"] = node.label
+    }
+    if (node.description) {
+        nodeObject["Description"] = node.description
+    }
+
+    var row = 0;
+    $.each(nodeObject, function (key, value) {
+        insertRow(dynamicTable, row, key, value);
+        row++
+    });
+}
+
+/**
+ * Renders edge info table
+ * @param {object} edge object
+ */
+function displayEdgeInfo(edge) {
+
+    var edgeObject = {};
+
+    var dynamicTable = document.getElementById('info-table');
+
+    while (dynamicTable.rows.length > 0) {
+        dynamicTable.deleteRow(0);
+    }
+
+    // Check if object property exists
+
+    if (edge.evidence) {
+        edgeObject["Evidence"] = edge.evidence;
+    }
+    if (edge.citation) {
+        edgeObject["Citation"] = "<a href=https://www.ncbi.nlm.nih.gov/pubmed/" + edge.citation.reference + " target='_blank' " +
+            "style='color: blue; text-decoration: underline'>" + edge.citation.reference + "</a>";
+    }
+    if (edge.relation) {
+        edgeObject["Relationship"] = edge.relation;
+    }
+    if (edge.annotations) {
+        edgeObject["Annotations"] = JSON.stringify(edge.annotations);
+    }
+    if (edge.source.cname) {
+        edgeObject["Source"] = edge.source.cname + " (ID: " + edge.source.id + ")";
+    }
+    if (edge.target.cname) {
+        edgeObject["Target"] = edge.target.cname + " (ID: " + edge.target.id + ")";
+    }
+
+    var row = 0;
+    $.each(edgeObject, function (key, value) {
+        insertRow(dynamicTable, row, key, value);
+        row++
+    });
+}
+
+/**
+ * Renders query info table
+ * @param {object} query object
+ */
+function displayQueryInfo(query) {
+
+    var dynamicTable = document.getElementById('query-table');
+
+    var queryObject = {};
+
+    queryObject["Query ID"] = query.id;
+
+    queryObject["Assembly"] = query.assembly;
+
+    if (query.seeding !== "[]") {
+        queryObject["Seeding"] = query.seeding;
+    }
+
+    if (query.pipeline !== "[]") {
+        queryObject["Pipeline"] = query.pipeline;
+    }
+
+    var row = 0;
+    $.each(queryObject, function (key, value) {
+        insertRow(dynamicTable, row, key, value);
+        row++
+    });
+}
+
+/**
  * Automatically select nodes in the tree given an URL
  * @param {InspireTree} tree
  * @param {string} url
@@ -89,7 +201,7 @@ function getAnnotationForTree(urlObject) {
         return doAjaxCall("/api/network/tree/?network_id=" + urlObject["network_id"]);
     }
     // Might be multiple networks within a query
-    else if (window.process_type === "query") {
+    else if (window.processType === "query") {
         return doAjaxCall("/api/network/tree/?query=" + urlObject["query"]);
     }
     // Tree for Universe
@@ -164,7 +276,7 @@ function getFilterParameters(tree) {
     }
 
     // Adds the query or the network id
-    if (window.process_type === "query") {
+    if (window.processType === "query") {
         args["query"] = window.query;
     }
     else {
@@ -249,7 +361,7 @@ function getSeedMethodFromURL(args, url) {
  */
 function getDefaultAjaxParameters(tree) {
 
-    if (window.process_type === "query") {
+    if (window.processType === "query") {
         return getQueryFromURL(getFilterParameters(tree), getCurrentURL())
     }
     else {
@@ -337,12 +449,17 @@ function insertRow(table, row, column1, column2) {
  */
 function processURL(urlObject) {
 
-    if (window.process_type === "url") {
+    if (window.processType === "url") {
         var networkName = doAjaxCall("/api/network/" + window.network_id + "/name");
         if (networkName) {
             $("#network-name").html(networkName);
         }
     }
+    if (window.processType === "query") {
+        var queryInfo = doAjaxCall("/api/get_query/" + window.query);
+        displayQueryInfo(queryInfo)
+    }
+
 
     tree = initTree(urlObject);
 
@@ -397,11 +514,11 @@ $(document).ready(function () {
 
     // Checks if query in URL
     if ("query" in urlObject) {
-        window.process_type = "query"; // initialize process_type
+        window.processType = "query"; // initialize processType
         window.query = urlObject["query"]; // initialize query global
 
     } else {
-        window.process_type = "url"; // // initialize process_type
+        window.processType = "url"; // // initialize processType
         // Set networkid as a global variable
         if ("network_id" in urlObject) {
             window.network_id = urlObject["network_id"];
@@ -692,7 +809,7 @@ function initD3Force(graph, tree) {
 
                     initD3Force(data["json"], tree);
 
-                    window.history.pushState("BiNE", "BiNE", "/explore?" + node_param);
+                    window.history.pushState("BiNE", "BiNE", "/explore?" + $.param(args, true));
 
                 });
             },
@@ -721,7 +838,7 @@ function initD3Force(graph, tree) {
 
                     initD3Force(data["json"], tree);
 
-                    window.history.pushState("BiNE", "BiNE", "/explore?" + node_param);
+                    window.history.pushState("BiNE", "BiNE", "/explore?" + $.param(args, true));
 
                 });
 
@@ -1087,90 +1204,6 @@ function initD3Force(graph, tree) {
         }).on("mouseout", function () {
         link.style("stroke", defaultLinkColor);
     });
-
-    /**
-     * Renders node info table
-     * @param {object} node object
-     */
-    function displayNodeInfo(node) {
-
-        var dynamicTable = document.getElementById('info-table');
-
-        while (dynamicTable.rows.length > 0) {
-            dynamicTable.deleteRow(0);
-        }
-
-        var nodeObject = {};
-
-        if (node.cname) {
-            nodeObject["Node"] = node.cname + " (ID: " + node.id + ")";
-        }
-        if (node.name) {
-            nodeObject["Name"] = node.cname;
-        }
-        if (node.function) {
-            nodeObject["Function"] = node.function;
-        }
-        if (node.namespace) {
-            nodeObject["Namespace"] = node.namespace;
-        }
-        if (node.label) {
-            nodeObject["Label"] = node.label
-        }
-        if (node.description) {
-            nodeObject["Description"] = node.description
-        }
-
-        var row = 0;
-        $.each(nodeObject, function (key, value) {
-            insertRow(dynamicTable, row, key, value);
-            row++
-        });
-    }
-
-    /**
-     * Renders edge info table
-     * @param {object} edge object
-     */
-    function displayEdgeInfo(edge) {
-
-        var edgeObject = {};
-
-        var dynamicTable = document.getElementById('info-table');
-
-        while (dynamicTable.rows.length > 0) {
-            dynamicTable.deleteRow(0);
-        }
-
-        // Check if object property exists
-
-        if (edge.evidence) {
-            edgeObject["Evidence"] = edge.evidence;
-        }
-        if (edge.citation) {
-            edgeObject["Citation"] = "<a href=https://www.ncbi.nlm.nih.gov/pubmed/" + edge.citation.reference + " target='_blank' " +
-                "style='color: blue; text-decoration: underline'>" + edge.citation.reference + "</a>";
-        }
-        if (edge.relation) {
-            edgeObject["Relationship"] = edge.relation;
-        }
-        if (edge.annotations) {
-            edgeObject["Annotations"] = JSON.stringify(edge.annotations);
-        }
-        if (edge.source.cname) {
-            edgeObject["Source"] = edge.source.cname + " (ID: " + edge.source.id + ")";
-        }
-        if (edge.target.cname) {
-            edgeObject["Target"] = edge.target.cname + " (ID: " + edge.target.id + ")";
-        }
-
-        var row = 0;
-        $.each(edgeObject, function (key, value) {
-            insertRow(dynamicTable, row, key, value);
-            row++
-        });
-    }
-
 
     /**
      * Freeze the graph when space is pressed
