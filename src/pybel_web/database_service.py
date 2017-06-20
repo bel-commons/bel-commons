@@ -372,7 +372,7 @@ def nodes_by_network(network_id):
 def drop_network_by_id(network_id):
     """Drops a specific graph"""
     log.info('dropping graphs %s', network_id)
-    manager.drop_graph(network_id)
+    manager.drop_network_by_id(network_id)
     return jsonify({'status': 200})
 
 
@@ -381,7 +381,7 @@ def drop_network_by_id(network_id):
 def drop_networks():
     """Drops all graphs"""
     log.info('dropping all networks')
-    manager.drop_graphs()
+    manager.drop_networks()
     return jsonify({'status': 200})
 
 
