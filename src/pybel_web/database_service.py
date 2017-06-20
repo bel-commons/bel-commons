@@ -388,7 +388,7 @@ def drop_networks():
 @api_blueprint.route('/api/network/list', methods=['GET'])
 def get_network_list():
     """Gets a list of networks"""
-    return jsonify(manager.list_graphs())
+    return jsonify(manager.list_networks())
 
 
 @api_blueprint.route('/api/network/<int:network_id>/summarize')
@@ -424,7 +424,7 @@ def drop_network(network_id):
 
     :param int network_id: The identifier of the network to drop
     """
-    manager.drop_graph(network_id)
+    manager.drop_network_by_id(network_id)
     flash('Dropped network {}'.format(network_id))
     return redirect(url_for('view_networks'))
 
