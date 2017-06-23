@@ -47,12 +47,23 @@
                                 {% for seed in query.seeding_as_json() %}
                                     <li>
                                         <span>{{ seed['type']|title }}</span>
-                                        <ul>{% for seed_data in seed['data'] %}
-                                            <li>
-                                                {{ seed_data }}
-                                            </li>
-                                        {% endfor %}
-                                        </ul>
+                                        {% if seed['type'] == 'annotation' %}
+                                            <ul>
+                                                {% for annotation, value in seed['data'].items() %}
+                                                    <li>
+                                                        {{ annotation }}:{{ value }}
+                                                    </li>
+                                                {% endfor %}
+                                            </ul>
+                                        {% else %}
+                                            <ul>
+                                                {% for seed_data in seed['data'] %}
+                                                    <li>
+                                                        {{ seed_data }}
+                                                    </li>
+                                                {% endfor %}
+                                            </ul>
+                                        {% endif %}
                                     </li>
                                 {% endfor %}
                             </ul>
