@@ -15,6 +15,7 @@ from pybel.struct import union
 EXPERIMENT_TABLE_NAME = 'pybel_experiment'
 REPORT_TABLE_NAME = 'pybel_report'
 ROLE_TABLE_NAME = 'pybel_role'
+PROJECT_TABLE_NAME = 'pybel_project'
 USER_TABLE_NAME = 'pybel_user'
 ASSEMBLY_TABLE_NAME = 'pybel_assembly'
 ASSEMBLY_NETWORK_TABLE_NAME = 'pybel_assembly_network'
@@ -79,6 +80,13 @@ roles_users = Table(
     Column('role_id', Integer, ForeignKey('{}.id'.format(ROLE_TABLE_NAME)))
 )
 
+projects_users = Table(
+    'projects_users',
+    Base.metadata,
+    Column('project_id', Integer, ForeignKey('{}.id'.format(PROJECT_TABLE_NAME))),
+    Column('user_id', Integer, ForeignKey('{}.id'.format(USER_TABLE_NAME)))
+)
+
 
 class Role(Base, RoleMixin):
     """Stores user roles"""
@@ -86,6 +94,18 @@ class Role(Base, RoleMixin):
     id = Column(Integer(), primary_key=True)
     name = Column(String(80), unique=True, nullable=False)
     description = Column(String(255))
+
+    def __str__(self):
+        return self.name
+
+
+class Project(Base):
+    """Stores projects"""
+    __tablename__ = PROJECT_TABLE_NAME
+    id = Column(Integer(), primary_key=True)
+    name = Column(String(80), unique=True, nullable=False)
+    description = Column(String(255))
+    users = relationship('User', backref=backref('projects', lazy='dynamic'))
 
     def __str__(self):
         return self.name
