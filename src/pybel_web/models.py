@@ -105,7 +105,7 @@ class Project(Base):
     id = Column(Integer(), primary_key=True)
     name = Column(String(80), unique=True, nullable=False)
     description = Column(String(255))
-    users = relationship('User', backref=backref('projects', lazy='dynamic'))
+    users = relationship('User', secondary=projects_users, backref=backref('projects', lazy='dynamic'))
 
     def __str__(self):
         return self.name
