@@ -7,14 +7,17 @@ Reference for testing Flask
 - Flask Cookbook: http://flask.pocoo.org/docs/0.12/tutorial/testing/
 """
 
+import datetime
 import json
 import logging
 import os
 import tempfile
 import unittest
 
+from flask_security import current_user
+
 from pybel.constants import PYBEL_CONNECTION
-from pybel_web.application import FlaskPybel, create_application
+from pybel_web.application import FlaskPyBEL, create_application
 from pybel_web.database_service import api_blueprint
 from pybel_web.forms import UploadForm
 from pybel_web.main_service import build_main_service
@@ -24,7 +27,7 @@ from tests.constants import test_bel_pickle_path
 log = logging.getLogger(__name__)
 log.setLevel(10)
 
-TEST_USER_USERNAME = 'test@example.com'
+TEST_USER_EMAIL = 'test@example.com'
 TEST_USER_PASSWORD = 'password'
 TEST_SECRET_KEY = 'pybel_web_tests'
 
@@ -50,7 +53,8 @@ class WebTest(unittest.TestCase):
             CELERY_ALWAYS_EAGER=True,
             CELERY_RESULT_BACKEND='cache',
             CELERY_CACHE_BACKEND='memory',
-            CELERY_EAGER_PROPAGATES_EXCEPTIONS=True
+            CELERY_EAGER_PROPAGATES_EXCEPTIONS=True,
+            WTF_CSRF_ENABLED=False,
         ))
 
         self.app_instance = create_application(**config)
@@ -61,11 +65,15 @@ class WebTest(unittest.TestCase):
         self.app_instance.register_blueprint(api_blueprint)
         self.app_instance.register_blueprint(upload_blueprint)
 
-        self.pybel_app = FlaskPybel(self.app_instance)
-        self.manager = self.pybel_app.manager
-        self.api = self.pybel_app.api
-        self.user_datastore = self.pybel_app.user_datastore
-        self.user_datastore.create_user(email=TEST_USER_USERNAME, password=TEST_USER_PASSWORD)
+        self.pybel = FlaskPyBEL(self.app_instance)
+        self.manager = self.pybel.manager
+        self.api = self.pybel.api
+        self.user_datastore = self.pybel.user_datastore
+        self.user_datastore.create_user(
+            email=TEST_USER_EMAIL,
+            password=TEST_USER_PASSWORD,
+            confirmed_at=datetime.datetime.now(),
+        )
         self.user_datastore.commit()
 
         self.app = self.app_instance.test_client()
@@ -88,14 +96,21 @@ class WebTest(unittest.TestCase):
         return self.app.get('/logout', follow_redirects=True)
 
     def test_login(self):
-        rv = self.login(TEST_USER_USERNAME, TEST_USER_PASSWORD)
-        log.warning('%s', rv)
-        self.assertTrue(rv.data)
+        """Test a user can be properly logged in then back out"""
+        self.assertFalse(current_user.authenticated)
+
+        self.login(TEST_USER_EMAIL, TEST_USER_PASSWORD)
+
+        self.assertTrue(current_user.authenticated)
+        self.assertEqual(TEST_USER_EMAIL, current_user.email)
+
+        self.logout()
+        self.assertFalse(current_user.authenticated)
 
     def test_upload(self):
         self.assertEqual(0, self.manager.count_networks())
 
-        self.login(TEST_USER_USERNAME, TEST_USER_PASSWORD)
+        self.login(TEST_USER_EMAIL, TEST_USER_PASSWORD)
 
         f = open(test_bel_pickle_path, 'rb')
 
@@ -113,7 +128,6 @@ class WebTest(unittest.TestCase):
 
         log.warning('Response: %s, data: %s', response, response.data)
 
-
         self.assertEqual(1, self.manager.count_networks())
 
     @unittest.skip
@@ -126,7 +140,7 @@ class WebTest(unittest.TestCase):
             'pipeline[]': ['function1']
         }
 
-        self.login(TEST_USER_USERNAME, TEST_USER_PASSWORD)
+        self.login(TEST_USER_EMAIL, TEST_USER_PASSWORD)
         response = self.app.post(
             '/api/pipeline/query',
             data=pipeline_query,
@@ -156,7 +170,7 @@ class WebTest(unittest.TestCase):
             'pipeline[]': ['function1', 'function2']
         }
 
-        self.login(TEST_USER_USERNAME, TEST_USER_PASSWORD)
+        self.login(TEST_USER_EMAIL, TEST_USER_PASSWORD)
         response = self.app.post(
             '/api/pipeline/query',
             data=pipeline_query,

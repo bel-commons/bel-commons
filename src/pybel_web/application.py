@@ -10,6 +10,7 @@ Resources:
 4. http://flask.pocoo.org/docs/0.12/patterns/celery/
 """
 
+import datetime
 import logging
 import os
 import socket
@@ -36,7 +37,7 @@ from .models import Role, User
 log = logging.getLogger(__name__)
 
 
-class FlaskPybel:
+class FlaskPyBEL:
     """Encapsulates the data needed for the PyBEL Web Application"""
 
     def __init__(self, app=None):
@@ -89,7 +90,7 @@ class FlaskPybel:
 
 
 bootstrap = Bootstrap()
-pybel = FlaskPybel()
+pybel = FlaskPyBEL()
 mail = Mail()
 security = Security()
 jquery2_cdn = WebCDN('//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/')
@@ -158,6 +159,7 @@ def create_application(get_mail=False, **kwargs):
                 admin_user = pybel.user_datastore.create_user(
                     email=email,
                     password='pybeladmin',
+                    confirmed_at=datetime.datetime.now(),
                 )
 
             pybel.user_datastore.add_role_to_user(admin_user, admin_role)
