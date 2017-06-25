@@ -17,6 +17,7 @@ from sqlalchemy.exc import IntegrityError, OperationalError
 
 from pybel import from_bytes
 from pybel.io.io_exceptions import ImportVersionWarning
+from pybel.manager.models import Network
 from .constants import integrity_message
 from .forms import UploadForm
 from .utils import add_network_reporting, manager
@@ -50,6 +51,13 @@ def view_upload():
         log.exception('unpickle error')
         flash(message, category='error')
         return redirect(url_for('upload.view_upload'))
+
+    network = manager.session.query(Network).filter(Network.name == graph.name,
+                                                    Network.version == graph.version).one_or_none()
+
+    if network:
+        flash('This network has already been inserted', category='warning')
+        return redirect(url_for('view_summary', network_id=network.id))
 
     try:
         network = manager.insert_graph(graph)
