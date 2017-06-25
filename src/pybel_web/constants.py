@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
+import os
+import time
 
 from logging import getLogger
+
+from pybel.constants import PYBEL_LOG_DIR
 
 PYBEL_CACHE_CONNECTION = 'pybel_cache_connection'
 PYBEL_DEFINITION_MANAGER = 'pybel_definition_manager'
@@ -59,3 +63,5 @@ BLACK_LIST = {
     FILTER_PATHOLOGIES,
     QUERY
 }
+
+log_path = os.path.join(PYBEL_LOG_DIR, time.strftime('pybel_web.txt'))

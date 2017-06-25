@@ -3,9 +3,7 @@
 """This module runs the dictionary-backed PyBEL API"""
 
 import logging
-import os
 import sys
-import time
 
 import pandas as pd
 from flask import (
@@ -27,9 +25,11 @@ from flask_security import (
 )
 from six import BytesIO
 
-from pybel import from_bytes
-from pybel import from_url
-from pybel.constants import FRAUNHOFER_RESOURCES, PYBEL_CONNECTION
+from pybel import from_bytes, from_url
+from pybel.constants import (
+    FRAUNHOFER_RESOURCES,
+    PYBEL_CONNECTION,
+)
 from pybel.manager.models import (
     Namespace,
     Annotation,
@@ -40,6 +40,7 @@ from pybel_tools.api import DatabaseService
 from pybel_tools.constants import BMS_BASE
 from pybel_tools.ioutils import upload_recursive, get_paths_recursive
 from pybel_tools.mutation.metadata import fix_pubmed_citations
+from pybel_tools.pipeline import no_arguments_map
 from pybel_tools.utils import get_version as get_pybel_tools_version
 from .application import create_celery
 from .constants import *
@@ -52,7 +53,6 @@ from .utils import (
     get_api,
     get_manager
 )
-from pybel_tools.pipeline import no_arguments_map
 
 log = logging.getLogger(__name__)
 
@@ -376,12 +376,15 @@ def build_main_service(app):
         reports = manager.session.query(Report).order_by(Report.created).all()
         return render_template('reporting.html', reports=reports)
 
+    @app.route('/logging', methods=['GET'])
+    def view_logging():
+        """Shows the logging"""
+        return send_file(log_path)
 
     @app.route('/how_to_use', methods=['GET'])
     def view_how_to_use():
         """Shows How to use PyBEL-web"""
         return render_template('how_to_use.html')
-
 
     @app.route('/pipeline/help', methods=['GET'])
     def view_pipeline_help():

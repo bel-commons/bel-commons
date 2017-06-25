@@ -32,6 +32,7 @@ from pybel.manager.models import Base
 from pybel.utils import get_version as pybel_version
 from pybel_tools.utils import enable_cool_mode
 from pybel_tools.utils import get_version as pybel_tools_get_version
+from .constants import log_path
 from .admin_service import build_admin_service
 from .analysis_service import analysis_blueprint
 from .application import create_application
@@ -47,18 +48,28 @@ from .utils import iterate_user_strings
 log = logging.getLogger(__name__)
 
 datefmt = '%H:%M:%S'
-fmt = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+fmt = "%(asctime)s - %(levelname)s - %(name)s - %(message)s"
 
 data_path = os.path.join(os.path.expanduser('~'), '.pybel', 'data')
 user_dump_path = os.path.join(data_path, 'users.tsv')
 
+fh = logging.FileHandler(log_path)
+fh.setLevel(logging.DEBUG)
+fh.setFormatter(logging.Formatter(fmt))
+log.addHandler(fh)
+
 
 def set_debug(level):
     logging.basicConfig(level=level, format=fmt, datefmt=datefmt)
+
     pybel_log = logging.getLogger('pybel')
     pybel_log.setLevel(level)
+    pybel_log.addHandler(fh)
+
     pbt_log = logging.getLogger('pybel_tools')
     pbt_log.setLevel(level)
+    pbt_log.addHandler(fh)
+
     log.setLevel(level)
 
 
