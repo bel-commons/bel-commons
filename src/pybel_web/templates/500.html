@@ -8,12 +8,15 @@
 
 {% block content %}
     <div class="container" style="margin-top: 50px">
+
         {{ util.flashed_messages(dismissible=True, container=False) }}
 
-
         <div class="panel panel-default">
+            <div class="page-header">
+                <h1>PyBEL Web Error Page</h1>
+            </div>
             <div class="panel-body">
-                <h3>500 Error</h3>
+                <h3>Internal Server (500) Error</h3>
                 <p>The server encountered a problem. Please contact the site administrator.</p>
 
                 <!-- Sentry JS SDK 2.1.+ required -->
