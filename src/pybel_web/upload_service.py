@@ -4,10 +4,16 @@ from __future__ import unicode_literals
 
 import logging
 
-from flask import flash, redirect, url_for
-from flask import render_template, Blueprint
+from flask import (
+    flash,
+    redirect,
+    url_for,
+    render_template,
+    Blueprint,
+    request,
+)
 from flask_login import login_required, current_user
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, OperationalError
 
 from pybel import from_bytes
 from pybel.io.io_exceptions import ImportVersionWarning
@@ -29,12 +35,14 @@ def view_upload():
     if not form.validate_on_submit():
         return render_template('upload.html', form=form, current_user=current_user)
 
+    log.warning('Request: %s, %s', request.data, request.files)
+
     log.info('uploading %s', form.file.data.filename)
 
     try:
         graph_bytes = form.file.data.read()
         graph = from_bytes(graph_bytes)
-    except ImportVersionWarning as e:
+    except (ImportVersionWarning, ImportError) as e:
         flash(str(e), category='error')
         return redirect(url_for('upload.view_upload'))
     except Exception as e:
@@ -46,14 +54,13 @@ def view_upload():
     try:
         network = manager.insert_graph(graph)
     except IntegrityError:
-        message = integrity_message.format(graph.name, graph.version)
-        log.exception(message)
-        flash(message, category='error')
+        flash(integrity_message.format(graph.name, graph.version), category='error')
         manager.rollback()
         return redirect(url_for('upload.view_upload'))
-    except Exception as e:
+    except (OperationalError, Exception) as e:
         log.exception('upload error')
         flash("Error storing in database [{}]".format(e), category='error')
+        manager.rollback()
         return redirect(url_for('upload.view_upload'))
 
     log.info('done uploading %s [%d]', form.file.data.filename, network.id)
@@ -70,8 +77,12 @@ def view_upload():
             public=form.public.data
         )
     except IntegrityError:
-        log.exception('integrity error')
-        flash('problem with reporting service', category='warning')
+        message = 'integrity error while adding reporting'
+        flash(message, category='warning')
+        manager.rollback()
+    except (OperationalError, Exception) as e:
+        log.exception('error uploading report')
+        flash("Error storing report in database [{}]".format(e), category='error')
         manager.rollback()
 
     return redirect(url_for('view_summary', network_id=network.id))
