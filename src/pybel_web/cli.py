@@ -146,7 +146,7 @@ def setup(ctx):
 
 
 @manage.command()
-@click.option('-f', '--file', type=click.File('r'), default=sys.stdin, help='Input user/role file')
+@click.option('-f', '--file', type=click.File('r'), default=user_dump_path, help='Input user/role file')
 @click.pass_context
 def load(ctx, file):
     """Dump stuff for loading later (in lieu of having proper migrations)"""
