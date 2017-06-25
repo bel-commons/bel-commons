@@ -421,6 +421,6 @@ def iterate_user_strings(manager, with_passwords):
             u.email,
             u.first_name,
             u.last_name,
-            ','.join(r.name for r in u.roles),
+            ','.join(sorted(r.name for r in u.roles)),
             '\t{}'.format(u.password) if with_passwords else ''
         )
