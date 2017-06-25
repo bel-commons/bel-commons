@@ -56,7 +56,7 @@ from pybel_tools.summary.export import info_list
 from pybel_tools.summary.node_properties import count_variants
 from pybel_tools.summary.node_summary import get_unused_namespaces
 from pybel_tools.utils import prepare_c3, count_dict_values
-from .application import get_manager, get_api, get_userdatastore
+from .application import get_manager, get_api, get_user_datastore
 from .constants import *
 from .models import User, Report, Experiment
 
@@ -87,7 +87,7 @@ def get_userdatastore_proxy():
 
     :rtype: flask_security.SQLAlchemyUserDataStore
     """
-    return LocalProxy(lambda: get_userdatastore(current_app))
+    return LocalProxy(lambda: get_user_datastore(current_app))
 
 
 manager = get_manager_proxy()

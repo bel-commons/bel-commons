@@ -41,6 +41,7 @@ INSTALL_REQUIRES = [
     'celery',
     'obonet',
     'pybel-tools',
+    'raven',
 ]
 EXTRAS_REQUIRE = {
     'speed': ['python-Levenshtein', ]  # Activates c-based speed improvements for fuzzywuzzy

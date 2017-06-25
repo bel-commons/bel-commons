@@ -16,12 +16,16 @@ import socket
 import time
 from getpass import getuser
 
-import flask
 from celery import Celery
-from flask import Flask
+from flask import (
+    Flask,
+    g,
+    render_template
+)
 from flask_bootstrap import Bootstrap, WebCDN
 from flask_mail import Mail, Message
 from flask_security import Security, SQLAlchemyUserDatastore
+from raven.contrib.flask import Sentry
 
 from pybel.constants import config as pybel_config, PYBEL_CONNECTION
 from pybel.manager import build_manager, Base
@@ -32,18 +36,6 @@ from .models import Role, User
 log = logging.getLogger(__name__)
 
 
-class _FlaskPybelState:
-    """Represents the internal state of the PyBEL Flask Extention"""
-
-    def __init__(self, manager):
-        """
-        :param pybel.manager.cache.CacheManager manager: A cache manager
-        """
-        self.manager = manager
-        self.api = DatabaseService(manager=self.manager)
-        self.user_datastore = SQLAlchemyUserDatastore(self.manager, User, Role)
-
-
 class FlaskPybel:
     """Encapsulates the data needed for the PyBEL Web Application"""
 
@@ -52,7 +44,10 @@ class FlaskPybel:
         :param flask.Flask app: A Flask app
         """
         self.app = app
-        self.state = None
+        self.sentry = None
+        self.manager = None
+        self.user_datastore = None
+        self.api = None
 
         if app is not None:
             self.init_app(app)
@@ -61,16 +56,20 @@ class FlaskPybel:
         """
         :param flask.Flask app:
         """
-        manager = build_manager(app.config.get(PYBEL_CONNECTION))
+        self.manager = build_manager(app.config.get(PYBEL_CONNECTION))
 
-        Base.metadata.bind = manager.engine
-        Base.query = manager.session.query_property()
+        self.sentry = Sentry(app,
+                             dsn='https://0e311acc3dc7491fb31406f4e90b07d9:7709d72100f04327b8ef3b2ea673b7ee@sentry.io/183619')
 
-        self.state = _FlaskPybelState(manager)
+        Base.metadata.bind = self.manager.engine
+        Base.query = self.manager.session.query_property()
+
+        self.api = DatabaseService(manager=self.manager)
+        self.user_datastore = SQLAlchemyUserDatastore(self.manager, User, Role)
 
         if app.config.get('PYBEL_DS_PRELOAD', False):
             log.info('preloading networks')
-            self.state.api.cache_networks(
+            self.api.cache_networks(
                 check_version=app.config.get('PYBEL_DS_CHECK_VERSION', True),
                 force_reload=app.config.get('PYBEL_WEB_FORCE_RELOAD', False),
                 eager=app.config.get('PYBEL_DS_EAGER', False)
@@ -78,7 +77,15 @@ class FlaskPybel:
             log.info('pre-loaded the dict service')
 
         app.extensions = getattr(app, 'extensions', {})
-        app.extensions['pybel'] = self.state
+        app.extensions['pybel'] = self
+
+        @app.errorhandler(500)
+        def internal_server_error(error):
+            return render_template(
+                '500.html',
+                event_id=g.sentry_event_id,
+                public_dsn=self.sentry.client.get_public_dsn('https')
+            )
 
 
 bootstrap = Bootstrap()
@@ -134,30 +141,30 @@ def create_application(get_mail=False, **kwargs):
                 mail.send(startup_message)
 
     pybel.init_app(app)
-    security.init_app(app, pybel.state.user_datastore, register_form=ExtendedRegisterForm)
+    security.init_app(app, pybel.user_datastore, register_form=ExtendedRegisterForm)
 
     @app.before_first_request
     def prepare_service():
         """A filter for preparing the web service when it is started"""
-        pybel.state.manager.create_all()
+        pybel.manager.create_all()
 
-        admin_role = pybel.state.user_datastore.find_or_create_role(name='admin', description='Admin of PyBEL Web')
-        scai_role = pybel.state.user_datastore.find_or_create_role(name='scai', description='Users from SCAI')
+        admin_role = pybel.user_datastore.find_or_create_role(name='admin', description='Admin of PyBEL Web')
+        scai_role = pybel.user_datastore.find_or_create_role(name='scai', description='Users from SCAI')
 
         for email in ('charles.hoyt@scai.fraunhofer.de', 'daniel.domingo.fernandez@scai.fraunhofer.de'):
-            admin_user = pybel.state.user_datastore.find_user(email=email)
+            admin_user = pybel.user_datastore.find_user(email=email)
 
             if admin_user is None:
-                admin_user = pybel.state.user_datastore.create_user(
+                admin_user = pybel.user_datastore.create_user(
                     email=email,
                     password='pybeladmin',
                 )
 
-            pybel.state.user_datastore.add_role_to_user(admin_user, admin_role)
-            pybel.state.user_datastore.add_role_to_user(admin_user, scai_role)
-            pybel.state.manager.session.add(admin_user)
+            pybel.user_datastore.add_role_to_user(admin_user, admin_role)
+            pybel.user_datastore.add_role_to_user(admin_user, scai_role)
+            pybel.manager.session.add(admin_user)
 
-        pybel.state.manager.session.commit()
+        pybel.manager.session.commit()
 
     if not get_mail:
         return app
@@ -172,22 +179,26 @@ def create_celery(application):
     :return: A Celery instance
     :rtype: celery.Celery
     """
-    celery = Celery(application.import_name, broker=application.config['CELERY_BROKER_URL'])
+    celery = Celery(
+        application.import_name,
+        broker=application.config['CELERY_BROKER_URL']
+    )
     celery.conf.update(application.config)
     TaskBase = celery.Task
 
     class ContextTask(TaskBase):
+        """Celery task running within a Flask application context."""
         abstract = True
 
         def __call__(self, *args, **kwargs):
             with application.app_context():
-                return TaskBase.__call__(self, *args, **kwargs)
+                return super(ContextTask, self).__call__(*args, **kwargs)
 
     celery.Task = ContextTask
     return celery
 
 
-def get_state(app):
+def get_pybel(app):
     """
     :param flask.Flask app: A Flask app
     :rtype: web.application._FlaskPybelState
@@ -204,7 +215,7 @@ def get_manager(app):
     :param flask.Flask app: A Flask app
     :rtype: pybel.manager.cache.CacheManager
     """
-    return get_state(app).manager
+    return get_pybel(app).manager
 
 
 def get_api(app):
@@ -213,13 +224,22 @@ def get_api(app):
     :param flask.Flask app: A Flask app
     :rtype: DatabaseService
     """
-    return get_state(app).api
+    return get_pybel(app).api
 
 
-def get_userdatastore(app):
+def get_user_datastore(app):
     """Gets the User Data Store from a Flask app
 
     :param flask.Flask app: A Flask app
     :rtype: flask_security.DatabaseService
     """
-    return get_state(app).user_datastore
+    return get_pybel(app).user_datastore
+
+
+def get_sentry(app):
+    """Gets the User Data Store from a Flask app
+
+    :param flask.Flask app: A Flask app
+    :rtype: raven.Sentry
+    """
+    return get_pybel(app).sentry
