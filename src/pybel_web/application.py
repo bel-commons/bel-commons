@@ -137,10 +137,26 @@ def create_application(get_mail=False, **kwargs):
     security.init_app(app, pybel.state.user_datastore, register_form=ExtendedRegisterForm)
 
     @app.before_first_request
-    def create_user():
+    def prepare_service():
+        """A filter for preparing the web service when it is started"""
         pybel.state.manager.create_all()
-        pybel.state.user_datastore.find_or_create_role(name='admin', description='Administrator of PyBEL Web')
-        pybel.state.user_datastore.find_or_create_role(name='scai', description='Users from Fraunhofer SCAI')
+
+        admin_role = pybel.state.user_datastore.find_or_create_role(name='admin', description='Admin of PyBEL Web')
+        scai_role = pybel.state.user_datastore.find_or_create_role(name='scai', description='Users from SCAI')
+
+        for email in ('charles.hoyt@scai.fraunhofer.de', 'daniel.domingo.fernandez@scai.fraunhofer.de'):
+            admin_user = pybel.state.user_datastore.find_user(email=email)
+
+            if admin_user is None:
+                admin_user = pybel.state.user_datastore.create_user(
+                    email=email,
+                    password='pybeladmin',
+                )
+
+            pybel.state.user_datastore.add_role_to_user(admin_user, admin_role)
+            pybel.state.user_datastore.add_role_to_user(admin_user, scai_role)
+            pybel.state.manager.session.add(admin_user)
+
         pybel.state.manager.session.commit()
 
     if not get_mail:
