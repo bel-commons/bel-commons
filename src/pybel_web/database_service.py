@@ -734,10 +734,10 @@ def nodes_by_name(node_name):
     return jsonify(nodes)
 
 
-@api_blueprint.route('/api/nodes/by_namespace/<node_namespace>', methods=['GET'])
-def nodes_by_namespace(node_namespace):
+@api_blueprint.route('/api/nodes/by_namespace/<namespace>', methods=['GET'])
+def nodes_by_namespace(namespace):
     """Gets all nodes with identifiers from the given namespace"""
-    nodes = api.query_nodes(namespace=node_namespace)
+    nodes = api.query_nodes(namespace=namespace)
     return jsonify(nodes)
 
 
@@ -802,7 +802,6 @@ def get_pipeline():
         seeding=json.dumps(q.seeds),
         pipeline_protocol=str(q.pipeline),
         dump=json.dumps(q.to_json()),
-
     )
 
     manager.session.add(qo)
@@ -849,8 +848,7 @@ def query_to_network(query_id):
         "seeding": str(query.seeding_as_json()),
         "assembly": str(query.assembly.networks),
         "pipeline": str(query.pipeline_protocol)
-    }
-    )
+    })
 
 
 ####################################
