@@ -13,11 +13,12 @@ import os
 import tempfile
 import unittest
 
-from pybel.constants import *
 from pybel.constants import PYBEL_CONNECTION
-from pybel_web.application import FlaskPybel
-from pybel_web.application import create_application
+from pybel_web.application import FlaskPybel, create_application
 from pybel_web.database_service import api_blueprint
+from pybel_web.main_service import build_main_service
+from pybel_web.upload_service import upload_blueprint
+from tests.constants import test_bel_pickle_path
 
 log = logging.getLogger(__name__)
 log.setLevel(10)
@@ -44,13 +45,23 @@ class WebTest(unittest.TestCase):
             'PYBEL_DS_PRELOAD': True,
         }
 
+        config.update(dict(
+            CELERY_ALWAYS_EAGER=True,
+            CELERY_RESULT_BACKEND='cache',
+            CELERY_CACHE_BACKEND='memory',
+            CELERY_EAGER_PROPAGATES_EXCEPTIONS=True
+        ))
+
         self.app_instance = create_application(**config)
 
+        build_main_service(self.app_instance)
         self.app_instance.register_blueprint(api_blueprint)
+        self.app_instance.register_blueprint(upload_blueprint)
+
         self.pybel_app = FlaskPybel(self.app_instance)
-        self.manager = self.pybel_app.state.manager
-        self.api = self.pybel_app.state.api
-        self.user_datastore = self.pybel_app.state.user_datastore
+        self.manager = self.pybel_app.manager
+        self.api = self.pybel_app.api
+        self.user_datastore = self.pybel_app.user_datastore
         self.user_datastore.create_user(email=TEST_USER_USERNAME, password=TEST_USER_PASSWORD)
         self.user_datastore.commit()
 
@@ -61,10 +72,13 @@ class WebTest(unittest.TestCase):
         os.unlink(self.db_file)
 
     def login(self, username, password):
-        return self.app.post('/login', data=dict(
-            username=username,
-            password=password
-        ), follow_redirects=True)
+        return self.app.post(
+            '/login',
+            data=dict(
+                username=username,
+                password=password
+            ),
+            follow_redirects=True)
 
     def logout(self):
         return self.app.get('/logout', follow_redirects=True)
@@ -73,6 +87,25 @@ class WebTest(unittest.TestCase):
         rv = self.login(TEST_USER_USERNAME, TEST_USER_PASSWORD)
         log.warning('%s', rv)
         self.assertTrue(rv.data)
+
+    def test_upload(self):
+        self.assertEqual(0, self.manager.count_networks())
+
+        self.login(TEST_USER_USERNAME, TEST_USER_PASSWORD)
+
+        f = open(test_bel_pickle_path, 'rb')
+
+        response = self.app.post(
+            '/upload',
+            data={
+                'file': (f, 'test_bel.gpickle')
+            },
+            follow_redirects=True,
+        )
+
+        log.warning('Response: %s', response)
+
+        self.assertEqual(1, self.manager.count_networks())
 
     @unittest.skip
     def test_pipeline_view(self):
