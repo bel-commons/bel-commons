@@ -99,7 +99,7 @@ def build_dictionary_service_admin(app):
     @roles_required('admin')
     def rollback():
         """Rolls back the transaction for when something bad happens"""
-        manager.rollback()
+        manager.session.rollback()
         return jsonify({'status': 200})
 
     @app.route('/admin/enrich')
