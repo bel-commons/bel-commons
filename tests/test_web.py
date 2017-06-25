@@ -16,6 +16,7 @@ import unittest
 from pybel.constants import PYBEL_CONNECTION
 from pybel_web.application import FlaskPybel, create_application
 from pybel_web.database_service import api_blueprint
+from pybel_web.forms import UploadForm
 from pybel_web.main_service import build_main_service
 from pybel_web.upload_service import upload_blueprint
 from tests.constants import test_bel_pickle_path
@@ -54,6 +55,8 @@ class WebTest(unittest.TestCase):
 
         self.app_instance = create_application(**config)
 
+        self.app_instance.config['LOGIN_DISABLED'] = False
+
         build_main_service(self.app_instance)
         self.app_instance.register_blueprint(api_blueprint)
         self.app_instance.register_blueprint(upload_blueprint)
@@ -71,14 +74,15 @@ class WebTest(unittest.TestCase):
         os.close(self.db_fd)
         os.unlink(self.db_file)
 
-    def login(self, username, password):
+    def login(self, email, password):
         return self.app.post(
             '/login',
             data=dict(
-                username=username,
+                email=email,
                 password=password
             ),
-            follow_redirects=True)
+            follow_redirects=True
+        )
 
     def logout(self):
         return self.app.get('/logout', follow_redirects=True)
@@ -95,15 +99,20 @@ class WebTest(unittest.TestCase):
 
         f = open(test_bel_pickle_path, 'rb')
 
+        with self.app_instance.test_request_context():
+            upload_form = UploadForm(
+                file=f
+            )
+
         response = self.app.post(
             '/upload',
-            data={
-                'file': (f, 'test_bel.gpickle')
-            },
+            data=upload_form.data,
+            content_type='multipart/form-data',
             follow_redirects=True,
         )
 
-        log.warning('Response: %s', response)
+        log.warning('Response: %s, data: %s', response, response.data)
+
 
         self.assertEqual(1, self.manager.count_networks())
 
