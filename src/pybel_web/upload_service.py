@@ -56,7 +56,8 @@ def view_upload():
                                                     Network.version == graph.version).one_or_none()
 
     if network:
-        flash('This network has already been inserted', category='warning')
+        flash('This network has already been uploaded. If you have made changes, consider bumping the version',
+              category='warning')
         return redirect(url_for('view_summary', network_id=network.id))
 
     try:
