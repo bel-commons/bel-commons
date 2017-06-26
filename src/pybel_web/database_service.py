@@ -841,6 +841,7 @@ def query_to_network(query_id):
     if not (current_user.admin or query.user_id == current_user.id):
         flask.abort(403)
 
+    # FIXME this is def not the best way to convert to json. Use: query.to_json() instead
     return jsonify({
         "id": query.id,
         "seeding": str(query.seeding_as_json()),
