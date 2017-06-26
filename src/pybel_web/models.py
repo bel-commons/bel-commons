@@ -20,6 +20,8 @@ USER_TABLE_NAME = 'pybel_user'
 ASSEMBLY_TABLE_NAME = 'pybel_assembly'
 ASSEMBLY_NETWORK_TABLE_NAME = 'pybel_assembly_network'
 QUERY_TABLE_NAME = 'pybel_query'
+ROLE_USER_TABLE_NAME = 'pybel_roles_users'
+PROJECT_USER_TABLE_NAME = 'pybel_project_user'
 
 
 class Experiment(Base):
@@ -74,14 +76,14 @@ class Report(Base):
 
 
 roles_users = Table(
-    'roles_users',
+    ROLE_USER_TABLE_NAME,
     Base.metadata,
     Column('user_id', Integer, ForeignKey('{}.id'.format(USER_TABLE_NAME))),
     Column('role_id', Integer, ForeignKey('{}.id'.format(ROLE_TABLE_NAME)))
 )
 
 projects_users = Table(
-    'projects_users',
+    PROJECT_USER_TABLE_NAME,
     Base.metadata,
     Column('project_id', Integer, ForeignKey('{}.id'.format(PROJECT_TABLE_NAME))),
     Column('user_id', Integer, ForeignKey('{}.id'.format(USER_TABLE_NAME)))
@@ -91,6 +93,7 @@ projects_users = Table(
 class Role(Base, RoleMixin):
     """Stores user roles"""
     __tablename__ = ROLE_TABLE_NAME
+
     id = Column(Integer(), primary_key=True)
     name = Column(String(80), unique=True, nullable=False)
     description = Column(String(255))
@@ -102,6 +105,7 @@ class Role(Base, RoleMixin):
 class Project(Base):
     """Stores projects"""
     __tablename__ = PROJECT_TABLE_NAME
+
     id = Column(Integer(), primary_key=True)
     name = Column(String(80), unique=True, nullable=False)
     description = Column(String(255))
@@ -198,6 +202,11 @@ class Query(Base):
         return pybel_tools.query.Query.from_jsons(self.dump)
 
     def seeding_as_json(self):
+        """Returns seeding json. It's also possible to get Query.data.seeding as well.
+
+        :return:
+        :rtype: dict
+        """
         return json.loads(self.seeding)
 
     def __call__(self, manager):
