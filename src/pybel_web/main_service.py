@@ -141,10 +141,10 @@ def build_dictionary_service_admin(app):
         flash('Queued task to parse the AETIONOMY folder: {}'.format(task))
         return redirect(url_for('home'))
 
-    @app.route('/admin/upload/selventa')
+    @app.route('/admin/ensure/selventa')
     @roles_required('admin')
-    def upload_selventa():
-        """Uploads the gpickles in the Selventa section of the Biological Model Store repository"""
+    def ensure_selventa():
+        """Parses and stores the Selventa resources from the Biological Model Store repository"""
         celery = create_celery(current_app)
         task = celery.send_task('parse-selventa', args=[app.config.get(PYBEL_CONNECTION)])
         flash('Queued task to parse the Selventa folder: {}'.format(task))

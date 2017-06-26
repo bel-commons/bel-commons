@@ -74,18 +74,20 @@
                     </p>
                     <h4>Ensure Remote BEL Documents</h4>
                     <p>
-                        <a class="btn btn-success" href="{{ url_for('ensure_simple') }}" role="button">Simple</a>
-                        <a class="btn btn-success" href="{{ url_for('ensure_gfam') }}" role="button">Gene Families</a>
+                        <a class="btn btn-success" href="{{ url_for('ensure_simple') }}" role="button">Sync Parse
+                            Simple</a>
+                        <a class="btn btn-success" href="{{ url_for('ensure_gfam') }}" role="button">Sync Parse Gene
+                            Families</a>
                     </p>
                     <h4>Ensure BMS BEL Documents</h4>
                     <p>
                         <a class="btn btn-info" href="{{ url_for('list_bms_pickles') }}" role="button">List BMS
                             Pickles</a>
-                        <a class="btn btn-warning" href="{{ url_for('upload_aetionomy') }}" role="button">Upload
-                            Aetionomy Pickles</a>
-                        <a class="btn btn-warning" href="{{ url_for('upload_selventa') }}" role="button">Upload Selventa
-                            Pickles</a>
-                        <a class="btn btn-danger" href="{{ url_for('ensure_aetionomy') }}" role="button">Compile BMS -
+                        <a class="btn btn-warning" href="{{ url_for('upload_aetionomy') }}" role="button">Sync Upload
+                            AETIONOMY Pickles</a>
+                        <a class="btn btn-danger" href="{{ url_for('ensure_selventa') }}" role="button">Async Parse
+                            Selventa</a>
+                        <a class="btn btn-danger" href="{{ url_for('ensure_aetionomy') }}" role="button">Async Parse
                             AETIONOMY</a>
                     </p>
                 </div>
@@ -130,7 +132,8 @@
                                 {% if current_user.is_authenticated %}
                                     {% if current_user.admin %}
                                         <li><a class="btn btn-danger" role="button"
-                                               href="{{ url_for('dbs.drop_network', network_id=network.id) }}">Drop</a></li>
+                                               href="{{ url_for('dbs.drop_network', network_id=network.id) }}">Drop</a>
+                                        </li>
                                     {% elif network.report and network.report.user == current_user %}
                                         <li><a class="btn btn-danger" role="button"
                                                href="{{ url_for('dbs.drop_user_network', network_id=network.id, user_id=current_user.id) }}">Drop</a>
@@ -148,10 +151,12 @@
                                         {% endif %}
                                     {% elif current_user.has_role('scai') or current_user.admin %}
                                         {% if network.report and not network.report.public %}
-                                            <li><a href="{{ url_for('dbs.make_network_public', network_id=network.id) }}"
+                                            <li>
+                                                <a href="{{ url_for('dbs.make_network_public', network_id=network.id) }}"
                                                    class="btn btn-danger" role="button">Make Public</a></li>
                                         {% elif network.report and network.report.public %}
-                                            <li><a href="{{ url_for('dbs.make_network_private', network_id=network.id) }}"
+                                            <li>
+                                                <a href="{{ url_for('dbs.make_network_private', network_id=network.id) }}"
                                                    class="btn btn-danger" role="button">Make Private</a></li>
                                         {% endif %}
 
