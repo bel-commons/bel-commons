@@ -456,7 +456,7 @@ function processURL(urlObject) {
         }
     }
     if (window.processType === "query") {
-        var queryInfo = doAjaxCall("/api/get_query/" + window.query);
+        var queryInfo = doAjaxCall("/api/query/" + window.query + "/info");
         displayQueryInfo(queryInfo)
     }
 

@@ -830,7 +830,7 @@ def drop_query_by_id(query_id):
     return redirect(url_for('home'))
 
 
-@api_blueprint.route('/api/get_query/<int:query_id>', methods=['GET'])
+@api_blueprint.route('/api/query/<int:query_id>/info', methods=['GET'])
 def query_to_network(query_id):
     """Returns info from a given query ID"""
     query = manager.session.query(models.Query).get(query_id)
@@ -841,13 +841,10 @@ def query_to_network(query_id):
     if not (current_user.admin or query.user_id == current_user.id):
         flask.abort(403)
 
-    # FIXME this is def not the best way to convert to json. Use: query.to_json() instead
-    return jsonify({
-        "id": query.id,
-        "seeding": str(query.seeding_as_json()),
-        "assembly": str(query.assembly.networks),
-        "pipeline": str(query.pipeline_protocol)
-    })
+    j = query.data.to_json()
+    j['id'] = query.id
+
+    return jsonify(j)
 
 
 ####################################
