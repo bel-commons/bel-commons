@@ -32,10 +32,10 @@ from pybel.manager.models import Base
 from pybel.utils import get_version as pybel_version
 from pybel_tools.utils import enable_cool_mode
 from pybel_tools.utils import get_version as pybel_tools_get_version
-from .constants import log_path
 from .admin_service import build_admin_service
 from .analysis_service import analysis_blueprint
 from .application import create_application
+from .constants import log_path
 from .curation_service import curation_blueprint
 from .database_service import api_blueprint
 from .main_service import build_main_service
@@ -163,7 +163,7 @@ def load(ctx, file):
                 password=password,
                 confirmed_at=datetime.datetime.now()
             )
-            log.info('added %s', u)
+            click.echo('added %s', u)
             ds.commit()
         for role_name in roles.strip().split(','):
             r = ds.find_role(role_name)
