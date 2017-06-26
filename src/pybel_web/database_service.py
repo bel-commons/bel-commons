@@ -825,7 +825,7 @@ def drop_query_by_id(query_id):
 
     manager.session.delete(query)
     manager.session.commit()
-    flash('Deleted query')
+    flash('Deleted query {}'.format(query_id))
 
     return redirect(url_for('home'))
 
@@ -959,7 +959,10 @@ def download_analysis(analysis_id):
 @roles_required('admin')
 def view_config():
     """Lists the application configuration"""
-    return jsonify({k: str(v) for k, v in current_app.config.items()})
+    return jsonify({
+        k: str(v)
+        for k, v in current_app.config.items()
+    })
 
 
 @api_blueprint.route('/api/meta/blacklist')
