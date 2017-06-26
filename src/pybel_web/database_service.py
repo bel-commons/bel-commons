@@ -36,7 +36,6 @@ from pybel.manager import Namespace, Annotation, Network
 from pybel_tools import pipeline
 from pybel_tools.analysis.npa import RESULT_LABELS
 from pybel_tools.definition_utils import write_namespace
-from pybel_tools.pipeline import query_form_to_dict
 from pybel_tools.query import Query
 from pybel_tools.selection import get_subgraph
 from pybel_tools.selection.induce_subgraph import SEED_TYPES, SEED_TYPE_AUTHOR, SEED_TYPE_PUBMED
@@ -68,7 +67,8 @@ from .utils import (
     manager,
     api,
     user_datastore,
-    get_and_run_query
+    get_and_run_query,
+    query_form_to_dict,
 )
 
 log = logging.getLogger(__name__)

@@ -4,10 +4,11 @@ import datetime
 import itertools as itt
 import logging
 import pickle
+from collections import defaultdict
 
 import flask
 import pandas
-from flask import current_app, jsonify
+from flask import current_app
 from flask import render_template, redirect, url_for
 from flask_login import current_user
 from sqlalchemy import func
@@ -95,13 +96,17 @@ user_datastore = get_userdatastore_proxy()
 def get_and_run_query(query_id):
     """Gets a query and runs it.
 
-    :param int query_id: The Query's Id
+    :param int query_id: The Query's database identifier
+    :return: A BEL network
+    :rtype: pybel.BELGraph
     """
     query = manager.session.query(models.Query).get(query_id)
+
     if query is None:
-        return jsonify('Invalid Query ID')
+        return flask.abort(404)
+
     query = query.data
-    return query(manager)
+    return query(api)
 
 
 def try_insert_graph(manager, graph, api):
@@ -423,3 +428,62 @@ def iterate_user_strings(manager, with_passwords):
             ','.join(sorted(r.name for r in u.roles)),
             '\t{}'.format(u.password) if with_passwords else ''
         )
+
+
+def sanitize_pipeline(function_name):
+    """Converts method.__name__ from capital and spaced to lower and underscore separated
+    :param str function_name
+    :return: function name sanitized
+    :rtype: str
+    """
+    return function_name.replace(" ", "_").lower()
+
+
+def sanitize_annotation(annotation_list):
+    """Converts annotation (Annotation:value) to tuple
+    :param list annotations
+    :return: annotation dictionary
+    :rtype: dict
+    """
+    annotation_dict = defaultdict(list)
+
+    for annotation_string in annotation_list:
+        annotation, annotation_value = annotation_string.split(":")[0:2]
+        annotation_dict[annotation].append(annotation_value)
+
+    return dict(annotation_dict)
+
+
+def query_form_to_dict(form):
+    """ Converts a request.form multidict to the query JSON format.
+
+    :param werkzeug.datastructures.ImmutableMultiDict form:
+    :return: json representation of the query
+    :rtype: dict
+    """
+    query_dict = {}
+
+    pairs = [
+        ('pubmed', "pubmed_selection[]"),
+        ('authors', 'author_selection[]'),
+        ('annotation', 'annotation_selection[]'),
+        (form["seed_method"], "node_selection[]")
+    ]
+
+    query_dict['seeding'] = [
+        {"type": key, "data": sanitize_annotation(form.getlist(value))} if key == 'annotation'
+        else {"type": key, "data": form.getlist(value)}
+        for key, value in pairs
+        if form.getlist(value)
+    ]
+
+    query_dict["pipeline"] = [
+        {'function': sanitize_pipeline(function_name)}
+        for function_name in form.getlist("pipeline[]")
+        if function_name
+    ]
+
+    if form.getlist("network_ids[]"):
+        query_dict["network_ids"] = form.getlist("network_ids[]")
+
+    return query_dict
