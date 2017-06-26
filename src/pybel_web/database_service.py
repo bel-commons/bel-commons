@@ -778,7 +778,7 @@ def get_pipeline_function_names():
     return jsonify([
         p.replace("_", " ").capitalize()
         for p in pipeline.no_arguments_map
-        if request.args['term'].lower() in p.replace("_", " ").lower()
+        if request.args['term'].casefold() in p.replace("_", " ").casefold()
     ])
 
 
