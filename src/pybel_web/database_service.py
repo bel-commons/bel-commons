@@ -5,7 +5,6 @@
 import csv
 import json
 import logging
-import os
 import pickle
 from operator import itemgetter
 
@@ -31,8 +30,7 @@ import pybel
 from pybel.constants import (
     METADATA_AUTHORS,
     METADATA_CONTACT,
-    METADATA_NAME,
-    PYBEL_LOG_DIR
+    METADATA_NAME
 )
 from pybel.manager import Namespace, Annotation, Network
 from pybel_tools import pipeline
@@ -40,8 +38,8 @@ from pybel_tools.analysis.npa import RESULT_LABELS
 from pybel_tools.definition_utils import write_namespace
 from pybel_tools.pipeline import query_form_to_dict
 from pybel_tools.query import Query
-from pybel_tools.selection.induce_subgraph import SEED_TYPES, SEED_TYPE_AUTHOR, SEED_TYPE_PUBMED
 from pybel_tools.selection import get_subgraph
+from pybel_tools.selection.induce_subgraph import SEED_TYPES, SEED_TYPE_AUTHOR, SEED_TYPE_PUBMED
 from pybel_tools.summary import (
     info_json,
     get_authors,
@@ -114,7 +112,7 @@ def get_network_from_request():
     if query_id is not None:
         query_id = int(query_id)
         query = manager.session.query(models.Query).get(query_id)
-        network_from_query = query(manager)
+        network_from_query = query(api)
 
         # TODO: Nodes expanding not working since the universe is retricted to the query and not to the set of BEL files
         network = get_subgraph(
