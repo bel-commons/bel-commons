@@ -4,8 +4,6 @@ import datetime
 import itertools as itt
 import logging
 import pickle
-import time
-import json
 
 import flask
 import pandas
@@ -17,7 +15,6 @@ from sqlalchemy.exc import IntegrityError
 from werkzeug.local import LocalProxy
 
 import pybel
-from . import models
 from pybel.canonicalize import decanonicalize_node
 from pybel.constants import RELATION, GENE
 from pybel.manager import Network
@@ -40,7 +37,6 @@ from pybel_tools.summary import (
     get_activities,
     count_namespaces,
     group_errors,
-    count_citation_years,
     get_naked_names,
 )
 from pybel_tools.summary.edge_summary import (
@@ -56,6 +52,7 @@ from pybel_tools.summary.export import info_list
 from pybel_tools.summary.node_properties import count_variants
 from pybel_tools.summary.node_summary import get_unused_namespaces
 from pybel_tools.utils import prepare_c3, count_dict_values
+from . import models
 from .application import get_manager, get_api, get_user_datastore
 from .constants import *
 from .models import User, Report, Experiment
@@ -141,6 +138,8 @@ def create_timeline(year_counter):
     :return: complete timeline
     :rtype: list[tuple]
     """
+    if not year_counter:
+        return []
 
     until_year = datetime.datetime.now().year
     from_year = min(year_counter)
@@ -239,7 +238,7 @@ def render_network_summary(network_id, graph, api):
         for node in iter_undefined_families(graph, ['SFAM', 'GFAM'])
     ]
 
-    citation_years = create_timeline(count_citation_years(graph))
+    # citation_years = create_timeline(count_citation_years(graph))
 
     overlap_counter = api.get_node_overlap(network_id)
     overlaps = [
