@@ -355,6 +355,7 @@ function getSeedMethodFromURL(args, url) {
                 args["pmids"] = url["pmids"];
             }
         }
+
         if ("induction" === url["seed_method"] || "shortest_paths" === url["seed_method"] ||
             "neighbors" === url["seed_method"] || "dneighbors" === url["seed_method"] ||
             "upstream" === url["seed_method"] || "downstream" === url["seed_method"]) {
@@ -376,11 +377,9 @@ function getSeedMethodFromURL(args, url) {
  * @param {InspireTree} tree
  */
 function getDefaultAjaxParameters(tree) {
-
     if (window.processType === "query") {
         return getQueryFromURL(getFilterParameters(tree), getCurrentURL())
-    }
-    else {
+    } else {
         return getSeedMethodFromURL(getFilterParameters(tree), getCurrentURL())
     }
 }
@@ -402,17 +401,15 @@ function renderNetwork(tree, firstInit) {
     var renderParameters = $.param(args, true);
 
     $.getJSON("/api/network/" + "?" + renderParameters, function (data) {
-
         if (firstInit === true && data.nodes.length > 500) { // First time it tries to render the network checks for the size of it
 
             renderEmptyFrame();
 
-            alert("The network you try to render contains: " + data.nodes.length + " nodes and " +
+            alert("The network you are trying to render contains: " + data.nodes.length + " nodes and " +
                 data.links.length + " edges. To avoid crashing your browser, this network will only be rendered " +
-                "after you click in refresh network. " + "Please consider to give a more specific query or apply some " +
-                "filters to it using the right side tree.")
-        }
-        else {
+                "after you click in refresh network. " + "Please consider giving a more specific query or applying some " +
+                "filters using the right-hand tree navigator.")
+        } else {
             initD3Force(data, tree);
         }
     });
