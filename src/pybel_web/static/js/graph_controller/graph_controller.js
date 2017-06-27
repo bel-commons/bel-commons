@@ -1560,6 +1560,8 @@ function initD3Force(graph, tree) {
 
     var checkNodes = $("#get-checked-nodes");
 
+    checkNodes.off('click'); // It will unbind the previous click if multiple graphs has been rendered
+
     // Highlight only selected nodes in the graph
     checkNodes.on("click", function (event) {
         event.preventDefault();
