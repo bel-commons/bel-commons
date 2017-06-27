@@ -68,18 +68,12 @@ from .utils import (
     api,
     user_datastore,
     query_form_to_dict,
+    get_nodes_from_list,
 )
 
 log = logging.getLogger(__name__)
 
 api_blueprint = Blueprint('dbs', __name__)
-
-
-def get_nodes_from_list(node_list):
-    return [
-        api.get_node_by_id(int(node_id_str.strip()))
-        for node_id_str in node_list.strip().split(',')
-    ]
 
 
 def get_network_from_request():

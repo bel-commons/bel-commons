@@ -408,6 +408,15 @@ def sanitize_annotation(annotation_list):
     return dict(annotation_dict)
 
 
+def convert_seed_value(key, form, value):
+    if key == 'annotation':
+        return sanitize_annotation(form.getlist(value))
+    elif key in {'pubmed', 'authors'}:
+        return form.getlist(value)
+    else:
+        return [api.get_node_by_id(node_id) for node_id in form.getlist(value, type=int)]
+
+
 def query_form_to_dict(form):
     """ Converts a request.form multidict to the query JSON format.
 
@@ -425,8 +434,7 @@ def query_form_to_dict(form):
     ]
 
     query_dict['seeding'] = [
-        {"type": key, "data": sanitize_annotation(form.getlist(value))} if key == 'annotation'
-        else {"type": key, "data": form.getlist(value)}
+        {"type": key, 'data': convert_seed_value(key, form, value)}
         for key, value in pairs
         if form.getlist(value)
     ]
@@ -441,3 +449,10 @@ def query_form_to_dict(form):
         query_dict["network_ids"] = form.getlist("network_ids[]")
 
     return query_dict
+
+
+def get_nodes_from_list(node_list):
+    return [
+        api.get_node_by_id(int(node_id_str.strip()))
+        for node_id_str in node_list.strip().split(',')
+    ]
