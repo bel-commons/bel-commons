@@ -22,6 +22,8 @@ ASSEMBLY_NETWORK_TABLE_NAME = 'pybel_assembly_network'
 QUERY_TABLE_NAME = 'pybel_query'
 ROLE_USER_TABLE_NAME = 'pybel_roles_users'
 PROJECT_USER_TABLE_NAME = 'pybel_project_user'
+PROJECT_NETWORK_TABLE_NAME = 'pybel_project_network'
+USER_NETWORK_TABLE_NAME = 'pybel_user_network'
 
 
 class Experiment(Base):
@@ -82,11 +84,25 @@ roles_users = Table(
     Column('role_id', Integer, ForeignKey('{}.id'.format(ROLE_TABLE_NAME)))
 )
 
+users_networks = Table(
+    USER_NETWORK_TABLE_NAME,
+    Base.metadata,
+    Column('user_id', Integer, ForeignKey('{}.id'.format(USER_TABLE_NAME))),
+    Column('network_id'), Integer, ForeignKey('{}.id'.format(NETWORK_TABLE_NAME))
+)
+
 projects_users = Table(
     PROJECT_USER_TABLE_NAME,
     Base.metadata,
     Column('project_id', Integer, ForeignKey('{}.id'.format(PROJECT_TABLE_NAME))),
     Column('user_id', Integer, ForeignKey('{}.id'.format(USER_TABLE_NAME)))
+)
+
+projects_networks = Table(
+    PROJECT_NETWORK_TABLE_NAME,
+    Base.metadata,
+    Column('project_id', Integer, ForeignKey('{}.id'.format(PROJECT_TABLE_NAME))),
+    Column('network_id'), Integer, ForeignKey('{}.id'.format(NETWORK_TABLE_NAME))
 )
 
 
@@ -109,7 +125,9 @@ class Project(Base):
     id = Column(Integer(), primary_key=True)
     name = Column(String(80), unique=True, nullable=False)
     description = Column(String(255))
+
     users = relationship('User', secondary=projects_users, backref=backref('projects', lazy='dynamic'))
+    networks = relationship('Network', secondary=projects_networks, backref=backref('projects', lazy='dynamic'))
 
     def __str__(self):
         return self.name
@@ -126,7 +144,9 @@ class User(Base, UserMixin):
     last_name = Column(String(255))
     active = Column(Boolean)
     confirmed_at = Column(DateTime)
+
     roles = relationship('Role', secondary=roles_users, backref=backref('users', lazy='dynamic'))
+    networks = relationship('Network', secondary=users_networks, backref=backref('users', lazy='dynamic'))
 
     @property
     def admin(self):
@@ -199,7 +219,10 @@ class Query(Base):
 
         :rtype: pybel_tools.query.Query
         """
-        return pybel_tools.query.Query.from_jsons(self.dump)
+        if not hasattr(self, '_query'):
+            self._query = pybel_tools.query.Query.from_jsons(self.dump)
+
+        return self._query
 
     def seeding_as_json(self):
         """Returns seeding json. It's also possible to get Query.data.seeding as well.
