@@ -213,7 +213,7 @@ class Query(Base):
         """A wrapper around the :meth:`pybel_tools.query.Query.run` function of the enclosed
         :class:`pybel_tools.pipeline.Query` object.
 
-        :param pybel.cache.manager.CacheManager manager:
+        :type manager: pybel.cache.manager.CacheManager or pybel_tools.api.DatabaseService
         :return: The result of this query
         :rtype: pybel.BELGraph
         """
