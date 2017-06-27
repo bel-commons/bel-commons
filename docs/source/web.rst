@@ -5,7 +5,7 @@ Configuration
 -------------
 
 .. autoclass:: pybel_web.config.Config
-:members:
+    :members:
 
 Asynchronous Compilation
 ------------------------
@@ -19,4 +19,4 @@ Using the asynchronous backend requires three steps:
 Code
 ----
 .. automodule:: pybel_web.main_service
-:members:
+    :members:
