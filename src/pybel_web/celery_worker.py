@@ -9,7 +9,7 @@ from flask_mail import Message
 from six import StringIO
 from sqlalchemy.exc import IntegrityError, OperationalError
 
-from pybel import from_lines
+from pybel import from_lines, from_url
 from pybel.manager import build_manager
 from pybel.parser.parse_exceptions import InconsistentDefinitionError
 from pybel_tools.constants import BMS_BASE
@@ -71,6 +71,27 @@ def parse_aetionomy(connection):
 def parse_selventa(connection):
     """Converts the Selventa folder in the BMS"""
     parse_folder(connection, 'selventa', citation_clearing=False)
+
+
+@celery.task(name='parse-url')
+def parse_by_url(connection, url):
+    """Parses a graph at the given URL resource"""
+    # FIXME add proper exception handling and feedback
+
+    manager = build_manager(connection)
+
+    try:
+        graph = from_url(url, manager=manager)
+    except:
+        return 'Parsing failed'
+
+    try:
+        network = manager.insert_graph(graph)
+    except:
+        manager.session.rollback()
+        return 'Error parsing'
+
+    return network.id
 
 
 @celery.task(name='pybelparser')

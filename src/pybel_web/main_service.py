@@ -25,7 +25,7 @@ from flask_security import (
 )
 from six import BytesIO
 
-from pybel import from_bytes, from_url
+from pybel import from_bytes
 from pybel.constants import (
     FRAUNHOFER_RESOURCES,
     PYBEL_CONNECTION,
@@ -48,7 +48,6 @@ from .forms import SeedProvenanceForm, SeedSubgraphForm
 from .models import User, Report
 from .utils import (
     render_network_summary,
-    try_insert_graph,
     sanitize_list_of_str,
     get_api,
     get_manager
@@ -109,28 +108,25 @@ def build_dictionary_service_admin(app):
         fix_pubmed_citations(api.universe)
         return jsonify({'status': 200})
 
-    @app.route('/admin/ensure/abstract3')
-    @roles_required('admin')
-    def ensure_abstract3():
-        """Parses and stores Selventa Example 3"""
-        url = 'http://resources.openbel.org/belframework/20150611/knowledge/full_abstract3.bel'
-        graph = from_url(url, manager=manager, citation_clearing=False, allow_nested=True)
-        return try_insert_graph(manager, graph, api)
-
     @app.route('/admin/ensure/simple')
     @roles_required('admin')
     def ensure_simple():
         """Parses and stores the PyBEL Test BEL Script"""
         url = 'https://raw.githubusercontent.com/pybel/pybel/develop/tests/bel/test_bel.bel'
-        graph = from_url(url, manager=manager)
-        return try_insert_graph(manager, graph, api)
+        celery = create_celery(current_app)
+        task = celery.send_task('parse-url', args=[app.config.get(PYBEL_CONNECTION), url])
+        flash('Queued task to parse PyBEL Test 1: {}'.format(task))
+        return redirect(url_for('home'))
 
     @app.route('/admin/ensure/gfam')
     @roles_required('admin')
     def ensure_gfam():
         """Parses and stores the HGNC Gene Family Definitions"""
-        graph = from_url(FRAUNHOFER_RESOURCES + 'gfam_members.bel', manager=manager)
-        return try_insert_graph(manager, graph, api)
+        url = FRAUNHOFER_RESOURCES + 'gfam_members.bel'
+        celery = create_celery(current_app)
+        task = celery.send_task('parse-url', args=[app.config.get(PYBEL_CONNECTION), url])
+        flash('Queued task to parse HGNC Gene Families: {}'.format(task))
+        return redirect(url_for('home'))
 
     @app.route('/admin/ensure/aetionomy')
     @roles_required('admin')
@@ -277,7 +273,7 @@ def build_main_service(app):
             flash("Problem getting graph {}: ({}) {}".format(network_id, type(e), e), category='error')
             return redirect(url_for('view_networks'))
 
-        return render_network_summary(network_id, graph, api)
+        return render_network_summary(network_id, graph)
 
     @app.route('/definitions')
     def view_definitions():

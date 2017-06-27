@@ -25,6 +25,7 @@ from flask_login import login_required, current_user
 from flask_security import roles_required, roles_accepted
 from requests.compat import unquote
 from six import StringIO
+from sqlalchemy.exc import IntegrityError
 
 import pybel
 from pybel.constants import (
@@ -62,7 +63,6 @@ from .main_service import (
 from .models import Report, User, Experiment
 from .send_utils import serve_network
 from .utils import (
-    try_insert_graph,
     get_recent_reports,
     manager,
     api,
@@ -196,7 +196,18 @@ def receive():
             'error': str(e)
         })
 
-    return try_insert_graph(manager, network, api)
+    try:
+        network = manager.insert_graph(network)
+        flask.flash('Success uploading {}'.format(network))
+    except IntegrityError as e:
+        flask.flash(integrity_message.format(network.name, network.version))
+        manager.rollback()
+    except Exception as e:
+        flask.flash("Error storing in database")
+        log.exception('Upload error')
+        manager.rollback()
+
+    return redirect(url_for('home'))
 
 
 ####################################

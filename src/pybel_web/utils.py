@@ -6,13 +6,11 @@ import logging
 import pickle
 from collections import defaultdict
 
-import flask
 import pandas
 from flask import current_app
-from flask import render_template, redirect, url_for
+from flask import render_template
 from flask_login import current_user
 from sqlalchemy import func
-from sqlalchemy.exc import IntegrityError
 from werkzeug.local import LocalProxy
 
 import pybel
@@ -92,33 +90,6 @@ api = get_api_proxy()
 user_datastore = get_userdatastore_proxy()
 
 
-def try_insert_graph(manager, graph, api):
-    """Inserts a graph and sends an okay message if success. else renders upload page
-    
-    :type manager: pybel.manager.cache.CacheManager
-    :param pybel.BELGraph graph: A BEL graph
-    :return: The HTTP response to use as a Flask response
-    """
-    try:
-        network = manager.insert_graph(graph)
-
-        if api:
-            api.add_network(network.id, graph)
-
-        flask.flash('Success uploading {}'.format(network))
-        return redirect(url_for('home'))
-    except IntegrityError as e:
-        message = integrity_message.format(graph.name, graph.version)
-        flask.flash(message)
-        log.exception(message)
-        manager.rollback()
-        return redirect(url_for('home'))
-    except Exception as e:
-        flask.flash("Error storing in database")
-        log.exception('Upload error')
-        return redirect(url_for('home'))
-
-
 def create_timeline(year_counter):
     """Completes the Counter timeline
     
@@ -149,7 +120,7 @@ def sanitize_list_of_str(l):
     return [e for e in (e.strip() for e in l) if e]
 
 
-def render_network_summary(network_id, graph, api):
+def render_network_summary(network_id, graph):
     """Renders the graph summary page
     
     :param int network_id: 
@@ -158,7 +129,7 @@ def render_network_summary(network_id, graph, api):
     """
     hub_data = api.get_top_degree(network_id)
     centrality_data = api.get_top_centrality(network_id)
-    disease_data = api.get_top_comorbidities(network_id)
+    disease_data = api.get_top_pathologies(network_id)
 
     node_bel_cache = {}
 
