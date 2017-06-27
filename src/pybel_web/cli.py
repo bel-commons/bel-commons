@@ -163,7 +163,7 @@ def load(ctx, file):
                 password=password,
                 confirmed_at=datetime.datetime.now()
             )
-            click.echo('added %s', u)
+            click.echo('added {}'.format(u))
             ds.commit()
         for role_name in roles.strip().split(','):
             r = ds.find_role(role_name)
