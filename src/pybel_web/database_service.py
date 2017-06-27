@@ -170,6 +170,7 @@ def get_network_from_request():
 
     filters = request.args.getlist(FILTERS)
 
+    # TODO get rid of this function and use query builder instead
     network = api.query(
         network_id=network_id,
         seed_method=seed_method,
