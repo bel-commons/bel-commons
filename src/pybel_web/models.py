@@ -88,7 +88,7 @@ users_networks = Table(
     USER_NETWORK_TABLE_NAME,
     Base.metadata,
     Column('user_id', Integer, ForeignKey('{}.id'.format(USER_TABLE_NAME))),
-    Column('network_id'), Integer, ForeignKey('{}.id'.format(NETWORK_TABLE_NAME))
+    Column('network_id', Integer, ForeignKey('{}.id'.format(NETWORK_TABLE_NAME)))
 )
 
 projects_users = Table(
@@ -102,7 +102,7 @@ projects_networks = Table(
     PROJECT_NETWORK_TABLE_NAME,
     Base.metadata,
     Column('project_id', Integer, ForeignKey('{}.id'.format(PROJECT_TABLE_NAME))),
-    Column('network_id'), Integer, ForeignKey('{}.id'.format(NETWORK_TABLE_NAME))
+    Column('network_id', Integer, ForeignKey('{}.id'.format(NETWORK_TABLE_NAME)))
 )
 
 
