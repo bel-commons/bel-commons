@@ -245,7 +245,6 @@ function initiliazeGlobals(url) {
     else {
         window.expandNodes = [];
     }
-
 }
 
 
@@ -1518,7 +1517,6 @@ function initD3Force(graph, tree) {
             // Select randomly a color and apply to this path
             edgesInPath.style("stroke", colorArray[getRandomInt(0, 21)]);
         }
-
     }
 
     // Call freezeGraph when a key is pressed, freezeGraph checks whether this key is "Space" that triggers the freeze
@@ -1560,8 +1558,10 @@ function initD3Force(graph, tree) {
         }
     });
 
+    var checkNodes = $("#get-checked-nodes");
+
     // Highlight only selected nodes in the graph
-    $("#get-checked-nodes").on("click", function (event) {
+    checkNodes.on("click", function (event) {
         event.preventDefault();
         var checkedItems = [];
         $(".node-checkbox:checked").each(function (idx, li) {
@@ -1591,7 +1591,11 @@ function initD3Force(graph, tree) {
 
     });
 
-    $("#get-checked-edges").on("click", function (event) {
+    var checkNodesButton = $("#get-checked-edges");
+
+    checkNodesButton.off('click'); // It will unbind the previous click if multiple graphs has been rendered
+
+    checkNodesButton.on("click", function (event) {
         event.preventDefault();
 
         var checkedItems = [];
@@ -1608,7 +1612,11 @@ function initD3Force(graph, tree) {
 
     var pathForm = $("#path-form");
 
-    $("#button-paths").on("click", function () {
+    var pathButton = $("#button-paths");
+
+    pathButton.off('click'); // It will unbind the previous click if multiple graphs has been rendered
+
+    pathButton.on("click", function () {
         if (pathForm.valid()) {
 
             var checkbox = pathForm.find("input[name='visualization-options']").is(":checked");
@@ -1744,7 +1752,11 @@ function initD3Force(graph, tree) {
 
     var betwennessForm = $("#betweenness-centrality");
 
-    $("#betweenness-button").on("click", function () {
+    var betweennessButton = $("#betweenness-button");
+
+    betweennessButton.off('click'); // It will unbind the previous click if multiple graphs has been rendered
+
+    betweennessButton.on("click", function () {
         if (betwennessForm.valid()) {
 
             var args = getDefaultAjaxParameters(tree);
@@ -1803,7 +1815,11 @@ function initD3Force(graph, tree) {
 
     var npaForm = $("#npa-form");
 
-    $("#npa-button").on("click", function () {
+    var npaButton = $("#npa-button");
+
+    betweennessButton.off('click'); // It will unbind the previous click if multiple graphs has been rendered
+
+    npaButton.on("click", function () {
         if (npaForm.valid()) {
 
             var args = getDefaultAjaxParameters(tree);
@@ -1861,18 +1877,30 @@ function initD3Force(graph, tree) {
         }
     );
 
+    var hideNodeNames = $("#hide_node_names");
+
+    hideNodeNames.off('click'); // It will unbind the previous click if multiple graphs has been rendered
+
     // Hide text in graph
-    $("#hide_node_names").on("click", function () {
+    hideNodeNames.on("click", function () {
         svg.selectAll(".node-name").style("display", "none");
     });
 
+    var restoreNodeNames = $("#restore_node_names");
+
+    restoreNodeNames.off('click'); // It will unbind the previous click if multiple graphs has been rendered
+
     // Hide text in graph
-    $("#restore_node_names").on("click", function () {
+    restoreNodeNames.on("click", function () {
         svg.selectAll(".node-name").style("display", "block");
     });
 
-    // Hide text in graph
-    $("#restore").on("click", function () {
+    var restoreAll = $("#restore");
+
+    restoreAll.off('click'); // It will unbind the previous click if multiple graphs has been rendered
+
+    // Restore all
+    restoreAll.on("click", function () {
         resetAttributes();
     });
 }
