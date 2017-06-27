@@ -75,6 +75,13 @@ log = logging.getLogger(__name__)
 api_blueprint = Blueprint('dbs', __name__)
 
 
+def get_nodes_from_list(node_list):
+    return [
+        api.get_node_by_id(int(node_id_str.strip()))
+        for node_id_str in node_list.strip().split(',')
+    ]
+
+
 def get_network_from_request():
     """Process the GET request returning the filtered network
 
@@ -90,10 +97,10 @@ def get_network_from_request():
     remove_nodes = request.args.get(REMOVE_PARAM)
 
     if expand_nodes:
-        expand_nodes = [api.decode_node(h) for h in expand_nodes.split(',')]
+        expand_nodes = get_nodes_from_list(expand_nodes)
 
     if remove_nodes:
-        remove_nodes = [api.decode_node(h) for h in remove_nodes.split(',')]
+        remove_nodes = get_nodes_from_list(remove_nodes)
 
     annotations = {
         k: request.args.getlist(k)
@@ -137,23 +144,27 @@ def get_network_from_request():
         network_id = None
 
     seed_method = request.args.get(SEED_TYPE)
+
     if seed_method and seed_method not in SEED_TYPES:
         raise ValueError('Invalid seed method: {}'.format(seed_method))
 
-    if seed_method and seed_method == SEED_TYPE_AUTHOR or seed_method == SEED_TYPE_PUBMED:
+    if seed_method and seed_method in {SEED_TYPE_AUTHOR, SEED_TYPE_PUBMED}:
         seed_data = {}
 
         authors = request.args.getlist(SEED_DATA_AUTHORS)
-
         if authors:
             seed_data['authors'] = [unquote(author) for author in authors]
 
         pmids = request.args.getlist(SEED_DATA_PMIDS)
         if pmids:
             seed_data['pmids'] = pmids
+
     elif seed_method:
-        seed_data = request.args.getlist(SEED_DATA_NODES)
-        seed_data = [api.decode_node(h) for h in seed_data]
+        seed_data = [
+            api.get_node_by_id(node_id_str.strip())
+            for node_id_str in request.args.getlist(SEED_DATA_NODES)
+        ]
+
     else:
         seed_data = None
 
@@ -401,8 +412,7 @@ def get_number_nodes(network_id):
 def get_network():
     """Builds a graph from the given network id and sends it in the given format"""
     network = get_network_from_request()
-    network.graph['PYBEL_RELABELED'] = True
-
+    network = api.relabel_nodes_to_identifiers(network)
     return serve_network(network, request.args.get(FORMAT))
 
 
@@ -549,11 +559,8 @@ def get_paths_api():
         raise ValueError('no target')
 
     method = request.args.get(PATHS_METHOD)
-    source = request.args.get(SOURCE_NODE)
-    target = request.args.get(TARGET_NODE)
-
-    source = int(source)
-    target = int(target)
+    source = api.get_node_by_id(request.args.get(SOURCE_NODE))
+    target = api.get_node_by_id(request.args.get(TARGET_NODE))
 
     undirected = UNDIRECTED in request.args
 
@@ -579,7 +586,7 @@ def get_paths_api():
         log.debug('No paths between: {} and {}'.format(source, target))
         return 'No paths between the selected nodes'
 
-    return jsonify(shortest_path)
+    return jsonify(api.get_node_ids(shortest_path))
 
 
 @api_blueprint.route('/api/network/query/centrality/', methods=['GET'])
@@ -597,12 +604,10 @@ def get_nodes_by_betweenness_centrality():
 
     bw_dict = nx.betweenness_centrality(network)
 
-    node_list = [
-        i[0]
-        for i in sorted(bw_dict.items(), key=itemgetter(1), reverse=True)[0:node_numbers]
-    ]
-
-    return jsonify(node_list)
+    return jsonify([
+        api.get_node_id(node)
+        for node, score in sorted(bw_dict.items(), key=itemgetter(1), reverse=True)[0:node_numbers]
+    ])
 
 
 @api_blueprint.route('/api/network/query/pmids')
@@ -717,10 +722,12 @@ def edges_by_annotation(annotation_name, annotation_value):
     return jsonify(edges)
 
 
-@api_blueprint.route('/api/edges/provenance/<int:sid>/<int:tid>')
-def get_edges(sid, tid):
+@api_blueprint.route('/api/edges/provenance/<int:source_id>/<int:target_id>')
+def get_edges(source_id, target_id):
     """Gets all edges between the two given nodes"""
-    return jsonify(api.get_edges(api.decode_node(sid), api.decode_node(tid)))
+    source = api.get_node_by_id(source_id)
+    target = api.get_node_by_id(target_id)
+    return jsonify(api.get_edges(source, target))
 
 
 ####################################
@@ -893,22 +900,22 @@ def delete_user(user_id):
 # Analysis
 ####################################
 
-@api_blueprint.route('/api/analysis/<analysis_id>')
+@api_blueprint.route('/api/analysis/<int:analysis_id>')
 def get_analysis(analysis_id):
     """Returns data from analysis"""
     network = get_network_from_request()
     experiment = manager.session.query(Experiment).get(analysis_id)
     data = pickle.loads(experiment.result)
     results = [
-        {'node': node, 'data': data[api.nid_node[node]]}
+        {'node': api.get_node_id(node), 'data': data[node]}
         for node in network.nodes_iter()
-        if api.nid_node[node] in data
+        if node in data
     ]
 
     return jsonify(results)
 
 
-@api_blueprint.route('/api/analysis/<analysis_id>/median')
+@api_blueprint.route('/api/analysis/<int:analysis_id>/median')
 def get_analysis_median(analysis_id):
     """Returns data from analysis"""
     network = get_network_from_request()
@@ -916,9 +923,9 @@ def get_analysis_median(analysis_id):
     data = pickle.loads(experiment.result)
     # position 3 is the 'median' score
     results = {
-        node: data[api.nid_node[node]][3]
+        api.get_node_id(node): data[node][3]
         for node in network.nodes_iter()
-        if api.nid_node[node] in data
+        if node in data
     }
 
     return jsonify(results)
