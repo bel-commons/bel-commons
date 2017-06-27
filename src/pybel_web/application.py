@@ -31,6 +31,7 @@ from raven.contrib.flask import Sentry
 from pybel.constants import config as pybel_config, PYBEL_CONNECTION
 from pybel.manager import build_manager, Base
 from pybel_tools.api import DatabaseService
+from .constants import CHARLIE_EMAIL, DANIEL_EMAIL
 from .forms import ExtendedRegisterForm
 from .models import Role, User
 
@@ -71,7 +72,6 @@ class FlaskPyBEL:
         if app.config.get('PYBEL_DS_PRELOAD', False):
             log.info('preloading networks')
             self.api.cache_networks(
-                check_version=app.config.get('PYBEL_DS_CHECK_VERSION', True),
                 force_reload=app.config.get('PYBEL_WEB_FORCE_RELOAD', False),
                 eager=app.config.get('PYBEL_DS_EAGER', False)
             )
@@ -152,7 +152,7 @@ def create_application(get_mail=False, **kwargs):
         admin_role = pybel.user_datastore.find_or_create_role(name='admin', description='Admin of PyBEL Web')
         scai_role = pybel.user_datastore.find_or_create_role(name='scai', description='Users from SCAI')
 
-        for email in ('charles.hoyt@scai.fraunhofer.de', 'daniel.domingo.fernandez@scai.fraunhofer.de'):
+        for email in (CHARLIE_EMAIL, DANIEL_EMAIL):
             admin_user = pybel.user_datastore.find_user(email=email)
 
             if admin_user is None:

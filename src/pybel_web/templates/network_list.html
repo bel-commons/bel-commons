@@ -130,13 +130,14 @@
                                            class="btn btn-default">Results</a></li>
                                 {% endif %}
                                 {% if current_user.is_authenticated %}
-                                    {% if current_user.admin %}
-                                        <li><a class="btn btn-danger" role="button"
-                                               href="{{ url_for('dbs.drop_network', network_id=network.id) }}">Drop</a>
-                                        </li>
-                                    {% elif network.report and network.report.user == current_user %}
+                                    {% if network.report and network.report.user == current_user %}
                                         <li><a class="btn btn-danger" role="button"
                                                href="{{ url_for('dbs.drop_user_network', network_id=network.id, user_id=current_user.id) }}">Drop</a>
+                                        </li>
+                                    {% elif current_user.admin %}
+                                        <li><a class="btn btn-danger" role="button"
+                                               href="{{ url_for('dbs.drop_network', network_id=network.id) }}">Admin
+                                            Drop</a>
                                         </li>
                                     {% endif %}
                                     {% if network.report and network.report.user == current_user %}

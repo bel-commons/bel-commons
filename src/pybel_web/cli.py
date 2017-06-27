@@ -28,18 +28,18 @@ from flask_security import SQLAlchemyUserDatastore
 
 from pybel.constants import get_cache_connection
 from pybel.manager.cache import build_manager
-from pybel.manager.models import Base
+from pybel.manager.models import Base, Network
 from pybel.utils import get_version as pybel_version
 from pybel_tools.utils import enable_cool_mode
 from pybel_tools.utils import get_version as pybel_tools_get_version
 from .admin_service import build_admin_service
 from .analysis_service import analysis_blueprint
 from .application import create_application
-from .constants import log_path
+from .constants import log_path, CHARLIE_EMAIL
 from .curation_service import curation_blueprint
 from .database_service import api_blueprint
 from .main_service import build_main_service
-from .models import Role, User
+from .models import Role, User, Report
 from .parser_async_service import parser_async_blueprint
 from .parser_endpoint import build_parser_service
 from .upload_service import upload_blueprint
@@ -187,6 +187,30 @@ def drop(ctx, yes):
                 print(s, file=f)
         click.echo('Dumped users to {}'.format(user_dump_path))
         ctx.obj.drop_database()
+
+
+@manage.command()
+@click.pass_context
+def sanitize_reports(ctx):
+    """Adds charlie as the owner of all non-reported graphs"""
+    ds = SQLAlchemyUserDatastore(ctx.obj, User, Role)
+    u = ds.find_user(email=CHARLIE_EMAIL)
+    click.echo('Adding {} as owner of unreported uploads'.format(u))
+
+    for network in ctx.obj.session.query(Network):
+        if network.report is not None:
+            continue
+
+        report = Report(
+            network=network,
+            user=u
+        )
+
+        ctx.obj.session.add(report)
+
+        click.echo('Sanitizing {}'.format(network))
+
+    ctx.obj.session.commit()
 
 
 @manage.group()
