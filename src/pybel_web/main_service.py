@@ -195,52 +195,11 @@ def build_main_service(app):
     @app.route('/networks', methods=['GET', 'POST'])
     def view_networks():
         """Renders a page for the user to choose a network"""
-
-        # TODO: we dont need the forms here anymore, do we?
-        seed_subgraph_form = SeedSubgraphForm()
-        seed_provenance_form = SeedProvenanceForm()
-
-        if seed_subgraph_form.validate_on_submit() and seed_subgraph_form.submit_subgraph.data:
-            seed_data_nodes = seed_subgraph_form.node_list.data.split(',')
-            seed_method = seed_subgraph_form.seed_method.data
-            filter_pathologies = seed_subgraph_form.filter_pathologies.data
-            log.info('got subgraph seed: %s', dict(
-                nodes=seed_data_nodes,
-                method=seed_method,
-                filter_path=filter_pathologies
-            ))
-            url = url_for('view_explorer', **{
-                NETWORK_ID: '0',
-                SEED_TYPE: seed_method,
-                SEED_DATA_NODES: seed_data_nodes,
-                FILTER_PATHOLOGIES: filter_pathologies,
-                AUTOLOAD: 'yes',
-            })
-            log.info('redirecting to %s', url)
-            return redirect(url)
-        elif seed_provenance_form.validate_on_submit() and seed_provenance_form.submit_provenance.data:
-            authors = sanitize_list_of_str(seed_provenance_form.author_list.data.split(','))
-            pmids = sanitize_list_of_str(seed_provenance_form.pubmed_list.data.split(','))
-            filter_pathologies = seed_provenance_form.filter_pathologies.data
-            log.info('got prov: %s', dict(authors=authors, pmids=pmids))
-            url = url_for('view_explorer', **{
-                NETWORK_ID: '0',
-                SEED_TYPE: 'provenance',
-                SEED_DATA_PMIDS: pmids,
-                SEED_DATA_AUTHORS: authors,
-                FILTER_PATHOLOGIES: filter_pathologies,
-                AUTOLOAD: 'yes',
-            })
-            log.info('redirecting to %s', url)
-            return redirect(url)
-
         networks = get_networks_with_permission(api)
 
         return render_template(
             'network_list.html',
             networks=networks,
-            provenance_form=seed_provenance_form,
-            subgraph_form=seed_subgraph_form,
             analysis_enabled=True,
             current_user=current_user,
         )

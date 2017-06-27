@@ -18,7 +18,9 @@
             </div>
             <div class="panel-body">
                 <h2>Step 1: Upload a BEL Document</h2>
-                <p>Click "Parse BEL", Choose a File, then Click "Upload".</p>
+                <p>On the <a href="{{ url_for('home') }}">home page</a>, click <a
+                        href="{{ url_for('parser.view_parser') }}">Parse BEL</a>. In the form, choose a file, then click
+                    "upload".</p>
                 <h2>Step 2: Summarize a BEL Document</h2>
                 <p>Click "List Networks" and find your network. Click "Summary".</p>
                 <h2>Step 3: Build a Query</h2>

@@ -7,8 +7,14 @@ import logging
 import time
 
 import requests
-from flask import redirect, url_for
-from flask import render_template, Blueprint, flash
+from flask import (
+    redirect,
+    url_for,
+    current_app,
+    render_template,
+    Blueprint,
+    flash
+)
 from flask_login import current_user, login_required
 from sqlalchemy.exc import IntegrityError
 
@@ -66,7 +72,7 @@ def view_parser():
         return redirect(url_for('view_parser'))
 
     try:
-        network = manager.insert_graph(graph, store_parts=form.save_edge_store.data)
+        network = manager.insert_graph(graph, store_parts=current_app.config.get('PYBEL_USE_EDGE_STORE'))
     except IntegrityError:
         log_graph(graph, current_user, preparsed=False, failed=True)
         log.exception('integrity error')

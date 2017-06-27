@@ -6,7 +6,7 @@ import codecs
 import logging
 
 from flask import render_template, current_app, Blueprint, flash
-from flask_login import current_user, login_required
+from flask_security import current_user, login_required
 
 from pybel.constants import PYBEL_CONNECTION
 from .application import create_celery
@@ -27,7 +27,6 @@ def view_parser():
     )
 
     if not form.validate_on_submit():
-        flash('Using asynchronous parser service. This service is currently in beta.', category='warning')
         return render_template('parser.html', form=form, current_user=current_user)
 
     lines = codecs.iterdecode(form.file.data.stream, form.encoding.data)

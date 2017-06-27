@@ -66,7 +66,6 @@ class ParserForm(FlaskForm):
     # suggest_naked_name = BooleanField('My document contains unqualified names - suggest appropriate namespaces')
     allow_nested = BooleanField('My document contains nested statements')
     citation_clearing = BooleanField("My document sometimes has evidences before citations - disable citation clearing")
-    save_edge_store = BooleanField('Save my knowledge assembly and cache in edge store for querying and exploration')
     public = BooleanField('Make my knowledge assembly publicly available', default=True)
     encoding = RadioField(
         'Encoding',

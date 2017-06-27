@@ -25,10 +25,11 @@ class Config:
     #: A connection string for the PyBEL cache
     PYBEL_CONNECTION = None
 
-    #: Should the version of the networks be checked upon reload? This is super important for maintaining the right
-    #: data format
+    #: Should the version of the networks be checked on reload? This is important for maintaining the right data format
     PYBEL_DS_CHECK_VERSION = True
     #: Should networks be preloaded to the in-memory cache of the DatabaseService upon the start of the app?
     PYBEL_DS_PRELOAD = False
     #: Should the difficult to calculate (citations, centrality measures) be precalculated as well?
     PYBEL_DS_EAGER = False
+    #: Should networks be saved to the edge store?
+    PYBEL_USE_EDGE_STORE = False
