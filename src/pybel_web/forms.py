@@ -62,11 +62,10 @@ class ParserForm(FlaskForm):
         DataRequired(),
         FileAllowed(['bel'], 'Only files with the *.bel extension are allowed')
     ])
-    suggest_name_corrections = BooleanField('Suggest name corrections')
-    suggest_naked_name = BooleanField('My document contains unqualified names - suggest appropriate namespaces')
+    # suggest_name_corrections = BooleanField('Suggest name corrections')
+    # suggest_naked_name = BooleanField('My document contains unqualified names - suggest appropriate namespaces')
     allow_nested = BooleanField('My document contains nested statements')
     citation_clearing = BooleanField("My document sometimes has evidences before citations - disable citation clearing")
-    save_network = BooleanField('Save my knowledge assembly for later viewing')
     save_edge_store = BooleanField('Save my knowledge assembly and cache in edge store for querying and exploration')
     public = BooleanField('Make my knowledge assembly publicly available', default=True)
     encoding = RadioField(

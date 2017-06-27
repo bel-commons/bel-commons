@@ -23,7 +23,6 @@ parser_async_blueprint = Blueprint('parser', __name__)
 def view_parser():
     """Renders the form for asynchronous parsing"""
     form = ParserForm(
-        save_network=True,
         public=(not current_user.has_role('scai')),
     )
 

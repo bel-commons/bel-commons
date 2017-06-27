@@ -8,7 +8,7 @@ import time
 
 import requests
 from flask import redirect, url_for
-from flask import render_template, Blueprint, flash, current_app
+from flask import render_template, Blueprint, flash
 from flask_login import current_user, login_required
 from sqlalchemy.exc import IntegrityError
 
@@ -20,9 +20,7 @@ from .forms import ParserForm
 from .utils import (
     log_graph,
     add_network_reporting,
-    render_network_summary,
     manager,
-    api,
 )
 
 log = logging.getLogger(__name__)
@@ -34,7 +32,7 @@ parser_sync_blueprint = Blueprint('parser', __name__)
 @login_required
 def view_parser():
     """An upload form for a BEL script"""
-    form = ParserForm(save_network=True)
+    form = ParserForm()
 
     if not form.validate_on_submit():
         return render_template('parser.html', form=form, current_user=current_user)
@@ -67,22 +65,13 @@ def view_parser():
         flash('Compilation error: {}'.format(e))
         return redirect(url_for('view_parser'))
 
-    if current_app.config.get('PYBEL_WEB_DISABLE_CACHE'):
-        flash('Sorry, graph storage is not currently enabled.', category='warning')
-        log_graph(graph, current_user, preparsed=False)
-        return render_network_summary(0, graph, api)
-
-    if not form.save_network.data and not form.save_edge_store.data:
-        log_graph(graph, current_user, preparsed=False)
-        return render_network_summary(0, graph, api)
-
     try:
         network = manager.insert_graph(graph, store_parts=form.save_edge_store.data)
     except IntegrityError:
         log_graph(graph, current_user, preparsed=False, failed=True)
         log.exception('integrity error')
         flash(integrity_message.format(graph.name, graph.version), category='error')
-        manager.rollback()
+        manager.session.rollback()
         return redirect(url_for('view_parser'))
     except Exception as e:
         log_graph(graph, current_user, preparsed=False, failed=True)
@@ -106,6 +95,9 @@ def view_parser():
     except IntegrityError:
         log.exception('integrity error')
         flash('problem with reporting service', category='warning')
-        manager.rollback()
+        manager.session.rollback()
+    except Exception as e:
+        manager.session.rollback()
+        raise e
 
     return redirect(url_for('view_summary', network_id=network.id))
