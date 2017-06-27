@@ -169,64 +169,6 @@
                 {% endfor %}
             </div>
         </div>
-        <a id="seedNodePanel"></a>
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                <h3 class="panel-title">Network Seeding by Nodes</h3>
-            </div>
-            <div class="panel-body">
-                <p>This method of seeding will acquire the given nodes and expand around them using given seed
-                    method.
-                </p>
-                <p><strong>Use Case:</strong> The leukemia drug, <a
-                        href="https://www.ebi.ac.uk/chembl/compound/inspect/CHEMBL255863">nilotinib</a>, triggers cells
-                    to get rid of faulty components - including the ones associated with several brain diseases. In
-                    2015, Georgetown University Medical Center <a
-                            href="http://content.iospress.com/articles/journal-of-parkinsons-disease/jpd160867">published</a>
-                    findings that the drug had a helpful effect on patients in
-                    Alzheimer's and Parkinson's diseases. Though it is currently unknown, a search of the paths between
-                    this drug and these diseases could provide insight to nilotinib's mechanism of action.</p>
-                <form class="form-horizontal">
-                    <div class="form-group form-horizontal">
-                        <label class="col-md-2 control-label">Nodes</label>
-                        <div class="col-md-10">
-                            <select style="width: 100%" multiple="multiple"
-                                    id="node_selection"></select>
-                        </div>
-                    </div>
-                </form>
-
-                {{ wtf.quick_form(subgraph_form, id='subgraph_form', form_type='horizontal', button_map={'submit_button': 'btn btn-primary'}) }}
-            </div>
-        </div>
-        <a id="seedProvenancePanel"></a>
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                <h3 class="panel-title">Network Seeding by Provenance</h3>
-            </div>
-            <div class="panel-body">
-                <p>This method of seeding will acquire nodes and edges asserted in the given citations and by the given
-                    authors, then expand around the neighborhood of these nodes to show all peripheral knowledge.</p>
-                <p><strong>Use Case:</strong> Users may be interested in the representation of their own work, their
-                    colleagues' work, and their favorite publications in the knowledge assembly. For users that are new
-                    to a given field, this is an excellent research tool to identify what papers to read next.</p>
-                <form class="form-horizontal">
-                    <div class="form-group form-horizontal">
-                        <label class="col-md-2 control-label">PubMed Identifiers</label>
-                        <div class="col-md-10">
-                            <select style="width: 100%" multiple="multiple" id="pubmed_selection"></select>
-                        </div>
-                    </div>
-                    <div class="form-group form-horizontal">
-                        <label class="col-md-2 control-label">Authors</label>
-                        <div class="col-md-10">
-                            <select style="width: 100%;" multiple="multiple" id="author_selection"></select>
-                        </div>
-                    </div>
-                </form>
-                {{ wtf.quick_form(provenance_form, id='provenance_form', form_type='horizontal', button_map={'submit_button': 'btn btn-primary'}) }}
-            </div>
-        </div>
     </div>
 
     {% include "footer.html" %}

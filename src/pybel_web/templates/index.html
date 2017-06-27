@@ -43,8 +43,6 @@
                 <div class="panel-body">
                     <a class="btn btn-info" href="{{ url_for('admin.index') }}" role="button">Admin</a>
                     <a class="btn btn-info" href="{{ url_for('view_users') }}" role="button">View Users</a>
-                    <a class="btn btn-info" href="{{ url_for('view_query_builder') }}" role="button">New Query
-                        Builder</a>
                     <a class="btn btn-warning" href="{{ url_for('rollback') }}" role="button" data-toggle="confirmation"
                        data-btn-ok-icon="glyphicon glyphicon-share-alt" data-btn-ok-class="btn-success"
                        data-btn-cancel-icon="glyphicon glyphicon-ban-circle"
@@ -139,8 +137,8 @@
                                 <h3>Query Builder</h3>
                                 <p>Build a network by investigating the knowledge related to interesting biological
                                     entities, chemical matter, authors, or publications.</p>
-                                <a href="{{ url_for('view_networks') }}#seedNodePanel"
-                                   class="btn btn-primary btn-block" role="button">Explore Knowledge Base</a>
+                                <a href="{{ url_for('view_query_builder') }}"
+                                   class="btn btn-primary btn-block" role="button">Query Builder</a>
                             </div>
                         </div>
                     </div>
@@ -157,7 +155,6 @@
                                 </p>
                                 <ul>
                                     <li>Chemical Enrichment Server</li>
-                                    <li>Interactive network query builder</li>
                                     <li>Additional Entries in <a href="https://github.com/cthoyt/bio2bel">bio2bel</a>
                                     </li>
                                 </ul>
