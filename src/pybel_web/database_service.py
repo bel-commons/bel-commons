@@ -67,7 +67,6 @@ from .utils import (
     manager,
     api,
     user_datastore,
-    get_and_run_query,
     query_form_to_dict,
 )
 
@@ -84,6 +83,8 @@ def get_network_from_request():
     """
 
     # Expand/remove nodes + annotations + filter_pathologies are common filters for both query and network_id seeding
+
+    log.debug('Getting network from request: %s', dict(request.args))
 
     expand_nodes = request.args.get(APPEND_PARAM)
     remove_nodes = request.args.get(REMOVE_PARAM)
@@ -510,10 +511,18 @@ def get_tree_api():
     query_id = request.args.get(QUERY)
 
     if query_id and not network_id:  # Tree from query subgraph
-        network = get_and_run_query(query_id)
+        log.debug('getting tree from query result')
+        query = manager.session.query(models.Query).get(query_id)
+
+        if query is None:
+            return flask.abort(500)  # missing resource
+
+        network = query(api)
 
     elif network_id and not query_id:
         network = api.get_network_by_id(network_id)
+
+    # FIXME shouldn't there be an error if there are both a query and network id given?
 
     else:
         network = api.universe

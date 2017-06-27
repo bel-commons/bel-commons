@@ -53,7 +53,6 @@ from pybel_tools.summary.export import info_list
 from pybel_tools.summary.node_properties import count_variants
 from pybel_tools.summary.node_summary import get_unused_namespaces
 from pybel_tools.utils import prepare_c3, count_dict_values
-from . import models
 from .application import get_manager, get_api, get_user_datastore
 from .constants import *
 from .models import User, Report, Experiment
@@ -91,22 +90,6 @@ def get_userdatastore_proxy():
 manager = get_manager_proxy()
 api = get_api_proxy()
 user_datastore = get_userdatastore_proxy()
-
-
-def get_and_run_query(query_id):
-    """Gets a query and runs it.
-
-    :param int query_id: The Query's database identifier
-    :return: A BEL network
-    :rtype: pybel.BELGraph
-    """
-    query = manager.session.query(models.Query).get(query_id)
-
-    if query is None:
-        return flask.abort(404)
-
-    query = query.data
-    return query(api)
 
 
 def try_insert_graph(manager, graph, api):
