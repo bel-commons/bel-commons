@@ -144,6 +144,23 @@ function displayQueryInfo(query) {
 }
 
 /**
+ * Highlights nodes in nodeArray
+ * @param {array} nodeArray
+ */
+function highlightNodeBorder(nodeArray) {
+
+    var highlightNodes = d3.select("#graph-chart").selectAll(".node").filter(function (el) {
+        return nodeArray.indexOf(el.id) >= 0;
+    });
+
+    if (highlightNodes["_groups"][0].length > 0) {
+        $.each(highlightNodes["_groups"][0], function (index, value) {
+            value.children[1].setAttribute('style', 'stroke: red');
+        });
+    }
+}
+
+/**
  * Automatically select nodes in the tree given an URL
  * @param {InspireTree} tree
  * @param {string} url
@@ -840,8 +857,6 @@ function initD3Force(graph, tree) {
 
                     initD3Force(data["json"], tree);
 
-                    highlightNodeBorder(data["newNodes"]);
-
                     window.history.pushState("BiNE", "BiNE", "/explore?" + $.param(args, true));
 
                 });
@@ -1216,23 +1231,6 @@ function initD3Force(graph, tree) {
         if (d3.event.keyCode === 32) {
             simulation.stop();
         }
-    }
-
-    /**
-     * Highlights nodes in nodeArray
-     * @param {array} nodeArray
-     */
-    function highlightNodeBorder(nodeArray) {
-
-        // console.log(nodeArray)
-        var highlightNodes = svg.selectAll(".node").filter(function (el) {
-            console.log(el.id)
-            return nodeArray.indexOf(el.id) >= 0;
-        });
-
-        // console.log(highlightNodes)
-
-        highlightNodes.style("stroke", "orange");
     }
 
     /**
