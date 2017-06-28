@@ -230,6 +230,7 @@ def render_network_summary(network_id, graph):
         contradictory_triplets=contradictory_triplets,
         unstable_triplets=unstable_triplets,
         graph=graph,
+        network=manager.session.query(Network).get(network_id),
         network_id=network_id,
         time=None,
         undefined_namespaces=sorted(undefined_namespaces),
