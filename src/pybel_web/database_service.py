@@ -269,6 +269,7 @@ def _build_namespace_helper(graph, namespace, names):
 @api_blueprint.route('/api/namespace/builder/undefined/<network_id>/<namespace>')
 def download_undefined_namespace(network_id, namespace):
     """Outputs a namespace built for this undefined namespace"""
+    """Outputs a namespace built for this undefined namespace"""
     network = api.get_network_by_id(network_id)
     names = get_undefined_namespace_names(network, namespace)
     return _build_namespace_helper(network, namespace, names)
@@ -390,6 +391,7 @@ def nodes_by_network(network_id):
 def drop_network_by_id(network_id):
     """Drops a specific graph"""
     log.info('dropping graphs %s', network_id)
+    api.forget_network(network_id)
     manager.drop_network_by_id(network_id)
     return jsonify({'status': 200})
 
@@ -399,6 +401,7 @@ def drop_network_by_id(network_id):
 def drop_networks():
     """Drops all graphs"""
     log.info('dropping all networks')
+    api.clear()
     manager.drop_networks()
     return jsonify({'status': 200})
 
