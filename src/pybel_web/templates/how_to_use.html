@@ -17,41 +17,82 @@
                 <h3 class="panel-title">Typical Workflow</h3>
             </div>
             <div class="panel-body">
-                <h2>Step 1: Upload a BEL Document</h2>
+                <h2>1. Curation</h2>
+                <p>PyBEL Web hosts biological knowledge assemblies that are encoded in Biological Expression Language.
+                    BEL supports the assembly of context-specific qualitative causal and correlative relations between
+                    biological entities across multiple modes and scales in BEL Script with provenance
+                    information, external namespace references, relation provenance (citation and evidence), and
+                    relation metadata such as the biological context (anatomy, cell, disease, etc.).
+                </p>
+                <h3>Upload and Parse</h3>
                 <p>On the <a href="{{ url_for('home') }}">home page</a>, click <a
                         href="{{ url_for('parser.view_parser') }}">Parse BEL</a>. In the form, choose a file, then click
                     "upload".</p>
-                <h2>Step 2: Summarize a BEL Document</h2>
+                <h3>Validate Namespaces</h3>
+                <p>Large terminologies that are curated for projects investigating new diseases and pathologies can be
+                    validated by checking their contents using the Ontology Lookup Service, provided by the EBI to
+                    identify duplicate names and enable better semantic integration. </p>
+                <h2>2. Summarize a Knowledge Assembly</h2>
                 <p>Click "List Networks" and find your network. Click "Summary".</p>
-                <h2>Step 3: Build a Query</h2>
-                <p>Choose the universe of BEL documents to start with, seed your network, and select
-                    filters/mutators.</p>
-                <h2>Step 4: Explore a Knowledge Assembly</h2>
-                <p>From the query builder, click "View my Network" and begin to interact with the explorer.</p>
-                <p>The explorer contains functions to build further queries.</p>
-                <h2>Step 5: Analyze a Knowledge Assembly</h2>
+                <p>This web application organizes high level statistical information about a network, such as the
+                    number of nodes, edges, author contributions, citation contributions, and provenance information as
+                    well as global network statistics such as the average node degree, network density, number of weakly
+                    connected components, etc. When appropriate, it proves feedback on syntax and semantics of the
+                    source BEL document to assist in curation.</p>
+                <p>Finally, the summary page provides an assessment of the "Biological Grammar", or the biological
+                    validity of statements. These analysis include identification of contradictory edges,
+                    unstable biological motifs in pairs and triplets of nodes, and other information that is inferred
+                    to be missing or incoplete.
+                </p>
+                <h2>3. Exploration of the Knowledge Base</h2>
+                <h3>Query Builder</h3>
+                <p>A query contain three actions:</p>
+                <ol>
+                    <li><strong>Assemble</strong>: a list of networks can be assembled. This is useful to integrate many
+                        networks in the same disease area that have been produced at different times and in different
+                        places. Additionally, this allows for integration of other static resources such as gene
+                        families, orthology information, biochemical reaction databases, and other annotations to fill
+                        in the most fine-granular information extracted from structured knowledge bases. We provide
+                        several networks publicly for users to add to their assemblies.
+                    </li>
+                    <li><strong>Seed</strong>: large assemblies of networks are very difficult to view, especially when
+                        there is
+                        a certain point of interest for the user. We provide several network seeding methods to create
+                        a more relevant and managable network before performing general queries. For example,
+                        subnetworks can be seeded around a given node or list of nodes, based on edges with certain
+                        properties, or even by author or citation provenance information.
+                    </li>
+                    <li><strong>Mutate and Filter</strong>: finally, networks can be modified using the entire suite of
+                        tools provided by PyBEL. This includes filters for nodes based on certain properties, expansion
+                        around nodes of interest, exclusion of nodes or groups of nodes, and so on.
+                    </li>
+                </ol>
+
+                <p>Finally, the results of queries can be summarised, downloaded in many formats, or explored.</p>
+                <h3>Interactive Network Explorer</h3>
+                <p>The results of query can be explored interactively with the Biological Network Explorer.
+                    Additional modifications and filters can be applied using the extended query builder interface
+                    in the biological network explorer. Additionally, network algorithms can be readily applied to
+                    networks such as path searches, centrality calulations, and overlaying of external data. These
+                    data can come from differential expression experiments, or directly from the results of the CMPA
+                    algorithm, which is explained below.
+                </p>
+                <h2>4. Analyze a Knowledge Assembly</h2>
                 <p>Data sets like differential gene expression can be used to quantify the perturbation amplitude
-                    of biological processes in a network using an randomized algorithm based on NPA. </p>
-            </div>
-        </div>
-
-
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                <h3 class="panel-title">PyBEL Web Compiler</h3>
-            </div>
-            <div class="panel-body">
-
-
-            </div>
-        </div>
-
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                <h3 class="panel-title">PyBEL Web Query Builder</h3>
-            </div>
-            <div class="panel-body">
-
+                    of biological processes in a network using an randomized algorithm based on NPA. Candidate
+                    upstream mechanisms are generated for each biological process and a heat diffusion algorithm is used
+                    to quantify the cumulative observed effect of upstream genes and gene products based on the
+                    differential gene expression data.
+                </p>
+                <p>
+                    This algorithm is general enough that other data types could be used, such as copy number variations
+                    on SNPs or clinical measurements of neuroimaginging features, which have been annotated to
+                    our Alzheimer Disease Knowledge assembly with NeuroMMSigDB.
+                </p>
+                <p>Data sets can be directly uploaded and analyzed. The results of these experiments can then be
+                    directly overlayed to the interactive network viewer to provide a data-driven analysis of
+                    given networks or subnetworks.
+                </p>
             </div>
         </div>
 
