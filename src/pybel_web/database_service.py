@@ -255,6 +255,7 @@ def _build_namespace_helper(graph, namespace, names):
         author_contact=graph.document.get(METADATA_CONTACT),
         citation_name=graph.document.get(METADATA_NAME),
         citation_description='This namespace was serialized by PyBEL Web',
+        cacheable=False,
         values=names,
         file=si
     )
