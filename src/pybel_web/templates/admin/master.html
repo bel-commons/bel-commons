@@ -1,0 +1,19 @@
+{% extends admin_base_template %}
+
+{% block head %}
+    {{ super() }}
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/nav.css') }}">
+    <style type="text/css">
+        body {
+            padding-top: 0;
+        }
+    </style>
+{% endblock %}
+
+{% block brand %}
+{% endblock %}
+
+{% block page_body %}
+    {% include 'nav.html' %}
+    {{ super() }}
+{% endblock %}
