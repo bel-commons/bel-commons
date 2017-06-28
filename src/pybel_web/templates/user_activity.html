@@ -15,6 +15,21 @@
 
         {{ util.flashed_messages(dismissible=True, container=False) }}
 
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">My Projects</h3>
+            </div>
+            <div class="list-group">
+                {% for project in user.projects %}
+                    <div class="list-group-item">
+                        <h4 class="list-group-item-heading">{{ project.name }}</h4>
+                        <div class="list-group-item-text">{{ project.description }}</div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
         <div class="panel panel-default">
             <div class="panel-heading">
                 <h3 class="panel-title">Queries</h3>
