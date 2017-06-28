@@ -36,7 +36,7 @@
         <div class="panel panel-default">
             <div class="panel-body">
                 <a class="btn btn-primary" href="{{ url_for('view_networks') }}" role="button">List Networks</a>
-                <a class="btn btn-default" href="{{ url_for('view_explorer', network_id=network_id) }}"
+                <a class="btn btn-default" href="{{ url_for('view_explorer_network', network_id=network_id) }}"
                    role="button">Explore</a>
                 <a class="btn btn-default"
                    href="{{ url_for('analysis.view_analysis_uploader', network_id=network_id) }}"
@@ -567,7 +567,7 @@
                     {% for source, aid, target, bid, relations in contradictions %}
                         <tr>
                             <td>
-                                <a href="{{ url_for('view_explorer', network_id=network_id, seed_method='induction', nodes=[aid, bid], autoload='yes') }}"><span
+                                <a href="{{ url_for('view_explorer_network', network_id=network_id, seed_method='induction', nodes=[aid, bid], autoload='yes') }}"><span
                                         class="glyphicon glyphicon-eye-open" aria-hidden="true"></span></a></td>
                             <td>{{ source }}</td>
                             <td>{{ ', '.join(relations) }}</td>
@@ -618,7 +618,7 @@
                     {% for a, aid, b, bid, label in unstable_pairs %}
                         <tr>
                             <td>
-                                <a href="{{ url_for('view_explorer', network_id=network_id, seed_method='induction', nodes=[aid, bid], autoload='yes') }}"><span
+                                <a href="{{ url_for('view_explorer_network', network_id=network_id, seed_method='induction', nodes=[aid, bid], autoload='yes') }}"><span
                                         class="glyphicon glyphicon-eye-open" aria-hidden="true"></span></a></td>
                             <td>{{ label }}</td>
                             <td>{{ a }}</td>
@@ -680,7 +680,7 @@
                     {% for a, aid, b, bid, c, cid, label in contradictory_triplets %}
                         <tr>
                             <td>
-                                <a href="{{ url_for('view_explorer', network_id=network_id, seed_method='induction', nodes=[aid, bid, cid], autoload='yes') }}"><span
+                                <a href="{{ url_for('view_explorer_network', network_id=network_id, seed_method='induction', nodes=[aid, bid, cid], autoload='yes') }}"><span
                                         class="glyphicon glyphicon-eye-open" aria-hidden="true"></span></a></td>
                             <td>{{ label }}</td>
                             <td>{{ a }}</td>
@@ -733,7 +733,7 @@
                     {% for a, aid, b, bid, c, cid, label in unstable_triplets %}
                         <tr>
                             <td>
-                                <a href="{{ url_for('view_explorer', network_id=network_id, seed_method='induction', nodes=[aid, bid, cid], autoload='yes') }}"><span
+                                <a href="{{ url_for('view_explorer_network', network_id=network_id, seed_method='induction', nodes=[aid, bid, cid], autoload='yes') }}"><span
                                         class="glyphicon glyphicon-eye-open" aria-hidden="true"></span></a></td>
                             <td>{{ label }}</td>
                             <td>{{ a }}</td>
@@ -774,7 +774,7 @@
                     {% for source, source_id, relation, target, target_id in causal_pathologies %}
                         <tr>
                             <td>
-                                <a href="{{ url_for('view_explorer', network_id=network_id, seed_method='induction', nodes=[source_id, target_id], autoload='yes') }}"><span
+                                <a href="{{ url_for('view_explorer_network', network_id=network_id, seed_method='induction', nodes=[source_id, target_id], autoload='yes') }}"><span
                                         class="glyphicon glyphicon-eye-open" aria-hidden="true"></span></a></td>
                             <td>{{ source }}</td>
                             <td>{{ relation }}</td>
@@ -812,7 +812,7 @@
                     {% for source, source_id in undefined_families %}
                         <tr>
                             <td>
-                                <a href="{{ url_for('view_explorer', network_id=network_id, seed_method='neighbors', nodes=[source_id], autoload='yes') }}"><span
+                                <a href="{{ url_for('view_explorer_network', network_id=network_id, seed_method='neighbors', nodes=[source_id], autoload='yes') }}"><span
                                         class="glyphicon glyphicon-eye-open" aria-hidden="true"></span></a></td>
                             <td><code>{{ source }}</code></td>
                         </tr>
