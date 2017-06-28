@@ -48,6 +48,7 @@ from pybel_tools.summary import (
     get_incorrect_names,
     get_naked_names,
 )
+from pybel_tools.summary import info_str
 from . import models
 from .constants import *
 from .main_service import (
@@ -114,7 +115,7 @@ def get_network_from_request():
     if query_id is not None:
         query_id = int(query_id)
         query = manager.session.query(models.Query).get(query_id)
-        network_from_query = query(api)
+        network_from_query = query.run(api)
 
         # TODO: Nodes expanding not working since the universe is retricted to the query and not to the set of BEL files
         network = get_subgraph(
@@ -533,7 +534,7 @@ def get_tree_api():
         if query is None:
             return flask.abort(500)  # missing resource
 
-        network = query(api)
+        network = query.run(api)
 
     elif network_id and not query_id:
         network = api.get_network_by_id(network_id)
@@ -810,18 +811,17 @@ def get_pipeline():
 
     q = Query.from_json(d)
 
-    asm = models.Assembly()
-    asm.networks = [
+    assembly = models.Assembly(networks=[
         manager.session.query(Network).get(network_id)
         for network_id in q.network_ids
-    ]
+    ])
 
     qo = models.Query(
         user=current_user,
-        assembly=asm,
+        assembly=assembly,
         seeding=json.dumps(q.seeds),
-        pipeline_protocol=str(q.pipeline),
-        dump=json.dumps(q.to_json()),
+        pipeline_protocol=q.pipeline.to_jsons(),
+        dump=q.to_jsons(),
     )
 
     manager.session.add(qo)
@@ -867,6 +867,47 @@ def query_to_network(query_id):
     j['id'] = query.id
 
     return jsonify(j)
+
+
+def add_pipeline_entry(query_id, name, arg):
+    """Adds an entry to the pipeline and """
+    query = manager.session.query(models.Query).get(query_id)
+
+    q = query.data
+    q.pipeline.append(name, arg)
+
+    result = q.run(api)
+    log.info('result info: %s', info_str(result))
+
+    qo = models.Query(
+        user=current_user,
+        assembly=query.assembly,
+        seeding=json.dumps(q.seeds),
+        pipeline_protocol=q.pipeline.to_jsons(),
+        dump=q.to_jsons(),
+    )
+
+    result = qo.run(api)
+    log.info('result info: %s', info_str(result))
+
+    manager.session.add(qo)
+    manager.session.commit()
+
+    return jsonify({
+        'id': qo.id
+    })
+
+
+@api_blueprint.route('/api/query/build_node_list_applier/<int:query_id>/<name>/<intlist:node_ids>', methods=['GET'])
+def add_node_list_action_to_query(query_id, name, node_ids):
+    """Builds a new query with a node list applier added to the end of the pipeline"""
+    return add_pipeline_entry(query_id, name, node_ids)
+
+
+@api_blueprint.route('/api/query/build_node_applier/<int:query_id>/<name>/<int:node_id>', methods=['GET'])
+def add_node_list_action_to_query(query_id, name, node_id):
+    """Builds a new query with a node applier added to the end of the pipeline"""
+    return add_pipeline_entry(query_id, name, node_id)
 
 
 ####################################
