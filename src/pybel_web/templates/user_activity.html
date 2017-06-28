@@ -84,7 +84,13 @@
                                 {% endfor %}
                             </ul>
                         </td>
-                        <td>{{ query.pipeline_protocol }}</td>
+                        <td>
+                            <ul>
+                                {% for protocol_entry in query.protocol_as_json() %}
+                                    <li>{{ protocol_entry }}</li>
+                                {% endfor %}
+                            </ul>
+                        </td>
                         <td><a href="{{ url_for('view_explorer_query', query_id=query.id) }}"><span
                                 class="glyphicon glyphicon-eye-open" aria-hidden="true"></span></a></td>
                         <td><a href="{{ url_for('dbs.drop_query_by_id', query_id=query.id) }}">

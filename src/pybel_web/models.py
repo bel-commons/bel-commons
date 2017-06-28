@@ -252,10 +252,16 @@ class Query(Base):
     def seeding_as_json(self):
         """Returns seeding json. It's also possible to get Query.data.seeding as well.
 
-        :return:
         :rtype: dict
         """
         return json.loads(self.seeding)
+
+    def protocol_as_json(self):
+        """Returns the pipeline as json
+
+        :rtype: list[dict]
+        """
+        return json.loads(self.pipeline_protocol)
 
     def run(self, manager):
         """A wrapper around the :meth:`pybel_tools.query.Query.run` function of the enclosed
