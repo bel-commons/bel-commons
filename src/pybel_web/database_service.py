@@ -84,96 +84,25 @@ def get_network_from_request():
     :rtype: pybel.BELGraph
     """
 
-    # Expand/remove nodes + annotations + filter_pathologies are common filters for both query and network_id seeding
-
-    log.debug('Getting network from request: %s', dict(request.args))
-
-    expand_nodes = request.args.get(APPEND_PARAM)
-    remove_nodes = request.args.get(REMOVE_PARAM)
-
-    if expand_nodes:
-        expand_nodes = get_nodes_from_list(expand_nodes)
-
-    if remove_nodes:
-        remove_nodes = get_nodes_from_list(remove_nodes)
-
     annotations = {
         k: request.args.getlist(k)
         for k in request.args
         if k not in BLACK_LIST
     }
 
-    filter_pathologies = request.args.get(FILTER_PATHOLOGIES)
-
-    if filter_pathologies and filter_pathologies in {'True', True}:
-        filter_pathologies = True
-
-    # Query is in the URL
-
     query_id = request.args.get('query')
 
-    if query_id is not None:
-        query_id = int(query_id)
-        query = manager.session.query(models.Query).get(query_id)
-        network_from_query = query.run(api)
+    # TODO: Currently we have the problem that the query argument MUST exists...
+    if query_id is None:
+        return 'Query not found in request'
 
-        # TODO: Nodes expanding not working since the universe is retricted to the query and not to the set of BEL files
-        network = get_subgraph(
-            network_from_query,
-            expand_nodes=expand_nodes,
-            remove_nodes=remove_nodes,
-            filter_pathologies=filter_pathologies,
-            **annotations
-        )
+    query_id = int(query_id)
+    query = manager.session.query(models.Query).get(query_id)
+    network_from_query = query.run(api)
 
-        return network
-
-    # network_id is in URL
-
-    network_id = request.args.get(NETWORK_ID)
-
-    if network_id is not None:
-        network_id = int(network_id)
-
-    if network_id == 0:
-        network_id = None
-
-    seed_method = request.args.get(SEED_TYPE)
-
-    if seed_method and seed_method not in SEED_TYPES:
-        raise ValueError('Invalid seed method: {}'.format(seed_method))
-
-    if seed_method and seed_method in {SEED_TYPE_AUTHOR, SEED_TYPE_PUBMED}:
-        seed_data = {}
-
-        authors = request.args.getlist(SEED_DATA_AUTHORS)
-        if authors:
-            seed_data['authors'] = [unquote(author) for author in authors]
-
-        pmids = request.args.getlist(SEED_DATA_PMIDS)
-        if pmids:
-            seed_data['pmids'] = pmids
-
-    elif seed_method:
-        seed_data = [
-            api.get_node_by_id(node_id_str.strip())
-            for node_id_str in request.args.getlist(SEED_DATA_NODES)
-        ]
-
-    else:
-        seed_data = None
-
-    filters = request.args.getlist(FILTERS)
-
-    # TODO get rid of this function and use query builder instead
-    network = api.query(
-        network_id=network_id,
-        seed_method=seed_method,
-        seed_data=seed_data,
-        expand_nodes=expand_nodes,
-        remove_nodes=remove_nodes,
-        filters=filters,
-        filter_pathologies=filter_pathologies,
+    # TODO: Currently, applying filters on the network. This should be done in JS side?
+    network = get_subgraph(
+        network_from_query,
         **annotations
     )
 
@@ -1036,6 +965,7 @@ def grant_network_to_project(network_id, project_id):
     manager.session.commit()
 
     return jsonify({'status': 200})
+
 
 @api_blueprint.route('/api/network/<int:network_id>/grant_user/<int:user_id>')
 def grant_network_to_user(network_id, user_id):

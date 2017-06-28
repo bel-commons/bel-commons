@@ -217,10 +217,15 @@ def build_main_service(app):
             current_user=current_user,
         )
 
-    @app.route('/explore', methods=['GET'])
-    def view_explorer():
+    @app.route('/explore/query/<int:query_id>', methods=['GET'])
+    def view_explorer_query(query_id):
         """Renders a page for the user to explore a network"""
-        return render_template('explorer.html')
+        return render_template('explorer.html', query_id=query_id)
+
+    @app.route('/explore/network/<int:network_id>', methods=['GET'])
+    def view_explore_network(network_id):
+        """Renders a page for the user to explore a network"""
+        return render_template('explorer.html', network_id=network_id)
 
     @app.route('/summary/<network_id>')
     def view_summary(network_id):
@@ -314,7 +319,7 @@ def build_main_service(app):
         """Renders a list of users"""
         return render_template('view_users.html', users=manager.session.query(User))
 
-    @app.route('/user')
+    @app.route('/my_activity')
     @login_required
     def view_current_user_activity():
         """Returns all user history."""

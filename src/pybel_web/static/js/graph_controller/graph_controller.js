@@ -228,17 +228,13 @@ function selectNodesInTreeFromURL(tree, url, blackList) {
 
 /**
  * Get all annotations needed to build the tree
- * @param {string} urlObject
  * @returns {object} JSON object coming from the API ready to render the tree
  */
-function getAnnotationForTree(urlObject) {
+function getAnnotationForTree() {
 
-    if ("network_id" in urlObject) {
-        return doAjaxCall("/api/network/tree/?network_id=" + urlObject["network_id"]);
-    }
-    // Might be multiple networks within a query
-    else if (window.processType === "query") {
-        return doAjaxCall("/api/network/tree/?query=" + urlObject["query"]);
+    // TODO: Elif check if network_id exists
+    if (window.query !== undefined) {
+        return doAjaxCall("/api/network/tree/?query=" + window.query);
     }
     // Tree for Universe
     else {
@@ -248,28 +244,8 @@ function getAnnotationForTree(urlObject) {
 
 
 /**
- * Initializes global variables (remove, append)
- * @param {string} url
- */
-function initiliazeGlobals(url) {
-    if ("remove" in url) {
-        window.deleteNodes = url["remove"].split(',');
-    }
-    else {
-        window.deleteNodes = [];
-    }
-    if ("append" in url) {
-        window.expandNodes = url["append"].split(',');
-    }
-    else {
-        window.expandNodes = [];
-    }
-}
-
-
-/**
  *  Returns the current URL
- *  (Search for for the int after /explore/ representing the network_id)
+ *  (Search for for the int after /explore/)
  */
 function getCurrentURL() {
 
@@ -294,113 +270,20 @@ function getCurrentURL() {
     return query_string;
 }
 
-/**
- * Creates an object with all default parameters necessary for PyBELWEB API query
- * @param {InspireTree} tree
- * @returns {object}
- */
-function getFilterParameters(tree) {
-    var args = getSelectedNodesFromTree(tree); // Adds the annotation filters
-
-    // Adds the append/remove nodes
-    if (window.deleteNodes.length > 0) {
-        args["remove"] = window.deleteNodes.join();
-    }
-    if (window.expandNodes.length > 0) {
-        args["append"] = window.expandNodes.join();
-    }
-
-    // Adds the query or the network id
-    if (window.processType === "query") {
-        args["query"] = window.query;
-    }
-    else {
-        args["network_id"] = window.network_id;
-    }
-
-    return args
-}
-
 
 /**
- * Checks if parameter is in the URL (represented as object) and sticks to object if is in URL
- * @param {object} args
- * @param {string} arg (parameter to be checked in url)
- * @param {object} url (object representation of url parameters)
- * @returns {object}
- */
-function argumentsInURL(args, arg, url) {
-    if (arg in url) {
-        args[arg] = url[arg];
-    }
-    return args
-}
-
-
-/**
- * Add query to URL
- * @param {object} args, default parameters
- * @param {object} url (object representation of url parameters)
- * @returns {object}
- */
-function getQueryFromURL(args, url) {
-
-    // Checking if methods for pipeline analysis are present
-    args = argumentsInURL(args, "pathology_filter", url);
-
-    // Checking if autoload is present
-    args = argumentsInURL(args, "autoload", url);
-
-    return args
-}
-
-
-/**
- * Adding seedMethod parameter to arguments
- * @param {object} args, default parameters
- * @param {object} url (object representation of url parameters)
- * @returns {object}
- */
-function getSeedMethodFromURL(args, url) {
-    // Checking if seed_methods are present in the URL and adding it to the parameters
-    if ("seed_method" in url) {
-        args["seed_method"] = url["seed_method"];
-
-        if ("provenance" === url["seed_method"]) {
-            if ("authors" in url) {
-                args["authors"] = url["authors"];
-            }
-            if ("pmids" in url) {
-                args["pmids"] = url["pmids"];
-            }
-        }
-
-        if ("induction" === url["seed_method"] || "shortest_paths" === url["seed_method"] ||
-            "neighbors" === url["seed_method"] || "dneighbors" === url["seed_method"] ||
-            "upstream" === url["seed_method"] || "downstream" === url["seed_method"]) {
-            args["nodes"] = url["nodes"];
-        }
-    }
-
-    // Checking if methods for pipeline analysis are present
-    args = argumentsInURL(args, "pathology_filter", url);
-
-    // Checking if autoload is present
-    args = argumentsInURL(args, "autoload", url);
-
-    return args
-}
-
-/**
- *  Returns an object with all arguments used to generated the current network
+ *  Returns an object with all arguments used to generated the current network + query
  * @param {InspireTree} tree
  */
 function getDefaultAjaxParameters(tree) {
-    if (window.processType === "query") {
-        return getQueryFromURL(getFilterParameters(tree), getCurrentURL())
-    } else {
-        return getSeedMethodFromURL(getFilterParameters(tree), getCurrentURL())
-    }
+
+    var args = getSelectedNodesFromTree(tree); // Adds the annotation filters
+
+    // Adds the query or the network id
+    // TODO: Query is always passed as an argument unless we change get_network_from_request
+    args["query"] = window.query;
+
+    return args;
 }
 
 
@@ -410,10 +293,6 @@ function getDefaultAjaxParameters(tree) {
  * @param {boolean} firstInit
  */
 function renderNetwork(tree, firstInit) {
-
-    // Next two lines store filtering parameters from tree and global variables (network_id, expand/delete nodes) and
-    // store seed methods/ pipeline arguments from URL
-    initiliazeGlobals(getCurrentURL());
 
     var args = getDefaultAjaxParameters(tree);
 
@@ -433,8 +312,9 @@ function renderNetwork(tree, firstInit) {
         }
     });
 
-    // Update the URL
-    window.history.pushState("BiNE", "BiNE", "/explore?" + renderParameters);
+
+    // TODO: Update the URL with the new query for nodes edxpansion
+    window.history.pushState("BiNE", "BiNE", "/explore/query/" + window.query + "?"+ renderParameters);
 }
 
 
@@ -481,28 +361,15 @@ function insertRow(table, row, column1, column2) {
  */
 function processURL(urlObject) {
 
-    if (window.processType === "url") {
-        var networkName = doAjaxCall("/api/network/" + window.network_id + "/name");
-        if (networkName) {
-            $("#network-name").html(networkName);
-        }
-    }
-    if (window.processType === "query") {
-        var queryInfo = doAjaxCall("/api/query/" + window.query + "/info");
-        displayQueryInfo(queryInfo)
-    }
+    var queryInfo = doAjaxCall("/api/query/" + window.query + "/info");
 
+    displayQueryInfo(queryInfo);
 
     tree = initTree(urlObject);
 
-    // Loads the network if autoload is an argument in the URL or render empty frame if not
-    if (window.location.search.indexOf("autoload=yes") > -1) {
-        renderNetwork(tree, false);
-    } else {
-        renderNetwork(tree, true);
-    }
+    renderNetwork(tree, true);
 
-    return tree
+    return tree;
 }
 
 
@@ -513,14 +380,14 @@ function processURL(urlObject) {
  */
 function initTree(urlObject) {
 
-    // Initiate the tree and expands it with the annotations given the network_id in URL
+    // Initiate the tree and expands it with the annotations given the URL
     var tree = new InspireTree({
         target: "#tree",
         selection: {
             mode: "checkbox",
             multiple: true
         },
-        data: getAnnotationForTree(urlObject)
+        data: getAnnotationForTree()
     });
 
     tree.on("model.loaded", function () {
@@ -532,31 +399,18 @@ function initTree(urlObject) {
     // Enables tree search
     $('#tree-search').on('keyup', function (ev) {
         tree.search(ev.target.value);
-
     });
 
     return tree
 }
 
 
-// Process the URL depending on whether 'query' arg is present or not (default: network_id)
 $(document).ready(function () {
 
     var urlObject = getCurrentURL();
 
-    // Checks if query in URL
-    if ("query" in urlObject) {
-        window.processType = "query"; // initialize processType
-        window.query = urlObject["query"]; // initialize query global
-
-    } else {
-        window.processType = "url"; // // initialize processType
-        // Set networkid as a global variable
-        if ("network_id" in urlObject) {
-            window.network_id = urlObject["network_id"];
-        } else {
-            window.network_id = "0";
-        }
+    if (window.query === undefined) {
+        // TODO: Process network_id
     }
 
     tree = processURL(urlObject);
@@ -623,16 +477,12 @@ $(document).ready(function () {
 
     // Reset expand/node window globals
     $("#reset_globals").on("click", function () {
-        window.expandNodes = [];
-        window.deleteNodes = [];
         var args = getDefaultAjaxParameters(tree);
-        window.history.pushState("BiNE", "BiNE", "/explore?" + $.param(args, true));
     });
 
     // Comes back to the network id originally choosen
     $("#reset_all").on("click", function () {
         var args = getDefaultAjaxParameters(tree);
-        window.history.pushState("BiNE", "BiNE", "/explore?" + $.param(args, true));
     });
 });
 
@@ -843,8 +693,6 @@ function initD3Force(graph, tree) {
 
                     highlightNodeBorder(data["newNodes"]);
 
-                    window.history.pushState("BiNE", "BiNE", "/explore?" + $.param(args, true));
-
                 });
             },
             disabled: false // optional, defaults to false
@@ -877,8 +725,6 @@ function initD3Force(graph, tree) {
 
                     highlightNodeBorder(data["newNodes"]);
 
-                    window.history.pushState("BiNE", "BiNE", "/explore?" + $.param(args, true));
-
                 });
             },
             disabled: false // optional, defaults to false
@@ -905,8 +751,6 @@ function initD3Force(graph, tree) {
                     clearUsedDivs();
 
                     initD3Force(data["json"], tree);
-
-                    window.history.pushState("BiNE", "BiNE", "/explore?" + $.param(args, true));
 
                 });
 

@@ -24,42 +24,22 @@ DICTIONARY_SERVICE = 'dictionary_service'
 DEFAULT_TITLE = 'Biological Network Explorer'
 
 NETWORK_ID = 'network_id'
-APPEND_PARAM = 'append'
-REMOVE_PARAM = 'remove'
 SOURCE_NODE = 'source'
 TARGET_NODE = 'target'
 UNDIRECTED = 'undirected'
 NODE_NUMBER = 'node_number'
 FORMAT = 'format'
-SEED_TYPE = 'seed_method'
-SEED_DATA_AUTHORS = 'authors'
-SEED_DATA_PMIDS = 'pmids'
-SEED_DATA_NODES = 'nodes'
 PATHS_METHOD = 'paths_method'
-PIPELINE = 'pipeline'
-AUTOLOAD = 'autoload'
-FILTERS = 'filters'
-FILTER_PATHOLOGIES = 'pathology_filter'
 QUERY = 'query'
 
 BLACK_LIST = {
     NETWORK_ID,
-    APPEND_PARAM,
-    REMOVE_PARAM,
     SOURCE_NODE,
     TARGET_NODE,
     UNDIRECTED,
     NODE_NUMBER,
     FORMAT,
-    SEED_TYPE,
-    SEED_DATA_AUTHORS,
-    SEED_DATA_PMIDS,
-    SEED_DATA_NODES,
     PATHS_METHOD,
-    PIPELINE,
-    AUTOLOAD,
-    FILTERS,
-    FILTER_PATHOLOGIES,
     QUERY
 }
 
