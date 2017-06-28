@@ -23,7 +23,6 @@ from flask import (
 )
 from flask_login import login_required, current_user
 from flask_security import roles_required, roles_accepted
-from requests.compat import unquote
 from six import StringIO
 from sqlalchemy.exc import IntegrityError
 
@@ -39,7 +38,6 @@ from pybel_tools.analysis.npa import RESULT_LABELS
 from pybel_tools.definition_utils import write_namespace
 from pybel_tools.query import Query
 from pybel_tools.selection import get_subgraph
-from pybel_tools.selection.induce_subgraph import SEED_TYPES, SEED_TYPE_AUTHOR, SEED_TYPE_PUBMED
 from pybel_tools.summary import (
     info_json,
     get_authors,
@@ -69,7 +67,6 @@ from .utils import (
     api,
     user_datastore,
     query_form_to_dict,
-    get_nodes_from_list,
 )
 
 log = logging.getLogger(__name__)
