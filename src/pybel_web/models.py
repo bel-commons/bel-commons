@@ -235,6 +235,7 @@ class Query(Base):
 
     pipeline_protocol = Column(Text, doc="Protocol list")
 
+    # TODO remove dump completely and have it reconstruct from parts
     dump = Column(Text, doc="The stringified JSON representing this query")
 
     @property
@@ -270,6 +271,7 @@ class Query(Base):
     def from_query(manager, user, query):
         """Builds a orm query from a pybel-tools query
 
+        :param pybel.manager.CacheManager manager:
         :param pybel_web.models.User user:
         :param pybel_tools.query.Query query:
         :rtype: Query
@@ -277,7 +279,21 @@ class Query(Base):
         return Query(
             user=user,
             assembly=Assembly.from_query(manager, query),
-            seeding=json.dumps(query.seeds),
+            seeding=query.seeding_to_jsons(),
             protocol=query.pipeline.to_jsons(),
             dump=query.to_jsons()
         )
+
+    @staticmethod
+    def from_query_args(manager, user, network_ids, seed_list=None, pipeline=None):
+        """Builds a orm query from the arguments for a pybel-tools query
+
+        :param pybel.manager.CacheManager manager:
+        :param pybel_web.models.User user:
+        :param int or list[int] network_ids:
+        :param list[dict] seed_list:
+        :param Pipeline pipeline: Instance of a pipeline
+        :rtype: Query
+        """
+        q = pybel_tools.query.Query(network_ids, seed_list=seed_list, pipeline=pipeline)
+        return Query.from_query_args(manager, user, q)

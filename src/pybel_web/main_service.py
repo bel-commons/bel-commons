@@ -25,7 +25,6 @@ from flask_security import (
 )
 from six import BytesIO
 
-import pybel_tools.query
 from pybel import from_bytes
 from pybel.constants import (
     FRAUNHOFER_RESOURCES,
@@ -224,8 +223,7 @@ def build_main_service(app):
     @app.route('/explore/network/<int:network_id>', methods=['GET'])
     def view_explore_network(network_id):
         """Renders a page for the user to explore a network"""
-        pbt_query = pybel_tools.query.Query(network_ids=network_id)
-        query = Query.from_query(manager, current_user, pbt_query)
+        query = Query.from_query_args(manager, current_user, network_id)
         manager.session.add(query)
         manager.session.commit()
         return redirect(url_for('view_explorer_query', query_id=query.id))
