@@ -457,10 +457,10 @@ def drop_user_network(network_id, user_id):
                                                       Report.user_id == user_id).one()
         manager.session.delete(report.network)
         manager.session.delete(report)
-        manager.commit()
+        manager.session.commit()
         flash('Dropped network {}'.format(network_id))
     except Exception:
-        manager.rollback()
+        manager.session.rollback()
         flash('Problem dropping network {}'.format(network_id), category='error')
 
     return redirect(url_for('view_networks'))
