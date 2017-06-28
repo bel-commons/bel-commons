@@ -4,16 +4,11 @@ cache: pip
 language: python
 
 python:
-    - "2.7"
-    - "3.6"
+    - 3.6
 env:
     - TOXENV=manifest
     - TOXENV=docs
     - TOXENV=py
-
-matrix:
-    allow_failures:
-    - python: "2.7"
 
 before_install:
     - pip install --upgrade pip
