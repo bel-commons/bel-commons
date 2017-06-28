@@ -27,10 +27,13 @@ from flask_bootstrap import Bootstrap, WebCDN
 from flask_mail import Mail, Message
 from flask_security import Security, SQLAlchemyUserDatastore
 from raven.contrib.flask import Sentry
+from werkzeug.routing import BaseConverter
 
 from pybel.constants import config as pybel_config, PYBEL_CONNECTION
 from pybel.manager import build_manager, Base
 from pybel_tools.api import DatabaseService
+from pybel_tools.mutation import expand_nodes_neighborhoods
+from pybel_tools.pipeline import uni_in_place_mutator
 from .constants import CHARLIE_EMAIL, DANIEL_EMAIL
 from .forms import ExtendedRegisterForm
 from .models import Role, User
@@ -88,12 +91,29 @@ class FlaskPyBEL:
                 public_dsn=self.sentry.client.get_public_dsn('https')
             )
 
+        # register functions from API
+        @uni_in_place_mutator
+        def expand_nodes_neighborhoods_by_ids(universe, graph, node_ids):
+            return expand_nodes_neighborhoods(
+                universe,
+                graph,
+                self.api.get_nodes_by_ids(node_ids)
+            )
+
 
 bootstrap = Bootstrap()
 pybel = FlaskPyBEL()
 mail = Mail()
 security = Security()
 jquery2_cdn = WebCDN('//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/')
+
+
+class IntListConverter(BaseConverter):
+    def to_python(self, value):
+        return [int(entry) for entry in value.split(',')]
+
+    def to_url(self, values):
+        return ','.join(BaseConverter.to_url(self, value) for value in values)
 
 
 def create_application(get_mail=False, **kwargs):
@@ -120,6 +140,9 @@ def create_application(get_mail=False, **kwargs):
 
     app.config.update(pybel_config)
     app.config.update(kwargs)
+
+    # Add converters
+    app.url_map.converters['intlist'] = IntListConverter
 
     # Initialize extensions
     bootstrap.init_app(app)
