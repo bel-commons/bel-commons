@@ -6,9 +6,15 @@ from flask_security import RegisterForm
 from flask_security.forms import get_form_field_label
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed
-from wtforms import fields, StringField, SubmitField
-from wtforms.fields import BooleanField, RadioField, HiddenField
-from wtforms.validators import DataRequired
+from wtforms.fields import (
+    StringField,
+    SubmitField,
+    BooleanField,
+    RadioField,
+    HiddenField,
+    IntegerField,
+)
+from wtforms.validators import DataRequired, URL
 
 from pybel_tools.selection.induce_subgraph import (
     SEED_TYPE_INDUCTION,
@@ -27,13 +33,22 @@ class UploadForm(FlaskForm):
         FileAllowed(['gpickle'], 'Only files with the *.gpickle extension are allowed')
     ])
     public = BooleanField('Make my knowledge assembly be made publicly available', default=True)
-    submit = fields.SubmitField('Upload')
+    submit = SubmitField('Upload')
+
+
+class ParseUrlForm(FlaskForm):
+    """Builds an upload form with wtf-forms"""
+    url = StringField('A BEL Document URL', validators=[
+        DataRequired(message="You must provide a URL"),
+        URL(message='Must be a valid URL')
+    ])
+    submit = SubmitField('Upload')
 
 
 class SeedSubgraphForm(FlaskForm):
     """Builds the form for seeding by subgraph"""
     node_list = HiddenField('Nodes')
-    seed_method = fields.RadioField(
+    seed_method = RadioField(
         'Expansion Method',
         choices=[
             (SEED_TYPE_INDUCTION, 'Induce a subgraph over the given nodes'),
@@ -45,7 +60,7 @@ class SeedSubgraphForm(FlaskForm):
         ],
         default=SEED_TYPE_INDUCTION)
     filter_pathologies = BooleanField('Filter pathology nodes', default=False)
-    submit_subgraph = fields.SubmitField('Submit Subgraph')
+    submit_subgraph = SubmitField('Submit Subgraph')
 
 
 class SeedProvenanceForm(FlaskForm):
@@ -53,7 +68,7 @@ class SeedProvenanceForm(FlaskForm):
     author_list = HiddenField('Nodes')
     pubmed_list = HiddenField('Nodes')
     filter_pathologies = BooleanField('Filter pathology nodes', default=True)
-    submit_provenance = fields.SubmitField('Submit Provenance')
+    submit_provenance = SubmitField('Submit Provenance')
 
 
 class ParserForm(FlaskForm):
@@ -74,16 +89,16 @@ class ParserForm(FlaskForm):
             ('utf_8_sig', 'My document is encoded in UTF-8 with a BOM (for Windows users who are having problems)')
         ],
         default='utf-8')
-    submit = fields.SubmitField('Upload')
+    submit = SubmitField('Upload')
 
 
 class DifferentialGeneExpressionForm(FlaskForm):
     """Builds the form for uploading differential gene expression data"""
     file = FileField('Differential Gene Expression File', validators=[DataRequired()])
-    gene_symbol_column = fields.StringField('Gene Symbol Column Name', default='Gene.symbol')
-    log_fold_change_column = fields.StringField('Log Fold Change Column Name', default='logFC')
-    permutations = fields.IntegerField('Number of Permutations', default=100)
-    description = fields.StringField('Description of Data', validators=[DataRequired()])
+    gene_symbol_column = StringField('Gene Symbol Column Name', default='Gene.symbol')
+    log_fold_change_column = StringField('Log Fold Change Column Name', default='logFC')
+    permutations = IntegerField('Number of Permutations', default=100)
+    description = StringField('Description of Data', validators=[DataRequired()])
     separator = RadioField(
         'Separator',
         choices=[
@@ -91,7 +106,7 @@ class DifferentialGeneExpressionForm(FlaskForm):
             (',', 'My document is a CSV file'),
         ],
         default='\t')
-    submit = fields.SubmitField('Analyze')
+    submit = SubmitField('Analyze')
 
 
 class ExtendedRegisterForm(RegisterForm):
