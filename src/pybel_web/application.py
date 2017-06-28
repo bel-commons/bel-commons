@@ -33,7 +33,7 @@ from pybel.constants import config as pybel_config, PYBEL_CONNECTION
 from pybel.manager import build_manager, Base
 from pybel_tools.api import DatabaseService
 from pybel_tools.mutation import expand_nodes_neighborhoods
-from pybel_tools.pipeline import uni_in_place_mutator
+from pybel_tools.pipeline import uni_in_place_mutator, in_place_mutator
 from .constants import CHARLIE_EMAIL, DANIEL_EMAIL
 from .forms import ExtendedRegisterForm
 from .models import Role, User
@@ -94,11 +94,27 @@ class FlaskPyBEL:
         # register functions from API
         @uni_in_place_mutator
         def expand_nodes_neighborhoods_by_ids(universe, graph, node_ids):
+            """Expands around the neighborhoods of a list of nodes by idenitifer
+
+            :param pybel.BELGraph universe:
+            :param pybel.BELGraph graph:
+            :param list[int] node_ids:
+            """
             return expand_nodes_neighborhoods(
                 universe,
                 graph,
                 self.api.get_nodes_by_ids(node_ids)
             )
+
+        @in_place_mutator
+        def delete_nodes_by_ids(graph, node_ids):
+            """Removes a list of nodes by identifier
+
+            :param pybel.BELGraph graph:
+            :param list[int] node_ids:
+            """
+            nodes = self.api.get_nodes_by_ids(node_ids)
+            graph.remove_nodes_from(nodes)
 
 
 bootstrap = Bootstrap()
