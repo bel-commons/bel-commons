@@ -2,6 +2,7 @@
 
 """This module runs the dictionary-backed PyBEL API"""
 
+import itertools as itt
 import logging
 import sys
 
@@ -54,6 +55,20 @@ from .utils import (
 log = logging.getLogger(__name__)
 
 
+def unique_networks(networks):
+    """Only yields unique networks
+
+    :param list[Network] networks:
+    :return: list[Network]
+    """
+    seen_ids = set()
+
+    for network in networks:
+        if network.id not in seen_ids:
+            seen_ids.add(network.id)
+            yield network
+
+
 def get_networks_with_permission(api):
     """Gets all networks tagged as public or uploaded by the current user
     
@@ -64,19 +79,17 @@ def get_networks_with_permission(api):
     if not current_user.is_authenticated:
         return api.list_public_networks()
 
-    if current_user.admin or current_user.has_role('scai'):
+    if current_user.admin:
         return api.list_recent_networks()
 
     networks = api.list_public_networks()
 
-    public_ids = {network.id for network in networks}
-
-    for report in current_user.reports:
-        if report.network_id in public_ids:
-            continue
-        networks.append(report.network)
-
-    return networks
+    return list(unique_networks(itt.chain(
+        networks,
+        current_user.get_owned_networks(),
+        current_user.get_shared_networks(),
+        current_user.get_project_networks()
+    )))
 
 
 def build_dictionary_service_admin(app):
