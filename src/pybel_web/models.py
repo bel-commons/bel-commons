@@ -232,7 +232,7 @@ class Query(Base):
         """
         return json.loads(self.seeding)
 
-    def __call__(self, manager):
+    def run(self, manager):
         """A wrapper around the :meth:`pybel_tools.query.Query.run` function of the enclosed
         :class:`pybel_tools.pipeline.Query` object.
 
@@ -240,4 +240,4 @@ class Query(Base):
         :return: The result of this query
         :rtype: pybel.BELGraph
         """
-        return self.data(manager)
+        return self.data.run(manager)
