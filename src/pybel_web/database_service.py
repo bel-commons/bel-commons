@@ -899,13 +899,13 @@ def add_pipeline_entry(query_id, name, arg):
 
 
 @api_blueprint.route('/api/query/build_node_list_applier/<int:query_id>/<name>/<intlist:node_ids>', methods=['GET'])
-def add_node_list_action_to_query(query_id, name, node_ids):
+def add_node_list_applier_to_query(query_id, name, node_ids):
     """Builds a new query with a node list applier added to the end of the pipeline"""
     return add_pipeline_entry(query_id, name, node_ids)
 
 
 @api_blueprint.route('/api/query/build_node_applier/<int:query_id>/<name>/<int:node_id>', methods=['GET'])
-def add_node_list_action_to_query(query_id, name, node_id):
+def add_node_applier_to_query(query_id, name, node_id):
     """Builds a new query with a node applier added to the end of the pipeline"""
     return add_pipeline_entry(query_id, name, node_id)
 
