@@ -476,7 +476,7 @@ def make_network_public(network_id):
     """Makes a given network public using admin powers"""
     report = manager.session.query(Report).filter(Report.network_id == network_id).one()
     report.public = True
-    manager.commit()
+    manager.session.commit()
 
     flash('Made {} public'.format(report.network))
     return redirect(url_for('view_networks'))
@@ -488,7 +488,7 @@ def make_network_private(network_id):
     """Makes a given network private using admin powers"""
     report = manager.session.query(Report).filter(Report.network_id == network_id).one()
     report.public = False
-    manager.commit()
+    manager.session.commit()
 
     flash('Made {} private'.format(report.network))
     return redirect(url_for('view_networks'))
@@ -503,7 +503,7 @@ def make_user_network_public(user_id, network_id):
 
     report = manager.session.query(Report).filter(Report.network_id == network_id, Report.user_id == user_id).one()
     report.public = True
-    manager.commit()
+    manager.session.commit()
 
     flash('Made {} public'.format(report.network))
     return redirect(url_for('view_networks'))
@@ -518,7 +518,7 @@ def make_user_network_private(user_id, network_id):
 
     report = manager.session.query(Report).filter(Report.network_id == network_id, Report.user_id == user_id).one()
     report.public = False
-    manager.commit()
+    manager.session.commit()
 
     flash('Made {} private'.format(report.network))
     return redirect(url_for('view_networks'))
