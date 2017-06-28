@@ -61,7 +61,7 @@ from .main_service import (
     NODE_NUMBER,
     BLACK_LIST
 )
-from .models import Report, User, Experiment
+from .models import Report, User, Experiment, Project
 from .send_utils import serve_network
 from .utils import (
     get_recent_reports,
@@ -999,7 +999,7 @@ def delete_analysis_results(analysis_id):
     return jsonify({'status': 200})
 
 
-@api_blueprint.route('/api/analysis/<analysis_id>/download')
+@api_blueprint.route('/api/analysis/<int:analysis_id>/download')
 def download_analysis(analysis_id):
     """Downloads data from a given experiment as a CSV"""
     experiment = manager.session.query(Experiment).get(analysis_id)
@@ -1013,6 +1013,44 @@ def download_analysis(analysis_id):
     output.headers["Content-Disposition"] = "attachment; filename=cmpa_{}.csv".format(analysis_id)
     output.headers["Content-type"] = "text/csv"
     return output
+
+
+####################################
+# RIGHTS MANAGEMENT
+####################################
+
+
+@api_blueprint.route('/api/network/<int:network_id>/grant_project/<int:project_id>')
+def grant_network_to_project(network_id, project_id):
+    """Adds rights to a network to a project"""
+    network = manager.session.query(Network).get(network_id)
+
+    # Check that the user is the owner of the the network
+    if not network.report.user.id == current_user.id:
+        flask.abort(403)
+
+    organization = manager.session.query(Project).get(project_id)
+    organization.networks.append(network)
+
+    manager.session.commit()
+
+    return jsonify({'status': 200})
+
+@api_blueprint.route('/api/network/<int:network_id>/grant_user/<int:user_id>')
+def grant_network_to_user(network_id, user_id):
+    """Adds rights to a network to a anther user"""
+    network = manager.session.query(Network).get(network_id)
+
+    # Check that the user is the owner of the the network
+    if not network.report.user.id == current_user.id:
+        flask.abort(403)
+
+    user = manager.session.query(User).get(user_id)
+    user.networks.append(network)
+
+    manager.session.commit()
+
+    return jsonify({'status': 200})
 
 
 ####################################
