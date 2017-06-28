@@ -125,13 +125,11 @@
                                 <li><a href="{{ url_for('view_explore_network', network_id=network.id) }}"
                                        class="btn btn-default">Explore</a>
                                 </li>
-                                {% if analysis_enabled %}
-                                    <li>
-                                        <a href="{{ url_for('analysis.view_analysis_uploader', network_id=network.id) }}"
-                                           class="btn btn-default">Analyze</a></li>
-                                    <li><a href="{{ url_for('analysis.view_analyses', network_id=network.id) }}"
-                                           class="btn btn-default">Results</a></li>
-                                {% endif %}
+                                <li>
+                                    <a href="{{ url_for('analysis.view_analysis_uploader', network_id=network.id) }}"
+                                       class="btn btn-default">Analyze</a></li>
+                                <li><a href="{{ url_for('analysis.view_analyses', network_id=network.id) }}"
+                                       class="btn btn-default">Results</a></li>
                                 {% if current_user.is_authenticated %}
                                     {% if network.report and network.report.user == current_user %}
                                         <li><a class="btn btn-danger" role="button"
