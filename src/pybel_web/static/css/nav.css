@@ -60,3 +60,8 @@ nav div.container-fluid {
 .btn-primary:hover {
     background-color: #006e57;
 }
+
+div.navbar-header button.navbar-toggle {
+    margin-top: 6px;
+    margin-bottom: 6px;
+}
