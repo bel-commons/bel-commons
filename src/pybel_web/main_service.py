@@ -125,7 +125,7 @@ def build_dictionary_service_admin(app):
         """Parses and stores the PyBEL Test BEL Script"""
         url = 'https://raw.githubusercontent.com/pybel/pybel/develop/tests/bel/test_bel.bel'
         celery = create_celery(current_app)
-        task = celery.send_task('parse-url', args=[app.config.get(PYBEL_CONNECTION), url])
+        task = celery.send_task('parse-url', args=[current_app.config.get(PYBEL_CONNECTION), url])
         flash('Queued task to parse PyBEL Test 1: {}'.format(task))
         return redirect(url_for('home'))
 
@@ -135,7 +135,7 @@ def build_dictionary_service_admin(app):
         """Parses and stores the HGNC Gene Family Definitions"""
         url = FRAUNHOFER_RESOURCES + 'gfam_members.bel'
         celery = create_celery(current_app)
-        task = celery.send_task('parse-url', args=[app.config.get(PYBEL_CONNECTION), url])
+        task = celery.send_task('parse-url', args=[current_app.config.get(PYBEL_CONNECTION), url])
         flash('Queued task to parse HGNC Gene Families: {}'.format(task))
         return redirect(url_for('home'))
 
@@ -144,7 +144,7 @@ def build_dictionary_service_admin(app):
     def ensure_aetionomy():
         """Parses and stores the AETIONOMY resources from the Biological Model Store repository"""
         celery = create_celery(current_app)
-        task = celery.send_task('parse-aetionomy', args=[app.config.get(PYBEL_CONNECTION)])
+        task = celery.send_task('parse-aetionomy', args=[current_app.config.get(PYBEL_CONNECTION)])
         flash('Queued task to parse the AETIONOMY folder: {}'.format(task))
         return redirect(url_for('home'))
 
@@ -153,7 +153,7 @@ def build_dictionary_service_admin(app):
     def ensure_selventa():
         """Parses and stores the Selventa resources from the Biological Model Store repository"""
         celery = create_celery(current_app)
-        task = celery.send_task('parse-selventa', args=[app.config.get(PYBEL_CONNECTION)])
+        task = celery.send_task('parse-selventa', args=[current_app.config.get(PYBEL_CONNECTION)])
         flash('Queued task to parse the Selventa folder: {}'.format(task))
         return redirect(url_for('home'))
 
@@ -185,11 +185,9 @@ def build_dictionary_service_admin(app):
         flash('Nuked the database')
         return redirect(url_for('home'))
 
-    log.info('added dict service admin functions')
-
 
 def build_main_service(app):
-    """Builds the PyBEL main sergice
+    """Builds the PyBEL main service
 
     :param flask.Flask app: A Flask App
     """
@@ -211,7 +209,6 @@ def build_main_service(app):
         return render_template(
             'network_list.html',
             networks=networks,
-            analysis_enabled=True,
             current_user=current_user,
         )
 
@@ -219,7 +216,6 @@ def build_main_service(app):
     @login_required
     def view_query_builder():
         """Renders the query builder page"""
-
         networks = get_networks_with_permission(api)
 
         return render_template(
@@ -246,7 +242,7 @@ def build_main_service(app):
         """Renders a page with the parsing errors for a given BEL script"""
         try:
             network = manager.get_network_by_id(network_id)
-            graph = from_bytes(network.blob, check_version=app.config.get('PYBEL_DS_CHECK_VERSION'))
+            graph = from_bytes(network.blob, check_version=current_app.config.get('PYBEL_DS_CHECK_VERSION'))
         except Exception as e:
             flash("Problem getting graph {}: ({}) {}".format(network_id, type(e), e), category='error')
             return redirect(url_for('view_networks'))
@@ -302,7 +298,7 @@ def build_main_service(app):
         """Displays a page with the site map"""
         api_links = []
         page_links = []
-        for rule in app.url_map.iter_rules():
+        for rule in current_app.url_map.iter_rules():
             try:
                 url = url_for(rule.endpoint)
                 item = url, rule.endpoint
@@ -373,5 +369,3 @@ def build_main_service(app):
             'pipeline_help.html',
             function_dict=data
         )
-
-    log.info('Added main to %s', app)
