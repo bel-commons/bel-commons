@@ -868,6 +868,7 @@ def query_to_network(query_id):
         flask.abort(403)
 
     j = query.data.to_json()
+    # TODO: Stick here the name of the networks and not the id
     j['id'] = query.id
 
     return jsonify(j)

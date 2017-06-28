@@ -126,14 +126,33 @@ function displayQueryInfo(query) {
 
     queryObject["Query ID"] = query.id;
 
-    queryObject["Assembly"] = query.assembly;
+    queryObject["Assembly (Networks IDs)"] = query.network_ids;
 
     if (query.seeding !== "[]") {
-        queryObject["Seeding"] = query.seeding;
+        var querySeeding = query.seeding.map(function (object) {
+            if (object.type == "annotation") {
+
+                var arr = [];
+
+                for (var key in object.data) {
+                    if (object.data.hasOwnProperty(key)) {
+                        arr.push(key + '=' + object.data[key]);
+                    }
+                }
+                return object.type + ": [" + arr.join(',') + "]";
+            }
+            return object.type + ": [" + object.data + "]";
+        });
+        queryObject["Seeding"] = querySeeding;
     }
 
     if (query.pipeline !== "[]") {
-        queryObject["Pipeline"] = query.pipeline;
+        var queryPipeline = query.pipeline.map(function (object) {
+            return object.function;
+        });
+
+        queryObject["Pipeline"] = queryPipeline.join(", ");
+
     }
 
     var row = 0;
@@ -797,7 +816,41 @@ function initD3Force(graph, tree) {
 
     var nodeMenu = [
         {
-            title: "Expand node neighbors",
+            title: "Expand node neighbors from networks used in the query",
+            action: function (elm, d, i) {
+                // Variables explanation:
+                // elm: [object SVGGElement] d: [object Object] i: (#Number)
+
+                var positions = savePreviousPositions();
+
+                // Push selected node to expand node list
+                window.expandNodes.push(d.id);
+                var args = getDefaultAjaxParameters(tree);
+
+                // Ajax to update the cypher query. Three list are sent to the server. pks of the subgraphs, list of nodes to delete and list of nodes to expand
+                $.ajax({
+                    url: "/api/network/",
+                    dataType: "json",
+                    data: $.param(args, true)
+                }).done(function (response) {
+
+                    // Load new data, first empty all created divs and clear the current network
+                    var data = updateNodePosition(response, positions);
+
+                    clearUsedDivs();
+
+                    initD3Force(data["json"], tree);
+
+                    highlightNodeBorder(data["newNodes"]);
+
+                    window.history.pushState("BiNE", "BiNE", "/explore?" + $.param(args, true));
+
+                });
+            },
+            disabled: false // optional, defaults to false
+        },
+        {
+            title: "Expand node neighbors from user universe",
             action: function (elm, d, i) {
                 // Variables explanation:
                 // elm: [object SVGGElement] d: [object Object] i: (#Number)
