@@ -6,8 +6,19 @@
             <h3 class="panel-title">Summary</h3>
         </div>
         <div class="panel-body">
-            <p>PyBEL Admin exposes the underlying database models for mucking and also some tools for dealing with the
-                web app as a whole.</p>
+            <h2>Administration</h2>
+            <p>This section of PyBEL Web is meant to be used for administrative purposes.</p>
+
+            {% if current_user.admin %}
+                <h4>Welcome back, master</h4>
+            {% endif %}
+
+            <h3>Projects</h3>
+            <p>
+                Projects can be created under the project tab. They contain a selection of users and
+                networks that have been contributed by those users.
+            </p>
+
         </div>
     </div>
 {% endblock %}

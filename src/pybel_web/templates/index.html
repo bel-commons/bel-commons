@@ -70,10 +70,11 @@
                         <div class="thumbnail home-link">
                             <!--<img src="http://placehold.it/350x150" alt="...">-->
                             <div class="caption">
-                                <h3>Parser</h3>
-                                <p>Parse and validate a BEL script with the option to store for later querying and
-                                    analyses. Automatic network analytics are run and presented after parsing.
-                                    Additionally, pre-parsed BEL scripts can be uploaded from Pickle files.
+                                <h3>Parse</h3>
+                                <p>
+                                    Parse BEL script, validate its contents, and generate a network summary.
+                                    Additionally, pre-parsed BEL scripts can be uploaded as <a
+                                        href="http://pybel.readthedocs.io/en/latest/io.html#bytes">Pickles</a>.
                                 </p>
                                 <p>
                                     <a href="{{ url_for('parser.view_parser') }}"
@@ -84,11 +85,12 @@
                             </div>
                         </div>
                     </div>
+
                     <div class="col-sm-6 col-md-4">
                         <div class="thumbnail">
                             <!--<img src="http://placehold.it/350x150" alt="...">-->
                             <div class="caption home-link">
-                                <h3>Networks</h3>
+                                <h3>Summarize</h3>
                                 <p>Select from a list of curated networks, then begin to explore with through
                                     automatically generated network analyses, interactive visualizations, and
                                     data-driven network analysis.</p>
@@ -98,27 +100,30 @@
                             </div>
                         </div>
                     </div>
+
                     <div class="col-sm-6 col-md-4">
                         <div class="thumbnail home-link">
                             <!--<img src="http://placehold.it/350x150" alt="...">-->
                             <div class="caption">
-                                <h3>Terminologies</h3>
-                                <p>View the ontologies and terminologies used in the knowledge base as namespaces and
-                                    annotations</p>
-                                <a href="{{ url_for('view_definitions') }}" class="btn btn-primary btn-block"
-                                   role="button">View
-                                    Terminologies</a>
+                                <h3>Explore</h3>
+                                <p>Build a network by investigating the knowledge related to interesting biological
+                                    entities, chemical matter, authors, or publications.</p>
+                                <a href="{{ url_for('view_query_builder') }}"
+                                   class="btn btn-primary btn-block" role="button">Build Query</a>
                             </div>
                         </div>
                     </div>
+
                     <div class="col-sm-6 col-md-4">
                         <div class="thumbnail home-link">
                             <!--<img src="http://placehold.it/350x150" alt="...">-->
                             <div class="caption">
-                                <h3>Curation Tools</h3>
-                                <p>Generate a template BEL script given a list of PubMed identifiers, merge
+                                <h3>Curate</h3>
+                                <p>
+                                    Generate a template BEL script given a list of PubMed identifiers, merge
                                     multiple BEL namespace files, or give feedback on overlapping definitions in a
-                                    given namespace.</p>
+                                    given namespace.
+                                </p>
                                 <p>
                                     <a href="{{ url_for('curation.get_boilerplate') }}" class="btn btn-primary"
                                        role="button">Generate</a>
@@ -130,18 +135,24 @@
                             </div>
                         </div>
                     </div>
+
                     <div class="col-sm-6 col-md-4">
                         <div class="thumbnail home-link">
                             <!--<img src="http://placehold.it/350x150" alt="...">-->
                             <div class="caption">
-                                <h3>Query Builder</h3>
-                                <p>Build a network by investigating the knowledge related to interesting biological
-                                    entities, chemical matter, authors, or publications.</p>
-                                <a href="{{ url_for('view_query_builder') }}"
-                                   class="btn btn-primary btn-block" role="button">Query Builder</a>
+                                <h3>Terminologies</h3>
+                                <p>
+                                    View the ontologies and terminologies used in the knowledge base as namespaces and
+                                    annotations. Each contains provenance information including a uniform resource
+                                    locator and version number.
+                                </p>
+                                <a href="{{ url_for('view_definitions') }}" class="btn btn-primary btn-block"
+                                   role="button">View
+                                    Terminologies</a>
                             </div>
                         </div>
                     </div>
+
                     <div class="col-sm-6 col-md-4">
                         <div class="thumbnail home-link">
                             <!--<img src="http://placehold.it/350x150" alt="...">-->
