@@ -296,4 +296,4 @@ class Query(Base):
         :rtype: Query
         """
         q = pybel_tools.query.Query(network_ids, seed_list=seed_list, pipeline=pipeline)
-        return Query.from_query_args(manager, user, q)
+        return Query.from_query(manager, user, q)
