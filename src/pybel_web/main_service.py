@@ -25,6 +25,7 @@ from flask_security import (
 )
 from six import BytesIO
 
+import pybel_tools.query
 from pybel import from_bytes
 from pybel.constants import (
     FRAUNHOFER_RESOURCES,
@@ -44,11 +45,9 @@ from pybel_tools.pipeline import no_arguments_map
 from pybel_tools.utils import get_version as get_pybel_tools_version
 from .application import create_celery
 from .constants import *
-from .forms import SeedProvenanceForm, SeedSubgraphForm
-from .models import User, Report
+from .models import User, Report, Query
 from .utils import (
     render_network_summary,
-    sanitize_list_of_str,
     get_api,
     get_manager
 )
@@ -225,7 +224,11 @@ def build_main_service(app):
     @app.route('/explore/network/<int:network_id>', methods=['GET'])
     def view_explore_network(network_id):
         """Renders a page for the user to explore a network"""
-        return render_template('explorer.html', network_id=network_id)
+        pbt_query = pybel_tools.query.Query(network_ids=network_id)
+        query = Query.from_query(manager, current_user, pbt_query)
+        manager.session.add(query)
+        manager.session.commit()
+        return redirect(url_for('view_explorer_query', query_id=query.id))
 
     @app.route('/summary/<network_id>')
     def view_summary(network_id):

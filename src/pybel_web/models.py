@@ -9,7 +9,7 @@ from sqlalchemy.orm import relationship, backref
 
 import pybel_tools.query
 from pybel.manager import Base
-from pybel.manager.models import NETWORK_TABLE_NAME
+from pybel.manager.models import NETWORK_TABLE_NAME, Network
 from pybel.struct import union
 
 EXPERIMENT_TABLE_NAME = 'pybel_experiment'
@@ -205,6 +205,18 @@ class Assembly(Base):
         """
         return union(network.as_bel() for network in self.networks)
 
+    @staticmethod
+    def from_query(manager, query):
+        """Builds an assembly from a query
+
+        :param pybel_tools.query.Query query:
+        :rtype: Assembly
+        """
+        return Assembly(networks=[
+            manager.session.query(Network).get(network_id)
+            for network_id in query.network_ids
+        ])
+
 
 class Query(Base):
     """Describes a :class:`pybel_tools.query.Query`"""
@@ -253,3 +265,19 @@ class Query(Base):
         :rtype: pybel.BELGraph
         """
         return self.data.run(manager)
+
+    @staticmethod
+    def from_query(manager, user, query):
+        """Builds a orm query from a pybel-tools query
+
+        :param pybel_web.models.User user:
+        :param pybel_tools.query.Query query:
+        :rtype: Query
+        """
+        return Query(
+            user=user,
+            assembly=Assembly.from_query(manager, query),
+            seeding=json.dumps(query.seeds),
+            protocol=query.pipeline.to_jsons(),
+            dump=query.to_jsons()
+        )
