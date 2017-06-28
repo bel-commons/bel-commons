@@ -174,7 +174,7 @@ class User(Base, UserMixin):
         return repr(self)
 
     def __repr__(self):
-        return '<User {}>'.format(self.email)
+        return self.email
 
 
 assembly_network = Table(
