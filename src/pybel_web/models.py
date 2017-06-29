@@ -289,7 +289,7 @@ class Query(Base):
             user=user,
             assembly=Assembly.from_query(manager, query),
             seeding=query.seeding_to_jsons(),
-            protocol=query.pipeline.to_jsons(),
+            pipeline_protocol=query.pipeline.to_jsons(),
             dump=query.to_jsons()
         )
 

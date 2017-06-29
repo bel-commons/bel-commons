@@ -32,7 +32,7 @@ from werkzeug.routing import BaseConverter
 from pybel.constants import config as pybel_config, PYBEL_CONNECTION
 from pybel.manager import build_manager, Base
 from pybel_tools.api import DatabaseService
-from pybel_tools.mutation import expand_nodes_neighborhoods
+from pybel_tools.mutation import expand_nodes_neighborhoods, expand_node_neighborhood
 from pybel_tools.pipeline import uni_in_place_mutator, in_place_mutator
 from .constants import CHARLIE_EMAIL, DANIEL_EMAIL
 from .forms import ExtendedRegisterForm
@@ -104,6 +104,20 @@ class FlaskPyBEL:
                 universe,
                 graph,
                 self.api.get_nodes_by_ids(node_ids)
+            )
+
+        @uni_in_place_mutator
+        def expand_node_neighborhood_by_id(universe, graph, node_id):
+            """Expands around the neighborhoods of a node by idenitifer
+
+            :param pybel.BELGraph universe:
+            :param pybel.BELGraph graph:
+            :param int node_id:
+            """
+            return expand_node_neighborhood(
+                universe,
+                graph,
+                self.api.get_node_by_id(node_id)
             )
 
         @in_place_mutator

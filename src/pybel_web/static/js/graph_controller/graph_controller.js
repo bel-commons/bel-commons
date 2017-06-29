@@ -272,33 +272,13 @@ function getCurrentURL() {
 
 
 /**
- *  Returns an object with all arguments used to generated the current network + query
- * @param {InspireTree} tree
- */
-function getDefaultAjaxParameters(tree) {
-
-    var args = getSelectedNodesFromTree(tree); // Adds the annotation filters
-
-    // Adds the query or the network id
-    // TODO: Query is always passed as an argument unless we change get_network_from_request
-    args["query"] = window.query;
-
-    return args;
-}
-
-
-/**
  * Renders the network given default parameters
  * @param {InspireTree} tree
  * @param {boolean} firstInit
  */
 function renderNetwork(tree, firstInit) {
 
-    var args = getDefaultAjaxParameters(tree);
-
-    var renderParameters = $.param(args, true);
-
-    $.getJSON("/api/network/" + "?" + renderParameters, function (data) {
+    $.getJSON("/api/network/" + window.query, function (data) {
         if (firstInit === true && data.nodes.length > 500) { // First time it tries to render the network checks for the size of it
 
             renderEmptyFrame();
@@ -312,9 +292,7 @@ function renderNetwork(tree, firstInit) {
         }
     });
 
-
-    // TODO: Update the URL with the new query for nodes edxpansion
-    window.history.pushState("BiNE", "BiNE", "/explore/query/" + window.query + "?" + renderParameters);
+    window.history.pushState("BiNE", "BiNE", "/explore/query/" + window.query);
 }
 
 
@@ -339,6 +317,24 @@ function doAjaxCall(url) {
     });
 
     return result
+}
+
+
+function updateQueryResponse(response, tree) {
+    var positions = savePreviousPositions();
+
+    window.query = response.id;
+
+    var networkResponse = doAjaxCall("/api/network/" + window.query);
+
+    window.history.pushState("BiNE", "BiNE", "/explore/query/" + window.query);
+
+    // Load new data, first empty all created divs and clear the current network
+    var data = updateNodePosition(networkResponse, positions);
+
+    clearUsedDivs();
+
+    initD3Force(data["json"], tree);
 }
 
 
@@ -409,14 +405,18 @@ $(document).ready(function () {
 
     var urlObject = getCurrentURL();
 
-    if (window.query === undefined) {
-        // TODO: Process network_id
-    }
-
     tree = processURL(urlObject);
 
     $("#refresh-network").on("click", function () {
-        renderNetwork(tree, false);
+
+        var treeSelection = getSelectedNodesFromTree(tree);
+
+        $.ajax({
+            url: "/api/query/" + window.query + "/add_annotation_filter/?" + $.param(treeSelection, true),
+            dataType: "json"
+        }).done(function (response) {
+            updateQueryResponse(response, tree)
+        });
     });
 
     $("#collapse-tree").on("click", function () {
@@ -428,13 +428,9 @@ $(document).ready(function () {
 
     // Export to BEL
     $("#bel-button").click(function () {
-        var args = getDefaultAjaxParameters(tree);
-        args["format"] = "bel";
-
         $.ajax({
-            url: "/api/network/",
-            dataType: "text",
-            data: $.param(args, true)
+            url: "/api/network/" + window.query + "/export/bel",
+            dataType: "text"
         }).done(function (response) {
             downloadText(response, "MyNetwork.bel")
         });
@@ -442,47 +438,27 @@ $(document).ready(function () {
 
     // Export to GraphML
     $("#graphml-button").click(function () {
-        var args = getDefaultAjaxParameters(tree);
-        args["format"] = "graphml";
-        window.location.href = "/api/network/?" + $.param(args, true);
+        window.location.href = "/api/network/" + window.query + "/export/graphml";
     });
 
     // Export to bytes
     $("#bytes-button").click(function () {
-        var args = getDefaultAjaxParameters(tree);
-        args["format"] = "bytes";
-        window.location.href = "/api/network/?" + $.param(args, true);
+        window.location.href = "/api/network/" + window.query + "/export/bytes";
 
     });
 
     // Export to CX
     $("#cx-button").click(function () {
-        var args = getDefaultAjaxParameters(tree);
-        args["format"] = "cx";
-        window.location.href = "/api/network/?" + $.param(args, true);
+        window.location.href = "/api/network/" + window.query + "/export/cx";
     });
 
     // Export to CSV
     $("#csv-button").click(function () {
-        var args = getDefaultAjaxParameters(tree);
-        args["format"] = "csv";
-        window.location.href = "/api/network/?" + $.param(args, true);
+        window.location.href = "/api/network/" + window.query + "/export/csv";
     });
 
     $("#nodelink-button").click(function () {
-        var args = getDefaultAjaxParameters(tree);
-        args["format"] = "json";
-        window.location.href = "/api/network/?" + $.param(args, true);
-    });
-
-    // Reset expand/node window globals
-    $("#reset_globals").on("click", function () {
-        var args = getDefaultAjaxParameters(tree);
-    });
-
-    // Comes back to the network id originally choosen
-    $("#reset_all").on("click", function () {
-        var args = getDefaultAjaxParameters(tree);
+        window.location.href = "/api/network/" + window.query + "/export/json";
     });
 });
 
@@ -590,7 +566,10 @@ function updateNodePosition(jsonData, prevPos) {
 
     });
 
-    return {json: jsonData, newNodes: newNodesArray}
+    return {
+        json: jsonData,
+        newNodes: newNodesArray
+    }
 }
 
 
@@ -667,99 +646,41 @@ function initD3Force(graph, tree) {
     var nodeMenu = [
         {
             title: "Expand node neighbors from networks used in the query",
-            action: function (elm, d, i) {
+            action: function (elm, node, i) {
                 // Variables explanation:
-                // elm: [object SVGGElement] d: [object Object] i: (#Number)
-
-                var positions = savePreviousPositions();
-
-                // Push selected node to expand node list
-                window.expandNodes.push(d.id);
-                var args = getDefaultAjaxParameters(tree);
-
-                // Ajax to update the cypher query. Three list are sent to the server. pks of the subgraphs, list of nodes to delete and list of nodes to expand
+                // elm: [object SVGGElement] d: [object NodeObject] i: (#Number)
                 $.ajax({
-                    url: "/api/network/",
-                    dataType: "json",
-                    data: $.param(args, true)
+                    url: "/api/query/" + window.query + "/add_node_applier/expand_node_neighborhood_by_id/" + node.id,
+                    dataType: "json"
                 }).done(function (response) {
-
-                    // Load new data, first empty all created divs and clear the current network
-                    var data = updateNodePosition(response, positions);
-
-                    clearUsedDivs();
-
-                    initD3Force(data["json"], tree);
-
-                    highlightNodeBorder(data["newNodes"]);
-
+                    updateQueryResponse(response, tree)
                 });
             },
             disabled: false // optional, defaults to false
         },
         {
             title: "Expand node neighbors from user universe",
-            action: function (elm, d, i) {
+            action: function (elm, node, i) {
                 // Variables explanation:
-                // elm: [object SVGGElement] d: [object Object] i: (#Number)
-
-                var positions = savePreviousPositions();
-
-                // Push selected node to expand node list
-                window.expandNodes.push(d.id);
-                var args = getDefaultAjaxParameters(tree);
-
-                // Ajax to update the cypher query. Three list are sent to the server. pks of the subgraphs, list of nodes to delete and list of nodes to expand
+                // elm: [object SVGGElement] d: [object NodeObject] i: (#Number)
                 $.ajax({
-                    url: "/api/network/",
-                    dataType: "json",
-                    data: $.param(args, true)
+                    url: "/api/network/", //TODO
+                    dataType: "json"
                 }).done(function (response) {
-
-                    // Load new data, first empty all created divs and clear the current network
-                    var data = updateNodePosition(response, positions);
-
-                    clearUsedDivs();
-
-                    initD3Force(data["json"], tree);
-
-                    highlightNodeBorder(data["newNodes"]);
-
+                    updateQueryResponse(response, tree)
                 });
             },
             disabled: false // optional, defaults to false
         },
         {
             title: "Delete node",
-            action: function (elm, d, i) {
-
-                var positions = savePreviousPositions();
-
-                // Push selected node to delete node list
-                var args = getDefaultAjaxParameters(tree);
-
+            action: function (elm, node, i) {
                 $.ajax({
-                    url: "/api/query/build_node_applier/" + window.query + "/delete_node_by_id/" + d.id,
+                    url: "/api/query/" + window.query + "/add_node_applier/delete_node_by_id/" + node.id,
                     dataType: "json"
                 }).done(function (response) {
-
-                    console.log(response.id);
-
-                    var networkResponse = doAjaxCall("/api/network/?query=" + response.id);
-
-                    window.query = response.id;
-
-                    window.history.pushState("BiNE", "BiNE", "/explore/query/" + window.query);
-
-                    // Load new data, first empty all created divs and clear the current network
-                    var data = updateNodePosition(networkResponse, positions);
-
-                    clearUsedDivs();
-
-                    initD3Force(data["json"], tree);
-
+                    updateQueryResponse(response, tree)
                 });
-
             }
         }
     ];
@@ -768,13 +689,13 @@ function initD3Force(graph, tree) {
     var edgeMenu = [
         {
             title: "Log evidences to console",
-            action: function (elm, d, i) {
+            action: function (elm, link, i) {
 
-                console.log(d.source);
-                console.log(d.target);
+                console.log(link.source);
+                console.log(link.target);
 
                 $.ajax({
-                    url: "/api/edges/provenance/" + d.source.id + "/" + d.target.id,
+                    url: "/api/edges/provenance/" + link.source.id + "/" + link.target.id,
                     dataType: "json"
                 }).done(function (response) {
                     console.log(response)
@@ -1523,7 +1444,6 @@ function initD3Force(graph, tree) {
 
             var checkbox = pathForm.find("input[name='visualization-options']").is(":checked");
 
-            var args = getDefaultAjaxParameters(tree);
             args["source"] = nodeNamesToId[pathForm.find("input[name='source']").val()];
             args["target"] = nodeNamesToId[pathForm.find("input[name='target']").val()];
             args["paths_method"] = $("input[name=paths_method]:checked", pathForm).val();
@@ -1535,7 +1455,7 @@ function initD3Force(graph, tree) {
             }
 
             $.ajax({
-                url: "/api/network/query/paths/",
+                url: "/api/network/query/" + window.query + "paths/",
                 type: pathForm.attr("method"),
                 dataType: "json",
                 data: $.param(args, true),
@@ -1661,12 +1581,10 @@ function initD3Force(graph, tree) {
     betweennessButton.on("click", function () {
         if (betwennessForm.valid()) {
 
-            var args = getDefaultAjaxParameters(tree);
-
             args["node_number"] = betwennessForm.find("input[name='betweenness']").val();
 
             $.ajax({
-                url: "/api/network/query/centrality/",
+                url: "/api/network/query/" + window.query + "centrality/",
                 type: betwennessForm.attr("method"),
                 dataType: "json",
                 data: $.param(args, true),
@@ -1724,15 +1642,12 @@ function initD3Force(graph, tree) {
     npaButton.on("click", function () {
         if (npaForm.valid()) {
 
-            var args = getDefaultAjaxParameters(tree);
-
             var experimentID = $("#analysis_id").val();
 
             $.ajax({
-                url: "/api/analysis/" + experimentID + "/median",
+                url: "/api/network/query/" + window.query + "analysis/" + experimentID + "/median",
                 type: npaForm.attr("method"),
                 dataType: "json",
-                data: $.param(args, true),
                 success: function (data) {
 
                     var distribution = Object.values(data).filter(Number);

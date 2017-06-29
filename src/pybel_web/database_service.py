@@ -37,7 +37,7 @@ from pybel_tools import pipeline
 from pybel_tools.analysis.npa import RESULT_LABELS
 from pybel_tools.definition_utils import write_namespace
 from pybel_tools.query import Query
-from pybel_tools.selection import get_subgraph
+from pybel_tools.selection import get_subgraph_by_data
 from pybel_tools.summary import (
     info_json,
     get_authors,
@@ -74,36 +74,15 @@ log = logging.getLogger(__name__)
 api_blueprint = Blueprint('dbs', __name__)
 
 
-def get_network_from_request():
+def get_network_from_request(query_id):
     """Process the GET request returning the filtered network
 
+    :param int query_id: Query id
     :return: A BEL graph
     :rtype: pybel.BELGraph
     """
-
-    annotations = {
-        k: request.args.getlist(k)
-        for k in request.args
-        if k not in BLACK_LIST
-    }
-
-    query_id = request.args.get('query')
-
-    # TODO: Currently we have the problem that the query argument MUST exists...
-    if query_id is None:
-        return 'Query not found in request'
-
-    query_id = int(query_id)
-    query = manager.session.query(models.Query).get(query_id)
-    network_from_query = query.run(api)
-
-    # TODO: Currently, applying filters on the network. This should be done in JS side?
-    network = get_subgraph(
-        network_from_query,
-        **annotations
-    )
-
-    return network
+    # TODO catch missing query_id and flask.abort(400)
+    return manager.session.query(models.Query).get(query_id).run(api)
 
 
 @api_blueprint.route('/api/receive', methods=['POST'])
@@ -270,6 +249,13 @@ def suggest_annotation():
 # NETWORKS
 ####################################
 
+@api_blueprint.route('/api/network/query/<int:query_id>/export/<serve_format>', methods=['GET'])
+def download_network(query_id, serve_format):
+    """Downloads a network in the given format"""
+    network = manager.session.query(Query).get(query_id).run(api)
+    return serve_network(network, serve_format=serve_format)
+
+
 @api_blueprint.route('/api/network/<int:network_id>/namespaces', methods=['GET'])
 def namespaces_by_network(network_id):
     """Gets all of the namespaces in a network"""
@@ -344,11 +330,11 @@ def get_number_nodes(network_id):
     return jsonify(info_json(api.get_network_by_id(network_id)))
 
 
-@api_blueprint.route('/api/network/', methods=['GET'])
+@api_blueprint.route('/api/network/<int:query_id>', methods=['GET'])
 @login_required
-def get_network():
+def get_network(query_id):
     """Builds a graph from the given network id and sends it in the given format"""
-    network = get_network_from_request()
+    network = get_network_from_request(query_id)
     network = api.relabel_nodes_to_identifiers(network)
     return serve_network(network, request.args.get(FORMAT))
 
@@ -481,13 +467,13 @@ def get_tree_api():
 # NETWORK QUERIES
 ####################################
 
-@api_blueprint.route('/api/network/query/paths/')
-def get_paths_api():
+@api_blueprint.route('/api/network/query/<int:query_id>/paths/')
+def get_paths(query_id):
     """Returns array of shortest/all paths given a source node and target node both belonging in the graph
 
     :return: JSON
     """
-    network = get_network_from_request()
+    network = get_network_from_request(query_id)
 
     if SOURCE_NODE not in request.args:
         raise ValueError('no source')
@@ -526,10 +512,10 @@ def get_paths_api():
     return jsonify(api.get_node_ids(shortest_path))
 
 
-@api_blueprint.route('/api/network/query/centrality/', methods=['GET'])
-def get_nodes_by_betweenness_centrality():
+@api_blueprint.route('/api/network/query/<int:query_id>/centrality/', methods=['GET'])
+def get_nodes_by_betweenness_centrality(query_id):
     """Gets a list of nodes with the top betweenness-centrality"""
-    network = get_network_from_request()
+    network = get_network_from_request(query_id)
 
     try:
         node_numbers = int(request.args.get(NODE_NUMBER))
@@ -547,10 +533,10 @@ def get_nodes_by_betweenness_centrality():
     ])
 
 
-@api_blueprint.route('/api/network/query/pmids')
-def get_all_pmids():
+@api_blueprint.route('/api/network/query/<int:query_id>/pmids/')
+def get_all_pmids(query_id):
     """Gets a list of all PubMed identifiers in the network produced by the given URL parameters"""
-    network = get_network_from_request()
+    network = get_network_from_request(query_id)
     return jsonify(sorted(get_pubmed_identifiers(network)))
 
 
@@ -594,10 +580,10 @@ def get_pubmed_suggestion():
 # AUTHOR
 ####################################
 
-@api_blueprint.route('/api/network/query/authors')
-def get_all_authors():
+@api_blueprint.route('/api/network/query/<query_id>/authors')
+def get_all_authors(query_id):
     """Gets a list of all authors in the graph produced by the given URL parameters"""
-    network = get_network_from_request()
+    network = get_network_from_request(query_id)
     return jsonify(sorted(get_authors(network)))
 
 
@@ -800,12 +786,12 @@ def query_to_network(query_id):
     return jsonify(j)
 
 
-def add_pipeline_entry(query_id, name, arg):
+def add_pipeline_entry(query_id, name, *args, **kwargs):
     """Adds an entry to the pipeline and """
     query = manager.session.query(models.Query).get(query_id)
 
     q = query.data
-    q.pipeline.append(name, arg)
+    q.pipeline.append(name, *args, **kwargs)
 
     result = q.run(api)
     log.info('result info: %s', info_str(result))
@@ -819,8 +805,7 @@ def add_pipeline_entry(query_id, name, arg):
         parent_id=query_id,
     )
 
-    result = qo.run(api)
-    log.info('result info: %s', info_str(result))
+    log.info('result info: %s', info_str(qo.run(api)))
 
     manager.session.add(qo)
     manager.session.commit()
@@ -830,16 +815,28 @@ def add_pipeline_entry(query_id, name, arg):
     })
 
 
-@api_blueprint.route('/api/query/build_node_list_applier/<int:query_id>/<name>/<intlist:node_ids>', methods=['GET'])
+@api_blueprint.route('/api/query/<int:query_id>/add_node_list_applier/<name>/<intlist:node_ids>', methods=['GET'])
 def add_node_list_applier_to_query(query_id, name, node_ids):
     """Builds a new query with a node list applier added to the end of the pipeline"""
     return add_pipeline_entry(query_id, name, node_ids)
 
 
-@api_blueprint.route('/api/query/build_node_applier/<int:query_id>/<name>/<int:node_id>', methods=['GET'])
+@api_blueprint.route('/api/query/<int:query_id>/add_node_applier/<name>/<int:node_id>', methods=['GET'])
 def add_node_applier_to_query(query_id, name, node_id):
     """Builds a new query with a node applier added to the end of the pipeline"""
     return add_pipeline_entry(query_id, name, node_id)
+
+
+@api_blueprint.route('/api/query/<int:query_id>/add_annotation_filter/', methods=['GET'])
+def add_annotation_filter_to_query(query_id):
+    """Builds a new query with the given node filter applied to the end of the pipeline"""
+    filters = {
+        k: request.args.getlist(k)
+        for k in request.args
+        if k not in BLACK_LIST
+    }
+
+    return add_pipeline_entry(query_id, get_subgraph_by_data, filters)
 
 
 ####################################
@@ -879,10 +876,10 @@ def delete_user(user_id):
 # Analysis
 ####################################
 
-@api_blueprint.route('/api/analysis/<int:analysis_id>')
-def get_analysis(analysis_id):
+@api_blueprint.route('/api/network/query/<int:query_id>/analysis/<int:analysis_id>/')
+def get_analysis(query_id, analysis_id):
     """Returns data from analysis"""
-    network = get_network_from_request()
+    network = get_network_from_request(query_id)
     experiment = manager.session.query(Experiment).get(analysis_id)
     data = pickle.loads(experiment.result)
     results = [
@@ -894,10 +891,10 @@ def get_analysis(analysis_id):
     return jsonify(results)
 
 
-@api_blueprint.route('/api/analysis/<int:analysis_id>/median')
-def get_analysis_median(analysis_id):
+@api_blueprint.route('/api/network/query/<int:query_id>/analysis/<int:analysis_id>/median')
+def get_analysis_median(query_id, analysis_id):
     """Returns data from analysis"""
-    network = get_network_from_request()
+    network = get_network_from_request(query_id)
     experiment = manager.session.query(Experiment).get(analysis_id)
     data = pickle.loads(experiment.result)
     # position 3 is the 'median' score
