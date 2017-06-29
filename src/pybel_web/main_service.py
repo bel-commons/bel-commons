@@ -227,7 +227,9 @@ def build_main_service(app):
     @app.route('/explore/query/<int:query_id>', methods=['GET'])
     def view_explorer_query(query_id):
         """Renders a page for the user to explore a network"""
-        return render_template('explorer.html', query_id=query_id)
+        query = manager.session.query(Query).get(query_id)
+
+        return render_template('explorer.html', query=query)
 
     @app.route('/explore/network/<int:network_id>', methods=['GET'])
     def view_explore_network(network_id):

@@ -116,6 +116,15 @@ class FlaskPyBEL:
             nodes = self.api.get_nodes_by_ids(node_ids)
             graph.remove_nodes_from(nodes)
 
+        @in_place_mutator
+        def delete_node_by_id(graph, node_id):
+            """Removes a node by identifier
+
+            :param pybel.BELGraph graph:
+            :param int node_id:
+            """
+            graph.remove_node(self.api.get_node_by_id(node_id))
+
 
 bootstrap = Bootstrap()
 pybel = FlaskPyBEL()

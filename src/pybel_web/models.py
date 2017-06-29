@@ -236,8 +236,8 @@ class Query(Base):
     pipeline_protocol = Column(Text, doc="Protocol list")
 
     parent_id = Column(Integer, ForeignKey('{}.id'.format(QUERY_TABLE_NAME)), nullable=True)
-    parent = relationship('Query', backref=backref('children', lazy='dynamic'))
-    
+    parent = relationship('Query', remote_side=[id], backref=backref('children', lazy='dynamic'))
+
     # TODO remove dump completely and have it reconstruct from parts
     dump = Column(Text, doc="The stringified JSON representing this query")
 

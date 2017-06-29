@@ -314,7 +314,7 @@ function renderNetwork(tree, firstInit) {
 
 
     // TODO: Update the URL with the new query for nodes edxpansion
-    window.history.pushState("BiNE", "BiNE", "/explore/query/" + window.query + "?"+ renderParameters);
+    window.history.pushState("BiNE", "BiNE", "/explore/query/" + window.query + "?" + renderParameters);
 }
 
 
@@ -736,17 +736,23 @@ function initD3Force(graph, tree) {
                 var positions = savePreviousPositions();
 
                 // Push selected node to delete node list
-                window.deleteNodes.push(d.id);
                 var args = getDefaultAjaxParameters(tree);
 
                 $.ajax({
-                    url: "/api/network/",
-                    dataType: "json",
-                    data: $.param(args, true)
+                    url: "/api/query/build_node_applier/" + window.query + "/delete_node_by_id/" + d.id,
+                    dataType: "json"
                 }).done(function (response) {
 
+                    console.log(response.id);
+
+                    var networkResponse = doAjaxCall("/api/network/?query=" + response.id);
+
+                    window.query = response.id;
+
+                    window.history.pushState("BiNE", "BiNE", "/explore/query/" + window.query);
+
                     // Load new data, first empty all created divs and clear the current network
-                    var data = updateNodePosition(response, positions);
+                    var data = updateNodePosition(networkResponse, positions);
 
                     clearUsedDivs();
 
