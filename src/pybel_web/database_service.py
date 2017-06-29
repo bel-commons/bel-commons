@@ -768,6 +768,17 @@ def drop_query_by_id(query_id):
     return redirect(url_for('home'))
 
 
+@api_blueprint.route('/api/query/dropall', methods=['GET'])
+@login_required
+def drop_user_queries():
+    """Deletes all queries associated to the user"""
+    query = manager.session.query(models.Query).filter_by(user_id=current_user.id).delete()
+    manager.session.commit()
+    flash('Deleted query {}'.format('All queries associated with your user has been deleted'))
+
+    return redirect(url_for('home'))
+
+
 @api_blueprint.route('/api/query/<int:query_id>/info', methods=['GET'])
 def query_to_network(query_id):
     """Returns info from a given query ID"""
