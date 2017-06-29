@@ -30,14 +30,15 @@ import pybel
 from pybel.constants import (
     METADATA_AUTHORS,
     METADATA_CONTACT,
-    METADATA_NAME
+    METADATA_NAME,
+    ANNOTATIONS
 )
 from pybel.manager import Namespace, Annotation, Network
 from pybel_tools import pipeline
 from pybel_tools.analysis.npa import RESULT_LABELS
 from pybel_tools.definition_utils import write_namespace
 from pybel_tools.query import Query
-from pybel_tools.selection import get_subgraph_by_data
+from pybel_tools.selection.induce_subgraph import get_subgraph_by_annotations
 from pybel_tools.summary import (
     info_json,
     get_authors,
@@ -51,7 +52,6 @@ from . import models
 from .constants import *
 from .main_service import (
     FORMAT,
-    NETWORK_ID,
     SOURCE_NODE,
     TARGET_NODE,
     PATHS_METHOD,
@@ -436,29 +436,12 @@ def make_user_network_private(user_id, network_id):
     return redirect(url_for('view_networks'))
 
 
-@api_blueprint.route('/api/network/tree/')
+@api_blueprint.route('/api/network/query/<int:query_id>/tree/')
 @login_required
-def get_tree_api():
+def get_tree_api(query_id):
     """Builds the annotation tree data structure for a given graph"""
-    network_id = request.args.get(NETWORK_ID)
-    query_id = request.args.get(QUERY)
 
-    if query_id and not network_id:  # Tree from query subgraph
-        log.debug('getting tree from query result')
-        query = manager.session.query(models.Query).get(query_id)
-
-        if query is None:
-            return flask.abort(500)  # missing resource
-
-        network = query.run(api)
-
-    elif network_id and not query_id:
-        network = api.get_network_by_id(network_id)
-
-    # FIXME shouldn't there be an error if there are both a query and network id given?
-
-    else:
-        network = api.universe
+    network = get_network_from_request(query_id)
 
     return jsonify(api.get_tree_annotations(network))
 
@@ -847,7 +830,11 @@ def add_annotation_filter_to_query(query_id):
         if k not in BLACK_LIST
     }
 
-    return add_pipeline_entry(query_id, get_subgraph_by_data, filters)
+    query_type = False if request.args.get(AND) else True
+
+    print(query_type)
+
+    return add_pipeline_entry(query_id, get_subgraph_by_annotations, filters, query_type)
 
 
 ####################################

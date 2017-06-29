@@ -36,12 +36,25 @@
 
 .not-rounded {
     border-radius: 0 !important;
-    width: 100%;
 }
 
-.not-rounded-50 {
-    border-radius: 0 !important;
+.toggle.android {
+    border-radius: 0;
+}
+
+.toggle.android .toggle-handle {
+    border-radius: 0;
+}
+
+.width-50 {
     width: 50%;
+}
+
+.toggle-off {
+    background-color: #00967f !important;
+    color: white !important;
+    text-decoration-color: white !important;
+    outline-color: white !important;
 }
 
 .node-checkbox {

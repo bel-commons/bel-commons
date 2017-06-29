@@ -37,6 +37,8 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/inspire-tree/1.12.1/inspire-tree.css"/>
     <link rel="stylesheet" type="text/css" href='https://code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css'/>
+    <link rel="stylesheet" type="text/css"
+          href='https://cdnjs.cloudflare.com/ajax/libs/bootstrap-toggle/2.2.2/css/bootstrap-toggle.min.css'/>
     <link rel="stylesheet" href="{{ url_for('static', filename='js/d3-context-menu/css/d3-context-menu.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/graph.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/legend.css') }}">
@@ -54,6 +56,8 @@
             src="{{ url_for('static', filename='js/graph_controller/graph_controller.js') }}"></script>
     <script type="text/javascript"
             src="{{ url_for('static', filename='js/d3-context-menu/js/d3-context-menu.js') }}"></script>
+    <script type="text/javascript"
+            src='https://cdnjs.cloudflare.com/ajax/libs/bootstrap-toggle/2.2.2/js/bootstrap-toggle.min.js'></script>
 {% endblock %}
 
 {% block content %}
@@ -118,16 +122,18 @@
                         <div class="tab-content">
                             <div class="tab-pane active" id="tree-panel" role="tabpanel">
                                 <button type="button" id="refresh-network"
-                                        class="btn btn-primary not-rounded-50 pull-left">
+                                        class="btn btn-primary not-rounded width-50 pull-left">
                                     Refresh Network
                                 </button>
                                 <button type="button" id="collapse-tree"
-                                        class="btn btn-primary not-rounded-50 pull-right">
+                                        class="btn btn-primary not-rounded width-50 pull-right">
                                     Collapse Annotations
                                 </button>
                                 <input placeholder="Annotation search" id="tree-search"
-                                       class="wide form-control not-rounded"
+                                       class="not-rounded form-control pull-left"
                                        aria-describedby="sizing-addon1" type="text"/>
+                                <input data-toggle="toggle" data-style="android" data-offstyle="" data-width="100"
+                                       data-on="AND" value="" id="andortoggle" data-off="OR" type="checkbox">
                                 <div id="tree" style="max-height: 450px;height: 450px; overflow:auto;"></div>
                             </div>
                             <div class="tab-pane not-rounded" id="nodes-panel" role="tabpanel">

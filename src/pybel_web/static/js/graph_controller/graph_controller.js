@@ -226,22 +226,6 @@ function selectNodesInTreeFromURL(tree, url, blackList) {
     });
 }
 
-/**
- * Get all annotations needed to build the tree
- * @returns {object} JSON object coming from the API ready to render the tree
- */
-function getAnnotationForTree() {
-
-    // TODO: Elif check if network_id exists
-    if (window.query !== undefined) {
-        return doAjaxCall("/api/network/tree/?query=" + window.query);
-    }
-    // Tree for Universe
-    else {
-        return doAjaxCall("/api/network/tree/");
-    }
-}
-
 
 /**
  *  Returns the current URL
@@ -374,7 +358,7 @@ function processURL(urlObject) {
  * @param {object} urlObject
  * @return {InspireTree} tree
  */
-function initTree(urlObject) {
+function initTree() {
 
     // Initiate the tree and expands it with the annotations given the URL
     var tree = new InspireTree({
@@ -383,14 +367,12 @@ function initTree(urlObject) {
             mode: "checkbox",
             multiple: true
         },
-        data: getAnnotationForTree()
+        data: doAjaxCall("/api/network/query/" + window.query + "/tree/")
     });
 
     tree.on("model.loaded", function () {
         tree.expand();
     });
-
-    selectNodesInTreeFromURL(tree, urlObject, doAjaxCall("/api/meta/blacklist"));
 
     // Enables tree search
     $('#tree-search').on('keyup', function (ev) {
@@ -411,11 +393,15 @@ $(document).ready(function () {
 
         var treeSelection = getSelectedNodesFromTree(tree);
 
+        if ($('#andortoggle').prop('checked') === true) {
+            treeSelection["and"] = true;
+        }
+
         $.ajax({
             url: "/api/query/" + window.query + "/add_annotation_filter/?" + $.param(treeSelection, true),
             dataType: "json"
         }).done(function (response) {
-            updateQueryResponse(response, tree)
+            updateQueryResponse(response, initTree())
         });
     });
 

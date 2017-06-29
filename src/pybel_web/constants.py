@@ -31,6 +31,7 @@ NODE_NUMBER = 'node_number'
 FORMAT = 'format'
 PATHS_METHOD = 'paths_method'
 QUERY = 'query'
+AND = 'and'
 
 BLACK_LIST = {
     NETWORK_ID,
@@ -40,7 +41,8 @@ BLACK_LIST = {
     NODE_NUMBER,
     FORMAT,
     PATHS_METHOD,
-    QUERY
+    QUERY,
+    AND,
 }
 
 log_path = os.path.join(PYBEL_LOG_DIR, time.strftime('pybel_web.txt'))
