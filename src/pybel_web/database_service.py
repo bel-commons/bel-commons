@@ -816,6 +816,7 @@ def add_pipeline_entry(query_id, name, arg):
         seeding=json.dumps(q.seeds),
         pipeline_protocol=q.pipeline.to_jsons(),
         dump=q.to_jsons(),
+        parent_id=query_id,
     )
 
     result = qo.run(api)
