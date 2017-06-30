@@ -31,7 +31,6 @@ from pybel.constants import (
     METADATA_AUTHORS,
     METADATA_CONTACT,
     METADATA_NAME,
-    ANNOTATIONS
 )
 from pybel.manager import Namespace, Annotation, Network
 from pybel_tools import pipeline
@@ -59,6 +58,7 @@ from .main_service import (
     NODE_NUMBER,
     BLACK_LIST
 )
+from .main_service import get_network_ids_with_permission
 from .models import Report, User, Experiment, Project
 from .send_utils import serve_network
 from .utils import (
@@ -788,14 +788,19 @@ def query_to_network(query_id):
     return jsonify(j)
 
 
-@api_blueprint.route('/api/query/<int:network_id>', methods=['GET'])
+@api_blueprint.route('/api/network/<int:network_id>/export/<serve_format>', methods=['GET'])
 @login_required
-def get_query_from_network_id(network_id):
+def export_network(network_id, serve_format):
     """Builds a graph from the given network id and sends it in the given format"""
 
-    network = get_network_from_request(network_id)
-    network = api.relabel_nodes_to_identifiers(network)
-    return serve_network(network, request.args.get(FORMAT))
+    networks_ids = get_network_ids_with_permission(api)
+
+    if network_id not in networks_ids:
+        return flask.abort(404, 'You have no permission to download the selected network')
+
+    network = api.get_network_by_id(network_id)
+
+    return serve_network(network, serve_format)
 
 
 def add_pipeline_entry(query_id, name, *args, **kwargs):

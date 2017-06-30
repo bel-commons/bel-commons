@@ -92,6 +92,21 @@ def get_networks_with_permission(api):
     )))
 
 
+def get_network_ids_with_permission(api):
+    """Gets the set of networks ids tagged as public or uploaded by the current user
+
+    :param DatabaseService api: The database service
+    :return: A list of all networks tagged as public or uploaded by the current user
+    :rtype: list[Network]
+    """
+    networks_with_permission = get_networks_with_permission(api)
+
+    return {
+        network.id
+        for network in networks_with_permission
+    }
+
+
 def build_dictionary_service_admin(app):
     """Dictionary Service Admin Functions"""
     manager = get_manager(app)

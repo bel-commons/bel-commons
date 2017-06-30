@@ -46,13 +46,13 @@
 
                 {% if current_user.is_authenticated %}
                     <a class="btn btn-default" role="button"
-                       href="{{ url_for('dbs.get_network', network_id=network_id, format='bel') }}">
+                       href="{{ url_for('dbs.export_network', network_id=network_id, serve_format='bel') }}">
                         <span class="glyphicon glyphicon-download" aria-hidden="true"></span> BEL Script</a>
                     <a class="btn btn-default" role="button"
-                       href="{{ url_for('dbs.get_network', network_id=network_id, format='json') }}">
+                       href="{{ url_for('dbs.export_network', network_id=network_id, serve_format='json') }}">
                         <span class="glyphicon glyphicon-download" aria-hidden="true"></span> Node-Link JSON</a>
                     <a class="btn btn-default" role="button"
-                       href="{{ url_for('dbs.get_network', network_id=network_id, format='cx') }}">
+                       href="{{ url_for('dbs.export_network', network_id=network_id, serve_format='cx') }}">
                         <span class="glyphicon glyphicon-download" aria-hidden="true"></span> CX JSON</a>
                 {% endif %}
 
@@ -150,32 +150,32 @@
                 </ol>
             </div>
         </div>
-
-        <a id="provenance"></a>
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                <h3 class="panel-title">Provenance
-                    <a class="pull-right" href="#top"><span class="glyphicon glyphicon-arrow-up"
-                                                            aria-hidden="true"></span></a>
-                </h3>
-            </div>
-            <div class="panel-body">
-                <dl class="dl-horizontal">
-                    <dt>Upload</dt>
-                    <dd>{{ network.report.user.email }} at {{ network.report.created }}</dd>
-                    <dt>Authors</dt>
-                    <dd>{{ graph.document['authors'] }}</dd>
-                    <dt>Contact</dt>
-                    <dd>{{ graph.document['contact'] }}</dd>
-                    <dt>Description</dt>
-                    <dd>{{ graph.description }}</dd>
-                    <dt>License</dt>
-                    <dd>{{ graph.document['licenses'] }}</dd>
-                    <dt>Copyright</dt>
-                    <dd>{{ graph.document['copyright'] }}</dd>
-                </dl>
-            </div>
-        </div>
+{##}
+{#        <a id="provenance"></a>#}
+{#        <div class="panel panel-default">#}
+{#            <div class="panel-heading">#}
+{#                <h3 class="panel-title">Provenance#}
+{#                    <a class="pull-right" href="#top"><span class="glyphicon glyphicon-arrow-up"#}
+{#                                                            aria-hidden="true"></span></a>#}
+{#                </h3>#}
+{#            </div>#}
+{#            <div class="panel-body">#}
+{#                <dl class="dl-horizontal">#}
+{#                    <dt>Upload</dt>#}
+{#                    <dd>{{ network.report.user.email }} at {{ network.report.created }}</dd>#}
+{#                    <dt>Authors</dt>#}
+{#                    <dd>{{ graph.document['authors'] }}</dd>#}
+{#                    <dt>Contact</dt>#}
+{#                    <dd>{{ graph.document['contact'] }}</dd>#}
+{#                    <dt>Description</dt>#}
+{#                    <dd>{{ graph.description }}</dd>#}
+{#                    <dt>License</dt>#}
+{#                    <dd>{{ graph.document['licenses'] }}</dd>#}
+{#                    <dt>Copyright</dt>#}
+{#                    <dd>{{ graph.document['copyright'] }}</dd>#}
+{#                </dl>#}
+{#            </div>#}
+{#        </div>#}
 
         <a id="network-statistics"></a>
         <div class="panel panel-default">
