@@ -228,34 +228,6 @@ function selectNodesInTreeFromURL(tree, url, blackList) {
 
 
 /**
- *  Returns the current URL
- *  (Search for for the int after /explore/)
- */
-function getCurrentURL() {
-
-    var query_string = {};
-    var query = window.location.search.substring(1);
-    var vars = query.split("&");
-    for (var i = 0; i < vars.length; i++) {
-        var pair = vars[i].split("=");
-        // If first entry with this name
-        if (typeof query_string[pair[0]] === "undefined") {
-            query_string[pair[0]] = decodeURIComponent(pair[1]);
-            // If second entry with this name
-        } else if (typeof query_string[pair[0]] === "string") {
-            var arr = [query_string[pair[0]], decodeURIComponent(pair[1])];
-            query_string[pair[0]] = arr;
-            // If third or later entry with this name
-        } else {
-            query_string[pair[0]].push(decodeURIComponent(pair[1]));
-        }
-    }
-
-    return query_string;
-}
-
-
-/**
  * Renders the network given default parameters
  * @param {InspireTree} tree
  * @param {boolean} firstInit
@@ -337,15 +309,14 @@ function insertRow(table, row, column1, column2) {
 
 /**
  * Process the URL and modifies the html rendering the graph
- * @param {object} urlObject
  */
-function processURL(urlObject) {
+function processQuery() {
 
     var queryInfo = doAjaxCall("/api/query/" + window.query + "/info");
 
     displayQueryInfo(queryInfo);
 
-    tree = initTree(urlObject);
+    tree = initTree();
 
     renderNetwork(tree, true);
 
@@ -355,12 +326,10 @@ function processURL(urlObject) {
 
 /**
  * Renders tree for annotation filtering
- * @param {object} urlObject
- * @return {InspireTree} tree
  */
 function initTree() {
 
-    // Initiate the tree and expands it with the annotations given the URL
+    // Initiate the tree and expands it with the annotations in the query
     var tree = new InspireTree({
         target: "#tree",
         selection: {
@@ -385,9 +354,7 @@ function initTree() {
 
 $(document).ready(function () {
 
-    var urlObject = getCurrentURL();
-
-    tree = processURL(urlObject);
+    tree = processQuery();
 
     $("#refresh-network").on("click", function () {
 
