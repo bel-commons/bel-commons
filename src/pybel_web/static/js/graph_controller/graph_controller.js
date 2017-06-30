@@ -180,6 +180,20 @@ function highlightNodeBorder(nodeArray) {
 }
 
 /**
+ * Remove highlighting all nodes
+ */
+// TODO: Fix this
+function removeHighlightNodeBorder() {
+
+    var highlightNodes = d3.select("#graph-chart").selectAll(".node");
+
+    $.each(highlightNodes["_groups"][0], function (index, value) {
+        value.children[1].setAttribute('style', 'stroke: black');
+    });
+
+}
+
+/**
  * Automatically select nodes in the tree given an URL
  * @param {InspireTree} tree
  * @param {string} url
@@ -230,20 +244,20 @@ function selectNodesInTreeFromURL(tree, url, blackList) {
 /**
  * Renders the network given default parameters
  * @param {InspireTree} tree
- * @param {boolean} firstInit
  */
-function renderNetwork(tree, firstInit) {
+function renderNetworkFirstTime(tree) {
 
     $.getJSON("/api/network/" + window.query, function (data) {
-        if (firstInit === true && data.nodes.length > 500) { // First time it tries to render the network checks for the size of it
-
+        if (data.nodes.length > 1000) {// Network bigger than 1000 nodes wont be render
             renderEmptyFrame();
 
             alert("The network you are trying to render contains: " + data.nodes.length + " nodes and " +
                 data.links.length + " edges. To avoid crashing your browser, this network will only be rendered " +
-                "after you click in refresh network. " + "Please consider giving a more specific query or applying some " +
+                "after you click in refresh network.Please consider giving a more specific query or applying some " +
                 "filters using the right-hand tree navigator.")
-        } else {
+        }
+
+        else {
             initD3Force(data, tree);
         }
     });
@@ -290,7 +304,21 @@ function updateQueryResponse(response, tree) {
 
     clearUsedDivs();
 
-    initD3Force(data["json"], tree);
+    if (data["json"].length > 1000) {// Network bigger than 1000 nodes wont be render
+        renderEmptyFrame();
+
+        alert("The network you are trying to render contains: " + data.nodes.length + " nodes and " +
+            data.links.length + " edges. To avoid crashing your browser, this network will only be rendered " +
+            "after you click in refresh network.Please consider giving a more specific query or applying some " +
+            "filters using the right-hand tree navigator.")
+    }
+
+    else {
+        initD3Force(data["json"], tree);
+
+        highlightNodeBorder(data["newNodes"]);
+    }
+
 }
 
 
@@ -308,19 +336,12 @@ function insertRow(table, row, column1, column2) {
 
 
 /**
- * Process the URL and modifies the html rendering the graph
+ * Gets the info from query and renders its table
  */
-function processQuery() {
-
+function updateQueryTable() {
     var queryInfo = doAjaxCall("/api/query/" + window.query + "/info");
 
     displayQueryInfo(queryInfo);
-
-    tree = initTree();
-
-    renderNetwork(tree, true);
-
-    return tree;
 }
 
 
@@ -354,7 +375,11 @@ function initTree() {
 
 $(document).ready(function () {
 
-    tree = processQuery();
+    updateQueryTable();
+
+    tree = initTree();
+
+    renderNetworkFirstTime(tree);
 
     $("#refresh-network").on("click", function () {
 
@@ -412,6 +437,22 @@ $(document).ready(function () {
 
     $("#nodelink-button").click(function () {
         window.location.href = "/api/network/" + window.query + "/export/json";
+    });
+
+    // Back to parent query
+    $("#parent-query").click(function () {
+        var response = doAjaxCall("/api/query/" + window.query + "/parent");
+        if (response["parent"] === false) {
+            alert("The current query has no parent");
+        }
+        else {
+            updateQueryResponse(response, initTree())
+        }
+    });
+
+    // Back to original query
+    $("#original-query").click(function () {
+        var response = doAjaxCall("/api/query/" + window.query + "/parent")
     });
 });
 
@@ -1672,6 +1713,15 @@ function initD3Force(graph, tree) {
     // Restore all
     restoreAll.on("click", function () {
         resetAttributes();
+    });
+
+    var removeNodeHighlighting = $("#remove-node-highlighting");
+
+    removeNodeHighlighting.off('click'); // It will unbind the previous click if multiple graphs has been rendered
+
+    // Restore all
+    removeNodeHighlighting.on("click", function () {
+        removeHighlightNodeBorder();
     });
 }
 

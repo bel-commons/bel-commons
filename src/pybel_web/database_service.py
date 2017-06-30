@@ -775,6 +775,7 @@ def query_to_network(query_id):
     """Returns info from a given query ID"""
     query = manager.session.query(models.Query).get(query_id)
 
+    # TODO: Make a function to get the query checking permission
     if query is None:
         return flask.abort(404, 'Invalid Query ID')
 
@@ -786,6 +787,28 @@ def query_to_network(query_id):
     j['id'] = query.id
 
     return jsonify(j)
+
+
+@api_blueprint.route('/api/query/<int:query_id>/parent', methods=['GET'])
+def get_query_parent(query_id):
+    """Returns the parent of the query"""
+
+    query = manager.session.query(models.Query).get(query_id)
+
+    if query is None:
+        return flask.abort(404, 'Invalid Query ID')
+
+    if not (current_user.admin or query.user_id == current_user.id):
+        flask.abort(403)
+
+    if not query.parent:
+        return jsonify({
+            'id': query.id, 'parent': False
+        })
+
+    return jsonify({
+        'id': query.parent.id, 'parent': True
+    })
 
 
 @api_blueprint.route('/api/network/<int:network_id>/export/<serve_format>', methods=['GET'])
@@ -859,6 +882,11 @@ def add_annotation_filter_to_query(query_id):
         for k in request.args
         if k not in BLACK_LIST
     }
+
+    if not filters: # If no filters send back the same query
+        return jsonify({
+            'id': query_id
+        })
 
     query_type = False if request.args.get(AND) else True
 

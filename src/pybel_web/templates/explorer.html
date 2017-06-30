@@ -138,7 +138,8 @@
                                 <div id="tree" style="max-height: 450px;height: 450px; overflow:auto;"></div>
                             </div>
                             <div class="tab-pane not-rounded" id="nodes-panel" role="tabpanel">
-                                <button class='btn btn-primary not-rounded' id='get-checked-nodes'>Show Selected Nodes
+                                <button class='btn btn-primary not-rounded full-width' id='get-checked-nodes'>Show
+                                    Selected Nodes
                                 </button>
                                 <div class="input-group">
                                         <span class="input-group-addon not-rounded2" id="sizing-addon"><i
@@ -151,7 +152,8 @@
                                      style="max-height: 450px;height: 450px; overflow:auto;"></div>
                             </div>
                             <div class="tab-pane not-rounded" id="edges-panel" role="tabpanel">
-                                <button class='btn btn-primary not-rounded' id='get-checked-edges'>Show Selected Edges
+                                <button class='btn btn-primary not-rounded full-width' id='get-checked-edges'>Show
+                                    Selected Edges
                                 </button>
                                 <div class="input-group">
                                         <span class="input-group-addon not-rounded2" id="sizing-addon"><i
@@ -173,7 +175,6 @@
                 <table id="info-table" class="table table-bordered table-hover"></table>
             </div>
             <div>
-                <table id="query-table" class="table table-bordered table-hover"></table>
                 <button type="button" id="parent-query"
                         class="btn btn-primary not-rounded width-50 pull-left">
                     Previous Query
@@ -182,6 +183,7 @@
                         class="btn btn-primary not-rounded width-50 pull-right">
                     Original Query
                 </button>
+                <table id="query-table" class="table table-bordered table-hover"></table>
             </div>
         </div>
     </div>
@@ -671,6 +673,14 @@
                                         </button>
                                     </td>
                                     <td>Restore node names and edge colors</td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <button type="button" id="remove-node-highlighting" class="btn btn-info">Remove
+                                            Text Highlighting
+                                        </button>
+                                    </td>
+                                    <td>Restore node text for new nodes</td>
                                 </tr>
                                 </tbody>
                             </table>
