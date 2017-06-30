@@ -150,32 +150,34 @@
                 </ol>
             </div>
         </div>
-{##}
-{#        <a id="provenance"></a>#}
-{#        <div class="panel panel-default">#}
-{#            <div class="panel-heading">#}
-{#                <h3 class="panel-title">Provenance#}
-{#                    <a class="pull-right" href="#top"><span class="glyphicon glyphicon-arrow-up"#}
-{#                                                            aria-hidden="true"></span></a>#}
-{#                </h3>#}
-{#            </div>#}
-{#            <div class="panel-body">#}
-{#                <dl class="dl-horizontal">#}
-{#                    <dt>Upload</dt>#}
-{#                    <dd>{{ network.report.user.email }} at {{ network.report.created }}</dd>#}
-{#                    <dt>Authors</dt>#}
-{#                    <dd>{{ graph.document['authors'] }}</dd>#}
-{#                    <dt>Contact</dt>#}
-{#                    <dd>{{ graph.document['contact'] }}</dd>#}
-{#                    <dt>Description</dt>#}
-{#                    <dd>{{ graph.description }}</dd>#}
-{#                    <dt>License</dt>#}
-{#                    <dd>{{ graph.document['licenses'] }}</dd>#}
-{#                    <dt>Copyright</dt>#}
-{#                    <dd>{{ graph.document['copyright'] }}</dd>#}
-{#                </dl>#}
-{#            </div>#}
-{#        </div>#}
+
+        <a id="provenance"></a>
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Provenance
+                    <a class="pull-right" href="#top"><span class="glyphicon glyphicon-arrow-up"
+                                                            aria-hidden="true"></span></a>
+                </h3>
+            </div>
+            <div class="panel-body">
+                <dl class="dl-horizontal">
+                    <dt>Upload</dt>
+                    {% if network.report %}
+                        <dd>{{ network.report.user.email }} at {{ network.report.created }}</dd>
+                    {% endif %}
+                    <dt>Authors</dt>
+                    <dd>{{ graph.document['authors'] }}</dd>
+                    <dt>Contact</dt>
+                    <dd>{{ graph.document['contact'] }}</dd>
+                    <dt>Description</dt>
+                    <dd>{{ graph.description }}</dd>
+                    <dt>License</dt>
+                    <dd>{{ graph.document['licenses'] }}</dd>
+                    <dt>Copyright</dt>
+                    <dd>{{ graph.document['copyright'] }}</dd>
+                </dl>
+            </div>
+        </div>
 
         <a id="network-statistics"></a>
         <div class="panel panel-default">
