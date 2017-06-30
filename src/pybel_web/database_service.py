@@ -823,7 +823,14 @@ def add_node_applier_to_query(query_id, name, node_id):
 
 @api_blueprint.route('/api/query/<int:query_id>/add_annotation_filter/', methods=['GET'])
 def add_annotation_filter_to_query(query_id):
-    """Builds a new query with the given node filter applied to the end of the pipeline"""
+    """Builds a new query with the annotation in the arguments. If 'and' is passed as an argument, it performs a AND
+    query. By default it uses the OR condition.
+
+    :param int query_id: Query id
+    :return: A BEL graph
+    :rtype: pybel.BELGraph
+    """
+
     filters = {
         k: request.args.getlist(k)
         for k in request.args
@@ -831,8 +838,6 @@ def add_annotation_filter_to_query(query_id):
     }
 
     query_type = False if request.args.get(AND) else True
-
-    print(query_type)
 
     return add_pipeline_entry(query_id, get_subgraph_by_annotations, filters, query_type)
 
