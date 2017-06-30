@@ -232,14 +232,17 @@ def build_main_service(app):
         return render_template('explorer.html', query=query)
 
     @app.route('/explore/network/<int:network_id>', methods=['GET'])
+    @login_required
     def view_explore_network(network_id):
         """Renders a page for the user to explore a network"""
+
         query = Query.from_query_args(manager, current_user, network_id)
         manager.session.add(query)
         manager.session.commit()
         return redirect(url_for('view_explorer_query', query_id=query.id))
 
     @app.route('/summary/<network_id>')
+    @login_required
     def view_summary(network_id):
         """Renders a page with the parsing errors for a given BEL script"""
         try:

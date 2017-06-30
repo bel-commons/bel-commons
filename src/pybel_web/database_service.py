@@ -81,8 +81,12 @@ def get_network_from_request(query_id):
     :return: A BEL graph
     :rtype: pybel.BELGraph
     """
-    # TODO catch missing query_id and flask.abort(400)
-    return manager.session.query(models.Query).get(query_id).run(api)
+    try:
+        return manager.session.query(models.Query).get(query_id).run(api)
+    except IntegrityError:
+        flask.flash("You do not have permission to access the queried network")
+        log.exception('User %s trying to access not allowed network', current_user)
+        return redirect(url_for('home'))
 
 
 @api_blueprint.route('/api/receive', methods=['POST'])
