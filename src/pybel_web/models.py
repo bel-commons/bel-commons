@@ -160,7 +160,10 @@ class User(Base, UserMixin):
 
     def get_owned_networks(self):
         """Gets all networks this user owns"""
-        return (report.network for report in self.reports)
+        return (
+            report.network
+            for report in self.reports
+        )
 
     def get_shared_networks(self):
         """Gets all networks shared with this user"""
@@ -168,7 +171,11 @@ class User(Base, UserMixin):
 
     def get_project_networks(self):
         """Gets all networks for which projects have granted this user access"""
-        return (network for project in self.projects for network in project.networks)
+        return (
+            network
+            for project in self.projects
+            for network in project.networks
+        )
 
     def __str__(self):
         return repr(self)
