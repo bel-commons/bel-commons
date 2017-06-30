@@ -755,10 +755,14 @@ def drop_query_by_id(query_id):
     return redirect(url_for('home'))
 
 
-@api_blueprint.route('/api/query/dropall', methods=['GET'])
+@api_blueprint.route('/api/query/dropall/<int:user_id>', methods=['GET'])
 @login_required
-def drop_user_queries():
+def drop_user_queries(user_id):
     """Deletes all queries associated to the user"""
+
+    if not (current_user.admin or user_id == current_user.id):
+        return flask.abort(403, 'Unauthorized user')
+
     query = manager.session.query(models.Query).filter_by(user_id=current_user.id).delete()
     manager.session.commit()
     flash('Deleted query {}'.format('All queries associated with your user has been deleted'))
@@ -782,6 +786,16 @@ def query_to_network(query_id):
     j['id'] = query.id
 
     return jsonify(j)
+
+
+@api_blueprint.route('/api/query/<int:network_id>', methods=['GET'])
+@login_required
+def get_query_from_network_id(network_id):
+    """Builds a graph from the given network id and sends it in the given format"""
+
+    network = get_network_from_request(network_id)
+    network = api.relabel_nodes_to_identifiers(network)
+    return serve_network(network, request.args.get(FORMAT))
 
 
 def add_pipeline_entry(query_id, name, *args, **kwargs):
