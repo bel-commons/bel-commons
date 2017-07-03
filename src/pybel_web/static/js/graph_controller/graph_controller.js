@@ -1446,6 +1446,8 @@ function initD3Force(graph, tree) {
 
             var checkbox = pathForm.find("input[name='visualization-options']").is(":checked");
 
+            args = {};
+
             args["source"] = nodeNamesToId[pathForm.find("input[name='source']").val()];
             args["target"] = nodeNamesToId[pathForm.find("input[name='target']").val()];
             args["paths_method"] = $("input[name=paths_method]:checked", pathForm).val();
@@ -1457,7 +1459,7 @@ function initD3Force(graph, tree) {
             }
 
             $.ajax({
-                url: "/api/network/query/" + window.query + "paths/",
+                url: "/api/network/query/" + window.query + "/paths/",
                 type: pathForm.attr("method"),
                 dataType: "json",
                 data: $.param(args, true),
@@ -1586,7 +1588,7 @@ function initD3Force(graph, tree) {
             args["node_number"] = betwennessForm.find("input[name='betweenness']").val();
 
             $.ajax({
-                url: "/api/network/query/" + window.query + "centrality/",
+                url: "/api/network/query/" + window.query + "/centrality/",
                 type: betwennessForm.attr("method"),
                 dataType: "json",
                 data: $.param(args, true),
@@ -1647,7 +1649,7 @@ function initD3Force(graph, tree) {
             var experimentID = $("#analysis_id").val();
 
             $.ajax({
-                url: "/api/network/query/" + window.query + "analysis/" + experimentID + "/median",
+                url: "/api/network/query/" + window.query + "/analysis/" + experimentID + "/median",
                 type: npaForm.attr("method"),
                 dataType: "json",
                 success: function (data) {
