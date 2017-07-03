@@ -594,7 +594,15 @@
                                 </button>
                             </td>
                         </tr>
-
+                        <tr>
+                            <td>Save as SIF</td>
+                            <td>
+                                <button onclick="window.location.href='/api/network/query/'+window.query+'/export/sif'"
+                                        type="button" class="btn btn-default" aria-label="Left Align">
+                                    <span class="glyphicon glyphicon-download" aria-hidden="true"></span>
+                                </button>
+                            </td>
+                        </tr>
                         <tr>
                             <td>Save as <a href="http://www.home.ndexbio.org/data-model/">CX</a> JSON for use with the
                                 <a href="http://ndexbio.org/">Network Data Exchange</a></td>
@@ -619,6 +627,15 @@
                             <td>Save as a pre-parsed gpickle for programmatic use</td>
                             <td>
                                 <button onclick="window.location.href='/api/network/query/'+window.query+'/export/bytes'"
+                                        type="button" class="btn btn-default" aria-label="Left Align">
+                                    <span class="glyphicon glyphicon-download" aria-hidden="true"></span>
+                                </button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Save as a GSEA GRP file</td>
+                            <td>
+                                <button onclick="window.location.href='/api/network/query/'+window.query+'/export/gsea'"
                                         type="button" class="btn btn-default" aria-label="Left Align">
                                     <span class="glyphicon glyphicon-download" aria-hidden="true"></span>
                                 </button>
