@@ -55,7 +55,6 @@ from .main_service import (
     TARGET_NODE,
     PATHS_METHOD,
     UNDIRECTED,
-    NODE_NUMBER,
     BLACK_LIST
 )
 from .main_service import get_network_ids_with_permission

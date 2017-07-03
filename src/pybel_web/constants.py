@@ -27,7 +27,6 @@ NETWORK_ID = 'network_id'
 SOURCE_NODE = 'source'
 TARGET_NODE = 'target'
 UNDIRECTED = 'undirected'
-NODE_NUMBER = 'node_number'
 FORMAT = 'format'
 PATHS_METHOD = 'paths_method'
 QUERY = 'query'
@@ -38,7 +37,6 @@ BLACK_LIST = {
     SOURCE_NODE,
     TARGET_NODE,
     UNDIRECTED,
-    NODE_NUMBER,
     FORMAT,
     PATHS_METHOD,
     QUERY,
