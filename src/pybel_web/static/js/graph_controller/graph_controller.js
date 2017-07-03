@@ -269,8 +269,9 @@ function updateQueryResponse(response, tree) {
 /**
  * Creates a new Query appending buttons value to the previous Query
  * @param {jQuery selection} button
+ * @param {InspireTree} tree
  */
-function applyPipelineFunction(button) {
+function applyPipelineFunction(button, tree) {
     $.ajax({
         url: "/api/query/" + window.query + "/add_applier/" + button.val(),
         dataType: "json"
@@ -1652,7 +1653,7 @@ function initD3Force(graph, tree) {
     centralDogmaGenesButton.off("click");
 
     centralDogmaGenesButton.on("click", function () {
-        applyPipelineFunction(centralDogmaGenesButton);
+        applyPipelineFunction(centralDogmaGenesButton, tree);
     });
 
     // Applies prune central dogma
@@ -1662,7 +1663,7 @@ function initD3Force(graph, tree) {
     pruneCentralDogma.off("click");
 
     pruneCentralDogma.on("click", function () {
-        applyPipelineFunction(pruneCentralDogma);
+        applyPipelineFunction(pruneCentralDogma, tree);
     });
 
     // Applies expand periphery
@@ -1672,7 +1673,7 @@ function initD3Force(graph, tree) {
     expandPeriphery.off("click");
 
     expandPeriphery.on("click", function () {
-        applyPipelineFunction(expandPeriphery);
+        applyPipelineFunction(expandPeriphery, tree);
     });
 
     // Applies enrich qualified
@@ -1682,7 +1683,7 @@ function initD3Force(graph, tree) {
     enrichUnqualified.off("click");
 
     enrichUnqualified.on("click", function () {
-        applyPipelineFunction(enrichUnqualified);
+        applyPipelineFunction(enrichUnqualified, tree);
     });
 
     // Applies enrich variants
@@ -1692,7 +1693,7 @@ function initD3Force(graph, tree) {
     enrichVariants.off("click");
 
     enrichVariants.on("click", function () {
-        applyPipelineFunction(enrichVariants);
+        applyPipelineFunction(enrichVariants, tree);
     });
 
     // Applies enrich reactions
@@ -1702,7 +1703,7 @@ function initD3Force(graph, tree) {
     enrichReactions.off("click");
 
     enrichReactions.on("click", function () {
-        applyPipelineFunction(enrichReactions);
+        applyPipelineFunction(enrichReactions, tree);
     });
 
     // Applies enrich composites
@@ -1712,7 +1713,7 @@ function initD3Force(graph, tree) {
     enrichComposites.off("click");
 
     enrichComposites.on("click", function () {
-        applyPipelineFunction(enrichComposites);
+        applyPipelineFunction(enrichComposites, tree);
     });
 
     // Applies enrich composites
@@ -1722,7 +1723,7 @@ function initD3Force(graph, tree) {
     enrichComplexes.off("click");
 
     enrichComplexes.on("click", function () {
-        applyPipelineFunction(enrichComplexes);
+        applyPipelineFunction(enrichComplexes, tree);
     });
 
     ///////////////////////
