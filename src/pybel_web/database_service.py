@@ -486,9 +486,10 @@ def get_paths(query_id):
 
     if method == 'all':
         # TODO: Think about increasing the cutoff
-        all_paths = nx.all_simple_paths(network, source=source, target=target, cutoff=7)
+        all_paths = nx.all_simple_paths(network, source=source, target=target, cutoff=12)
         # all_paths is a generator -> convert to list and create a list of lists (paths)
-        return jsonify(list(all_paths))
+
+        return jsonify(api.paths_tuples_to_ids(list(all_paths)))
 
     try:
         shortest_path = nx.shortest_path(network, source=source, target=target)
