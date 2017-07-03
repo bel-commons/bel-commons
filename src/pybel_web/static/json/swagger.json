@@ -1,701 +1,2237 @@
 {
-    "swagger": "2.0",
-    "info": {
-        "version": "0.1.0",
-        "title": "BiNE API",
-        "description": "Application Programming Interface for the Biological Network Explorer from Fraunhofer SCAI."
-    },
-    "host": "api.bine.com",
-    "schemes": [
-        "http"
-    ],
-    "produces": [
-        "application/json"
-    ],
-    "paths": {
-        "/networks": {
-            "get": {
-                "description": "Gets `Network` objects.\n",
-                "tags": [
-                    "Network"
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Successful response",
-                        "schema": {
-                            "title": "ArrayOfNetworks",
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/Network"
-                            }
-                        }
-                    }
-                }
+  "swagger": "2.0",
+  "info": {
+    "version": "0.1.0",
+    "title": "BiNE API",
+    "description": "Application Programming Interface for the Biological Network Explorer from Fraunhofer SCAI."
+  },
+  "host": "api.bine.com",
+  "schemes": [
+    "http"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/api/namespaces": {
+      "get": {
+        "description": "Gets a list of all `namespaces` in the database.\n",
+        "tags": [
+          "Namespace"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "schema": {
+              "title": "ArrayOfNamespaces",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Definition"
+              }
             }
-        },
-        "/namespaces": {
-            "get": {
-                "description": "Gets a list of all `namespaces` in the database.\n",
-                "tags": [
-                    "Context"
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Successful response",
-                        "schema": {
-                            "title": "ArrayOfNamespaces",
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/Definition"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/namespaces/by_network/{network_id}": {
-            "get": {
-                "description": "Gets a list of all `namespaces` used in a specific network.\n",
-                "parameters": [
-                    {
-                        "$ref": "#/parameters/NetworkID"
-                    }
-                ],
-                "tags": [
-                    "Context"
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Successful response",
-                        "schema": {
-                            "title": "ArrayOfNamespaces",
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/Definition"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/names/{definition_key}": {
-            "get": {
-                "description": "Gets a list of the first 1000 names defined by the given `namespace_key`.\n",
-                "parameters": [
-                    {
-                        "$ref": "#/parameters/DefinitionKey"
-                    }
-                ],
-                "tags": [
-                    "Context"
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Successful response",
-                        "schema": {
-                            "title": "Names",
-                            "type": "array",
-                            "items": {
-                                "title": "name",
-                                "type": "string",
-                                "description": "Name defined in the given namespace"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/annotations": {
-            "get": {
-                "description": "Gets a list of all `annotations` in the database.\n",
-                "tags": [
-                    "Context"
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Successful response",
-                        "schema": {
-                            "title": "ArrayOfAnnotationKeys",
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/Definition"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/annotations/by_network/{network_id}": {
-            "get": {
-                "description": "Gets a list of all `annotations` used in a specific network.\n",
-                "parameters": [
-                    {
-                        "$ref": "#/parameters/NetworkID"
-                    }
-                ],
-                "tags": [
-                    "Context"
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Successful response",
-                        "schema": {
-                            "title": "ArrayOfAnnotationKeys",
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/Definition"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/annos/{definition_key}": {
-            "get": {
-                "description": "Gets a list of the first 1000 annotations defined by the given `annotation_key`.\n",
-                "parameters": [
-                    {
-                        "$ref": "#/parameters/DefinitionKey"
-                    }
-                ],
-                "tags": [
-                    "Context"
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Successful response",
-                        "schema": {
-                            "title": "Annotations",
-                            "type": "array",
-                            "items": {
-                                "title": "anno",
-                                "type": "string",
-                                "description": "Annotation defined in the given annotation_key"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/citations": {
-            "get": {
-                "description": "Gets a list of all `citations` in the database.\n",
-                "tags": [
-                    "Context"
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Successful response",
-                        "schema": {
-                            "title": "ArrayOfCitations",
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/Citation"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/citations/by_network/{network_id}": {
-            "get": {
-                "description": "Gets a list of all `citatinos` used in a specific network.\n",
-                "parameters": [
-                    {
-                        "$ref": "#/parameters/NetworkID"
-                    }
-                ],
-                "tags": [
-                    "Context"
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Successful response",
-                        "schema": {
-                            "title": "ArrayOfCitations",
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/Citation"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/edges/by_network/{network_id}": {
-            "get": {
-                "description": "Get `Edge` objects from a specific network.\n",
-                "parameters": [
-                    {
-                        "$ref": "#/parameters/NetworkID"
-                    }
-                ],
-                "tags": [
-                    "Edge"
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Successful response",
-                        "schema": {
-                            "title": "ArrayOfEdges",
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/Edge"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/edges/by_pmid/{pmid_id}": {
-            "get": {
-                "description": "Gets `Network` objects by PubMed identifier.\n",
-                "parameters": [
-                    {
-                        "$ref": "#/parameters/PmidID"
-                    }
-                ],
-                "tags": [
-                    "Network"
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Successful response",
-                        "schema": {
-                            "title": "ArrayOfNetworkEdges",
-                            "type": "array",
-                            "items": {
-                                "title": "NetworkEdges",
-                                "type": "object",
-                                "properties": {
-                                    "network_id": {
-                                        "type": "integer",
-                                        "description": "Databaseidentifier of the given network."
-                                    },
-                                    "edges": {
-                                        "type": "array",
-                                        "items": {
-                                            "$ref": "#/definitions/Edge"
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/edges/by_author/{author}": {
-            "get": {
-                "description": "Get `Edge` objects filtered by the author of the cited source.\n",
-                "parameters": [
-                    {
-                        "$ref": "#/parameters/Author"
-                    }
-                ],
-                "tags": [
-                    "Edge"
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Successful response",
-                        "schema": {
-                            "title": "ArrayOfEdges",
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/Edge"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/edges/by_network_author/{network_id}/{author}": {
-            "get": {
-                "description": "Get `Edge` objects filtered by the network identifier and one author of the cited source.\n",
-                "parameters": [
-                    {
-                        "$ref": "#/parameters/NetworkID"
-                    },
-                    {
-                        "$ref": "#/parameters/Author"
-                    }
-                ],
-                "tags": [
-                    "Edge"
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Successful response",
-                        "schema": {
-                            "title": "ArrayOfEdges",
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/Edge"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/edges/by_network_pmid/{network_id}/{pmid_id}": {
-            "get": {
-                "description": "Get `Edge` objects filtered by the network identifier and the PubMed identifier of the cited source.\n",
-                "parameters": [
-                    {
-                        "$ref": "#/parameters/NetworkID"
-                    },
-                    {
-                        "$ref": "#/parameters/PmidID"
-                    }
-                ],
-                "tags": [
-                    "Edge"
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Successful response",
-                        "schema": {
-                            "title": "ArrayOfEdges",
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/Edge"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/edges/by_annotation/{definition_key}/{name}": {
-            "get": {
-                "description": "Get `Edge` objects filtered by a specific annotation (interaction context).\n",
-                "parameters": [
-                    {
-                        "$ref": "#/parameters/DefinitionKey"
-                    },
-                    {
-                        "$ref": "#/parameters/Name"
-                    }
-                ],
-                "tags": [
-                    "Edge"
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Successful response",
-                        "schema": {
-                            "title": "ArrayOfEdges",
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/Edge"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/edges/by_network_annotation/{network_id}/{definition_key}/{name}": {
-            "get": {
-                "description": "Get `Edge` objects from a specific network filtered by a specific annotation (interaction context).\n",
-                "parameters": [
-                    {
-                        "$ref": "#/parameters/NetworkID"
-                    },
-                    {
-                        "$ref": "#/parameters/DefinitionKey"
-                    },
-                    {
-                        "$ref": "#/parameters/Name"
-                    }
-                ],
-                "tags": [
-                    "Edge"
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Successful response",
-                        "schema": {
-                            "title": "ArrayOfEdges",
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/Edge"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/nodes/by_network/{network_id}": {
-            "get": {
-                "description": "Get `Node` objects from a specific network.\n",
-                "parameters": [
-                    {
-                        "$ref": "#/parameters/NetworkID"
-                    }
-                ],
-                "tags": [
-                    "Node"
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Successful response",
-                        "schema": {
-                            "title": "ArrayOfNodes",
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/Node"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/path": {
-            "post": {
-                "description": "Gives an ordered list of `nodes` from a path with given start and end node.\n",
-                "consumes": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Path"
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Successful response",
-                        "schema": {
-                            "title": "ArrayOfNodes",
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/NodeIdentifier"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/all_paths": {
-            "post": {
-                "description": "Gives a list of `paths` (ordered lists of `nodes`) from a given start to a given end node.\n",
-                "consumes": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Path"
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Successful response",
-                        "schema": {
-                            "title": "ArrayOfPaths",
-                            "type": "array",
-                            "items": {
-                                "title": "ArrayOfNodes",
-                                "type": "array",
-                                "items": {
-                                    "$ref": "#/definitions/NodeIdentifier"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+          }
         }
+      }
     },
-    "definitions": {
-        "Edge": {
-            "type": "object",
-            "properties": {
-                "sourceNode": {
-                    "$ref": "#/definitions/NodeIdentifier"
-                },
-                "targetNode": {
-                    "$ref": "#/definitions/NodeIdentifier"
-                },
-                "identifier": {
-                    "type": "integer",
-                    "description": "Identifies weather the given edge was automatically created or extracted from BEL."
-                },
-                "contextData": {
-                    "type": "object",
-                    "properties": {
-                        "relation": {
-                            "type": "string",
-                            "description": "Describes the relation between source and target node."
-                        },
-                        "annotation": {
-                            "type": "string",
-                            "description": "Name of a context annotation (Key)"
-                        },
-                        "annotationName": {
-                            "type": "string",
-                            "description": "The used context. (Value)"
-                        }
-                    }
-                }
+    "/api/namespaces/{keyword}": {
+      "get": {
+        "description": "List of all names.\n",
+        "tags": [
+          "Namespace"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "schema": {
+              "title": "ArrayOfNamespaces",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Definition"
+              }
             }
+          }
         },
-        "Node": {
-            "type": "object",
-            "properties": {
-                "nodeIdentifier": {
-                    "$ref": "#/definitions/NodeIdentifier"
-                },
-                "data": {
-                    "type": "object",
-                    "properties": {
-                        "type": {
-                            "type": "string",
-                            "description": "The type of the node given by BEL definition."
-                        },
-                        "namespace": {
-                            "type": "string",
-                            "description": "The namespace that defines the nodes name given by BEL definition."
-                        },
-                        "name": {
-                            "type": "string",
-                            "description": "The name of the node given by BEL defintion."
-                        },
-                        "variants": {
-                            "type": "object",
-                            "description": "optional",
-                            "properties": {
-                                "VariantType": {
-                                    "type": "string",
-                                    "description": "Type of the variant or modification defined by BEL."
-                                },
-                                "VariantString": {
-                                    "type": "string",
-                                    "description": "Description of the given variant."
-                                }
-                            }
-                        }
-                    }
-                }
+        "parameters": [
+          {
+            "$ref": "#/parameters/Keyword"
+          }
+        ]
+      }
+    },
+    "/api/namespaces/{namespace_id}/drop": {
+      "get": {
+        "description": "Drops a namespace given its identifier.\n",
+        "tags": [
+          "Namespace"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/parameters/NameSpace"
+          }
+        ]
+      }
+    },
+    "/api/namespaces/drop": {
+      "get": {
+        "description": "Drops all namespaces.\n",
+        "tags": [
+          "Namespace"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/namespaces/builder/undefined/{network_id}/{namespace_id}": {
+      "get": {
+        "description": "Outputs a namespace built for this undefined namespace.\n",
+        "tags": [
+          "Namespace"
+        ],
+        "produces": [
+          "text/csv"
+        ],
+        "responses": {
+          "200": {
+            "description": "Namespace text file."
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/parameters/NetworkID"
+          },
+          {
+            "$ref": "#/parameters/NameSpace"
+          }
+        ]
+      }
+    },
+    "/api/namespaces/builder/incorrect/{network_id}/{namespace_id}": {
+      "get": {
+        "description": "Outputs a namespace built for this undefined namespace.\n",
+        "tags": [
+          "Namespace"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/parameters/NetworkID"
+          },
+          {
+            "$ref": "#/parameters/NameSpace"
+          }
+        ]
+      }
+    },
+    "/api/namespaces/builder/naked/{network_id}": {
+      "get": {
+        "description": "Outputs a namespace built for this undefined namespace.\n",
+        "tags": [
+          "Namespace"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/parameters/NetworkID"
+          }
+        ]
+      }
+    },
+    "/api/annotation": {
+      "get": {
+        "description": "Lists all annotations.\n",
+        "tags": [
+          "Annotations"
+        ],
+        "produces": [
+          "json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Annotations"
+          }
+        }
+      }
+    },
+    "/api/annotation/{keyword}": {
+      "get": {
+        "description": "Lists the values in an annotation, by keyword.\n",
+        "tags": [
+          "Annotations"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/parameters/Keyword"
+          }
+        ]
+      }
+    },
+    "/api/annotation/{annotation_id}/drop": {
+      "get": {
+        "description": "Drops an annotation given its identifie.\n",
+        "tags": [
+          "Annotations"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/parameters/AnnotationID"
+          }
+        ]
+      }
+    },
+    "/api/annotation/drop": {
+      "get": {
+        "description": "Drops all annotation.\n",
+        "tags": [
+          "Annotations"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/annotation/suggestion": {
+      "get": {
+        "description": "Creates a suggestion for annotations.\n",
+        "tags": [
+          "Annotations"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/network/query/{query_id}/export/{serve_format}": {
+      "get": {
+        "description": "Downloads a network in the given format.\n",
+        "tags": [
+          "Network"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/parameters/QueryID"
+          },
+          {
+            "$ref": "#/parameters/ServeFormat"
+          }
+        ]
+      }
+    },
+    "/api/network/query/{network_id}/namespaces": {
+      "get": {
+        "description": "Gets all of the namespaces in a network.\n",
+        "tags": [
+          "Network"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/parameters/NetworkID"
+          }
+        ]
+      }
+    },
+    "/api/network/query/{network_id}/annotations": {
+      "get": {
+        "description": "Gets all of the annotations in a network.\n",
+        "tags": [
+          "Network"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/parameters/NetworkID"
+          }
+        ]
+      }
+    },
+    "/api/network/query/{network_id}/citations": {
+      "get": {
+        "description": "Gets all of the citations in a given network.\n",
+        "tags": [
+          "Network"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/parameters/NetworkID"
+          }
+        ]
+      }
+    },
+    "/api/network/query/{network_id}/edges": {
+      "get": {
+        "description": "Gets all of the edges in a network.\n",
+        "tags": [
+          "Network"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/parameters/NetworkID"
+          }
+        ]
+      }
+    },
+    "/api/network/query/{network_id}/edges/offset/{offset_start}/{offset_end}": {
+      "get": {
+        "description": "Gets all of the edges in a given network with a given offset.\n",
+        "tags": [
+          "Network"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/parameters/NetworkID"
+          },
+          {
+            "$ref": "#/parameters/OffsetStart"
+          },
+          {
+            "$ref": "#/parameters/OffsetEnd"
+          }
+        ]
+      }
+    },
+    "/api/network/query/{network_id}/nodes": {
+      "get": {
+        "description": "Gets all of the nodes in a network.\n",
+        "tags": [
+          "Network"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/parameters/NetworkID"
+          }
+        ]
+      }
+    },
+    "/api/network/query/{network_id}/drop": {
+      "get": {
+        "description": "Drops a specific graph.\n",
+        "tags": [
+          "Network"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/parameters/NetworkID"
+          }
+        ]
+      }
+    },
+    "/api/network/drop": {
+      "get": {
+        "description": "Drops all graphs.\n",
+        "tags": [
+          "Network"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/network/list": {
+      "get": {
+        "description": "Gets a list of networks.\n",
+        "tags": [
+          "Network"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/network/query/{network_id}/summarize": {
+      "get": {
+        "description": "Gets a summary of the given network.\n",
+        "tags": [
+          "Network"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/parameters/NetworkID"
+          }
+        ]
+      }
+    },
+    "/api/network/{query_id}": {
+      "get": {
+        "description": "Builds a graph from the given network id and sends it in the given format.\n",
+        "tags": [
+          "Network"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/parameters/QueryID"
+          }
+        ]
+      }
+    },
+    "/api/network/{network_id}/name": {
+      "get": {
+        "description": "Returns network name given its id.\n",
+        "tags": [
+          "Network"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/parameters/NetworkID"
+          }
+        ]
+      }
+    },
+    "/api/network/{network_id}/drop": {
+      "get": {
+        "description": "Drops a given network.\n",
+        "tags": [
+          "Network"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/parameters/NetworkID"
+          }
+        ]
+      }
+    },
+    "/api/network/{network_id}/drop/{user_id}": {
+      "get": {
+        "description": "Drops a given network\n",
+        "tags": [
+          "Network"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/parameters/NetworkID"
+          },
+          {
+            "$ref": "#/parameters/UserID"
+          }
+        ]
+      }
+    },
+    "/api/network/{network_id}/make_public": {
+      "get": {
+        "description": "Makes a given network public using admin powers\n",
+        "tags": [
+          "Network"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/parameters/NetworkID"
+          }
+        ]
+      }
+    },
+    "/api/network/{network_id}/make_private": {
+      "get": {
+        "description": "Makes a given network private using admin powers\n",
+        "tags": [
+          "Network"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/parameters/NetworkID"
+          }
+        ]
+      }
+    },
+    "/api/network/{network_id}/make_public/{user_id}": {
+      "get": {
+        "description": "Makes a given network public after authenticating that the given user is the owner\n",
+        "tags": [
+          "Network"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/parameters/NetworkID"
+          },
+          {
+            "$ref": "#/parameters/UserID"
+          }
+        ]
+      }
+    },
+    "/api/network/make_private/{user_id}/{network_id}": {
+      "get": {
+        "description": "Makes a given network private after authenticating that the given user is the owner.\n",
+        "tags": [
+          "Network"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/parameters/NetworkID"
+          },
+          {
+            "$ref": "#/parameters/UserID"
+          }
+        ]
+      }
+    },
+    "/api/network/query/{query_id}/tree": {
+      "get": {
+        "description": "Builds the annotation tree data structure for a given graph.\n",
+        "tags": [
+          "Network"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/parameters/QueryID"
+          }
+        ]
+      }
+    },
+    "/api/network/query/{query_id}/paths": {
+      "get": {
+        "description": "Returns array of shortest/all paths given a source node and target node both belonging in the graph.\n",
+        "tags": [
+          "Network_Queries"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/parameters/QueryID"
+          }
+        ]
+      }
+    },
+    "/api/network/query/{query_id}/centrality": {
+      "get": {
+        "description": "Gets a list of nodes with the top betweenness-centrality.\n",
+        "tags": [
+          "Network_Queries"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/parameters/QueryID"
+          }
+        ]
+      }
+    },
+    "/api/network/query/{query_id}/pmids": {
+      "get": {
+        "description": "Gets a list of all PubMed identifiers in the network produced by the given URL parameters.\n",
+        "tags": [
+          "Network_Queries"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/parameters/QueryID"
+          }
+        ]
+      }
+    },
+    "/api/network/query/nodes": {
+      "get": {
+        "description": "Gets the dictionary of {node id pybel node tuples.}\n",
+        "tags": [
+          "Network_Queries"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/citations": {
+      "get": {
+        "description": "Gets all citations.\n",
+        "tags": [
+          "Citations"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/citations/by_author/{author}": {
+      "get": {
+        "description": "Gets all citations from the given author.\n",
+        "tags": [
+          "Citations"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/parameters/Author"
+          }
+        ]
+      }
+    },
+    "/api/pubmed/suggestion": {
+      "get": {
+        "description": "Return list of pubmedids matching the integer keyword.\n",
+        "tags": [
+          "Citations"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/network/query/{query_id}/authors": {
+      "get": {
+        "description": "Gets a list of all authors in the graph produced by the given URL parameters.\n",
+        "tags": [
+          "Author"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/parameters/QueryID"
+          }
+        ]
+      }
+    },
+    "/api/authors/suggestion": {
+      "get": {
+        "description": "Return list of authors matching the author keyword.\n",
+        "tags": [
+          "Author"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/edges/by_bel/statement/{statement_bel}": {
+      "get": {
+        "description": "Get edges that match the given BEL.\n",
+        "tags": [
+          "Edges"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/parameters/StatementBel"
+          }
+        ]
+      }
+    },
+    "/api/edges/by_bel/source/{source_bel}": {
+      "get": {
+        "description": "Get edges whose sources match the given BEL.\n",
+        "tags": [
+          "Edges"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/parameters/SourceBel"
+          }
+        ]
+      }
+    },
+    "/api/edges/by_bel/target/{target_bel}": {
+      "get": {
+        "description": "Gets edges whose targets match the given BEL.\n",
+        "tags": [
+          "Edges"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/parameters/TargetBel"
+          }
+        ]
+      }
+    },
+    "/api/edges/by_pmid/{pmid_id}": {
+      "get": {
+        "description": "Gets edges whose targets match the given BEL.\n",
+        "tags": [
+          "Edges"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/parameters/PmidID"
+          }
+        ]
+      }
+    },
+    "/api/edges/by_author/{author}": {
+      "get": {
+        "description": "Gets edges with a given author.\n",
+        "tags": [
+          "Edges"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/parameters/Author"
+          }
+        ]
+      }
+    },
+    "/api/edges/by_annotation/{annotation_name}/{annotation_value}": {
+      "get": {
+        "description": "Gets edges with the given annotation/value combination.\n",
+        "tags": [
+          "Edges"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/parameters/AnnotationValue"
+          },
+          {
+            "$ref": "#/parameters/AnnotationName"
+          }
+        ]
+      }
+    },
+    "/api/edges/provenance/{source_id}/{target_id}": {
+      "get": {
+        "description": "Gets all edges between the two given nodes.\n",
+        "tags": [
+          "Edges"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/parameters/SourceID"
+          },
+          {
+            "$ref": "#/parameters/TargetID"
+          }
+        ]
+      }
+    },
+    "/api/nodes/by_bel/{node_bel}": {
+      "get": {
+        "description": "Gets all nodes that match the given BEL.\n",
+        "tags": [
+          "Nodes"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/parameters/NodeBel"
+          }
+        ]
+      }
+    },
+    "/api/nodes/by_name/{node_name}": {
+      "get": {
+        "description": "Gets all nodes that match the given BEL.\n",
+        "tags": [
+          "Nodes"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/parameters/NodeName"
+          }
+        ]
+      }
+    },
+    "/api/nodes/by_namespace/{namespace_id}": {
+      "get": {
+        "description": "Gets all nodes with identifiers from the given namespace.\n",
+        "tags": [
+          "Nodes"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/parameters/NameSpace"
+          }
+        ]
+      }
+    },
+    "/api/nodes/by_defined_name/{node_namespace}/{node_name}": {
+      "get": {
+        "description": "Gets all nodes with the given namespace and name.\n",
+        "tags": [
+          "Nodes"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/parameters/NodeNameSpace"
+          },
+          {
+            "$ref": "#/parameters/NodeName"
+          }
+        ]
+      }
+    },
+    "/api/nodes/{node_id}": {
+      "get": {
+        "description": "Gets the pybel node tuple.\n",
+        "tags": [
+          "Nodes"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/parameters/NodeID"
+          }
+        ]
+      }
+    },
+    "/api/nodes/suggestion": {
+      "get": {
+        "description": "Suggests a node based on the search criteria.\n",
+        "tags": [
+          "Nodes"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/pipeline/suggestion": {
+      "get": {
+        "description": "Sends a list of functions to use in the pipeline.\n",
+        "tags": [
+          "Pipeline"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/pipeline/query": {
+      "get": {
+        "description": "Executes a pipeline.\n",
+        "tags": [
+          "Pipeline"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/pipeline/query/{query_id}/drop": {
+      "get": {
+        "description": "Deletes a query.\n",
+        "tags": [
+          "Pipeline"
+        ],
+        "responses": {
+          "200": {
+            "description": "successful response"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/parameters/QueryID"
+          }
+        ]
+      }
+    },
+    "/api/query/dropall/{user_id}": {
+      "get": {
+        "description": "Deletes all queries associated to the user.\n",
+        "tags": [
+          "Pipeline"
+        ],
+        "responses": {
+          "200": {
+            "description": "successful response"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/parameters/UserID"
+          }
+        ]
+      }
+    },
+    "/api/query/dropall/{query_id}/info": {
+      "get": {
+        "description": "Returns info from a given query ID.\n",
+        "tags": [
+          "Pipeline"
+        ],
+        "responses": {
+          "200": {
+            "description": "successful response"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/parameters/QueryID"
+          }
+        ]
+      }
+    },
+    "/api/query/dropall/{query_id}/parent": {
+      "get": {
+        "description": "Returns the parent of the query from a given query ID.\n",
+        "tags": [
+          "Pipeline"
+        ],
+        "responses": {
+          "200": {
+            "description": "successful response"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/parameters/QueryID"
+          }
+        ]
+      }
+    },
+    "/api/network/{network_id}/export/{serve_format}": {
+      "get": {
+        "description": "Builds a graph from the given network id and sends it in the given format.\n",
+        "tags": [
+          "Pipeline"
+        ],
+        "responses": {
+          "200": {
+            "description": "successful response"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/parameters/NetworkID"
+          },
+          {
+            "$ref": "#/parameters/ServeFormat"
+          }
+        ]
+      }
+    },
+    "/api/query/{query_id}/add_node_list_applier/{name}/{node_ids}": {
+      "get": {
+        "description": "Builds a graph from the given network id and sends it in the given format.\n",
+        "tags": [
+          "Pipeline"
+        ],
+        "responses": {
+          "200": {
+            "description": "successful response"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/parameters/QueryID"
+          },
+          {
+            "$ref": "#/parameters/Name"
+          },
+          {
+            "$ref": "#/parameters/NodeIds"
+          }
+        ]
+      }
+    },
+    "/api/query/{query_id}/add_node_applier/{name}/{node_id}": {
+      "get": {
+        "description": "Builds a graph from the given network id and sends it in the given format.\n",
+        "tags": [
+          "Pipeline"
+        ],
+        "responses": {
+          "200": {
+            "description": "successful response"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/parameters/QueryID"
+          },
+          {
+            "$ref": "#/parameters/Name"
+          },
+          {
+            "$ref": "#/parameters/NodeID"
+          }
+        ]
+      }
+    },
+    "/api/query/{query_id}/add_annotation_filter": {
+      "get": {
+        "description": "Builds a graph from the given network id and sends it in the given format.\n",
+        "tags": [
+          "Pipeline"
+        ],
+        "responses": {
+          "200": {
+            "description": "successful response"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/parameters/QueryID"
+          }
+        ]
+      }
+    },
+    "/api/user/{user}/add_role/{role}": {
+      "get": {
+        "description": "Adds a role to a use.\n",
+        "tags": [
+          "User"
+        ],
+        "responses": {
+          "200": {
+            "description": "successful response"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/parameters/User"
+          },
+          {
+            "$ref": "#/parameters/Role"
+          }
+        ]
+      }
+    },
+    "/api/user/{user}/remove_role/{role}": {
+      "get": {
+        "description": "Removes a role from a user.\n",
+        "tags": [
+          "User"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/parameters/User"
+          },
+          {
+            "$ref": "#/parameters/Role"
+          }
+        ]
+      }
+    },
+    "/api/user/{user_id}/delete": {
+      "get": {
+        "description": "Deletes a user.\n",
+        "tags": [
+          "User"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/parameters/UserID"
+          }
+        ]
+      }
+    },
+    "/api/network/query/{query_id}/analysis/{analysis_id}": {
+      "get": {
+        "description": "Returns data from analysis.\n",
+        "tags": [
+          "Analysis"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/parameters/QueryID"
+          },
+          {
+            "$ref": "#/parameters/AnalysisID"
+          }
+        ]
+      }
+    },
+    "/api/analysis/{analysis_id}/drop": {
+      "get": {
+        "description": "Drops an analysis.\n",
+        "tags": [
+          "Analysis"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/parameters/AnalysisID"
+          }
+        ]
+      }
+    },
+    "/api/analysis/{analysis_id}/download": {
+      "get": {
+        "description": "Downloads data from a given experiment as a CSV.\n",
+        "tags": [
+          "Analysis"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/parameters/AnalysisID"
+          }
+        ]
+      }
+    },
+    "/api/network/{network_id}/grant_project/{project_id}": {
+      "get": {
+        "description": "Adds rights to a network to a project.\n",
+        "tags": [
+          "RightsManagement"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/parameters/NetworkID"
+          },
+          {
+            "$ref": "#/parameters/ProjectID"
+          }
+        ]
+      }
+    },
+    "/api/network/{network_id}/grant_user/{user_id}": {
+      "get": {
+        "description": "Adds rights to a network to a anther user.\n",
+        "tags": [
+          "RightsManagement"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/parameters/NetworkID"
+          },
+          {
+            "$ref": "#/parameters/UserID"
+          }
+        ]
+      }
+    },
+    "/api/meta/config": {
+      "get": {
+        "description": "Lists the application configuration.\n",
+        "tags": [
+          "Metadata"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/meta/blacklist": {
+      "get": {
+        "description": "Return list of blacklist constants.\n",
+        "tags": [
+          "Metadata"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/text/report": {
+      "get": {
+        "description": "Gets the recent reports.\n",
+        "tags": [
+          "Metadata"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/reporting/list": {
+      "get": {
+        "description": "Sends the reporting log as a text file.\n",
+        "tags": [
+          "Metadata"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/analysis/{network_id}": {
+      "get": {
+        "description": "Views a list of all analyses, with optional filter by network id.\n",
+        "tags": [
+          "Analysis"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      },
+      "parameters": [
+        {
+          "$ref": "#/parameters/NetworkID"
+        }
+      ]
+    },
+    "/analysis/results/{analysis_id}": {
+      "get": {
+        "description": "View the results of a given analysis.\n",
+        "tags": [
+          "Analysis"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      },
+      "parameters": [
+        {
+          "$ref": "#/parameters/AnalysisID"
+        }
+      ]
+    },
+    "/asyncanalysis/upload/{network_id}": {
+      "get": {
+        "description": "Renders the asynchronous analysis page.\n",
+        "tags": [
+          "Analysis"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      },
+      "parameters": [
+        {
+          "$ref": "#/parameters/NetworkID"
+        }
+      ]
+    },
+    "/analysis/upload/{network_id}": {
+      "get": {
+        "description": "Views the results of analysis on a given graph.\n",
+        "tags": [
+          "Analysis"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      },
+      "parameters": [
+        {
+          "$ref": "#/parameters/NetworkID"
+        }
+      ]
+    },
+    "/namespaces/by_network/{network_id}": {
+      "get": {
+        "description": "Deletes a user.\n",
+        "parameters": [
+          {
+            "$ref": "#/parameters/NetworkID"
+          }
+        ],
+        "tags": [
+          "Context"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "schema": {
+              "title": "ArrayOfNamespaces",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Definition"
+              }
             }
-        },
-        "Citation": {
-            "type": "object",
-            "properties": {
-                "name": {
-                    "type": "string",
-                    "description": "Name of the cited publication."
-                },
-                "reference": {
-                    "type": "string",
-                    "description": "Identifier for the cited publication within the source i.e. PubMed identifier."
-                },
-                "type": {
-                    "type": "string",
-                    "description": "Source of the cited publication i.e. PubMed."
-                }
+          }
+        }
+      }
+    },
+    "/names/{definition_key}": {
+      "get": {
+        "description": "Gets a list of the first 1000 names defined by the given `namespace_key`.\n",
+        "parameters": [
+          {
+            "$ref": "#/parameters/DefinitionKey"
+          }
+        ],
+        "tags": [
+          "Context"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "schema": {
+              "title": "Names",
+              "type": "array",
+              "items": {
+                "title": "name",
+                "type": "string",
+                "description": "Name defined in the given namespace"
+              }
             }
-        },
-        "NodeIdentifier": {
-            "type": "object",
-            "properties": {
-                "type": {
-                    "type": "string",
-                    "description": "The type of the node given by BEL definition."
-                },
-                "namespace": {
-                    "type": "string",
-                    "description": "The namespace that defines the nodes name given by BEL definition."
-                },
-                "name": {
-                    "type": "string",
-                    "description": "The name of the node given by BEL defintion."
-                },
-                "modification": {
-                    "type": "object",
-                    "properties": {
-                        "type": {
-                            "type": "string",
-                            "description": "Modification-type given by BEL defintion."
-                        }
-                    }
-                }
+          }
+        }
+      }
+    },
+    "/annotations": {
+      "get": {
+        "description": "Gets a list of all `annotations` in the database.\n",
+        "tags": [
+          "Context"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "schema": {
+              "title": "ArrayOfAnnotationKeys",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Definition"
+              }
             }
-        },
-        "Network": {
-            "type": "object",
-            "properties": {
-                "identifier": {
+          }
+        }
+      }
+    },
+    "/annotations/by_network/{network_id}": {
+      "get": {
+        "description": "Gets a list of all `annotations` used in a specific network.\n",
+        "parameters": [
+          {
+            "$ref": "#/parameters/NetworkID"
+          }
+        ],
+        "tags": [
+          "Context"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "schema": {
+              "title": "ArrayOfAnnotationKeys",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Definition"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/annos/{definition_key}": {
+      "get": {
+        "description": "Gets a list of the first 1000 annotations defined by the given `annotation_key`.\n",
+        "parameters": [
+          {
+            "$ref": "#/parameters/DefinitionKey"
+          }
+        ],
+        "tags": [
+          "Context"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "schema": {
+              "title": "Annotations",
+              "type": "array",
+              "items": {
+                "title": "anno",
+                "type": "string",
+                "description": "Annotation defined in the given annotation_key"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/citations": {
+      "get": {
+        "description": "Gets a list of all `citations` in the database.\n",
+        "tags": [
+          "Context"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "schema": {
+              "title": "ArrayOfCitations",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Citation"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/citations/by_network/{network_id}": {
+      "get": {
+        "description": "Gets a list of all `citatinos` used in a specific network.\n",
+        "parameters": [
+          {
+            "$ref": "#/parameters/NetworkID"
+          }
+        ],
+        "tags": [
+          "Context"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "schema": {
+              "title": "ArrayOfCitations",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Citation"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/edges/by_network/{network_id}": {
+      "get": {
+        "description": "Get `Edge` objects from a specific network.\n",
+        "parameters": [
+          {
+            "$ref": "#/parameters/NetworkID"
+          }
+        ],
+        "tags": [
+          "Edge"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "schema": {
+              "title": "ArrayOfEdges",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Edge"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/edges/by_pmid/{pmid_id}": {
+      "get": {
+        "description": "Gets `Network` objects by PubMed identifier.\n",
+        "parameters": [
+          {
+            "$ref": "#/parameters/PmidID"
+          }
+        ],
+        "tags": [
+          "Network"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "schema": {
+              "title": "ArrayOfNetworkEdges",
+              "type": "array",
+              "items": {
+                "title": "NetworkEdges",
+                "type": "object",
+                "properties": {
+                  "network_id": {
                     "type": "integer",
                     "description": "Databaseidentifier of the given network."
-                },
-                "name": {
-                    "type": "string",
-                    "description": "Name of the `network` that was extracted from the source BEL file."
-                },
-                "number_of_nodes": {
-                    "type": "integer",
-                    "format": "int32",
-                    "description": "Total number of `nodes` in the given `network`."
-                },
-                "number_of_edges": {
-                    "type": "integer",
-                    "format": "int32",
-                    "description": "Total number of `edges` in the given `network`."
-                },
-                "keywords": {
+                  },
+                  "edges": {
                     "type": "array",
                     "items": {
-                        "title": "keyword",
-                        "type": "string",
-                        "description": "Keyword that describes the given `network`."
+                      "$ref": "#/definitions/Edge"
                     }
+                  }
                 }
+              }
             }
-        },
-        "Definition": {
-            "type": "object",
-            "properties": {
-                "keyword": {
-                    "type": "string",
-                    "description": "Keyword that is used to identify a definition (namespace/annotation)."
-                },
-                "url": {
-                    "type": "string",
-                    "description": "URL to the `.belns` (`namespace`) or the `.belanno` (`annotation`) definition file."
-                }
-            }
+          }
         }
+      }
     },
-    "parameters": {
-        "Author": {
-            "name": "author",
-            "in": "path",
-            "description": "The name of one of the authors of the cited publication.",
-            "required": true,
-            "type": "string"
-        },
-        "NetworkID": {
-            "name": "network_id",
-            "in": "path",
-            "description": "Identifier of the network in the database.",
-            "required": true,
-            "type": "integer"
-        },
-        "PmidID": {
-            "name": "pmid_id",
-            "in": "path",
-            "description": "PubMed identifier of one cited publication.",
-            "required": true,
-            "type": "integer"
-        },
-        "DefinitionKey": {
-            "name": "definition_key",
-            "in": "path",
-            "description": "The key used to identify an `annotation` or a `namespace` definition file.",
-            "required": true,
-            "type": "string"
-        },
-        "Name": {
-            "name": "name",
-            "in": "path",
-            "description": "The name of an entry defined by `annotation` or `namespace`.",
-            "required": true,
-            "type": "string"
+    "/edges/by_author/{author}": {
+      "get": {
+        "description": "Get `Edge` objects filtered by the author of the cited source.\n",
+        "parameters": [
+          {
+            "$ref": "#/parameters/Author"
+          }
+        ],
+        "tags": [
+          "Edge"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "schema": {
+              "title": "ArrayOfEdges",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Edge"
+              }
+            }
+          }
         }
+      }
+    },
+    "/edges/by_network_author/{network_id}/{author}": {
+      "get": {
+        "description": "Get `Edge` objects filtered by the network identifier and one author of the cited source.\n",
+        "parameters": [
+          {
+            "$ref": "#/parameters/NetworkID"
+          },
+          {
+            "$ref": "#/parameters/Author"
+          }
+        ],
+        "tags": [
+          "Edge"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "schema": {
+              "title": "ArrayOfEdges",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Edge"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/edges/by_network_pmid/{network_id}/{pmid_id}": {
+      "get": {
+        "description": "Get `Edge` objects filtered by the network identifier and the PubMed identifier of the cited source.\n",
+        "parameters": [
+          {
+            "$ref": "#/parameters/NetworkID"
+          },
+          {
+            "$ref": "#/parameters/PmidID"
+          }
+        ],
+        "tags": [
+          "Edge"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "schema": {
+              "title": "ArrayOfEdges",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Edge"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/edges/by_annotation/{definition_key}/{name}": {
+      "get": {
+        "description": "Get `Edge` objects filtered by a specific annotation (interaction context).\n",
+        "parameters": [
+          {
+            "$ref": "#/parameters/DefinitionKey"
+          },
+          {
+            "$ref": "#/parameters/Name"
+          }
+        ],
+        "tags": [
+          "Edge"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "schema": {
+              "title": "ArrayOfEdges",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Edge"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/edges/by_network_annotation/{network_id}/{definition_key}/{name}": {
+      "get": {
+        "description": "Get `Edge` objects from a specific network filtered by a specific annotation (interaction context).\n",
+        "parameters": [
+          {
+            "$ref": "#/parameters/NetworkID"
+          },
+          {
+            "$ref": "#/parameters/DefinitionKey"
+          },
+          {
+            "$ref": "#/parameters/Name"
+          }
+        ],
+        "tags": [
+          "Edge"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "schema": {
+              "title": "ArrayOfEdges",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Edge"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/path": {
+      "post": {
+        "description": "Gives an ordered list of `nodes` from a path with given start and end node.\n",
+        "consumes": [
+          "application/json"
+        ],
+        "tags": [
+          "Path"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "schema": {
+              "title": "ArrayOfNodes",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/NodeIdentifier"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/all_paths": {
+      "post": {
+        "description": "Gives a list of `paths` (ordered lists of `nodes`) from a given start to a given end node.\n",
+        "consumes": [
+          "application/json"
+        ],
+        "tags": [
+          "Path"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "schema": {
+              "title": "ArrayOfPaths",
+              "type": "array",
+              "items": {
+                "title": "ArrayOfNodes",
+                "type": "array",
+                "items": {
+                  "$ref": "#/definitions/NodeIdentifier"
+                }
+              }
+            }
+          }
+        }
+      }
     }
+  },
+  "definitions": {
+    "Edge": {
+      "type": "object",
+      "properties": {
+        "sourceNode": {
+          "$ref": "#/definitions/NodeIdentifier"
+        },
+        "targetNode": {
+          "$ref": "#/definitions/NodeIdentifier"
+        },
+        "identifier": {
+          "type": "integer",
+          "description": "Identifies weather the given edge was automatically created or extracted from BEL."
+        },
+        "contextData": {
+          "type": "object",
+          "properties": {
+            "relation": {
+              "type": "string",
+              "description": "Describes the relation between source and target node."
+            },
+            "annotation": {
+              "type": "string",
+              "description": "Name of a context annotation (Key)"
+            },
+            "annotationName": {
+              "type": "string",
+              "description": "The used context. (Value)"
+            }
+          }
+        }
+      }
+    },
+    "Node": {
+      "type": "object",
+      "properties": {
+        "nodeIdentifier": {
+          "$ref": "#/definitions/NodeIdentifier"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "description": "The type of the node given by BEL definition."
+            },
+            "namespace": {
+              "type": "string",
+              "description": "The namespace that defines the nodes name given by BEL definition."
+            },
+            "name": {
+              "type": "string",
+              "description": "The name of the node given by BEL defintion."
+            },
+            "variants": {
+              "type": "object",
+              "description": "optional",
+              "properties": {
+                "VariantType": {
+                  "type": "string",
+                  "description": "Type of the variant or modification defined by BEL."
+                },
+                "VariantString": {
+                  "type": "string",
+                  "description": "Description of the given variant."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Citation": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name of the cited publication."
+        },
+        "reference": {
+          "type": "string",
+          "description": "Identifier for the cited publication within the source i.e. PubMed identifier."
+        },
+        "type": {
+          "type": "string",
+          "description": "Source of the cited publication i.e. PubMed."
+        }
+      }
+    },
+    "NodeIdentifier": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "The type of the node given by BEL definition."
+        },
+        "namespace": {
+          "type": "string",
+          "description": "The namespace that defines the nodes name given by BEL definition."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the node given by BEL defintion."
+        },
+        "modification": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "description": "Modification-type given by BEL defintion."
+            }
+          }
+        }
+      }
+    },
+    "Network": {
+      "type": "object",
+      "properties": {
+        "identifier": {
+          "type": "integer",
+          "description": "Databaseidentifier of the given network."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the `network` that was extracted from the source BEL file."
+        },
+        "number_of_nodes": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Total number of `nodes` in the given `network`."
+        },
+        "number_of_edges": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Total number of `edges` in the given `network`."
+        },
+        "keywords": {
+          "type": "array",
+          "items": {
+            "title": "keyword",
+            "type": "string",
+            "description": "Keyword that describes the given `network`."
+          }
+        }
+      }
+    },
+    "Definition": {
+      "type": "object",
+      "properties": {
+        "keyword": {
+          "type": "string",
+          "description": "Keyword that is used to identify a definition (namespace/annotation)."
+        },
+        "url": {
+          "type": "string",
+          "description": "URL to the `.belns` (`namespace`) or the `.belanno` (`annotation`) definition file."
+        }
+      }
+    }
+  },
+  "parameters": {
+    "Author": {
+      "name": "author",
+      "in": "path",
+      "description": "The name of one of the authors of the cited publication.",
+      "required": true,
+      "type": "string"
+    },
+    "AnnotationID": {
+      "name": "annotation_id",
+      "in": "path",
+      "description": "Identifier of an annotation.",
+      "required": true,
+      "type": "string"
+    },
+    "AnalysisID": {
+      "name": "analysis_id",
+      "in": "path",
+      "description": "Identifier of an annalysis.",
+      "required": true,
+      "type": "integer"
+    },
+    "AnnotationName": {
+      "name": "annotation_name",
+      "in": "path",
+      "description": "Name of an annotation.",
+      "required": true,
+      "type": "string"
+    },
+    "AnnotationValue": {
+      "name": "annotation_value",
+      "in": "path",
+      "description": "Value of an annotation.",
+      "required": true,
+      "type": "string"
+    },
+    "Keyword": {
+      "name": "keyword",
+      "in": "path",
+      "description": "Keyword of the query.",
+      "required": true,
+      "type": "string"
+    },
+    "NetworkID": {
+      "name": "network_id",
+      "in": "path",
+      "description": "Identifier of the network in the database.",
+      "required": true,
+      "type": "integer"
+    },
+    "QueryID": {
+      "name": "query_id",
+      "in": "path",
+      "description": "Identifier of the query.",
+      "required": true,
+      "type": "integer"
+    },
+    "ServeFormat": {
+      "name": "serve_format",
+      "in": "path",
+      "description": "Format.",
+      "required": true,
+      "type": "string"
+    },
+    "OffsetStart": {
+      "name": "offset_start",
+      "in": "path",
+      "description": "Format.",
+      "required": true,
+      "type": "integer"
+    },
+    "OffsetEnd": {
+      "name": "offset_end",
+      "in": "path",
+      "description": "Format.",
+      "required": true,
+      "type": "integer"
+    },
+    "UserID": {
+      "name": "user_id",
+      "in": "path",
+      "description": "User identifier.",
+      "required": true,
+      "type": "integer"
+    },
+    "StatementBel": {
+      "name": "statement_bel",
+      "in": "path",
+      "description": "User identifier.",
+      "required": true,
+      "type": "integer"
+    },
+    "SourceBel": {
+      "name": "source_bel",
+      "in": "path",
+      "description": "User identifier.",
+      "required": true,
+      "type": "integer"
+    },
+    "SourceID": {
+      "name": "source_id",
+      "in": "path",
+      "description": "User identifier.",
+      "required": true,
+      "type": "integer"
+    },
+    "TargetID": {
+      "name": "target_id",
+      "in": "path",
+      "description": "User identifier.",
+      "required": true,
+      "type": "integer"
+    },
+    "TargetBel": {
+      "name": "target_bel",
+      "in": "path",
+      "description": "User identifier.",
+      "required": true,
+      "type": "integer"
+    },
+    "PmidID": {
+      "name": "pmid_id",
+      "in": "path",
+      "description": "PubMed identifier of one cited publication.",
+      "required": true,
+      "type": "integer"
+    },
+    "DefinitionKey": {
+      "name": "definition_key",
+      "in": "path",
+      "description": "The key used to identify an `annotation` or a `namespace` definition file.",
+      "required": true,
+      "type": "string"
+    },
+    "Name": {
+      "name": "name",
+      "in": "path",
+      "description": "The name of an entry defined by `annotation` or `namespace`.",
+      "required": true,
+      "type": "string"
+    },
+    "NameSpace": {
+      "name": "namespace_id",
+      "in": "path",
+      "description": "The namespace name.",
+      "required": true,
+      "type": "string"
+    },
+    "Role": {
+      "name": "role",
+      "in": "path",
+      "description": "The namespace name.",
+      "required": true,
+      "type": "string"
+    },
+    "ProjectID": {
+      "name": "project_id",
+      "in": "path",
+      "description": "The project id.",
+      "required": true,
+      "type": "string"
+    },
+    "User": {
+      "name": "user",
+      "in": "path",
+      "description": "The namespace name.",
+      "required": true,
+      "type": "string"
+    },
+    "NodeBel": {
+      "name": "node_bel",
+      "in": "path",
+      "description": "The namespace name.",
+      "required": true,
+      "type": "string"
+    },
+    "NodeName": {
+      "name": "node_name",
+      "in": "path",
+      "description": "Node name.",
+      "required": true,
+      "type": "string"
+    },
+    "NodeNameSpace": {
+      "name": "node_namespace",
+      "in": "path",
+      "description": "Node name space.",
+      "required": true,
+      "type": "string"
+    },
+    "NodeID": {
+      "name": "node_id",
+      "in": "path",
+      "description": "Node ID.",
+      "required": true,
+      "type": "string"
+    },
+    "NodeIds": {
+      "name": "node_ids",
+      "in": "path",
+      "description": "Node ID.",
+      "required": true,
+      "type": "integer"
+    }
+  }
 }
