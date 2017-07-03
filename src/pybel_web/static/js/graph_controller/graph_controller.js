@@ -250,13 +250,14 @@ function doAjaxCall(url) {
 /**
  * Updates the network from a new query
  * @param {object} response: Response with the new Query ID
- * @param {InspireTree} tree: New tree from the new query
  */
-function updateQueryResponse(response, tree) {
+function updateQueryResponse(response) {
 
     var positions = savePreviousPositions();
 
     window.query = response.id; // Updates in window the new query id
+
+    initTree(); // Inits tree from network annotations
 
     var networkResponse = doAjaxCall("/api/network/" + window.query); // Grabs the new network from the API
 
@@ -292,7 +293,7 @@ function applyPipelineFunction(button) {
         url: "/api/query/" + window.query + "/add_applier/" + button.val(),
         dataType: "json"
     }).done(function (response) {
-        updateQueryResponse(response, initTree())
+        updateQueryResponse(response)
     });
 }
 
@@ -367,7 +368,7 @@ $(document).ready(function () {
             url: "/api/query/" + window.query + "/add_annotation_filter/?" + $.param(treeSelection, true),
             dataType: "json"
         }).done(function (response) {
-            updateQueryResponse(response, initTree())
+            updateQueryResponse(response)
         });
     });
 
@@ -395,7 +396,7 @@ $(document).ready(function () {
             alert("The current query has no parent");
         }
         else {
-            updateQueryResponse(response, initTree())
+            updateQueryResponse(response)
         }
     });
 
@@ -407,7 +408,7 @@ $(document).ready(function () {
             alert("The current query has no parent");
         }
         else {
-            updateQueryResponse(response, initTree())
+            updateQueryResponse(response)
         }
     });
 });
@@ -603,7 +604,7 @@ function initD3Force(graph, tree) {
                     url: "/api/query/" + window.query + "/add_node_applier/expand_node_neighborhood_by_id/" + node.id,
                     dataType: "json"
                 }).done(function (response) {
-                    updateQueryResponse(response, tree)
+                    updateQueryResponse(response)
                 });
             },
             disabled: false // optional, defaults to false
@@ -617,7 +618,7 @@ function initD3Force(graph, tree) {
                     url: "/api/network/", //TODO
                     dataType: "json"
                 }).done(function (response) {
-                    updateQueryResponse(response, tree)
+                    updateQueryResponse(response)
                 });
             },
             disabled: false // optional, defaults to false
@@ -629,7 +630,7 @@ function initD3Force(graph, tree) {
                     url: "/api/query/" + window.query + "/add_node_applier/delete_node_by_id/" + node.id,
                     dataType: "json"
                 }).done(function (response) {
-                    updateQueryResponse(response, tree)
+                    updateQueryResponse(response)
                 });
             }
         }
@@ -1532,9 +1533,7 @@ function initD3Force(graph, tree) {
 
     betweennessButton.on("click", function () {
 
-        console.log('Click');
         if (betwennessForm.valid()) {
-            console.log('asdf');
 
             args["node_number"] = betwennessForm.find("input[name='betweenness']").val();
 
@@ -1592,7 +1591,7 @@ function initD3Force(graph, tree) {
 
     var npaButton = $("#npa-button");
 
-    betweennessButton.off("click"); // It will unbind the previous click if multiple graphs has been rendered
+    npaButton.off("click"); // It will unbind the previous click if multiple graphs has been rendered
 
     npaButton.on("click", function () {
         if (npaForm.valid()) {
