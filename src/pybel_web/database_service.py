@@ -500,24 +500,19 @@ def get_paths(query_id):
     return jsonify(api.get_node_ids(shortest_path))
 
 
-@api_blueprint.route('/api/network/query/<int:query_id>/centrality/', methods=['GET'])
-def get_nodes_by_betweenness_centrality(query_id):
+@api_blueprint.route('/api/network/query/<int:query_id>/centrality/<int:node_number>', methods=['GET'])
+def get_nodes_by_betweenness_centrality(query_id, node_number):
     """Gets a list of nodes with the top betweenness-centrality"""
     network = get_network_from_request(query_id)
 
-    try:
-        node_numbers = int(request.args.get(NODE_NUMBER))
-    except ValueError:
-        return 'Please enter a number'
-
-    if node_numbers > nx.number_of_nodes(network):
+    if node_number > nx.number_of_nodes(network):
         return 'The number introduced is bigger than the nodes in the network'
 
     bw_dict = nx.betweenness_centrality(network)
 
     return jsonify([
         api.get_node_id(node)
-        for node, score in sorted(bw_dict.items(), key=itemgetter(1), reverse=True)[0:node_numbers]
+        for node, score in sorted(bw_dict.items(), key=itemgetter(1), reverse=True)[0:node_number]
     ])
 
 

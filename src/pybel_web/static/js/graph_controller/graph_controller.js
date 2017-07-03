@@ -1536,12 +1536,9 @@ function initD3Force(graph, tree) {
         if (betwennessForm.valid()) {
 
             $.ajax({
-                url: "/api/network/query/" + window.query + "/centrality/",
+                url: "/api/network/query/" + window.query + "/centrality/" + betwennessForm.find("input[name='betweenness']").val(),
                 type: betwennessForm.attr("method"),
                 dataType: "json",
-                data: {
-                    "node_number": betwennessForm.find("input[name='betweenness']").val()
-                },
                 success: function (data) {
 
                     var nodesToIncrease = nodesInArrayKeepOrder(data, 'id');
