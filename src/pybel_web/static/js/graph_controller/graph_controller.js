@@ -201,9 +201,8 @@ function removeHighlightNodeBorder() {
 
 /**
  * Renders the network given default parameters
- * @param {InspireTree} tree
  */
-function firstNetworkInit(tree) {
+function firstNetworkInit() {
 
     $.getJSON("/api/network/" + window.query, function (data) {
         if (data.nodes.length > 1000) {// Network bigger than 1000 nodes wont be render
@@ -216,7 +215,7 @@ function firstNetworkInit(tree) {
         }
 
         else {
-            initD3Force(data, tree);
+            initD3Force(data);
         }
     });
 
@@ -250,14 +249,15 @@ function doAjaxCall(url) {
 /**
  * Updates the network from a new query
  * @param {object} response: Response with the new Query ID
+ * @param {InspireTree} tree: tree
  */
-function updateQueryResponse(response) {
+function updateQueryResponse(response, tree) {
 
     var positions = savePreviousPositions();
 
     window.query = response.id; // Updates in window the new query id
 
-    initTree(); // Inits tree from network annotations
+    reloadTree(tree); // Inits tree from network annotations
 
     var networkResponse = doAjaxCall("/api/network/" + window.query); // Grabs the new network from the API
 
@@ -278,7 +278,7 @@ function updateQueryResponse(response) {
     }
 
     else {
-        initD3Force(data["json"], tree); // Init new network
+        initD3Force(data["json"]); // Init new network
 
         highlightNodeBorder(data["newNodes"]); // Highlights nodes that were not in present query
     }
@@ -322,10 +322,30 @@ function updateQueryTable() {
 
 /**
  * Renders tree for annotation filtering
+ * @param {InspireTree} tree
  */
-function initTree() {
+function reloadTree(tree) {
 
-    // Initiate the tree and expands it with the annotations in the query
+    tree.removeAll(); //Clean tree
+
+    // reload TreeNodes
+    tree.load(doAjaxCall("/api/network/query/" + window.query + "/tree/"));
+
+    tree.on("model.loaded", function () {
+        tree.expand();
+    });
+
+    // Enables tree search
+    $('#tree-search').on('keyup', function (ev) {
+        tree.search(ev.target.value);
+    });
+}
+
+
+$(document).ready(function () {
+
+    updateQueryTable();  // Renders info of Initial query
+
     var tree = new InspireTree({
         target: "#tree",
         selection: {
@@ -344,16 +364,6 @@ function initTree() {
         tree.search(ev.target.value);
     });
 
-    return tree
-}
-
-
-$(document).ready(function () {
-
-    updateQueryTable();  // Renders info of Initial query
-
-    tree = initTree(); // Renders the tree
-
     firstNetworkInit(tree);
 
     $("#refresh-network").on("click", function () {
@@ -368,7 +378,7 @@ $(document).ready(function () {
             url: "/api/query/" + window.query + "/add_annotation_filter/?" + $.param(treeSelection, true),
             dataType: "json"
         }).done(function (response) {
-            updateQueryResponse(response)
+            updateQueryResponse(response, tree)
         });
     });
 
@@ -586,9 +596,8 @@ function downloadText(response, name) {
 /**
  * Initialize d3 Force to plot network from json
  * @param {object} graph json data
- * @param {InspireTree} tree
  */
-function initD3Force(graph, tree) {
+function initD3Force(graph) {
 
     /**
      * Defines d3-context menu on right click
