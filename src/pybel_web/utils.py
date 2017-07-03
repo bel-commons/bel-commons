@@ -53,7 +53,7 @@ from pybel_tools.summary.node_summary import get_unused_namespaces
 from pybel_tools.utils import prepare_c3, count_dict_values
 from .application import get_manager, get_api, get_user_datastore
 from .constants import *
-from .models import User, Report, Experiment
+from .models import User, Report, Experiment, Query
 
 log = logging.getLogger(__name__)
 
@@ -457,3 +457,32 @@ def get_nodes_from_list(node_list):
         api.get_node_by_id(int(node_id_str.strip()))
         for node_id_str in node_list.strip().split(',')
     ]
+
+
+def get_query_ancestor_id(query_id):
+    """Gets the oldest ancestor of the given query
+
+    :param int query_id: The original query database identifier
+    :rtype: models.Query
+    """
+    query = manager.session.query(Query).get(query_id)
+
+    if not query.parent_id:
+        return query_id
+
+    return get_query_ancestor_id(query.parent_id)
+
+
+def get_query_descendants(query_id):
+    """Gets all ancestors to the root query as a list of queries. In this formulation, the original query comes first
+    in the list, with its parent next, its grandparent third, and so-on.
+
+    :param int query_id: The original query database identifier
+    :rtype: list[models.Query]
+    """
+    query = manager.session.query(Query).get(query_id)
+
+    if not query.parent_id:
+        return [query]
+
+    return [query] + get_query_descendants(query.parent_id)
