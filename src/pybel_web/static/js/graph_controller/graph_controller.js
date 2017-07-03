@@ -122,6 +122,10 @@ function displayQueryInfo(query) {
 
     var dynamicTable = document.getElementById('query-table');
 
+    while (dynamicTable.rows.length > 0) {
+        dynamicTable.deleteRow(0);
+    }
+
     var queryObject = {};
 
     queryObject["Query ID"] = query.id;
@@ -324,6 +328,8 @@ function updateQueryResponse(response, tree) {
         highlightNodeBorder(data["newNodes"]); // Highlights nodes that were not in present query
     }
 
+    updateQueryTable(); // Updates Query Table
+
 }
 
 
@@ -400,9 +406,6 @@ $(document).ready(function () {
         }).done(function (response) {
             updateQueryResponse(response, initTree())
         });
-
-        updateQueryTable(); // Updates Query Table
-
     });
 
     $("#collapse-tree").on("click", function () {
@@ -458,9 +461,17 @@ $(document).ready(function () {
         }
     });
 
+    // TODO: implement
+
     // Back to original query
     $("#original-query").click(function () {
-        var response = doAjaxCall("/api/query/" + window.query + "/parent")
+        var response = doAjaxCall("/api/query/" + window.query + "/parent");
+        if (response["parent"] === false) {
+            alert("The current query has no parent");
+        }
+        else {
+            updateQueryResponse(response, initTree())
+        }
     });
 });
 
