@@ -578,16 +578,18 @@
                         <tr>
                             <td>Save as <a href="http://graphml.graphdrawing.org/">GraphML</a> for use in Cytoscape</td>
                             <td>
-                                <button type="button" id="graphml-button" class="btn btn-default"
-                                        aria-label="Left Align"><span class="glyphicon glyphicon-download"
-                                                                      aria-hidden="true"></span>
+                                <button onclick="window.location.href='/api/network/query/'+window.query+'/export/graphml'"
+                                        type="button" class="btn btn-default" aria-label="Left Align"><span
+                                        class="glyphicon glyphicon-download"
+                                        aria-hidden="true"></span>
                                 </button>
                             </td>
                         </tr>
                         <tr>
                             <td>Save as CSV for import in Microsoft Excel</td>
                             <td>
-                                <button type="button" id="csv-button" class="btn btn-default" aria-label="Left Align">
+                                <button onclick="window.location.href='/api/network/query/'+window.query+'/export/csv'"
+                                        type="button" class="btn btn-default" aria-label="Left Align">
                                     <span class="glyphicon glyphicon-download" aria-hidden="true"></span>
                                 </button>
                             </td>
@@ -597,7 +599,8 @@
                             <td>Save as <a href="http://www.home.ndexbio.org/data-model/">CX</a> JSON for use with the
                                 <a href="http://ndexbio.org/">Network Data Exchange</a></td>
                             <td>
-                                <button type="button" id="cx-button" class="btn btn-default" aria-label="Left Align">
+                                <button onclick="window.location.href='/api/network/query/'+window.query+'/export/cx'"
+                                        type="button" class="btn btn-default" aria-label="Left Align">
                                     <span class="glyphicon glyphicon-download" aria-hidden="true"></span>
                                 </button>
                             </td>
@@ -606,8 +609,8 @@
                             <td>Save as Nodelink JSON for custom visualization using <a href="https://d3js.org/">D3</a>
                             </td>
                             <td>
-                                <button type="button" id="nodelink-button" class="btn btn-default"
-                                        aria-label="Left Align">
+                                <button onclick="window.location.href='/api/network/query/'+window.query+'/export/json'"
+                                        type="button" class="btn btn-default" aria-label="Left Align">
                                     <span class="glyphicon glyphicon-download" aria-hidden="true"></span>
                                 </button>
                             </td>
@@ -615,7 +618,8 @@
                         <tr>
                             <td>Save as a preparsed gpickle for programmatic use</td>
                             <td>
-                                <button type="button" id="bytes-button" class="btn btn-default" aria-label="Left Align">
+                                <button onclick="window.location.href='/api/network/query/'+window.query+'/export/bytes'"
+                                        type="button" class="btn btn-default" aria-label="Left Align">
                                     <span class="glyphicon glyphicon-download" aria-hidden="true"></span>
                                 </button>
                             </td>
@@ -725,6 +729,63 @@
                                         </button>
                                     </td>
                                     <td>Collapse Protein/RNA/Gene nodes to genes</td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <button type="button" value="prune_central_dogma"
+                                                id="prune-central-dogma" class="btn btn-info">Prune Central Dogma
+                                        </button>
+                                    </td>
+                                    <td>Prunes genes, then RNA</td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <button type="button" value="expand_periphery"
+                                                id="expand-periphery" class="btn btn-info">Expand Periphery
+                                        </button>
+                                    </td>
+                                    <td>Expand the periphery of the network</td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <button type="button" value="enrich_unqualified"
+                                                id="enrich-unqualified" class="btn btn-info">Enrich Unqualified Edges
+                                        </button>
+                                    </td>
+                                    <td>Enriches the subgraph with the unqualified edges from the graph</td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <button type="button" value="enrich_variants"
+                                                id="enrich-variants" class="btn btn-info">Enrich variants
+                                        </button>
+                                    </td>
+                                    <td>Adds the reference nodes for all variants of genes, RNAs, miRNAs, and proteins
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <button type="button" value="enrich_reactions"
+                                                id="enrich-reactions" class="btn btn-info">Enrich Reactions
+                                        </button>
+                                    </td>
+                                    <td>Adds all of the reactants and products of reactions</td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <button type="button" value="enrich_composites"
+                                                id="enrich-composites" class="btn btn-info">Enrich Composites
+                                        </button>
+                                    </td>
+                                    <td>Adds all of the members of the composite abundances</td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <button type="button" value="enrich_complexes"
+                                                id="enrich-complexes" class="btn btn-info">Enrich Complexes
+                                        </button>
+                                    </td>
+                                    <td>Adds all of the members of the complexes</td>
                                 </tr>
                                 </tbody>
                             </table>

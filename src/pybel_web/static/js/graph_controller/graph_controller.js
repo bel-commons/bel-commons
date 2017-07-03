@@ -114,6 +114,7 @@ function displayEdgeInfo(edge) {
     });
 }
 
+
 /**
  * Renders query info table
  * @param {object} query object
@@ -195,53 +196,6 @@ function removeHighlightNodeBorder() {
         value.children[1].setAttribute('style', 'stroke: black');
     });
 
-}
-
-/**
- * Automatically select nodes in the tree given an URL
- * @param {InspireTree} tree
- * @param {string} url
- * @param {array} blackList parameters in the URL not belonging to the tree
- */
-function selectNodesInTreeFromURL(tree, url, blackList) {
-    // Select in the tree the tree-nodes in the URL
-    var selectedNodes = {};
-
-    $.each(url, function (index, value) {
-        if (!(index in blackList)) {
-            if (Array.isArray(value)) {
-                $.each(value, function (childIndex, child) {
-                    if (index in selectedNodes) {
-                        selectedNodes[index].push(child.replace(/\+/g, " "));
-                    }
-                    else {
-                        selectedNodes[index] = [child.replace(/\+/g, " ")];
-                    }
-                });
-            }
-            else {
-                if (index in selectedNodes) {
-                    selectedNodes[index].push(value.replace(/\+/g, " "));
-                }
-                else {
-                    selectedNodes[index] = [value.replace(/\+/g, " ")];
-                }
-            }
-        }
-    });
-
-    var treeNodes = tree.nodes();
-
-    $.each(treeNodes, function (index, value) {
-        if (value.text in selectedNodes) {
-            $.each(value.children, function (child, childValue) {
-
-                if (selectedNodes[value.text].indexOf(childValue.text) >= 0) {
-                    childValue.check();
-                }
-            });
-        }
-    });
 }
 
 
@@ -332,6 +286,15 @@ function updateQueryResponse(response, tree) {
 
 }
 
+
+function applyPipelineFunction(button) {
+    $.ajax({
+        url: "/api/query/" + window.query + "/add_applier/" + button.val(),
+        dataType: "json"
+    }).done(function (response) {
+        updateQueryResponse(response, initTree())
+    });
+}
 
 /**
  * Creates a new row in Node/Edge info table
@@ -425,31 +388,6 @@ $(document).ready(function () {
         });
     });
 
-    // Export to GraphML
-    $("#graphml-button").click(function () {
-        window.location.href = "/api/network/query/" + window.query + "/export/graphml";
-    });
-
-    // Export to bytes
-    $("#bytes-button").click(function () {
-        window.location.href = "/api/network/query/" + window.query + "/export/bytes";
-
-    });
-
-    // Export to CX
-    $("#cx-button").click(function () {
-        window.location.href = "/api/network/query/" + window.query + "/export/cx";
-    });
-
-    // Export to CSV
-    $("#csv-button").click(function () {
-        window.location.href = "/api/network/query/" + window.query + "/export/csv";
-    });
-
-    $("#nodelink-button").click(function () {
-        window.location.href = "/api/network/query/" + window.query + "/export/json";
-    });
-
     // Back to parent query
     $("#parent-query").click(function () {
         var response = doAjaxCall("/api/query/" + window.query + "/parent");
@@ -462,7 +400,6 @@ $(document).ready(function () {
     });
 
     // TODO: implement
-
     // Back to original query
     $("#original-query").click(function () {
         var response = doAjaxCall("/api/query/" + window.query + "/parent");
@@ -1712,21 +1649,93 @@ function initD3Force(graph, tree) {
         }
     );
 
-    // Applies Central_Dogma_To_Genes to current query
+    ///////////////////////
+    // Tool modal buttons /
+    ///////////////////////
 
     var centralDogmaGenesButton = $("#central-dogma-to-genes");
 
-    centralDogmaGenesButton.off("click"); // It w
+    centralDogmaGenesButton.off("click");
 
     centralDogmaGenesButton.on("click", function () {
-        $.ajax({
-            url: "/api/query/" + window.query + "/add_applier/" + centralDogmaGenesButton.val(),
-            dataType: "json"
-        }).done(function (response) {
-            updateQueryResponse(response, initTree())
-        });
+        applyPipelineFunction(centralDogmaGenesButton);
     });
 
+    // Applies prune central dogma
+
+    var pruneCentralDogma = $("#prune-central-dogma");
+
+    pruneCentralDogma.off("click");
+
+    pruneCentralDogma.on("click", function () {
+        applyPipelineFunction(pruneCentralDogma);
+    });
+
+    // Applies expand periphery
+
+    var expandPeriphery = $("#expand-periphery");
+
+    expandPeriphery.off("click");
+
+    expandPeriphery.on("click", function () {
+        applyPipelineFunction(expandPeriphery);
+    });
+
+    // Applies enrich qualified
+
+    var enrichUnqualified = $("#enrich-unqualified");
+
+    enrichUnqualified.off("click");
+
+    enrichUnqualified.on("click", function () {
+        applyPipelineFunction(enrichUnqualified);
+    });
+
+    // Applies enrich variants
+
+    var enrichVariants = $("#enrich-variants");
+
+    enrichVariants.off("click");
+
+    enrichVariants.on("click", function () {
+        applyPipelineFunction(enrichVariants);
+    });
+
+    // Applies enrich reactions
+
+    var enrichReactions = $("#enrich-reactions");
+
+    enrichReactions.off("click");
+
+    enrichReactions.on("click", function () {
+        applyPipelineFunction(enrichReactions);
+    });
+
+    // Applies enrich composites
+
+    var enrichComposites = $("#enrich-composites");
+
+    enrichComposites.off("click");
+
+    enrichComposites.on("click", function () {
+        applyPipelineFunction(enrichComposites);
+    });
+
+    // Applies enrich composites
+
+    var enrichComplexes = $("#enrich-complexes");
+
+    enrichComplexes.off("click");
+
+    enrichComplexes.on("click", function () {
+        applyPipelineFunction(enrichComplexes);
+    });
+
+    ///////////////////////
+    // Tool modal buttons /
+    ///////////////////////
+
+    // Hide node names button
 
     var hideNodeNames = $("#hide_node_names");
 
