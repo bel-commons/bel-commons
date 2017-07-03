@@ -418,7 +418,7 @@ $(document).ready(function () {
     // Export to BEL
     $("#bel-button").click(function () {
         $.ajax({
-            url: "/api/network/" + window.query + "/export/bel",
+            url: "/api/network/query/" + window.query + "/export/bel",
             dataType: "text"
         }).done(function (response) {
             downloadText(response, "MyNetwork.bel")
@@ -427,27 +427,27 @@ $(document).ready(function () {
 
     // Export to GraphML
     $("#graphml-button").click(function () {
-        window.location.href = "/api/network/" + window.query + "/export/graphml";
+        window.location.href = "/api/network/query/" + window.query + "/export/graphml";
     });
 
     // Export to bytes
     $("#bytes-button").click(function () {
-        window.location.href = "/api/network/" + window.query + "/export/bytes";
+        window.location.href = "/api/network/query/" + window.query + "/export/bytes";
 
     });
 
     // Export to CX
     $("#cx-button").click(function () {
-        window.location.href = "/api/network/" + window.query + "/export/cx";
+        window.location.href = "/api/network/query/" + window.query + "/export/cx";
     });
 
     // Export to CSV
     $("#csv-button").click(function () {
-        window.location.href = "/api/network/" + window.query + "/export/csv";
+        window.location.href = "/api/network/query/" + window.query + "/export/csv";
     });
 
     $("#nodelink-button").click(function () {
-        window.location.href = "/api/network/" + window.query + "/export/json";
+        window.location.href = "/api/network/query/" + window.query + "/export/json";
     });
 
     // Back to parent query
@@ -1394,7 +1394,7 @@ function initD3Force(graph, tree) {
 
     var checkNodes = $("#get-checked-nodes");
 
-    checkNodes.off('click'); // It will unbind the previous click if multiple graphs has been rendered
+    checkNodes.off("click"); // It will unbind the previous click if multiple graphs has been rendered
 
     // Highlight only selected nodes in the graph
     checkNodes.on("click", function (event) {
@@ -1429,7 +1429,7 @@ function initD3Force(graph, tree) {
 
     var checkNodesButton = $("#get-checked-edges");
 
-    checkNodesButton.off('click'); // It will unbind the previous click if multiple graphs has been rendered
+    checkNodesButton.off("click"); // It will unbind the previous click if multiple graphs has been rendered
 
     checkNodesButton.on("click", function (event) {
         event.preventDefault();
@@ -1450,7 +1450,7 @@ function initD3Force(graph, tree) {
 
     var pathButton = $("#button-paths");
 
-    pathButton.off('click'); // It will unbind the previous click if multiple graphs has been rendered
+    pathButton.off("click"); // It will unbind the previous click if multiple graphs has been rendered
 
     pathButton.on("click", function () {
         if (pathForm.valid()) {
@@ -1591,10 +1591,13 @@ function initD3Force(graph, tree) {
 
     var betweennessButton = $("#betweenness-button");
 
-    betweennessButton.off('click'); // It will unbind the previous click if multiple graphs has been rendered
+    betweennessButton.off("click"); // It will unbind the previous click if multiple graphs has been rendered
 
     betweennessButton.on("click", function () {
+
+        console.log('Click');
         if (betwennessForm.valid()) {
+            console.log('asdf');
 
             args["node_number"] = betwennessForm.find("input[name='betweenness']").val();
 
@@ -1652,7 +1655,7 @@ function initD3Force(graph, tree) {
 
     var npaButton = $("#npa-button");
 
-    betweennessButton.off('click'); // It will unbind the previous click if multiple graphs has been rendered
+    betweennessButton.off("click"); // It will unbind the previous click if multiple graphs has been rendered
 
     npaButton.on("click", function () {
         if (npaForm.valid()) {
@@ -1711,7 +1714,7 @@ function initD3Force(graph, tree) {
 
     var hideNodeNames = $("#hide_node_names");
 
-    hideNodeNames.off('click'); // It will unbind the previous click if multiple graphs has been rendered
+    hideNodeNames.off("click"); // It will unbind the previous click if multiple graphs has been rendered
 
     // Hide text in graph
     hideNodeNames.on("click", function () {
@@ -1720,7 +1723,7 @@ function initD3Force(graph, tree) {
 
     var restoreNodeNames = $("#restore_node_names");
 
-    restoreNodeNames.off('click'); // It will unbind the previous click if multiple graphs has been rendered
+    restoreNodeNames.off("click"); // It will unbind the previous click if multiple graphs has been rendered
 
     // Hide text in graph
     restoreNodeNames.on("click", function () {
@@ -1729,7 +1732,7 @@ function initD3Force(graph, tree) {
 
     var restoreAll = $("#restore");
 
-    restoreAll.off('click'); // It will unbind the previous click if multiple graphs has been rendered
+    restoreAll.off("click"); // It will unbind the previous click if multiple graphs has been rendered
 
     // Restore all
     restoreAll.on("click", function () {
@@ -1738,7 +1741,7 @@ function initD3Force(graph, tree) {
 
     var removeNodeHighlighting = $("#remove-node-highlighting");
 
-    removeNodeHighlighting.off('click'); // It will unbind the previous click if multiple graphs has been rendered
+    removeNodeHighlighting.off("click"); // It will unbind the previous click if multiple graphs has been rendered
 
     // Restore all
     removeNodeHighlighting.on("click", function () {

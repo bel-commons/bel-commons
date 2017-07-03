@@ -256,7 +256,7 @@ def suggest_annotation():
 @api_blueprint.route('/api/network/query/<int:query_id>/export/<serve_format>', methods=['GET'])
 def download_network(query_id, serve_format):
     """Downloads a network in the given format"""
-    network = manager.session.query(Query).get(query_id).run(api)
+    network = manager.session.query(models.Query).get(query_id).run(api)
     return serve_network(network, serve_format=serve_format)
 
 
@@ -856,6 +856,12 @@ def add_pipeline_entry(query_id, name, *args, **kwargs):
     })
 
 
+@api_blueprint.route('/api/query/<int:query_id>/add_applier/<name>', methods=['GET'])
+def add_applier_to_query(query_id, name):
+    """Builds a new query with the applier in the url and adds it to the end of the pipeline"""
+    return add_pipeline_entry(query_id, name)
+
+
 @api_blueprint.route('/api/query/<int:query_id>/add_node_list_applier/<name>/<intlist:node_ids>', methods=['GET'])
 def add_node_list_applier_to_query(query_id, name, node_ids):
     """Builds a new query with a node list applier added to the end of the pipeline"""
@@ -884,7 +890,7 @@ def add_annotation_filter_to_query(query_id):
         if k not in BLACK_LIST
     }
 
-    if not filters: # If no filters send back the same query
+    if not filters:  # If no filters send back the same query
         return jsonify({
             'id': query_id
         })
