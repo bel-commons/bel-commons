@@ -200,30 +200,6 @@ function removeHighlightNodeBorder() {
 
 
 /**
- * Renders the network given default parameters
- */
-function firstNetworkInit() {
-
-    $.getJSON("/api/network/" + window.query, function (data) {
-        if (data.nodes.length > 1000) {// Network bigger than 1000 nodes wont be render
-            renderEmptyFrame();
-
-            alert("The network you are trying to render contains: " + data.nodes.length + " nodes and " +
-                data.links.length + " edges. To avoid crashing your browser, this network will only be rendered " +
-                "after you click in refresh network.Please consider giving a more specific query or applying some " +
-                "filters using the right-hand tree navigator.")
-        }
-
-        else {
-            initD3Force(data);
-        }
-    });
-
-    window.history.pushState("BiNE", "BiNE", "/explore/query/" + window.query);
-}
-
-
-/**
  * Performs an AJAX call given an URL
  * @param {string} url
  */
@@ -244,6 +220,21 @@ function doAjaxCall(url) {
     });
 
     return result
+}
+
+function networkSizeChecking(data, tree) {
+    if (data.nodes.length > 1000) {// Network bigger than 1000 nodes wont be render
+        renderEmptyFrame();
+
+        alert("The network you are trying to render contains: " + data.nodes.length + " nodes and " +
+            data.links.length + " edges. To avoid crashing your browser, this network will only be rendered " +
+            "after you click in refresh network.Please consider giving a more specific query or applying some " +
+            "filters using the right-hand tree navigator.")
+    }
+
+    else {
+        initD3Force(data, tree);
+    }
 }
 
 /**
@@ -267,33 +258,24 @@ function updateQueryResponse(response, tree) {
 
     clearUsedDivs(); // Cleans up used divs
 
-    if (data["json"].length > 1000) {// Network bigger than 1000 nodes wont be rendered
+    networkSizeChecking(data["jsonNetwork"], tree);
 
-        renderEmptyFrame();
-
-        alert("The network you are trying to render contains: " + data.nodes.length + " nodes and " +
-            data.links.length + " edges. To avoid crashing your browser, this network will only be rendered " +
-            "after you click in refresh network.Please consider giving a more specific query or applying some " +
-            "filters using the right-hand tree navigator.")
-    }
-
-    else {
-        initD3Force(data["json"]); // Init new network
-
-        highlightNodeBorder(data["newNodes"]); // Highlights nodes that were not in present query
-    }
+    highlightNodeBorder(data["newNodes"]); // Highlights nodes that were not in present query
 
     updateQueryTable(); // Updates Query Table
-
 }
 
 
+/**
+ * Creates a new Query appending buttons value to the previous Query
+ * @param {jQuery selection} button
+ */
 function applyPipelineFunction(button) {
     $.ajax({
         url: "/api/query/" + window.query + "/add_applier/" + button.val(),
         dataType: "json"
     }).done(function (response) {
-        updateQueryResponse(response)
+        updateQueryResponse(response, tree)
     });
 }
 
@@ -319,18 +301,12 @@ function updateQueryTable() {
     displayQueryInfo(queryInfo);
 }
 
-
 /**
- * Renders tree for annotation filtering
+ * Expands the tree and enables search
  * @param {InspireTree} tree
  */
-function reloadTree(tree) {
-
-    tree.removeAll(); //Clean tree
-
-    // reload TreeNodes
-    tree.load(doAjaxCall("/api/network/query/" + window.query + "/tree/"));
-
+function initTreeTools(tree) {
+    // Expands the tree
     tree.on("model.loaded", function () {
         tree.expand();
     });
@@ -342,10 +318,27 @@ function reloadTree(tree) {
 }
 
 
+/**
+ * Updates tree childs and loads new query annotations
+ * @param {InspireTree} tree
+ */
+function reloadTree(tree) {
+
+    tree.removeAll(); //Clean tree
+
+    // reload TreeNodes
+    tree.load(doAjaxCall("/api/network/query/" + window.query + "/tree/"));
+
+    initTreeTools(tree);
+}
+
+
 $(document).ready(function () {
 
-    updateQueryTable();  // Renders info of Initial query
+    updateQueryTable();  // Renders table info of the given query
 
+
+    // Inits the Annotation tree
     var tree = new InspireTree({
         target: "#tree",
         selection: {
@@ -355,16 +348,11 @@ $(document).ready(function () {
         data: doAjaxCall("/api/network/query/" + window.query + "/tree/")
     });
 
-    tree.on("model.loaded", function () {
-        tree.expand();
-    });
+    initTreeTools(tree); // Enable search/expands tree
 
-    // Enables tree search
-    $('#tree-search').on('keyup', function (ev) {
-        tree.search(ev.target.value);
+    $.getJSON("/api/network/" + window.query, function (networkJson) {
+        networkSizeChecking(networkJson, tree);
     });
-
-    firstNetworkInit(tree);
 
     $("#refresh-network").on("click", function () {
 
@@ -406,7 +394,7 @@ $(document).ready(function () {
             alert("The current query has no parent");
         }
         else {
-            updateQueryResponse(response)
+            updateQueryResponse(response,tree)
         }
     });
 
@@ -418,7 +406,7 @@ $(document).ready(function () {
             alert("The current query has no parent");
         }
         else {
-            updateQueryResponse(response)
+            updateQueryResponse(response, tree)
         }
     });
 });
@@ -528,7 +516,7 @@ function updateNodePosition(jsonData, prevPos) {
     });
 
     return {
-        json: jsonData,
+        jsonNetwork: jsonData,
         newNodes: newNodesArray
     }
 }
@@ -596,8 +584,9 @@ function downloadText(response, name) {
 /**
  * Initialize d3 Force to plot network from json
  * @param {object} graph json data
+ * @param {InspireTree} tree
  */
-function initD3Force(graph) {
+function initD3Force(graph, tree) {
 
     /**
      * Defines d3-context menu on right click
@@ -613,7 +602,7 @@ function initD3Force(graph) {
                     url: "/api/query/" + window.query + "/add_node_applier/expand_node_neighborhood_by_id/" + node.id,
                     dataType: "json"
                 }).done(function (response) {
-                    updateQueryResponse(response)
+                    updateQueryResponse(response, tree)
                 });
             },
             disabled: false // optional, defaults to false
@@ -627,7 +616,7 @@ function initD3Force(graph) {
                     url: "/api/network/", //TODO
                     dataType: "json"
                 }).done(function (response) {
-                    updateQueryResponse(response)
+                    updateQueryResponse(response, tree)
                 });
             },
             disabled: false // optional, defaults to false
@@ -639,7 +628,7 @@ function initD3Force(graph) {
                     url: "/api/query/" + window.query + "/add_node_applier/delete_node_by_id/" + node.id,
                     dataType: "json"
                 }).done(function (response) {
-                    updateQueryResponse(response)
+                    updateQueryResponse(response, tree)
                 });
             }
         }
