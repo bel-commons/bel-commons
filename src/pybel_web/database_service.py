@@ -453,6 +453,8 @@ def get_tree_api(query_id):
 # NETWORK QUERIES
 ####################################
 
+
+# TODO @ddomingof change this to have explicit source and target in path
 @api_blueprint.route('/api/network/query/<int:query_id>/paths/')
 def get_paths(query_id):
     """Returns array of shortest/all paths given a source node and target node both belonging in the graph
