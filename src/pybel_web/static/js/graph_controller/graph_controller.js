@@ -1712,6 +1712,22 @@ function initD3Force(graph, tree) {
         }
     );
 
+    // Applies Central_Dogma_To_Genes to current query
+
+    var centralDogmaGenesButton = $("#central-dogma-to-genes");
+
+    centralDogmaGenesButton.off("click"); // It w
+
+    centralDogmaGenesButton.on("click", function () {
+        $.ajax({
+            url: "/api/query/" + window.query + "/add_applier/" + centralDogmaGenesButton.val(),
+            dataType: "json"
+        }).done(function (response) {
+            updateQueryResponse(response, initTree())
+        });
+    });
+
+
     var hideNodeNames = $("#hide_node_names");
 
     hideNodeNames.off("click"); // It will unbind the previous click if multiple graphs has been rendered
