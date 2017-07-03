@@ -3,7 +3,7 @@
 import logging
 
 from flask import send_file, Response, jsonify
-from six import BytesIO, StringIO
+from six import StringIO, BytesIO
 
 from pybel import to_cx, to_bel_lines, to_graphml, to_bytes, to_csv, to_sif, to_jgif, to_gsea
 from pybel.constants import GRAPH_ANNOTATION_LIST
@@ -76,28 +76,45 @@ def serve_network(graph, serve_format=None):
         bio = BytesIO()
         to_graphml(graph, bio)
         bio.seek(0)
-        data = StringIO(bio.read().decode('utf-8'))
-        return send_file(data, mimetype='text/xml', attachment_filename='graph.graphml', as_attachment=True)
+        return send_file(
+            bio,
+            mimetype='text/xml',
+            attachment_filename='graph.graphml',
+            as_attachment=True
+        )
 
     if serve_format == 'sif':
-        bio = BytesIO()
+        bio = StringIO()
         to_sif(graph, bio)
         bio.seek(0)
-        data = StringIO(bio.read().decode('utf-8'))
-        return send_file(data, attachment_filename="graph.sif", as_attachment=True)
+        data = BytesIO(bio.read().encode('utf-8'))
+        return send_file(
+            data,
+            attachment_filename="graph.sif",
+            as_attachment=True
+        )
 
     if serve_format == 'csv':
-        bio = BytesIO()
+        bio = StringIO()
         to_csv(graph, bio)
         bio.seek(0)
-        data = StringIO(bio.read().decode('utf-8'))
-        return send_file(data, attachment_filename="graph.tsv", as_attachment=True)
+        data = BytesIO(bio.read().encode('utf-8'))
+        return send_file(
+            data,
+            mimetype="text/tab-separated-values",
+            attachment_filename="graph.tsv",
+            as_attachment=True
+        )
 
     if serve_format == 'gsea':
-        bio = BytesIO()
+        bio = StringIO()
         to_gsea(graph, bio)
         bio.seek(0)
-        data = StringIO(bio.read().decode('utf-8'))
-        return send_file(data, attachment_filename="graph.tsv", as_attachment=True)
+        data = BytesIO(bio.read().encode('utf-8'))
+        return send_file(
+            data,
+            attachment_filename="graph.grp",
+            as_attachment=True
+        )
 
     raise TypeError('{} is not a valid format'.format(serve_format))
