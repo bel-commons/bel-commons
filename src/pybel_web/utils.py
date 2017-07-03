@@ -415,7 +415,7 @@ def convert_seed_value(key, form, value):
     elif key in {'pubmed', 'authors'}:
         return form.getlist(value)
     else:
-        return [api.get_node_by_id(node_id) for node_id in form.getlist(value, type=int)]
+        return api.get_nodes_by_ids(form.getlist(value, type=int))
 
 
 def query_form_to_dict(form):
@@ -450,13 +450,6 @@ def query_form_to_dict(form):
         query_dict["network_ids"] = form.getlist("network_ids[]")
 
     return query_dict
-
-
-def get_nodes_from_list(node_list):
-    return [
-        api.get_node_by_id(int(node_id_str.strip()))
-        for node_id_str in node_list.strip().split(',')
-    ]
 
 
 def get_query_ancestor_id(query_id):
