@@ -13,9 +13,6 @@ log = logging.getLogger(__name__)
 
 
 def to_json_custom(graph, _id='id', source='source', target='target', key='key'):
-    if 'PYBEL_RELABELED' not in graph.graph:
-        raise ValueError('Needs to be relabeled first by PyBEL')
-
     result = {
         'directed': graph.is_directed(),
         'multigraph': graph.is_multigraph(),
