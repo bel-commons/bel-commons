@@ -245,7 +245,7 @@ function selectNodesInTreeFromURL(tree, url, blackList) {
  * Renders the network given default parameters
  * @param {InspireTree} tree
  */
-function renderNetworkFirstTime(tree) {
+function firstNetworkInit(tree) {
 
     $.getJSON("/api/network/" + window.query, function (data) {
         if (data.nodes.length > 1000) {// Network bigger than 1000 nodes wont be render
@@ -289,22 +289,27 @@ function doAjaxCall(url) {
     return result
 }
 
-
+/**
+ * Updates the network from a new query
+ * @param {object} response: Response with the new Query ID
+ * @param {InspireTree} tree: New tree from the new query
+ */
 function updateQueryResponse(response, tree) {
+
     var positions = savePreviousPositions();
 
-    window.query = response.id;
+    window.query = response.id; // Updates in window the new query id
 
-    var networkResponse = doAjaxCall("/api/network/" + window.query);
+    var networkResponse = doAjaxCall("/api/network/" + window.query); // Grabs the new network from the API
 
-    window.history.pushState("BiNE", "BiNE", "/explore/query/" + window.query);
+    window.history.pushState("BiNE", "BiNE", "/explore/query/" + window.query); // Updates the URL
 
-    // Load new data, first empty all created divs and clear the current network
-    var data = updateNodePosition(networkResponse, positions);
+    var data = updateNodePosition(networkResponse, positions); // Loads new data, first empty all created divs and clear the current network
 
-    clearUsedDivs();
+    clearUsedDivs(); // Cleans up used divs
 
-    if (data["json"].length > 1000) {// Network bigger than 1000 nodes wont be render
+    if (data["json"].length > 1000) {// Network bigger than 1000 nodes wont be rendered
+
         renderEmptyFrame();
 
         alert("The network you are trying to render contains: " + data.nodes.length + " nodes and " +
@@ -314,9 +319,9 @@ function updateQueryResponse(response, tree) {
     }
 
     else {
-        initD3Force(data["json"], tree);
+        initD3Force(data["json"], tree); // Init new network
 
-        highlightNodeBorder(data["newNodes"]);
+        highlightNodeBorder(data["newNodes"]); // Highlights nodes that were not in present query
     }
 
 }
@@ -336,7 +341,7 @@ function insertRow(table, row, column1, column2) {
 
 
 /**
- * Gets the info from query and renders its table
+ * Gets the query info from the API and renders it in a table
  */
 function updateQueryTable() {
     var queryInfo = doAjaxCall("/api/query/" + window.query + "/info");
@@ -375,11 +380,11 @@ function initTree() {
 
 $(document).ready(function () {
 
-    updateQueryTable();
+    updateQueryTable();  // Renders info of Initial query
 
-    tree = initTree();
+    tree = initTree(); // Renders the tree
 
-    renderNetworkFirstTime(tree);
+    firstNetworkInit(tree);
 
     $("#refresh-network").on("click", function () {
 
@@ -395,6 +400,9 @@ $(document).ready(function () {
         }).done(function (response) {
             updateQueryResponse(response, initTree())
         });
+
+        updateQueryTable(); // Updates Query Table
+
     });
 
     $("#collapse-tree").on("click", function () {
