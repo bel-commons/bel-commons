@@ -667,10 +667,14 @@ def nodes_by_namespace_name(node_namespace, node_name):
     return jsonify(nodes)
 
 
-@api_blueprint.route('/api/nodes/<node_id>')
+@api_blueprint.route('/api/nodes/<int:node_id>')
 def get_node_hash(node_id):
-    """Gets the pybel node tuple"""
-    return jsonify(api.get_node_by_id(node_id))
+    """Gets the pybel node tuple
+
+    :param node_id: A node identifier
+    """
+    node = api.get_node_by_id(node_id)
+    return jsonify(node)
 
 
 @api_blueprint.route('/api/nodes/suggestion/')
