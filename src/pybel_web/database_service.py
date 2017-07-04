@@ -773,6 +773,7 @@ def drop_user_queries(user_id):
 
 
 @api_blueprint.route('/api/query/<int:query_id>/info', methods=['GET'])
+@login_required
 def query_to_network(query_id):
     """Returns info from a given query ID"""
     query = manager.session.query(models.Query).get(query_id)
@@ -797,6 +798,7 @@ def query_to_network(query_id):
 
 
 @api_blueprint.route('/api/query/<int:query_id>/parent', methods=['GET'])
+@login_required
 def get_query_parent(query_id):
     """Returns the parent of the query"""
 
@@ -819,6 +821,7 @@ def get_query_parent(query_id):
 
 
 @api_blueprint.route('/api/query/<int:query_id>/ancestor', methods=['GET'])
+@login_required
 def get_query_oldest_ancestry(query_id):
     """Returns the parent of the query"""
 
@@ -995,7 +998,7 @@ def get_analysis_median(query_id, analysis_id):
 @login_required
 def delete_analysis_results(analysis_id):
     """Drops an analysis"""
-    if not current_user.admin:
+    if not current_user.admin:  # TODO test if it's the user/s analysis
         flask.abort(403)
 
     manager.session.query(Experiment).get(analysis_id).delete()
@@ -1030,6 +1033,7 @@ def download_analysis(analysis_id):
 
 
 @api_blueprint.route('/api/network/<int:network_id>/grant_project/<int:project_id>')
+@login_required
 def grant_network_to_project(network_id, project_id):
     """Adds rights to a network to a project"""
     network = manager.session.query(Network).get(network_id)
@@ -1047,6 +1051,7 @@ def grant_network_to_project(network_id, project_id):
 
 
 @api_blueprint.route('/api/network/<int:network_id>/grant_user/<int:user_id>')
+@login_required
 def grant_network_to_user(network_id, user_id):
     """Adds rights to a network to a anther user"""
     network = manager.session.query(Network).get(network_id)
