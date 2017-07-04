@@ -34,7 +34,7 @@ from pybel.manager import build_manager, Base
 from pybel_tools.api import DatabaseService
 from pybel_tools.mutation import expand_nodes_neighborhoods, expand_node_neighborhood
 from pybel_tools.pipeline import uni_in_place_mutator, in_place_mutator
-from .constants import CHARLIE_EMAIL, DANIEL_EMAIL
+from .constants import CHARLIE_EMAIL, DANIEL_EMAIL, ALEX_EMAIL
 from .forms import ExtendedRegisterForm
 from .models import Role, User
 
@@ -214,7 +214,7 @@ def create_application(get_mail=False, **kwargs):
         admin_role = pybel.user_datastore.find_or_create_role(name='admin', description='Admin of PyBEL Web')
         scai_role = pybel.user_datastore.find_or_create_role(name='scai', description='Users from SCAI')
 
-        for email in (CHARLIE_EMAIL, DANIEL_EMAIL):
+        for email in (CHARLIE_EMAIL, DANIEL_EMAIL, ALEX_EMAIL):
             admin_user = pybel.user_datastore.find_user(email=email)
 
             if admin_user is None:
