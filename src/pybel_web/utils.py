@@ -7,10 +7,13 @@ import logging
 import pickle
 from collections import defaultdict
 
+import matplotlib
+import matplotlib.pyplot as plt
 import pandas
 from flask import current_app
 from flask import render_template
 from flask_login import current_user
+from matplotlib_venn import venn2
 from six import BytesIO
 from sqlalchemy import func
 from werkzeug.local import LocalProxy
@@ -60,6 +63,9 @@ from .constants import *
 from .models import User, Report, Experiment, Query
 
 log = logging.getLogger(__name__)
+
+# See: http://matplotlib.org/faq/usage_faq.html#what-is-a-backend
+matplotlib.use('AGG')
 
 LABEL = 'dgxa'
 
@@ -493,9 +499,6 @@ def calculate_overlap_dict(g1, g2, set_labels=('Query 1', 'Query 2')):
     :return: A dictionary containing important information for displaying base64 images
     :rtype: dict
     """
-    import matplotlib.pyplot as plt
-    from matplotlib_venn import venn2
-
     plt.clf()
     plt.cla()
     plt.close()
