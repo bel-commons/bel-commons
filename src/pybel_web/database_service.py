@@ -66,6 +66,7 @@ from .utils import (
     api,
     user_datastore,
     query_form_to_dict,
+    get_query_ancestor_id,
 )
 
 log = logging.getLogger(__name__)
@@ -809,6 +810,30 @@ def get_query_parent(query_id):
 
     return jsonify({
         'id': query.parent.id, 'parent': True
+    })
+
+
+@api_blueprint.route('/api/query/<int:query_id>/ancestor', methods=['GET'])
+def get_query_oldest_ancestry(query_id):
+    """Returns the parent of the query"""
+
+    query = manager.session.query(models.Query).get(query_id)
+
+    if query is None:
+        return flask.abort(404, 'Invalid Query ID')
+
+    if not (current_user.admin or query.user_id == current_user.id):
+        flask.abort(403)
+
+    ancestor_id = get_query_ancestor_id(query.id)
+
+    if not query.parent:
+        return jsonify({
+            'id': ancestor_id, 'parent': False
+        })
+
+    return jsonify({
+        'id': ancestor_id, 'parent': True
     })
 
 

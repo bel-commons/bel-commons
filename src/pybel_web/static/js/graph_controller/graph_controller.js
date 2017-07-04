@@ -333,6 +333,19 @@ function reloadTree(tree) {
     initTreeTools(tree);
 }
 
+/**
+ * Updates network to a previous query
+ * @param {object} response
+ */
+function backToOldQuery(response, tree) {
+    if (response["parent"] === false) {
+        alert("The current query has no parent");
+    }
+    else {
+        updateQueryResponse(response, tree)
+    }
+}
+
 
 $(document).ready(function () {
 
@@ -390,25 +403,12 @@ $(document).ready(function () {
 
     // Back to parent query
     $("#parent-query").click(function () {
-        var response = doAjaxCall("/api/query/" + window.query + "/parent");
-        if (response["parent"] === false) {
-            alert("The current query has no parent");
-        }
-        else {
-            updateQueryResponse(response,tree)
-        }
+        backToOldQuery(doAjaxCall("/api/query/" + window.query + "/parent"), tree);
     });
 
-    // TODO: implement
     // Back to original query
     $("#original-query").click(function () {
-        var response = doAjaxCall("/api/query/" + window.query + "/parent");
-        if (response["parent"] === false) {
-            alert("The current query has no parent");
-        }
-        else {
-            updateQueryResponse(response, tree)
-        }
+        backToOldQuery(doAjaxCall("/api/query/" + window.query + "/ancestor"), tree)
     });
 });
 
