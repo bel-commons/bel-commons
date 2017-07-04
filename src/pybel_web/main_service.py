@@ -59,8 +59,9 @@ log = logging.getLogger(__name__)
 def unique_networks(networks):
     """Only yields unique networks
 
-    :param list[Network] networks:
-    :return: list[Network]
+    :param iter[Network] networks: An iterable of networks
+    :return: An iterable over the unique network identifiers in the original iterator
+    :rtype: iter[Network]
     """
     seen_ids = set()
 
@@ -68,6 +69,15 @@ def unique_networks(networks):
         if network.id not in seen_ids:
             seen_ids.add(network.id)
             yield network
+
+
+def _networks_with_permission_iter(api):
+    return itt.chain(
+        api.list_public_networks(),
+        current_user.get_owned_networks(),
+        current_user.get_shared_networks(),
+        current_user.get_project_networks()
+    )
 
 
 def get_networks_with_permission(api):
@@ -83,14 +93,7 @@ def get_networks_with_permission(api):
     if current_user.admin:
         return api.list_recent_networks()
 
-    networks = api.list_public_networks()
-
-    return list(unique_networks(itt.chain(
-        networks,
-        current_user.get_owned_networks(),
-        current_user.get_shared_networks(),
-        current_user.get_project_networks()
-    )))
+    return list(unique_networks(_networks_with_permission_iter(api)))
 
 
 def get_network_ids_with_permission(api):
@@ -98,13 +101,11 @@ def get_network_ids_with_permission(api):
 
     :param DatabaseService api: The database service
     :return: A list of all networks tagged as public or uploaded by the current user
-    :rtype: list[Network]
+    :rtype: set[int]
     """
-    networks_with_permission = get_networks_with_permission(api)
-
     return {
         network.id
-        for network in networks_with_permission
+        for network in _networks_with_permission_iter(api)
     }
 
 
