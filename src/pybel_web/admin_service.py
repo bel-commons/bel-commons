@@ -67,8 +67,9 @@ def build_admin_service(app):
 
             filters = (field.ilike(u'%%%s%%' % term) for field in self._cached_fields)
             query = query.filter(or_(*filters))
-
-            query = query.filter(Network.id.in_(network.id for network in current_user.get_owned_networks()))
+            
+            if not current_user.admin:
+                query = query.filter(Network.id.in_(network.id for network in current_user.get_owned_networks()))
 
             return query.offset(offset).limit(limit).all()
 
