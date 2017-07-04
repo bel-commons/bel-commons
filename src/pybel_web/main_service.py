@@ -393,9 +393,15 @@ def build_main_service(app):
 
     @app.route('/query/compare/<int:query_1_id>/<int:query_2_id>')
     def view_query_comparison(query_1_id, query_2_id):
+        """View the comparison between the result of two queries"""
         q1 = manager.session.query(Query).get(query_1_id).run(api)
         q2 = manager.session.query(Query).get(query_2_id).run(api)
 
-        data = calculate_overlap_dict(q1, q2)
+        data = calculate_overlap_dict(q1, q2, set_labels=(query_1_id, query_2_id))
 
-        return render_template('query_comparison.html', data=data)
+        return render_template(
+            'query_comparison.html',
+            query_1_id=query_1_id,
+            query_2_id=query_2_id,
+            data=data,
+        )

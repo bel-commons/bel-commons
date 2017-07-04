@@ -41,6 +41,8 @@ from pybel_tools.summary import (
     count_namespaces,
     group_errors,
     get_naked_names,
+    get_pubmed_identifiers,
+    get_annotations
 )
 from pybel_tools.summary.edge_summary import (
     get_unused_annotations,
@@ -485,14 +487,67 @@ def get_query_descendants(query_id):
     return [query] + get_query_descendants(query.parent_id)
 
 
-def calculate_overlap_dict(g1, g2):
+def calculate_overlap_dict(g1, g2, set_labels=('Query 1', 'Query 2')):
+    """
+
+    :param pybel.BELGraph g1:
+    :param pybel.BELGraph g2:
+    :return: A dictionary containing important information for displaying base64 images
+    :rtype: dict
+    """
     nodes_overlap_file = BytesIO()
-    venn2([set(g1.nodes_iter()), set(g2.nodes_iter())],
-          set_labels=['Query 1', 'Query 2'])
+    venn2(
+        [set(g1.nodes_iter()), set(g2.nodes_iter())],
+        set_labels=set_labels
+    )
     plt.savefig(nodes_overlap_file, format='png')
     nodes_overlap_file.seek(0)
     nodes_overlap_data = base64.b64encode(nodes_overlap_file.getvalue())
 
+    plt.clf()
+    plt.cla()
+    plt.close()
+
+    edges_overlap_file = BytesIO()
+    venn2(
+        [set(g1.edges_iter()), set(g2.edges_iter())],
+        set_labels=set_labels
+    )
+    plt.savefig(edges_overlap_file, format='png')
+    edges_overlap_file.seek(0)
+    edges_overlap_data = base64.b64encode(edges_overlap_file.getvalue())
+
+    plt.clf()
+    plt.cla()
+    plt.close()
+
+    citations_overlap_file = BytesIO()
+    venn2(
+        [get_pubmed_identifiers(g1), get_pubmed_identifiers(g2)],
+        set_labels=set_labels
+
+    )
+    plt.savefig(citations_overlap_file, format='png')
+    citations_overlap_file.seek(0)
+    citations_overlap_data = base64.b64encode(citations_overlap_file.getvalue())
+
+    plt.clf()
+    plt.cla()
+    plt.close()
+
+    annotations_overlap_file = BytesIO()
+    venn2(
+        [get_annotations(g1), get_annotations(g2)],
+        set_labels=set_labels
+
+    )
+    plt.savefig(annotations_overlap_file, format='png')
+    annotations_overlap_file.seek(0)
+    annotations_overlap_data = base64.b64encode(annotations_overlap_file.getvalue())
+
     return {
-        'nodes': nodes_overlap_data.decode('utf-8')
+        'nodes': nodes_overlap_data.decode('utf-8'),
+        'edges': edges_overlap_data.decode('utf-8'),
+        'citations': citations_overlap_data.decode('utf-8'),
+        'annotations': annotations_overlap_data.decode('utf-8')
     }
