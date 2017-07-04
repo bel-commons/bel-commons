@@ -251,7 +251,7 @@ function updateQueryResponse(response, tree) {
 
     reloadTree(tree); // Inits tree from network annotations
 
-    var networkResponse = doAjaxCall("/api/network/" + window.query); // Grabs the new network from the API
+    var networkResponse = doAjaxCall("/api/query/" + window.query + "/relabel"); // Grabs the new network from the API
 
     window.history.pushState("BiNE", "BiNE", "/explore/query/" + window.query); // Updates the URL
 
@@ -351,7 +351,7 @@ $(document).ready(function () {
 
     initTreeTools(tree); // Enable search/expands tree
 
-    $.getJSON("/api/network/" + window.query, function (networkJson) {
+    $.getJSON("/api/query/" + window.query + "/relabel", function (networkJson) {
         networkSizeChecking(networkJson, tree);
     });
 
