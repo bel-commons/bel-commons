@@ -889,13 +889,23 @@ def add_applier_to_query(query_id, name):
 
 @api_blueprint.route('/api/query/<int:query_id>/add_node_list_applier/<name>/<intlist:node_ids>', methods=['GET'])
 def add_node_list_applier_to_query(query_id, name, node_ids):
-    """Builds a new query with a node list applier added to the end of the pipeline"""
+    """Builds a new query with a node list applier added to the end of the pipeline
+
+    :param int query_id: A query's database identifier
+    :param str name: The name of the function to apply at the end of the query
+    :param list[int] node_ids: The node identifiers to use as the argument to the function
+    """
     return add_pipeline_entry(query_id, name, node_ids)
 
 
 @api_blueprint.route('/api/query/<int:query_id>/add_node_applier/<name>/<int:node_id>', methods=['GET'])
 def add_node_applier_to_query(query_id, name, node_id):
-    """Builds a new query with a node applier added to the end of the pipeline"""
+    """Builds a new query with a node applier added to the end of the pipeline
+
+    :param int query_id: A query's database identifier
+    :param str name: The name of the function to apply at the end of the query
+    :param int node_id: The node identifier to use as the argument ot the function
+    """
     return add_pipeline_entry(query_id, name, node_id)
 
 
@@ -904,15 +914,13 @@ def add_annotation_filter_to_query(query_id):
     """Builds a new query with the annotation in the arguments. If 'and' is passed as an argument, it performs a AND
     query. By default it uses the OR condition.
 
-    :param int query_id: Query id
-    :return: A BEL graph
-    :rtype: pybel.BELGraph
+    :param int query_id: A query's database identifier
     """
 
     filters = {
-        k: request.args.getlist(k)
-        for k in request.args
-        if k not in BLACK_LIST
+        key: request.args.getlist(key)
+        for key in request.args
+        if key not in BLACK_LIST
     }
 
     if not filters:  # If no filters send back the same query
@@ -920,7 +928,7 @@ def add_annotation_filter_to_query(query_id):
             'id': query_id
         })
 
-    query_type = False if request.args.get(AND) else True
+    query_type = not request.args.get(AND)
 
     return add_pipeline_entry(query_id, get_subgraph_by_annotations, filters, query_type)
 
