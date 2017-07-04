@@ -455,26 +455,23 @@ def get_tree_api(query_id):
 ####################################
 
 
-# TODO @ddomingof change this to have explicit source and target in path
-@api_blueprint.route('/api/network/query/<int:query_id>/paths/')
-def get_paths(query_id):
+@api_blueprint.route('/api/query/<int:query_id>/paths/<int:source_id>/<int:target_id>/')
+def get_paths(query_id, source_id, target_id):
     """Returns array of shortest/all paths given a source node and target node both belonging in the graph
 
     :return: JSON
     """
+
     network = get_network_from_request(query_id)
 
-    if SOURCE_NODE not in request.args:
-        raise ValueError('no source')
-
-    if TARGET_NODE not in request.args:
-        raise ValueError('no target')
-
     method = request.args.get(PATHS_METHOD)
-    source = api.get_node_by_id(request.args.get(SOURCE_NODE))
-    target = api.get_node_by_id(request.args.get(TARGET_NODE))
 
     undirected = UNDIRECTED in request.args
+
+    cutoff = request.args.get('cutoff', 12)
+
+    source = api.get_node_by_id(source_id)
+    target = api.get_node_by_id(target_id)
 
     log.info('Source: %s, target: %s', source, target)
 
@@ -487,11 +484,8 @@ def get_paths(query_id):
         network = network.to_undirected()
 
     if method == 'all':
-        # TODO: Think about increasing the cutoff
-        all_paths = nx.all_simple_paths(network, source=source, target=target, cutoff=12)
-        # all_paths is a generator -> convert to list and create a list of lists (paths)
-
-        return jsonify(api.paths_tuples_to_ids(list(all_paths)))
+        all_paths = nx.all_simple_paths(network, source=source, target=target, cutoff=cutoff)
+        return jsonify(api.paths_tuples_to_ids(all_paths))
 
     try:
         shortest_path = nx.shortest_path(network, source=source, target=target)

@@ -1396,8 +1396,6 @@ function initD3Force(graph, tree) {
 
             args = {};
 
-            args["source"] = nodeNamesToId[pathForm.find("input[name='source']").val()];
-            args["target"] = nodeNamesToId[pathForm.find("input[name='target']").val()];
             args["paths_method"] = $("input[name=paths_method]:checked", pathForm).val();
 
             var undirected = pathForm.find("input[name='undirectionalize']").is(":checked");
@@ -1407,7 +1405,9 @@ function initD3Force(graph, tree) {
             }
 
             $.ajax({
-                url: "/api/network/query/" + window.query + "/paths/",
+                url: "/api/query/" + window.query + "/paths/" +
+                nodeNamesToId[pathForm.find("input[name='source']").val()] + "/" +
+                nodeNamesToId[pathForm.find("input[name='target']").val()] + "/",
                 type: pathForm.attr("method"),
                 dataType: "json",
                 data: $.param(args, true),
