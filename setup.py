@@ -42,6 +42,8 @@ INSTALL_REQUIRES = [
     'obonet',
     'pybel-tools',
     'raven',
+    'matplotlib_venn',
+    'matplotlib',
 ]
 EXTRAS_REQUIRE = {
     'speed': ['python-Levenshtein', ]  # Activates c-based speed improvements for fuzzywuzzy

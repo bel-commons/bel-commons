@@ -19,3 +19,5 @@ obonet
 pybel-tools
 pybel
 raven
+matplotlib_venn
+matplotlib

@@ -49,7 +49,8 @@ from .models import User, Report, Query
 from .utils import (
     render_network_summary,
     get_api,
-    get_manager
+    get_manager,
+    calculate_overlap_dict,
 )
 
 log = logging.getLogger(__name__)
@@ -389,3 +390,12 @@ def build_main_service(app):
             'pipeline_help.html',
             function_dict=data
         )
+
+    @app.route('/query/compare/<int:query_1_id>/<int:query_2_id>')
+    def view_query_comparison(query_1_id, query_2_id):
+        q1 = manager.session.query(Query).get(query_1_id).run(api)
+        q2 = manager.session.query(Query).get(query_2_id).run(api)
+
+        data = calculate_overlap_dict(q1, q2)
+
+        return render_template('query_comparison.html', data=data)

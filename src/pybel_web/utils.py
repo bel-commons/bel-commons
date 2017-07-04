@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import base64
 import datetime
 import itertools as itt
 import logging
@@ -10,6 +11,9 @@ import pandas
 from flask import current_app
 from flask import render_template
 from flask_login import current_user
+from matplotlib import pyplot as plt
+from matplotlib_venn import venn2
+from six import BytesIO
 from sqlalchemy import func
 from werkzeug.local import LocalProxy
 
@@ -479,3 +483,16 @@ def get_query_descendants(query_id):
         return [query]
 
     return [query] + get_query_descendants(query.parent_id)
+
+
+def calculate_overlap_dict(g1, g2):
+    nodes_overlap_file = BytesIO()
+    venn2([set(g1.nodes_iter()), set(g2.nodes_iter())],
+          set_labels=['Query 1', 'Query 2'])
+    plt.savefig(nodes_overlap_file, format='png')
+    nodes_overlap_file.seek(0)
+    nodes_overlap_data = base64.b64encode(nodes_overlap_file.getvalue())
+
+    return {
+        'nodes': nodes_overlap_data.decode('utf-8')
+    }
