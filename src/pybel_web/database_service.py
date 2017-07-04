@@ -50,9 +50,6 @@ from pybel_tools.summary import info_str
 from . import models
 from .constants import *
 from .main_service import (
-    FORMAT,
-    SOURCE_NODE,
-    TARGET_NODE,
     PATHS_METHOD,
     UNDIRECTED,
     BLACK_LIST
@@ -251,12 +248,6 @@ def suggest_annotation():
 # NETWORKS
 ####################################
 
-@api_blueprint.route('/api/query/<int:query_id>/export/<serve_format>', methods=['GET'])
-def download_network(query_id, serve_format):
-    """Downloads a network in the given format"""
-    network = manager.session.query(models.Query).get(query_id).run(api)
-    return serve_network(network, serve_format=serve_format)
-
 
 @api_blueprint.route('/api/network/<int:network_id>/namespaces', methods=['GET'])
 def namespaces_by_network(network_id):
@@ -326,19 +317,24 @@ def get_network_list():
     return jsonify(manager.list_networks())
 
 
+@api_blueprint.route('/api/network/<int:network_id>/export/<serve_format>', methods=['GET'])
+@login_required
+def export_network(network_id, serve_format):
+    """Builds a graph from the given network id and sends it in the given format"""
+    networks_ids = get_network_ids_with_permission(api)
+
+    if network_id not in networks_ids:
+        return flask.abort(404, 'You have no permission to download the selected network')
+
+    network = api.get_network_by_id(network_id)
+
+    return serve_network(network, serve_format)
+
+
 @api_blueprint.route('/api/network/<int:network_id>/summarize')
 def get_number_nodes(network_id):
     """Gets a summary of the given network"""
     return jsonify(info_json(api.get_network_by_id(network_id)))
-
-
-@api_blueprint.route('/api/network/<int:query_id>', methods=['GET'])
-@login_required
-def get_network(query_id):
-    """Builds a graph from the given network id and sends it in the given format"""
-    network = get_network_from_request(query_id)
-    network = api.relabel_nodes_to_identifiers(network)
-    return serve_network(network, request.args.get(FORMAT))
 
 
 @api_blueprint.route('/api/network/<int:network_id>/name')
@@ -453,13 +449,25 @@ def get_tree_api(query_id):
 ####################################
 
 
+@api_blueprint.route('/api/query/<int:query_id>/export/<serve_format>', methods=['GET'])
+def download_network(query_id, serve_format):
+    """Downloads a network in the given format"""
+    network = get_network_from_request(query_id)
+    return serve_network(network, serve_format=serve_format)
+
+
+@api_blueprint.route('/api/query/<int:query_id>/relabel', methods=['GET'])
+@login_required
+def get_network(query_id):
+    """Builds a graph from the given network id and sends it (relabeled) for the explorer"""
+    network = get_network_from_request(query_id)
+    network = api.relabel_nodes_to_identifiers(network)
+    return serve_network(network)
+
+
 @api_blueprint.route('/api/query/<int:query_id>/paths/<int:source_id>/<int:target_id>/')
 def get_paths(query_id, source_id, target_id):
-    """Returns array of shortest/all paths given a source node and target node both belonging in the graph
-
-    :return: JSON
-    """
-
+    """Returns array of shortest/all paths given a source node and target node both belonging in the graph"""
     network = get_network_from_request(query_id)
 
     method = request.args.get(PATHS_METHOD)
@@ -832,21 +840,6 @@ def get_query_oldest_ancestry(query_id):
     return jsonify({
         'id': ancestor_id, 'parent': True
     })
-
-
-@api_blueprint.route('/api/network/<int:network_id>/export/<serve_format>', methods=['GET'])
-@login_required
-def export_network(network_id, serve_format):
-    """Builds a graph from the given network id and sends it in the given format"""
-
-    networks_ids = get_network_ids_with_permission(api)
-
-    if network_id not in networks_ids:
-        return flask.abort(404, 'You have no permission to download the selected network')
-
-    network = api.get_network_by_id(network_id)
-
-    return serve_network(network, serve_format)
 
 
 def add_pipeline_entry(query_id, name, *args, **kwargs):
