@@ -315,7 +315,7 @@ function reloadTree(tree) {
     tree.removeAll(); //Clean tree
 
     // reload TreeNodes
-    tree.load(doAjaxCall("/api/network/query/" + window.query + "/tree/"));
+    tree.load(doAjaxCall("/api/query/" + window.query + "/tree/"));
 
     initTreeTools(tree);
 }
@@ -346,7 +346,7 @@ $(document).ready(function () {
             mode: "checkbox",
             multiple: true
         },
-        data: doAjaxCall("/api/network/query/" + window.query + "/tree/")
+        data: doAjaxCall("/api/query/" + window.query + "/tree/")
     });
 
     initTreeTools(tree); // Enable search/expands tree
@@ -381,7 +381,7 @@ $(document).ready(function () {
     // Export to BEL
     $("#bel-button").click(function () {
         $.ajax({
-            url: "/api/network/query/" + window.query + "/export/bel",
+            url: "/api/query/" + window.query + "/export/bel",
             dataType: "text"
         }).done(function (response) {
             downloadText(response, "MyNetwork.bel")
@@ -1522,7 +1522,7 @@ function initD3Force(graph, tree) {
         if (betwennessForm.valid()) {
 
             $.ajax({
-                url: "/api/network/query/" + window.query + "/centrality/" + betwennessForm.find("input[name='betweenness']").val(),
+                url: "/api/query/" + window.query + "/centrality/" + betwennessForm.find("input[name='betweenness']").val(),
                 type: betwennessForm.attr("method"),
                 dataType: "json",
                 success: function (data) {
@@ -1581,7 +1581,7 @@ function initD3Force(graph, tree) {
             var experimentID = $("#analysis_id").val();
 
             $.ajax({
-                url: "/api/network/query/" + window.query + "/analysis/" + experimentID + "/median",
+                url: "/api/query/" + window.query + "/analysis/" + experimentID + "/median",
                 type: npaForm.attr("method"),
                 dataType: "json",
                 success: function (data) {

@@ -251,7 +251,7 @@ def suggest_annotation():
 # NETWORKS
 ####################################
 
-@api_blueprint.route('/api/network/query/<int:query_id>/export/<serve_format>', methods=['GET'])
+@api_blueprint.route('/api/query/<int:query_id>/export/<serve_format>', methods=['GET'])
 def download_network(query_id, serve_format):
     """Downloads a network in the given format"""
     network = manager.session.query(models.Query).get(query_id).run(api)
@@ -438,7 +438,7 @@ def make_user_network_private(user_id, network_id):
     return redirect(url_for('view_networks'))
 
 
-@api_blueprint.route('/api/network/query/<int:query_id>/tree/')
+@api_blueprint.route('/api/query/<int:query_id>/tree/')
 @login_required
 def get_tree_api(query_id):
     """Builds the annotation tree data structure for a given graph"""
@@ -494,7 +494,7 @@ def get_paths(query_id, source_id, target_id):
     return jsonify(api.get_node_ids(shortest_path))
 
 
-@api_blueprint.route('/api/network/query/<int:query_id>/centrality/<int:node_number>', methods=['GET'])
+@api_blueprint.route('/api/query/<int:query_id>/centrality/<int:node_number>', methods=['GET'])
 def get_nodes_by_betweenness_centrality(query_id, node_number):
     """Gets a list of nodes with the top betweenness-centrality"""
     network = get_network_from_request(query_id)
@@ -510,14 +510,14 @@ def get_nodes_by_betweenness_centrality(query_id, node_number):
     ])
 
 
-@api_blueprint.route('/api/network/query/<int:query_id>/pmids/')
+@api_blueprint.route('/api/query/<int:query_id>/pmids/')
 def get_all_pmids(query_id):
     """Gets a list of all PubMed identifiers in the network produced by the given URL parameters"""
     network = get_network_from_request(query_id)
     return jsonify(sorted(get_pubmed_identifiers(network)))
 
 
-@api_blueprint.route('/api/network/query/nodes/')
+@api_blueprint.route('/api/query/nodes/')
 def get_node_hashes():
     """Gets the dictionary of {node id: pybel node tuples}"""
     return jsonify(api.nid_node)
@@ -557,7 +557,7 @@ def get_pubmed_suggestion():
 # AUTHOR
 ####################################
 
-@api_blueprint.route('/api/network/query/<query_id>/authors')
+@api_blueprint.route('/api/query/<query_id>/authors')
 def get_all_authors(query_id):
     """Gets a list of all authors in the graph produced by the given URL parameters"""
     network = get_network_from_request(query_id)
@@ -967,7 +967,7 @@ def delete_user(user_id):
 # Analysis
 ####################################
 
-@api_blueprint.route('/api/network/query/<int:query_id>/analysis/<int:analysis_id>/')
+@api_blueprint.route('/api/query/<int:query_id>/analysis/<int:analysis_id>/')
 def get_analysis(query_id, analysis_id):
     """Returns data from analysis"""
     network = get_network_from_request(query_id)
@@ -982,7 +982,7 @@ def get_analysis(query_id, analysis_id):
     return jsonify(results)
 
 
-@api_blueprint.route('/api/network/query/<int:query_id>/analysis/<int:analysis_id>/median')
+@api_blueprint.route('/api/query/<int:query_id>/analysis/<int:analysis_id>/median')
 def get_analysis_median(query_id, analysis_id):
     """Returns data from analysis"""
     network = get_network_from_request(query_id)
