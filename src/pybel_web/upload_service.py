@@ -64,12 +64,12 @@ def view_upload():
         network = manager.insert_graph(graph)
     except IntegrityError:
         flash(integrity_message.format(graph.name, graph.version), category='error')
-        manager.rollback()
+        manager.session.rollback()
         return redirect(url_for('upload.view_upload'))
     except (OperationalError, Exception) as e:
         log.exception('upload error')
         flash("Error storing in database [{}]".format(e), category='error')
-        manager.rollback()
+        manager.session.rollback()
         return redirect(url_for('upload.view_upload'))
 
     log.info('done uploading %s [%d]', form.file.data.filename, network.id)
@@ -88,10 +88,10 @@ def view_upload():
     except IntegrityError:
         message = 'integrity error while adding reporting'
         flash(message, category='warning')
-        manager.rollback()
+        manager.session.rollback()
     except (OperationalError, Exception) as e:
         log.exception('error uploading report')
         flash("Error storing report in database [{}]".format(e), category='error')
-        manager.rollback()
+        manager.session.rollback()
 
     return redirect(url_for('view_summary', network_id=network.id))
