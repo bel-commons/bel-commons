@@ -495,6 +495,10 @@ def calculate_overlap_dict(g1, g2, set_labels=('Query 1', 'Query 2')):
     :return: A dictionary containing important information for displaying base64 images
     :rtype: dict
     """
+    plt.clf()
+    plt.cla()
+    plt.close()
+
     nodes_overlap_file = BytesIO()
     venn2(
         [set(g1.nodes_iter()), set(g2.nodes_iter())],
