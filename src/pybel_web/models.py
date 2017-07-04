@@ -224,6 +224,9 @@ class Assembly(Base):
             for network_id in query.network_ids
         ])
 
+    def __repr__(self):
+        return 'Assembly([{}])'.format(', '.join(network.id for network in self.networks))
+
 
 class Query(Base):
     """Describes a :class:`pybel_tools.query.Query`"""
