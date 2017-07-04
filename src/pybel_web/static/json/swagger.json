@@ -58,7 +58,7 @@
         ]
       }
     },
-    "/api/namespaces/{namespace_id}/drop": {
+    "/api/namespace/{namespace_id}/drop": {
       "get": {
         "description": "Drops a namespace given its identifier.\n",
         "tags": [
@@ -76,7 +76,7 @@
         ]
       }
     },
-    "/api/namespaces/drop": {
+    "/api/namespace/drop": {
       "get": {
         "description": "Drops all namespaces.\n",
         "tags": [
@@ -89,7 +89,7 @@
         }
       }
     },
-    "/api/namespaces/builder/undefined/{network_id}/{namespace_id}": {
+    "/api/namespace/builder/undefined/{network_id}/{namespace_id}": {
       "get": {
         "description": "Outputs a namespace built for this undefined namespace.\n",
         "tags": [
@@ -113,15 +113,18 @@
         ]
       }
     },
-    "/api/namespaces/builder/incorrect/{network_id}/{namespace_id}": {
+    "/api/namespace/builder/incorrect/{network_id}/{namespace_id}": {
       "get": {
         "description": "Outputs a namespace built for this undefined namespace.\n",
         "tags": [
           "Namespace"
         ],
+        "produces": [
+          "text/csv"
+        ],
         "responses": {
           "200": {
-            "description": "Successful response"
+            "description": "Text file with the namespace built from the missing names."
           }
         },
         "parameters": [
@@ -134,15 +137,18 @@
         ]
       }
     },
-    "/api/namespaces/builder/naked/{network_id}": {
+    "/api/namespace/builder/naked/{network_id}": {
       "get": {
         "description": "Outputs a namespace built for this undefined namespace.\n",
         "tags": [
           "Namespace"
         ],
+        "produces": [
+          "text/csv"
+        ],
         "responses": {
           "200": {
-            "description": "Successful response"
+            "description": "Text file with the nakednames."
           }
         },
         "parameters": [
@@ -152,7 +158,7 @@
         ]
       }
     },
-    "/api/annotation": {
+    "/api/annotations": {
       "get": {
         "description": "Lists all annotations.\n",
         "tags": [
@@ -163,7 +169,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Annotations"
+            "description": "All Annotations"
           }
         }
       }
@@ -174,9 +180,12 @@
         "tags": [
           "Annotations"
         ],
+        "produces": [
+          "json"
+        ],
         "responses": {
           "200": {
-            "description": "Successful response"
+            "description": "Values in an annotations"
           }
         },
         "parameters": [
@@ -223,9 +232,12 @@
         "tags": [
           "Annotations"
         ],
+        "produces": [
+          "json"
+        ],
         "responses": {
           "200": {
-            "description": "Successful response"
+            "description": "Suggestion for annotations"
           }
         }
       }
@@ -238,7 +250,13 @@
         ],
         "responses": {
           "200": {
-            "description": "Successful response"
+            "description": "A network in the given format.",
+            "schema": {
+              "title": "NetworkNamespaces",
+              "items": {
+                "$ref": "#/definitions/Network"
+              }
+            }
           }
         },
         "parameters": [
@@ -251,15 +269,18 @@
         ]
       }
     },
-    "/api/network/query/{network_id}/namespaces": {
+    "/api/network/{network_id}/namespaces": {
       "get": {
         "description": "Gets all of the namespaces in a network.\n",
         "tags": [
           "Network"
         ],
+        "produces": [
+          "json"
+        ],
         "responses": {
           "200": {
-            "description": "Successful response"
+            "description": "Namespaces in a network."
           }
         },
         "parameters": [
@@ -269,15 +290,18 @@
         ]
       }
     },
-    "/api/network/query/{network_id}/annotations": {
+    "/api/network/{network_id}/annotations": {
       "get": {
         "description": "Gets all of the annotations in a network.\n",
         "tags": [
           "Network"
         ],
+        "produces": [
+          "json"
+        ],
         "responses": {
           "200": {
-            "description": "Successful response"
+            "description": "Anotations in a network."
           }
         },
         "parameters": [
@@ -287,15 +311,24 @@
         ]
       }
     },
-    "/api/network/query/{network_id}/citations": {
+    "/api/network/{network_id}/citations": {
       "get": {
         "description": "Gets all of the citations in a given network.\n",
         "tags": [
           "Network"
         ],
+        "produces": [
+          "json"
+        ],
         "responses": {
           "200": {
-            "description": "Successful response"
+            "description": "Citations in a network.",
+            "schema": {
+              "title": "CitationsNetwork",
+              "items": {
+                "$ref": "#/definitions/Citation"
+              }
+            }
           }
         },
         "parameters": [
@@ -305,15 +338,24 @@
         ]
       }
     },
-    "/api/network/query/{network_id}/edges": {
+    "/api/network/{network_id}/edges": {
       "get": {
         "description": "Gets all of the edges in a network.\n",
         "tags": [
           "Network"
         ],
+        "produces": [
+          "json"
+        ],
         "responses": {
           "200": {
-            "description": "Successful response"
+            "description": "Edges in a network.",
+            "schema": {
+              "title": "EdgesNetwork",
+              "items": {
+                "$ref": "#/definitions/Edge"
+              }
+            }
           }
         },
         "parameters": [
@@ -323,15 +365,24 @@
         ]
       }
     },
-    "/api/network/query/{network_id}/edges/offset/{offset_start}/{offset_end}": {
+    "/api/network/{network_id}/edges/offset/{offset_start}/{offset_end}": {
       "get": {
         "description": "Gets all of the edges in a given network with a given offset.\n",
         "tags": [
           "Network"
         ],
+        "produces": [
+          "json"
+        ],
         "responses": {
           "200": {
-            "description": "Successful response"
+            "description": "Edges in a network.",
+            "schema": {
+              "title": "EdgesNetworkOffset",
+              "items": {
+                "$ref": "#/definitions/Edge"
+              }
+            }
           }
         },
         "parameters": [
@@ -347,33 +398,24 @@
         ]
       }
     },
-    "/api/network/query/{network_id}/nodes": {
+    "/api/network/{network_id}/nodes": {
       "get": {
         "description": "Gets all of the nodes in a network.\n",
         "tags": [
           "Network"
         ],
-        "responses": {
-          "200": {
-            "description": "Successful response"
-          }
-        },
-        "parameters": [
-          {
-            "$ref": "#/parameters/NetworkID"
-          }
-        ]
-      }
-    },
-    "/api/network/query/{network_id}/drop": {
-      "get": {
-        "description": "Drops a specific graph.\n",
-        "tags": [
-          "Network"
+        "produces": [
+          "json"
         ],
         "responses": {
           "200": {
-            "description": "Successful response"
+            "description": "Nodes in a network.",
+            "schema": {
+              "title": "NodesNetwork",
+              "items": {
+                "$ref": "#/definitions/Node"
+              }
+            }
           }
         },
         "parameters": [
@@ -402,22 +444,34 @@
         "tags": [
           "Network"
         ],
+        "produces": [
+          "json"
+        ],
         "responses": {
           "200": {
-            "description": "Successful response"
+            "description": "List of networks.",
+            "schema": {
+              "title": "NetworkList",
+              "items": {
+                "$ref": "#/definitions/Network"
+              }
+            }
           }
         }
       }
     },
-    "/api/network/query/{network_id}/summarize": {
+    "/api/network/{network_id}/summarize": {
       "get": {
         "description": "Gets a summary of the given network.\n",
         "tags": [
           "Network"
         ],
+        "produces": [
+          "json"
+        ],
         "responses": {
           "200": {
-            "description": "Successful response"
+            "description": "Summary of network."
           }
         },
         "parameters": [
@@ -435,7 +489,13 @@
         ],
         "responses": {
           "200": {
-            "description": "Successful response"
+            "description": "Graph from a network in the given format.",
+            "schema": {
+              "title": "NetworkGraph",
+              "items": {
+                "$ref": "#/definitions/Network"
+              }
+            }
           }
         },
         "parameters": [
@@ -451,9 +511,12 @@
         "tags": [
           "Network"
         ],
+        "produces": [
+          "json"
+        ],
         "responses": {
           "200": {
-            "description": "Successful response"
+            "description": "Network name."
           }
         },
         "parameters": [
@@ -471,7 +534,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Successful response"
+            "description": "Redirecctiion."
           }
         },
         "parameters": [
@@ -489,7 +552,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Successful response"
+            "description": "Redirecctiion."
           }
         },
         "parameters": [
@@ -510,7 +573,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Successful response"
+            "description": "Redirecctiion."
           }
         },
         "parameters": [
@@ -528,7 +591,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Successful response"
+            "description": "Redirecctiion."
           }
         },
         "parameters": [
@@ -546,7 +609,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Successful response"
+            "description": "Redirecctiion."
           }
         },
         "parameters": [
@@ -567,7 +630,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Successful response"
+            "description": "Redirecctiion."
           }
         },
         "parameters": [
@@ -586,9 +649,12 @@
         "tags": [
           "Network"
         ],
+        "produces": [
+          "json"
+        ],
         "responses": {
           "200": {
-            "description": "Successful response"
+            "description": "Tree annotations."
           }
         },
         "parameters": [
@@ -604,9 +670,12 @@
         "tags": [
           "Network_Queries"
         ],
+        "produces": [
+          "json"
+        ],
         "responses": {
           "200": {
-            "description": "Successful response"
+            "description": "Shortest/all paths."
           }
         },
         "parameters": [
@@ -622,9 +691,18 @@
         "tags": [
           "Network_Queries"
         ],
+        "produces": [
+          "json"
+        ],
         "responses": {
           "200": {
-            "description": "Successful response"
+            "description": "List of nodes.",
+            "schema": {
+              "title": "NodesCentrality",
+              "items": {
+                "$ref": "#/definitions/Node"
+              }
+            }
           }
         },
         "parameters": [
@@ -640,9 +718,12 @@
         "tags": [
           "Network_Queries"
         ],
+        "produces": [
+          "json"
+        ],
         "responses": {
           "200": {
-            "description": "Successful response"
+            "description": "List of PubMed identifiers."
           }
         },
         "parameters": [
@@ -658,9 +739,12 @@
         "tags": [
           "Network_Queries"
         ],
+        "produces": [
+          "json"
+        ],
         "responses": {
           "200": {
-            "description": "Successful response"
+            "description": "Dictionary of a node."
           }
         }
       }
@@ -671,9 +755,18 @@
         "tags": [
           "Citations"
         ],
+        "produces": [
+          "json"
+        ],
         "responses": {
           "200": {
-            "description": "Successful response"
+            "description": "List of citations.",
+            "schema": {
+              "title": "Citations",
+              "items": {
+                "$ref": "#/definitions/Citation"
+              }
+            }
           }
         }
       }
@@ -684,9 +777,18 @@
         "tags": [
           "Citations"
         ],
+        "produces": [
+          "json"
+        ],
         "responses": {
           "200": {
-            "description": "Successful response"
+            "description": "List of citations by author.",
+            "schema": {
+              "title": "CitationsAuthor",
+              "items": {
+                "$ref": "#/definitions/Citation"
+              }
+            }
           }
         },
         "parameters": [
@@ -702,9 +804,12 @@
         "tags": [
           "Citations"
         ],
+        "produces": [
+          "json"
+        ],
         "responses": {
           "200": {
-            "description": "Successful response"
+            "description": "List of PubMed identifiers."
           }
         }
       }
@@ -715,9 +820,12 @@
         "tags": [
           "Author"
         ],
+        "produces": [
+          "json"
+        ],
         "responses": {
           "200": {
-            "description": "Successful response"
+            "description": "List of all authors."
           }
         },
         "parameters": [
@@ -733,9 +841,12 @@
         "tags": [
           "Author"
         ],
+        "produces": [
+          "json"
+        ],
         "responses": {
           "200": {
-            "description": "Successful response"
+            "description": "List of all authors."
           }
         }
       }
@@ -746,9 +857,18 @@
         "tags": [
           "Edges"
         ],
+        "produces": [
+          "json"
+        ],
         "responses": {
           "200": {
-            "description": "Successful response"
+            "description": "List of edges.",
+            "schema": {
+              "title": "EdgesMach",
+              "items": {
+                "$ref": "#/definitions/Edge"
+              }
+            }
           }
         },
         "parameters": [
@@ -764,9 +884,18 @@
         "tags": [
           "Edges"
         ],
+        "produces": [
+          "json"
+        ],
         "responses": {
           "200": {
-            "description": "Successful response"
+            "description": "List of edges.",
+            "schema": {
+              "title": "EdgesSources",
+              "items": {
+                "$ref": "#/definitions/Edge"
+              }
+            }
           }
         },
         "parameters": [
@@ -782,9 +911,18 @@
         "tags": [
           "Edges"
         ],
+        "produces": [
+          "json"
+        ],
         "responses": {
           "200": {
-            "description": "Successful response"
+            "description": "List of edges.",
+            "schema": {
+              "title": "EdgesTarfets",
+              "items": {
+                "$ref": "#/definitions/Edge"
+              }
+            }
           }
         },
         "parameters": [
@@ -800,9 +938,18 @@
         "tags": [
           "Edges"
         ],
+        "produces": [
+          "json"
+        ],
         "responses": {
           "200": {
-            "description": "Successful response"
+            "description": "List of edges.",
+            "schema": {
+              "title": "EdgesPubMed",
+              "items": {
+                "$ref": "#/definitions/Edge"
+              }
+            }
           }
         },
         "parameters": [
@@ -818,9 +965,18 @@
         "tags": [
           "Edges"
         ],
+        "produces": [
+          "json"
+        ],
         "responses": {
           "200": {
-            "description": "Successful response"
+            "description": "List of edges.",
+            "schema": {
+              "title": "EdgesAuthor",
+              "items": {
+                "$ref": "#/definitions/Edge"
+              }
+            }
           }
         },
         "parameters": [
@@ -836,9 +992,18 @@
         "tags": [
           "Edges"
         ],
+        "produces": [
+          "json"
+        ],
         "responses": {
           "200": {
-            "description": "Successful response"
+            "description": "List of edges.",
+            "schema": {
+              "title": "EdgesAnotation",
+              "items": {
+                "$ref": "#/definitions/Edge"
+              }
+            }
           }
         },
         "parameters": [
@@ -857,9 +1022,18 @@
         "tags": [
           "Edges"
         ],
+        "produces": [
+          "json"
+        ],
         "responses": {
           "200": {
-            "description": "Successful response"
+            "description": "List of edges.",
+            "schema": {
+              "title": "EdgesProvenance",
+              "items": {
+                "$ref": "#/definitions/Edge"
+              }
+            }
           }
         },
         "parameters": [
@@ -878,9 +1052,18 @@
         "tags": [
           "Nodes"
         ],
+        "produces": [
+          "json"
+        ],
         "responses": {
           "200": {
-            "description": "Successful response"
+            "description": "List of nodes.",
+            "schema": {
+              "title": "NodesMatch",
+              "items": {
+                "$ref": "#/definitions/Node"
+              }
+            }
           }
         },
         "parameters": [
@@ -896,9 +1079,18 @@
         "tags": [
           "Nodes"
         ],
+        "produces": [
+          "json"
+        ],
         "responses": {
           "200": {
-            "description": "Successful response"
+            "description": "List of nodes.",
+            "schema": {
+              "title": "NodesIdent",
+              "items": {
+                "$ref": "#/definitions/Node"
+              }
+            }
           }
         },
         "parameters": [
@@ -914,9 +1106,18 @@
         "tags": [
           "Nodes"
         ],
+        "produces": [
+          "json"
+        ],
         "responses": {
           "200": {
-            "description": "Successful response"
+            "description": "List of nodes.",
+            "schema": {
+              "title": "NodesNamespace",
+              "items": {
+                "$ref": "#/definitions/Node"
+              }
+            }
           }
         },
         "parameters": [
@@ -932,9 +1133,18 @@
         "tags": [
           "Nodes"
         ],
+        "produces": [
+          "json"
+        ],
         "responses": {
           "200": {
-            "description": "Successful response"
+            "description": "List of nodes.",
+            "schema": {
+              "title": "NodesNameSpace",
+              "items": {
+                "$ref": "#/definitions/Node"
+              }
+            }
           }
         },
         "parameters": [
@@ -953,9 +1163,18 @@
         "tags": [
           "Nodes"
         ],
+        "produces": [
+          "json"
+        ],
         "responses": {
           "200": {
-            "description": "Successful response"
+            "description": "List of nodes.",
+            "schema": {
+              "title": "NodeTupple",
+              "items": {
+                "$ref": "#/definitions/Node"
+              }
+            }
           }
         },
         "parameters": [
@@ -971,9 +1190,18 @@
         "tags": [
           "Nodes"
         ],
+        "produces": [
+          "json"
+        ],
         "responses": {
           "200": {
-            "description": "Successful response"
+            "description": "List of nodes.",
+            "schema": {
+              "title": "Nodes",
+              "items": {
+                "$ref": "#/definitions/Node"
+              }
+            }
           }
         }
       }
@@ -984,9 +1212,12 @@
         "tags": [
           "Pipeline"
         ],
+        "produces": [
+          "json"
+        ],
         "responses": {
           "200": {
-            "description": "Successful response"
+            "description": "List of functions."
           }
         }
       }
@@ -999,7 +1230,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Successful response"
+            "description": "Render template. Executes a pipeline."
           }
         }
       }
@@ -1012,7 +1243,7 @@
         ],
         "responses": {
           "200": {
-            "description": "successful response"
+            "description": "Redirect to an URL."
           }
         },
         "parameters": [
@@ -1030,7 +1261,7 @@
         ],
         "responses": {
           "200": {
-            "description": "successful response"
+            "description": "Redirect to an URL."
           }
         },
         "parameters": [
@@ -1040,15 +1271,18 @@
         ]
       }
     },
-    "/api/query/dropall/{query_id}/info": {
+    "/api/query/{query_id}/info": {
       "get": {
         "description": "Returns info from a given query ID.\n",
         "tags": [
           "Pipeline"
         ],
+        "produces": [
+          "json"
+        ],
         "responses": {
           "200": {
-            "description": "successful response"
+            "description": "Query info."
           }
         },
         "parameters": [
@@ -1058,15 +1292,18 @@
         ]
       }
     },
-    "/api/query/dropall/{query_id}/parent": {
+    "/api/query/{query_id}/parent": {
       "get": {
         "description": "Returns the parent of the query from a given query ID.\n",
         "tags": [
           "Pipeline"
         ],
+        "produces": [
+          "json"
+        ],
         "responses": {
           "200": {
-            "description": "successful response"
+            "description": "Query parent."
           }
         },
         "parameters": [
@@ -1084,7 +1321,13 @@
         ],
         "responses": {
           "200": {
-            "description": "successful response"
+            "description": "A graph from network in the given format.",
+            "schema": {
+              "title": "NetworkGraphPipeline",
+              "items": {
+                "$ref": "#/definitions/Network"
+              }
+            }
           }
         },
         "parameters": [
@@ -1099,13 +1342,13 @@
     },
     "/api/query/{query_id}/add_node_list_applier/{name}/{node_ids}": {
       "get": {
-        "description": "Builds a graph from the given network id and sends it in the given format.\n",
+        "description": "Builds a new query with a node list applier added to the end of the pipeline.\n",
         "tags": [
           "Pipeline"
         ],
         "responses": {
           "200": {
-            "description": "successful response"
+            "description": "A BEL graph"
           }
         },
         "parameters": [
@@ -1123,13 +1366,13 @@
     },
     "/api/query/{query_id}/add_node_applier/{name}/{node_id}": {
       "get": {
-        "description": "Builds a graph from the given network id and sends it in the given format.\n",
+        "description": "Builds a new query with a node applier added to the end of the pipeline.\n",
         "tags": [
           "Pipeline"
         ],
         "responses": {
           "200": {
-            "description": "successful response"
+            "description": "A BEL graph."
           }
         },
         "parameters": [
@@ -1147,13 +1390,13 @@
     },
     "/api/query/{query_id}/add_annotation_filter": {
       "get": {
-        "description": "Builds a graph from the given network id and sends it in the given format.\n",
+        "description": "Builds a new query with the annotation in the arguments. If 'and' is passed as an argument, it performs a AND query. By default it uses the OR condition.\n",
         "tags": [
           "Pipeline"
         ],
         "responses": {
           "200": {
-            "description": "successful response"
+            "description": "A BEL graph"
           }
         },
         "parameters": [
@@ -1171,7 +1414,7 @@
         ],
         "responses": {
           "200": {
-            "description": "successful response"
+            "description": "Successful response"
           }
         },
         "parameters": [
@@ -1229,9 +1472,36 @@
         "tags": [
           "Analysis"
         ],
+        "produces": [
+          "json"
+        ],
         "responses": {
           "200": {
-            "description": "Successful response"
+            "description": "Analysis results."
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/parameters/QueryID"
+          },
+          {
+            "$ref": "#/parameters/AnalysisID"
+          }
+        ]
+      }
+    },
+    "/api/network/query/{query_id}/analysis/{analysis_id}/median": {
+      "get": {
+        "description": "Returns data from analysis.\n",
+        "tags": [
+          "Analysis"
+        ],
+        "produces": [
+          "json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Analysis results."
           }
         },
         "parameters": [
@@ -1268,9 +1538,12 @@
         "tags": [
           "Analysis"
         ],
+        "produces": [
+          "text/csv"
+        ],
         "responses": {
           "200": {
-            "description": "Successful response"
+            "description": "Downloaded data text file."
           }
         },
         "parameters": [
@@ -1328,9 +1601,12 @@
         "tags": [
           "Metadata"
         ],
+        "produces": [
+          "json"
+        ],
         "responses": {
           "200": {
-            "description": "Successful response"
+            "description": "App configuration."
           }
         }
       }
@@ -1341,9 +1617,12 @@
         "tags": [
           "Metadata"
         ],
+        "produces": [
+          "json"
+        ],
         "responses": {
           "200": {
-            "description": "Successful response"
+            "description": "Blacklist constants."
           }
         }
       }
@@ -1354,9 +1633,12 @@
         "tags": [
           "Metadata"
         ],
+        "produces": [
+          "text/txt"
+        ],
         "responses": {
           "200": {
-            "description": "Successful response"
+            "description": "Recent reports text file."
           }
         }
       }
@@ -1367,9 +1649,12 @@
         "tags": [
           "Metadata"
         ],
+        "produces": [
+          "text/txt"
+        ],
         "responses": {
           "200": {
-            "description": "Successful response"
+            "description": "Reporting log text file."
           }
         }
       }
@@ -1382,7 +1667,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Successful response"
+            "description": "Render template. html with the analyses."
           }
         }
       },
@@ -1400,7 +1685,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Successful response"
+            "description": "Render template. html with the analyses."
           }
         }
       },
@@ -1418,7 +1703,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Successful response"
+            "description": "Redirects to the results."
           }
         }
       },
@@ -1436,7 +1721,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Successful response"
+            "description": "Redirects to the results."
           }
         }
       },
@@ -1445,428 +1730,6 @@
           "$ref": "#/parameters/NetworkID"
         }
       ]
-    },
-    "/namespaces/by_network/{network_id}": {
-      "get": {
-        "description": "Deletes a user.\n",
-        "parameters": [
-          {
-            "$ref": "#/parameters/NetworkID"
-          }
-        ],
-        "tags": [
-          "Context"
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "schema": {
-              "title": "ArrayOfNamespaces",
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/Definition"
-              }
-            }
-          }
-        }
-      }
-    },
-    "/names/{definition_key}": {
-      "get": {
-        "description": "Gets a list of the first 1000 names defined by the given `namespace_key`.\n",
-        "parameters": [
-          {
-            "$ref": "#/parameters/DefinitionKey"
-          }
-        ],
-        "tags": [
-          "Context"
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "schema": {
-              "title": "Names",
-              "type": "array",
-              "items": {
-                "title": "name",
-                "type": "string",
-                "description": "Name defined in the given namespace"
-              }
-            }
-          }
-        }
-      }
-    },
-    "/annotations": {
-      "get": {
-        "description": "Gets a list of all `annotations` in the database.\n",
-        "tags": [
-          "Context"
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "schema": {
-              "title": "ArrayOfAnnotationKeys",
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/Definition"
-              }
-            }
-          }
-        }
-      }
-    },
-    "/annotations/by_network/{network_id}": {
-      "get": {
-        "description": "Gets a list of all `annotations` used in a specific network.\n",
-        "parameters": [
-          {
-            "$ref": "#/parameters/NetworkID"
-          }
-        ],
-        "tags": [
-          "Context"
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "schema": {
-              "title": "ArrayOfAnnotationKeys",
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/Definition"
-              }
-            }
-          }
-        }
-      }
-    },
-    "/annos/{definition_key}": {
-      "get": {
-        "description": "Gets a list of the first 1000 annotations defined by the given `annotation_key`.\n",
-        "parameters": [
-          {
-            "$ref": "#/parameters/DefinitionKey"
-          }
-        ],
-        "tags": [
-          "Context"
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "schema": {
-              "title": "Annotations",
-              "type": "array",
-              "items": {
-                "title": "anno",
-                "type": "string",
-                "description": "Annotation defined in the given annotation_key"
-              }
-            }
-          }
-        }
-      }
-    },
-    "/citations": {
-      "get": {
-        "description": "Gets a list of all `citations` in the database.\n",
-        "tags": [
-          "Context"
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "schema": {
-              "title": "ArrayOfCitations",
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/Citation"
-              }
-            }
-          }
-        }
-      }
-    },
-    "/citations/by_network/{network_id}": {
-      "get": {
-        "description": "Gets a list of all `citatinos` used in a specific network.\n",
-        "parameters": [
-          {
-            "$ref": "#/parameters/NetworkID"
-          }
-        ],
-        "tags": [
-          "Context"
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "schema": {
-              "title": "ArrayOfCitations",
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/Citation"
-              }
-            }
-          }
-        }
-      }
-    },
-    "/edges/by_network/{network_id}": {
-      "get": {
-        "description": "Get `Edge` objects from a specific network.\n",
-        "parameters": [
-          {
-            "$ref": "#/parameters/NetworkID"
-          }
-        ],
-        "tags": [
-          "Edge"
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "schema": {
-              "title": "ArrayOfEdges",
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/Edge"
-              }
-            }
-          }
-        }
-      }
-    },
-    "/edges/by_pmid/{pmid_id}": {
-      "get": {
-        "description": "Gets `Network` objects by PubMed identifier.\n",
-        "parameters": [
-          {
-            "$ref": "#/parameters/PmidID"
-          }
-        ],
-        "tags": [
-          "Network"
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "schema": {
-              "title": "ArrayOfNetworkEdges",
-              "type": "array",
-              "items": {
-                "title": "NetworkEdges",
-                "type": "object",
-                "properties": {
-                  "network_id": {
-                    "type": "integer",
-                    "description": "Databaseidentifier of the given network."
-                  },
-                  "edges": {
-                    "type": "array",
-                    "items": {
-                      "$ref": "#/definitions/Edge"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/edges/by_author/{author}": {
-      "get": {
-        "description": "Get `Edge` objects filtered by the author of the cited source.\n",
-        "parameters": [
-          {
-            "$ref": "#/parameters/Author"
-          }
-        ],
-        "tags": [
-          "Edge"
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "schema": {
-              "title": "ArrayOfEdges",
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/Edge"
-              }
-            }
-          }
-        }
-      }
-    },
-    "/edges/by_network_author/{network_id}/{author}": {
-      "get": {
-        "description": "Get `Edge` objects filtered by the network identifier and one author of the cited source.\n",
-        "parameters": [
-          {
-            "$ref": "#/parameters/NetworkID"
-          },
-          {
-            "$ref": "#/parameters/Author"
-          }
-        ],
-        "tags": [
-          "Edge"
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "schema": {
-              "title": "ArrayOfEdges",
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/Edge"
-              }
-            }
-          }
-        }
-      }
-    },
-    "/edges/by_network_pmid/{network_id}/{pmid_id}": {
-      "get": {
-        "description": "Get `Edge` objects filtered by the network identifier and the PubMed identifier of the cited source.\n",
-        "parameters": [
-          {
-            "$ref": "#/parameters/NetworkID"
-          },
-          {
-            "$ref": "#/parameters/PmidID"
-          }
-        ],
-        "tags": [
-          "Edge"
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "schema": {
-              "title": "ArrayOfEdges",
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/Edge"
-              }
-            }
-          }
-        }
-      }
-    },
-    "/edges/by_annotation/{definition_key}/{name}": {
-      "get": {
-        "description": "Get `Edge` objects filtered by a specific annotation (interaction context).\n",
-        "parameters": [
-          {
-            "$ref": "#/parameters/DefinitionKey"
-          },
-          {
-            "$ref": "#/parameters/Name"
-          }
-        ],
-        "tags": [
-          "Edge"
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "schema": {
-              "title": "ArrayOfEdges",
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/Edge"
-              }
-            }
-          }
-        }
-      }
-    },
-    "/edges/by_network_annotation/{network_id}/{definition_key}/{name}": {
-      "get": {
-        "description": "Get `Edge` objects from a specific network filtered by a specific annotation (interaction context).\n",
-        "parameters": [
-          {
-            "$ref": "#/parameters/NetworkID"
-          },
-          {
-            "$ref": "#/parameters/DefinitionKey"
-          },
-          {
-            "$ref": "#/parameters/Name"
-          }
-        ],
-        "tags": [
-          "Edge"
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "schema": {
-              "title": "ArrayOfEdges",
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/Edge"
-              }
-            }
-          }
-        }
-      }
-    },
-    "/path": {
-      "post": {
-        "description": "Gives an ordered list of `nodes` from a path with given start and end node.\n",
-        "consumes": [
-          "application/json"
-        ],
-        "tags": [
-          "Path"
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "schema": {
-              "title": "ArrayOfNodes",
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/NodeIdentifier"
-              }
-            }
-          }
-        }
-      }
-    },
-    "/all_paths": {
-      "post": {
-        "description": "Gives a list of `paths` (ordered lists of `nodes`) from a given start to a given end node.\n",
-        "consumes": [
-          "application/json"
-        ],
-        "tags": [
-          "Path"
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "schema": {
-              "title": "ArrayOfPaths",
-              "type": "array",
-              "items": {
-                "title": "ArrayOfNodes",
-                "type": "array",
-                "items": {
-                  "$ref": "#/definitions/NodeIdentifier"
-                }
-              }
-            }
-          }
-        }
-      }
     }
   },
   "definitions": {
@@ -2096,14 +1959,14 @@
     "OffsetStart": {
       "name": "offset_start",
       "in": "path",
-      "description": "Format.",
+      "description": "Offset.",
       "required": true,
       "type": "integer"
     },
     "OffsetEnd": {
       "name": "offset_end",
       "in": "path",
-      "description": "Format.",
+      "description": "Offset end.",
       "required": true,
       "type": "integer"
     },
@@ -2117,35 +1980,35 @@
     "StatementBel": {
       "name": "statement_bel",
       "in": "path",
-      "description": "User identifier.",
+      "description": "Bel statement.",
       "required": true,
       "type": "integer"
     },
     "SourceBel": {
       "name": "source_bel",
       "in": "path",
-      "description": "User identifier.",
+      "description": "Bel source.",
       "required": true,
       "type": "integer"
     },
     "SourceID": {
       "name": "source_id",
       "in": "path",
-      "description": "User identifier.",
+      "description": "Source identifier.",
       "required": true,
       "type": "integer"
     },
     "TargetID": {
       "name": "target_id",
       "in": "path",
-      "description": "User identifier.",
+      "description": "Target identifier.",
       "required": true,
       "type": "integer"
     },
     "TargetBel": {
       "name": "target_bel",
       "in": "path",
-      "description": "User identifier.",
+      "description": "Target bel identifier.",
       "required": true,
       "type": "integer"
     },
@@ -2173,35 +2036,35 @@
     "NameSpace": {
       "name": "namespace_id",
       "in": "path",
-      "description": "The namespace name.",
+      "description": "Namespace.",
       "required": true,
       "type": "string"
     },
     "Role": {
       "name": "role",
       "in": "path",
-      "description": "The namespace name.",
+      "description": "Role.",
       "required": true,
       "type": "string"
     },
     "ProjectID": {
       "name": "project_id",
       "in": "path",
-      "description": "The project id.",
+      "description": "Project id.",
       "required": true,
       "type": "string"
     },
     "User": {
       "name": "user",
       "in": "path",
-      "description": "The namespace name.",
+      "description": "User id.",
       "required": true,
       "type": "string"
     },
     "NodeBel": {
       "name": "node_bel",
       "in": "path",
-      "description": "The namespace name.",
+      "description": "Bel node name.",
       "required": true,
       "type": "string"
     },
@@ -2229,9 +2092,12 @@
     "NodeIds": {
       "name": "node_ids",
       "in": "path",
-      "description": "Node ID.",
+      "description": "Node IDs list.",
       "required": true,
-      "type": "integer"
+      "type": "array",
+      "items": {
+        "type": "integer"
+      }
     }
   }
 }
