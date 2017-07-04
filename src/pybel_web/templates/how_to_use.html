@@ -24,14 +24,23 @@
                     information, external namespace references, relation provenance (citation and evidence), and
                     relation metadata such as the biological context (anatomy, cell, disease, etc.).
                 </p>
+
                 <h3>Upload and Parse</h3>
                 <p>On the <a href="{{ url_for('home') }}">home page</a>, click <a
                         href="{{ url_for('parser.view_parser') }}">Parse BEL</a>. In the form, choose a file, then click
                     "upload".</p>
+
                 <h3>Validate Namespaces</h3>
                 <p>Large terminologies that are curated for projects investigating new diseases and pathologies can be
                     validated by checking their contents using the Ontology Lookup Service, provided by the EBI to
                     identify duplicate names and enable better semantic integration. </p>
+
+                <h3>Share</h3>
+                <p>Users can create <a href="http://pybel.scai.fraunhofer.de/admin/project/">projects</a> that allow
+                    them to easily share networks with groups of other users. This is useful when multiple curators
+                    are uploading related BEL Scripts. Later, they can be assembled and queried.
+                </p>
+
                 <h2>2. Summarize a Knowledge Assembly</h2>
                 <p>Click "List Networks" and find your network. Click "Summary".</p>
                 <p>This web application organizes high level statistical information about a network, such as the
@@ -44,7 +53,9 @@
                     unstable biological motifs in pairs and triplets of nodes, and other information that is inferred
                     to be missing or incoplete.
                 </p>
+
                 <h2>3. Exploration of the Knowledge Base</h2>
+
                 <h3>Query Builder</h3>
                 <p>A query contain three actions:</p>
                 <ol>
@@ -69,6 +80,7 @@
                 </ol>
 
                 <p>Finally, the results of queries can be summarised, downloaded in many formats, or explored.</p>
+
                 <h3>Interactive Network Explorer</h3>
                 <p>The results of query can be explored interactively with the Biological Network Explorer.
                     Additional modifications and filters can be applied using the extended query builder interface
@@ -77,6 +89,7 @@
                     data can come from differential expression experiments, or directly from the results of the CMPA
                     algorithm, which is explained below.
                 </p>
+
                 <h2>4. Analyze a Knowledge Assembly</h2>
                 <p>Data sets like differential gene expression can be used to quantify the perturbation amplitude
                     of biological processes in a network using an randomized algorithm based on NPA. Candidate
