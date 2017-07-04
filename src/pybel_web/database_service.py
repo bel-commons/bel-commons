@@ -94,22 +94,20 @@ def receive():
     """Receives a JSON serialized BEL graph"""
     try:
         network = pybel.from_json(request.get_json())
-    except Exception as e:
-        return jsonify({
-            'status': 'bad',
-            'error': str(e)
-        })
+    except:
+        flask.flash('Error parsing json')
+        return redirect(url_for('home'))
 
     try:
         network = manager.insert_graph(network)
         flask.flash('Success uploading {}'.format(network))
-    except IntegrityError as e:
+    except IntegrityError:
         flask.flash(integrity_message.format(network.name, network.version))
-        manager.rollback()
-    except Exception as e:
+        manager.session.rollback()
+    except:
         flask.flash("Error storing in database")
         log.exception('Upload error')
-        manager.rollback()
+        manager.session.rollback()
 
     return redirect(url_for('home'))
 
