@@ -225,7 +225,7 @@ class Assembly(Base):
         ])
 
     def __repr__(self):
-        return '<Assembly {}>'.format(', '.join(map(str, network.id for network in self.networks)))
+        return '<Assembly {}>'.format(', '.join(str(network.id) for network in self.networks))
 
 
 class Query(Base):
