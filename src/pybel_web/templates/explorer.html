@@ -741,7 +741,7 @@
                                 <tr>
                                     <td>
                                         <button type="button" value="collapse_by_central_dogma_to_genes"
-                                                id="central-dogma-to-genes" class="btn btn-info" data-dismiss="modal">
+                                                id="central-dogma-to-genes" class="btn btn-info explorer-tool" data-dismiss="modal">
                                             Central Dogma To Genes
                                         </button>
                                     </td>
@@ -749,8 +749,18 @@
                                 </tr>
                                 <tr>
                                     <td>
+                                        <button type="button" value="infer_central_dogma" data-dismiss="modal"
+                                                id="infer-central-dogma" class="btn btn-info explorer-tool">Infer Central Dogma
+                                        </button>
+                                    </td>
+                                    <td>Adds RNAs corresponding to Proteins, then adds Genes corresponding to RNAs and
+                                        miRNAs
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
                                         <button type="button" value="prune_central_dogma" data-dismiss="modal"
-                                                id="prune-central-dogma" class="btn btn-info">Prune Central Dogma
+                                                id="prune-central-dogma" class="btn btn-info explorer-tool">Prune Central Dogma
                                         </button>
                                     </td>
                                     <td>Prunes genes, then RNA</td>
@@ -758,15 +768,23 @@
                                 <tr>
                                     <td>
                                         <button type="button" value="expand_periphery" data-dismiss="modal"
-                                                id="expand-periphery" class="btn btn-info">Expand Periphery
+                                                id="expand-periphery" class="btn btn-info explorer-tool">Expand Periphery
                                         </button>
                                     </td>
                                     <td>Expand the periphery of the network</td>
                                 </tr>
                                 <tr>
                                     <td>
+                                        <button type="button" value="expand_internal" data-dismiss="modal"
+                                                id="expand-internal" class="btn btn-info explorer-tool">Expand Internal Edges
+                                        </button>
+                                    </td>
+                                    <td>Expand edges between nodes in the network</td>
+                                </tr>
+                                <tr>
+                                    <td>
                                         <button type="button" value="enrich_unqualified" data-dismiss="modal"
-                                                id="enrich-unqualified" class="btn btn-info">Enrich Unqualified Edges
+                                                id="enrich-unqualified" class="btn btn-info explorer-tool">Enrich Unqualified Edges
                                         </button>
                                     </td>
                                     <td>Enriches the subgraph with the unqualified edges from the graph</td>
@@ -774,7 +792,7 @@
                                 <tr>
                                     <td>
                                         <button type="button" value="enrich_variants" data-dismiss="modal"
-                                                id="enrich-variants" class="btn btn-info">Enrich variants
+                                                id="enrich-variants" class="btn btn-info explorer-tool">Enrich Variants
                                         </button>
                                     </td>
                                     <td>Adds the reference nodes for all variants of genes, RNAs, miRNAs, and proteins
@@ -783,7 +801,7 @@
                                 <tr>
                                     <td>
                                         <button type="button" value="enrich_reactions" data-dismiss="modal"
-                                                id="enrich-reactions" class="btn btn-info">Enrich Reactions
+                                                id="enrich-reactions" class="btn btn-info explorer-tool">Enrich Reactions
                                         </button>
                                     </td>
                                     <td>Adds all of the reactants and products of reactions</td>
@@ -791,7 +809,7 @@
                                 <tr>
                                     <td>
                                         <button type="button" value="enrich_composites" data-dismiss="modal"
-                                                id="enrich-composites" class="btn btn-info">Enrich Composites
+                                                id="enrich-composites" class="btn btn-info explorer-tool">Enrich Composites
                                         </button>
                                     </td>
                                     <td>Adds all of the members of the composite abundances</td>
@@ -799,7 +817,7 @@
                                 <tr>
                                     <td>
                                         <button type="button" value="enrich_complexes" data-dismiss="modal"
-                                                id="enrich-complexes" class="btn btn-info">Enrich Complexes
+                                                id="enrich-complexes" class="btn btn-info explorer-tool">Enrich Complexes
                                         </button>
                                     </td>
                                     <td>Adds all of the members of the complexes</td>

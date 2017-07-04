@@ -121,6 +121,8 @@ function displayEdgeInfo(edge) {
  */
 function displayQueryInfo(query) {
 
+    console.log(query)
+
     var dynamicTable = document.getElementById('query-table');
 
     while (dynamicTable.rows.length > 0) {
@@ -131,8 +133,7 @@ function displayQueryInfo(query) {
 
     queryObject["Query ID"] = query.id;
 
-    queryObject["Assembly (Networks IDs)"] = query.network_ids;
-
+    queryObject["Assembly (Networks IDs)"] = query.networks.join(", ");
     if (query.seeding !== "[]") {
         var querySeeding = query.seeding.map(function (object) {
             if (object.type == "annotation") {
@@ -267,20 +268,6 @@ function updateQueryResponse(response, tree) {
 
 
 /**
- * Creates a new Query appending buttons value to the previous Query
- * @param {jQuery selection} button
- * @param {InspireTree} tree
- */
-function applyPipelineFunction(button, tree) {
-    $.ajax({
-        url: "/api/query/" + window.query + "/add_applier/" + button.val(),
-        dataType: "json"
-    }).done(function (response) {
-        updateQueryResponse(response, tree)
-    });
-}
-
-/**
  * Creates a new row in Node/Edge info table
  */
 function insertRow(table, row, column1, column2) {
@@ -342,7 +329,7 @@ function backToOldQuery(response, tree) {
         alert("The current query has no parent");
     }
     else {
-        updateQueryResponse(response, tree)
+        updateQueryResponse(response, tree);
     }
 }
 
@@ -380,7 +367,7 @@ $(document).ready(function () {
             url: "/api/query/" + window.query + "/add_annotation_filter/?" + $.param(treeSelection, true),
             dataType: "json"
         }).done(function (response) {
-            updateQueryResponse(response, tree)
+            updateQueryResponse(response, tree);
         });
     });
 
@@ -603,25 +590,25 @@ function initD3Force(graph, tree) {
                     url: "/api/query/" + window.query + "/add_node_applier/expand_node_neighborhood_by_id/" + node.id,
                     dataType: "json"
                 }).done(function (response) {
-                    updateQueryResponse(response, tree)
+                    updateQueryResponse(response, tree);
                 });
             },
             disabled: false // optional, defaults to false
         },
-        {
-            title: "Expand node neighbors from user universe",
-            action: function (elm, node, i) {
-                // Variables explanation:
-                // elm: [object SVGGElement] d: [object NodeObject] i: (#Number)
-                $.ajax({
-                    url: "/api/network/", //TODO
-                    dataType: "json"
-                }).done(function (response) {
-                    updateQueryResponse(response, tree)
-                });
-            },
-            disabled: false // optional, defaults to false
-        },
+        // {
+        //     title: "Expand node neighbors from user universe",
+        //     action: function (elm, node, i) {
+        //         // Variables explanation:
+        //         // elm: [object SVGGElement] d: [object NodeObject] i: (#Number)
+        //         $.ajax({
+        //             url: "/api/network/", //TODO
+        //             dataType: "json"
+        //         }).done(function (response) {
+        //             updateQueryResponse(response, tree);
+        //         });
+        //     },
+        //     disabled: false // optional, defaults to false
+        // },
         {
             title: "Delete node",
             action: function (elm, node, i) {
@@ -629,7 +616,7 @@ function initD3Force(graph, tree) {
                     url: "/api/query/" + window.query + "/add_node_applier/delete_node_by_id/" + node.id,
                     dataType: "json"
                 }).done(function (response) {
-                    updateQueryResponse(response, tree)
+                    updateQueryResponse(response, tree);
                 });
             }
         }
@@ -1550,7 +1537,6 @@ function initD3Force(graph, tree) {
                     });
 
                     // Make bigger by factor scale the nodes in the top x
-                    //TODO: change this coefficient
                     var nodeFactor = (nominalBaseNodeSize / 3) / nodesToIncrease.length;
                     var factor = nominalBaseNodeSize + nodeFactor;
 
@@ -1648,82 +1634,18 @@ function initD3Force(graph, tree) {
     // Tool modal buttons /
     ///////////////////////
 
-    var centralDogmaGenesButton = $("#central-dogma-to-genes");
+    var toolButtonClass = $(".explorer-tool");
 
-    centralDogmaGenesButton.off("click");
+    toolButtonClass.off("click");
 
-    centralDogmaGenesButton.on("click", function () {
-        applyPipelineFunction(centralDogmaGenesButton, tree);
-    });
+    toolButtonClass.on("click", function () {
 
-    // Applies prune central dogma
-
-    var pruneCentralDogma = $("#prune-central-dogma");
-
-    pruneCentralDogma.off("click");
-
-    pruneCentralDogma.on("click", function () {
-        applyPipelineFunction(pruneCentralDogma, tree);
-    });
-
-    // Applies expand periphery
-
-    var expandPeriphery = $("#expand-periphery");
-
-    expandPeriphery.off("click");
-
-    expandPeriphery.on("click", function () {
-        applyPipelineFunction(expandPeriphery, tree);
-    });
-
-    // Applies enrich qualified
-
-    var enrichUnqualified = $("#enrich-unqualified");
-
-    enrichUnqualified.off("click");
-
-    enrichUnqualified.on("click", function () {
-        applyPipelineFunction(enrichUnqualified, tree);
-    });
-
-    // Applies enrich variants
-
-    var enrichVariants = $("#enrich-variants");
-
-    enrichVariants.off("click");
-
-    enrichVariants.on("click", function () {
-        applyPipelineFunction(enrichVariants, tree);
-    });
-
-    // Applies enrich reactions
-
-    var enrichReactions = $("#enrich-reactions");
-
-    enrichReactions.off("click");
-
-    enrichReactions.on("click", function () {
-        applyPipelineFunction(enrichReactions, tree);
-    });
-
-    // Applies enrich composites
-
-    var enrichComposites = $("#enrich-composites");
-
-    enrichComposites.off("click");
-
-    enrichComposites.on("click", function () {
-        applyPipelineFunction(enrichComposites, tree);
-    });
-
-    // Applies enrich composites
-
-    var enrichComplexes = $("#enrich-complexes");
-
-    enrichComplexes.off("click");
-
-    enrichComplexes.on("click", function () {
-        applyPipelineFunction(enrichComplexes, tree);
+        $.ajax({
+            url: "/api/query/" + window.query + "/add_applier/" + $(this).val(),
+            dataType: "json"
+        }).done(function (response) {
+            updateQueryResponse(response, tree);
+        });
     });
 
     ///////////////////////
