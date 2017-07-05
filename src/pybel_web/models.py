@@ -159,18 +159,27 @@ class User(Base, UserMixin):
         return '{} {}'.format(self.first_name, self.last_name) if self.first_name else self.email
 
     def get_owned_networks(self):
-        """Gets all networks this user owns"""
+        """Gets all networks this user owns
+
+        :rtype: iter[Network]
+        """
         return (
             report.network
             for report in self.reports
         )
 
     def get_shared_networks(self):
-        """Gets all networks shared with this user"""
+        """Gets all networks shared with this user
+
+        :rtype: iter[Network]
+        """
         return self.networks
 
     def get_project_networks(self):
-        """Gets all networks for which projects have granted this user access"""
+        """Gets all networks for which projects have granted this user access
+
+        :rtype: iter[Network]
+        """
         return (
             network
             for project in self.projects
