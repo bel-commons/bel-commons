@@ -92,6 +92,9 @@ def build_admin_service(app):
             return super(ProjectView, self).get_query().filter(
                 Project.id.in_(project.id for project in current_user.projects))
 
+        def on_model_change(self, form, model, is_created):
+            model.users.append(current_user)
+
         form_ajax_refs = {
             'networks': NetworkAjaxModelLoader()
         }
