@@ -25,7 +25,7 @@
                     <div class="list-group-item">
                         <h4 class="list-group-item-heading">{{ project.name }}
                             <a class="pull-right"
-                               href="{{ url_for('project.edit_view', id=project.id, url=url_for('project.index_view')) }}">
+                               href="{{ url_for('project.create_view', id=project.id, url=url_for('view_current_user_activity')) }}">
                                 <span class="glyphicon glyphicon-pencil" aria-hidden="true"></span>
                             </a>
                         </h4>

@@ -47,9 +47,13 @@
                            aria-haspopup="true"
                            aria-expanded="false">{{ current_user.email }} <span class="caret"></span></a>
                         <ul class="dropdown-menu">
-                            <li><a class="nav-header" href="{{ url_for('admin.index') }}">Admin</a></li>
+                            {% if current_user.admin %}
+                                <li><a class="nav-header" href="{{ url_for('admin.index') }}">Admin</a></li>
+                            {% endif %}
+                            <li><a href="{{ url_for('project.create_view', id=project.id, url=url_for('home')) }}">Create
+                                Project</a></li>
                             <li><a href="{{ url_for('view_current_user_activity') }}">My Activity</a></li>
-                            <li><a class="nav-header" href="{{ url_for('security.logout') }}">Log Out</a></li>
+                            <li><a href="{{ url_for('security.logout') }}">Log Out</a></li>
                         </ul>
                     </li>
                 {% else %}
