@@ -11,27 +11,19 @@ class Config:
     """
     #: The Flask app secret key. CHANGE THIS
     SECRET_KEY = 'pybel_not_default_key1234567890"'
-    SERVER_NAME = 'pybel.scai.fraunhofer.de'
     DEBUG = False
     TESTING = False
 
     CELERY_BROKER_URL = 'amqp://localhost'
 
     SECURITY_REGISTERABLE = True
-    SECURITY_CONFIRMABLE = True
-    SECURITY_SEND_REGISTER_EMAIL = True
+    SECURITY_CONFIRMABLE = False
+    SECURITY_SEND_REGISTER_EMAIL = False
     SECURITY_RECOVERABLE = True
     #: What hash algorithm should we use for passwords
     SECURITY_PASSWORD_HASH = 'pbkdf2_sha512'
     #: What salt should we use to hash passwords? DEFINITELY CHANGE THIS
     SECURITY_PASSWORD_SALT = 'pybel_not_default_salt1234567890'
-    SECURITY_EMAIL_SENDER = 'PyBEL Web <pybel@scai.fraunhofer.de>"'
-
-    MAIL_SERVER = 'localhost'
-    MAIL_PORT = 25
-    MAIL_USERNAME = 'pybel@scai.fraunhofer.de'
-    # Automatically sends mail from this account
-    MAIL_DEFAULT_SENDER = 'PyBEL Web <pybel@scai.fraunhofer.de>'
 
     #: A connection string for the PyBEL cache
     PYBEL_CONNECTION = None
@@ -44,6 +36,26 @@ class Config:
     PYBEL_DS_EAGER = False
     #: Should networks be saved to the edge store?
     PYBEL_USE_EDGE_STORE = False
+
+
+class EmailConfig:
+    MAIL_SERVER = 'localhost'
+    MAIL_PORT = 25
+    MAIL_USERNAME = 'pybel@scai.fraunhofer.de'
+    # Automatically sends mail from this account
+    MAIL_DEFAULT_SENDER = 'PyBEL Web <pybel@scai.fraunhofer.de>'
+
+
+class BartConfig(Config, EmailConfig):
+    """This configuration is for running on bart"""
+    SERVER_NAME = 'pybel.scai.fraunhofer.de'
+
+    SECURITY_REGISTERABLE = True
+    SECURITY_CONFIRMABLE = True
+    SECURITY_SEND_REGISTER_EMAIL = True
+    SECURITY_RECOVERABLE = True
+
+    SECURITY_EMAIL_SENDER = 'PyBEL Web <pybel@scai.fraunhofer.de>"'
 
     PYBEL_WEB_STARTUP_NOTIFY = CHARLIE_EMAIL
     PYBEL_WEB_REPORT_RECIPIENT = CHARLIE_EMAIL
