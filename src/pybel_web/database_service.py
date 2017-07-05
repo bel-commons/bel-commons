@@ -1068,6 +1068,28 @@ def grant_network_to_user(network_id, user_id):
     return jsonify({'status': 200})
 
 
+@api_blueprint.route('/api/project/<int:project_id>/drop')
+@login_required
+def drop_project_by_id(project_id):
+    """Drops a given project from the database
+
+    :param int project_id: THe project's database identifier
+    """
+    project = manager.session.query(Project).get(project_id)
+
+    if not current_user.admin and current_user.id not in {user.id for user in project.users}:
+        flask.abort(403, 'User does not have permission to access this Project')
+
+    manager.session.delete(project)
+    manager.session.commit()
+
+    if 'next' in request.args:
+        flash('Dropped project: {}'.format(project.name))
+        return redirect(request.args['next'])
+
+    return jsonify({'status': 200})
+
+
 ####################################
 # METADATA
 ####################################
