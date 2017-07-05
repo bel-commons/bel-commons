@@ -909,7 +909,6 @@ def add_annotation_filter_to_query(query_id):
 
     :param int query_id: A query's database identifier
     """
-
     filters = {
         key: request.args.getlist(key)
         for key in request.args
@@ -953,10 +952,16 @@ def remove_user_role(user, role):
 @roles_required('admin')
 def delete_user(user_id):
     """Deletes a user"""
-    u = User.query.get(user_id)
-    user_datastore.delete_user(u)
+    user = User.query.get(user_id)
+
+    user_datastore.delete_user(user)
     user_datastore.commit()
-    return jsonify({'status': 200, 'action': 'deleted user', 'user': str(u)})
+
+    if 'next' in request.args:
+        flash('Deleted user: {}'.format(user))
+        return redirect(request.args['next'])
+
+    return jsonify({'status': 200, 'action': 'deleted user', 'user': str(user)})
 
 
 ####################################
@@ -1001,11 +1006,13 @@ def delete_analysis_results(analysis_id):
     if not current_user.admin:  # TODO test if it's the user/s analysis
         flask.abort(403)
 
-    manager.session.query(Experiment).get(analysis_id).delete()
+    experiment = manager.session.query(Experiment).get(analysis_id)
+
+    manager.session.delete(experiment)
     manager.session.commit()
 
     if 'next' in request.args:
-        flash('Dropped Experiment #{}'.format(analysis_id))
+        flash('Dropped Experiment #{}'.format(experiment.id))
         return redirect(request.args['next'])
 
     return jsonify({'status': 200})
@@ -1042,10 +1049,14 @@ def grant_network_to_project(network_id, project_id):
     if not network.report.user.id == current_user.id:
         flask.abort(403)
 
-    organization = manager.session.query(Project).get(project_id)
-    organization.networks.append(network)
+    project = manager.session.query(Project).get(project_id)
+    project.networks.append(network)
 
     manager.session.commit()
+
+    if 'next' in request.args:
+        flash('Added rights for {} to {}'.format(network, project))
+        return redirect(request.args['next'])
 
     return jsonify({'status': 200})
 
@@ -1064,6 +1075,10 @@ def grant_network_to_user(network_id, user_id):
     user.networks.append(network)
 
     manager.session.commit()
+
+    if 'next' in request.args:
+        flash('Added rights for {} to {}'.format(network, user))
+        return redirect(request.args['next'])
 
     return jsonify({'status': 200})
 
