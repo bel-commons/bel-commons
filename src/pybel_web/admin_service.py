@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import logging
+from itertools import chain
 
 from flask import redirect, url_for, request
 from flask_admin import Admin
@@ -11,7 +12,7 @@ from flask_security import current_user
 from sqlalchemy import or_
 
 from pybel.manager.models import Network, Namespace, Annotation
-from .application import get_manager
+from .application import get_manager, get_api
 from .models import Report, Experiment, Role, User, Query, Assembly, Project
 
 log = logging.getLogger(__name__)
@@ -46,7 +47,10 @@ def build_admin_service(app):
     :rtype flask_admin.Admin
     """
     manager = get_manager(app)
+    api = get_api(app)
+
     admin = Admin(app, template_mode='bootstrap3')
+
     admin.add_view(UserView(User, manager.session))
     admin.add_view(ModelView(Role, manager.session))
     admin.add_view(ModelView(Namespace, manager.session))
@@ -69,12 +73,15 @@ def build_admin_service(app):
             query = query.filter(or_(*filters))
 
             if not current_user.admin:
-                owned_network_ids = {network.id for network in current_user.get_owned_networks()}
+                allowed_network_ids = {
+                    network.id
+                    for network in chain(current_user.get_owned_networks(), api.list_public_networks())
+                }
 
-                if not owned_network_ids:  # If the current user doesn't have any networks, then return an empty query
+                if not allowed_network_ids:  # If the current user doesn't have any networks, then return nothing
                     return []
 
-                query = query.filter(Network.id.in_(owned_network_ids))
+                query = query.filter(Network.id.in_(allowed_network_ids))
 
             return query.offset(offset).limit(limit).all()
 
