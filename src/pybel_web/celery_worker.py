@@ -113,9 +113,11 @@ def async_parser(lines, connection, current_user_id, current_user_email, public,
         )
         add_canonical_names(graph)
         fix_pubmed_citations(graph)
+
     except requests.exceptions.ConnectionError:
         message = 'Connection to resource could not be established.'
         log.exception(message)
+
         with app.app_context():
             mail.send(Message(
                 subject='Parsing Failed',
@@ -123,7 +125,9 @@ def async_parser(lines, connection, current_user_id, current_user_email, public,
                 body=message,
                 sender=("PyBEL Web", 'pybel@scai.fraunhofer.de'),
             ))
+
         return message
+
     except InconsistentDefinitionError as e:
         message = 'Parsing failed because {} was redefined on line {}.'.format(e.definition, e.line_number)
         log.exception(message)
@@ -134,10 +138,13 @@ def async_parser(lines, connection, current_user_id, current_user_email, public,
                 body=message,
                 sender=("PyBEL Web", 'pybel@scai.fraunhofer.de'),
             ))
+
         return message
+
     except Exception as e:
         message = 'Parsing failed from a general error: {}'.format(e)
         log.exception(message)
+
         with app.app_context():
             mail.send(Message(
                 subject='Parsing Failed',
@@ -145,6 +152,7 @@ def async_parser(lines, connection, current_user_id, current_user_email, public,
                 body=message,
                 sender=("PyBEL Web", 'pybel@scai.fraunhofer.de'),
             ))
+
         return message
 
     network = manager.session.query(Network).filter(Network.name == graph.name,
@@ -154,9 +162,9 @@ def async_parser(lines, connection, current_user_id, current_user_email, public,
         message = integrity_message.format(graph.name, graph.version)
 
         if network.report.user_id == current_user_id:  # This user is being a fool
-
-            log.exception(message)
+            log.warning('%s %s', current_user_email, message)
             manager.session.rollback()
+
             with app.app_context():
                 mail.send(Message(
                     subject='Upload Failed',
@@ -164,6 +172,7 @@ def async_parser(lines, connection, current_user_id, current_user_email, public,
                     body=message,
                     sender=("PyBEL Web", 'pybel@scai.fraunhofer.de'),
                 ))
+
             return message
 
         if hashlib.sha1(network.blob).hexdigest() != hashlib.sha1(to_bytes(network)):
@@ -176,9 +185,9 @@ def async_parser(lines, connection, current_user_id, current_user_email, public,
                 ))
 
                 mail.send(Message(
-                    subject='Attempted Espionage',
+                    subject='Possible attempted Espionage',
                     recipients=[CHARLIE_EMAIL, DANIEL_EMAIL],
-                    body='The following user ({} {}) has attempted espionage of network: {}'.format(
+                    body='The following user ({} {}) may have attempted espionage of network: {}'.format(
                         current_user_id,
                         current_user_email,
                         network
@@ -187,7 +196,7 @@ def async_parser(lines, connection, current_user_id, current_user_email, public,
                 ))
             return message
 
-            # Grant rights to this user
+        # Grant rights to this user
         user = manager.session.query(User).get(current_user_id)
         network.users.append(user)
         manager.session.commit()
@@ -196,10 +205,12 @@ def async_parser(lines, connection, current_user_id, current_user_email, public,
 
     try:
         network = manager.insert_graph(graph, store_parts=store_parts)
+
     except IntegrityError:
         message = integrity_message.format(graph.name, graph.version)
-        log.exception(message)
+        log.warning('%s %s', current_user_email, message)
         manager.session.rollback()
+
         with app.app_context():
             mail.send(Message(
                 subject='Upload Failed',
@@ -207,13 +218,19 @@ def async_parser(lines, connection, current_user_id, current_user_email, public,
                 body=message,
                 sender=("PyBEL Web", 'pybel@scai.fraunhofer.de'),
             ))
+
         return message
+
     except OperationalError:
         message = 'Database is locked. Unable to upload.'
+        log.exception(message)
+
         return message
+
     except Exception as e:
         message = "Error storing in database: {}".format(e)
         log.exception(message)
+
         with app.app_context():
             mail.send(Message(
                 subject='Upload Failed',
@@ -221,6 +238,7 @@ def async_parser(lines, connection, current_user_id, current_user_email, public,
                 body=message,
                 sender=("PyBEL Web", 'pybel@scai.fraunhofer.de'),
             ))
+
         return message
 
     log.info('done storing [%d]', network.id)
@@ -236,10 +254,12 @@ def async_parser(lines, connection, current_user_id, current_user_email, public,
         )
         manager.session.add(report)
         manager.session.commit()
+
     except IntegrityError:
         message = 'Problem with reporting service.'
         log.exception(message)
         manager.session.rollback()
+
         return message
 
     do_okay_mail(current_user_email, graph)
