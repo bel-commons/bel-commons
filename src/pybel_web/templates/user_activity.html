@@ -60,7 +60,7 @@
                             <ul>
                                 {% for network in query.assembly.networks %}
                                     <li>
-                                        <a href="{{ url_for('view_summary', network_id=network.id) }}">{{ network.name }}</a>
+                                        <a href="{{ url_for('view_summary', network_id=network.id) }}">{{ network }}</a>
                                     </li>
                                 {% endfor %}
                             </ul>
@@ -74,7 +74,7 @@
                                             {% if seed['type'] == 'annotation' %}
                                                 {% for annotation, value in seed['data'].items() %}
                                                     <li>
-                                                        {{ annotation }}:{{ value }}
+                                                        {{ annotation }}: {{ value }}
                                                     </li>
                                                 {% endfor %}
                                             {% else %}
@@ -92,7 +92,23 @@
                         <td>
                             <ul>
                                 {% for protocol_entry in query.protocol_as_json() %}
-                                    <li>{{ protocol_entry }}</li>
+                                    <li>
+                                        <code>{{ protocol_entry['function'] }}</code>
+                                        {% if protocol_entry['args'] or protocol_entry['kwargs'] %}
+                                            <ul>
+                                                {% if protocol_entry['args'] %}
+                                                    {% for arg in  protocol_entry['args'] %}
+                                                        <li><code>{{ arg }}</code></li>
+                                                    {% endfor %}
+                                                {% endif %}
+                                                {% if protocol_entry['kwargs'] %}
+                                                    {% for kwarg_key, kwarg_value in protocol_entry['kwargs'].items() %}
+                                                        <li><code>{{ kwarg_key }}={{ kwarg_value }}</code></li>
+                                                    {% endfor %}
+                                                {% endif %}
+                                            </ul>
+                                        {% endif %}
+                                    </li>
                                 {% endfor %}
                             </ul>
                         </td>
