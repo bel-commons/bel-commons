@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import hashlib
 import logging
 import os
 
@@ -9,15 +10,17 @@ from flask_mail import Message
 from six import StringIO
 from sqlalchemy.exc import IntegrityError, OperationalError
 
-from pybel import from_lines, from_url
+from pybel import from_lines, from_url, to_bytes
 from pybel.manager import build_manager
+from pybel.manager.models import Network
 from pybel.parser.parse_exceptions import InconsistentDefinitionError
 from pybel_tools.constants import BMS_BASE
 from pybel_tools.ioutils import convert_recursive
 from pybel_tools.mutation import add_canonical_names, fix_pubmed_citations
 from .application import create_application, create_celery
+from .constants import CHARLIE_EMAIL, DANIEL_EMAIL
 from .constants import integrity_message
-from .models import Report
+from .models import Report, User
 from .utils import run_experiment
 
 app, mail = create_application(get_mail=True)
@@ -110,7 +113,7 @@ def async_parser(lines, connection, current_user_id, current_user_email, public,
         )
         add_canonical_names(graph)
         fix_pubmed_citations(graph)
-    except requests.exceptions.ConnectionError as e:
+    except requests.exceptions.ConnectionError:
         message = 'Connection to resource could not be established.'
         log.exception(message)
         with app.app_context():
@@ -143,6 +146,53 @@ def async_parser(lines, connection, current_user_id, current_user_email, public,
                 sender=("PyBEL Web", 'pybel@scai.fraunhofer.de'),
             ))
         return message
+
+    network = manager.session.query(Network).filter(Network.name == graph.name,
+                                                    Network.version == graph.version).one_or_none()
+
+    if network is not None:
+        message = integrity_message.format(graph.name, graph.version)
+
+        if network.report.user_id == current_user_id:  # This user is being a fool
+
+            log.exception(message)
+            manager.session.rollback()
+            with app.app_context():
+                mail.send(Message(
+                    subject='Upload Failed',
+                    recipients=[current_user_email],
+                    body=message,
+                    sender=("PyBEL Web", 'pybel@scai.fraunhofer.de'),
+                ))
+            return message
+
+        if hashlib.sha1(network.blob).hexdigest() != hashlib.sha1(to_bytes(network)):
+            with app.app_context():
+                mail.send(Message(
+                    subject='Upload Failed',
+                    recipients=[current_user_email],
+                    body=message,
+                    sender=("PyBEL Web", 'pybel@scai.fraunhofer.de'),
+                ))
+
+                mail.send(Message(
+                    subject='Attempted Espionage',
+                    recipients=[CHARLIE_EMAIL, DANIEL_EMAIL],
+                    body='The following user ({} {}) has attempted espionage of network: {}'.format(
+                        current_user_id,
+                        current_user_email,
+                        network
+                    ),
+                    sender=("PyBEL Web", 'pybel@scai.fraunhofer.de'),
+                ))
+            return message
+
+            # Grant rights to this user
+        user = manager.session.query(User).get(current_user_id)
+        network.users.append(user)
+        manager.session.commit()
+
+        return 'Granted rights for {} to {}'.format(network, user)
 
     try:
         network = manager.insert_graph(graph, store_parts=store_parts)
