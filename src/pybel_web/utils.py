@@ -8,7 +8,6 @@ import pickle
 from collections import defaultdict
 
 import matplotlib
-import matplotlib.pyplot as plt
 import pandas
 from flask import current_app
 from flask import render_template
@@ -499,6 +498,8 @@ def calculate_overlap_dict(g1, g2, set_labels=('Query 1', 'Query 2')):
     :return: A dictionary containing important information for displaying base64 images
     :rtype: dict
     """
+    import matplotlib.pyplot as plt
+    
     plt.clf()
     plt.cla()
     plt.close()
