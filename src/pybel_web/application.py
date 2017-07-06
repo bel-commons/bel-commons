@@ -155,19 +155,21 @@ class IntListConverter(BaseConverter):
         return ','.join(BaseConverter.to_url(self, value) for value in values)
 
 
-def create_application(get_mail=False, **kwargs):
+def create_application(get_mail=False, config_object=None, **kwargs):
     """Builds a Flask app for the PyBEL web service
     
     1. Loads default config
     2. Updates with kwargs
     
-    :param dict kwargs: keyword arguments to add to config
     :param bool get_mail: Activate the return have a tuple of (Flask, Mail)
+    :param str config_object: The path to the object that will get loaded for default configuration. Defaults to
+                                :data:`'pybel_web.config.Config'`
+    :param dict kwargs: keyword arguments to add to config
     :rtype: flask.Flask
     """
     app = Flask(__name__)
 
-    app.config.from_object('pybel_web.config.Config')
+    app.config.from_object('pybel_web.config.Config' if config_object is None else config_object)
 
     if 'PYBEL_WEB_CONFIG' in os.environ:
         env_conf_path = os.path.expanduser(os.environ['PYBEL_WEB_CONFIG'])
