@@ -874,6 +874,34 @@ def add_pipeline_entry(query_id, name, *args, **kwargs):
     })
 
 
+@api_blueprint.route('/api/query/<int:query_id>/isolated_node/<int:node_id>', methods=['GET'])
+def get_query_from_isolated_node(query_id, node_id):
+    """Creates a query with a single node_id"""
+
+    query = manager.session.query(models.Query).get(query_id)
+
+    q = Query.from_json(
+        {'seeding': [{'type': 'induction', 'data': [api.get_node_by_id(node_id)]}], 'pipeline': [],
+         'network_ids': [network.id for network in query.assembly.networks]}
+    )
+
+    qo = models.Query(
+        user=current_user,
+        assembly=query.assembly,
+        seeding=json.dumps(q.seeds),
+        pipeline_protocol=q.pipeline.to_jsons(),
+        dump=q.to_jsons(),
+        parent_id=query_id,
+    )
+
+    manager.session.add(qo)
+    manager.session.commit()
+
+    return jsonify({
+        'id': qo.id
+    })
+
+
 @api_blueprint.route('/api/query/<int:query_id>/add_applier/<name>', methods=['GET'])
 def add_applier_to_query(query_id, name):
     """Builds a new query with the applier in the url and adds it to the end of the pipeline"""
