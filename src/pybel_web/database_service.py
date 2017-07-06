@@ -877,28 +877,31 @@ def add_pipeline_entry(query_id, name, *args, **kwargs):
 @api_blueprint.route('/api/query/<int:query_id>/isolated_node/<int:node_id>', methods=['GET'])
 def get_query_from_isolated_node(query_id, node_id):
     """Creates a query with a single node_id"""
+    parent_query = manager.session.query(models.Query).get(query_id)
 
-    query = manager.session.query(models.Query).get(query_id)
+    child_query = Query.from_json({
+        'seeding': [{'type': 'induction', 'data': [api.get_node_by_id(node_id)]}],
+        'pipeline': [],
+        'network_ids': [
+            network.id
+            for network in parent_query.assembly.networks
+        ]
+    })
 
-    q = Query.from_json(
-        {'seeding': [{'type': 'induction', 'data': [api.get_node_by_id(node_id)]}], 'pipeline': [],
-         'network_ids': [network.id for network in query.assembly.networks]}
-    )
-
-    qo = models.Query(
+    child_query_model = models.Query(
         user=current_user,
-        assembly=query.assembly,
-        seeding=json.dumps(q.seeds),
-        pipeline_protocol=q.pipeline.to_jsons(),
-        dump=q.to_jsons(),
-        parent_id=query_id,
+        assembly=parent_query.assembly,
+        seeding=json.dumps(child_query.seeds),
+        pipeline_protocol=child_query.pipeline.to_jsons(),
+        dump=child_query.to_jsons(),
+        parent_id=parent_query.id,
     )
 
-    manager.session.add(qo)
+    manager.session.add(child_query_model)
     manager.session.commit()
 
     return jsonify({
-        'id': qo.id
+        'id': child_query_model.id
     })
 
 
