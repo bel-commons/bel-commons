@@ -73,9 +73,15 @@ def build_admin_service(app):
             query = query.filter(or_(*filters))
 
             if not current_user.admin:
+                network_chain = chain(
+                    current_user.get_owned_networks(),
+                    current_user.get_shared_networks(),
+                    api.list_public_networks(),
+                )
+
                 allowed_network_ids = {
                     network.id
-                    for network in chain(current_user.get_owned_networks(), api.list_public_networks())
+                    for network in network_chain
                 }
 
                 if not allowed_network_ids:  # If the current user doesn't have any networks, then return nothing
