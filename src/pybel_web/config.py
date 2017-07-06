@@ -11,7 +11,6 @@ class Config:
     """
     #: The Flask app secret key. CHANGE THIS
     SECRET_KEY = 'pybel_not_default_key1234567890"'
-    SERVER_NAME = 'pybel.scai.fraunhofer.de'
     DEBUG = False
     TESTING = False
 
