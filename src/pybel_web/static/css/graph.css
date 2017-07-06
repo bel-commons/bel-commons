@@ -9,7 +9,8 @@
 }
 
 .svg-border {
-    border: 1px solid black;
+    border: 1px solid #DDDDDD;
+    border-radius: 4px;
 }
 
 .center-table {
@@ -165,4 +166,3 @@
 .Composite {
     fill: #9467BD;
 }
-

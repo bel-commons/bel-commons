@@ -94,86 +94,81 @@
                 </button>
             </div>
         </div>
-        <div class="panel panel-default">
-            <div class="panel-body">
-                <div class="row"><!-- visualization row -->
-                    <div class="col-lg-8">
-                        <div id="graph-chart"></div>
+
+        <div class="row" style="margin-right: 0; margin-bottom:20px"><!-- visualization row -->
+            <div id="graph-chart" class="col-lg-8"></div>
+            <div class="panel panel-default col-lg-4"
+                 style="max-height: 585px;height: 585px;padding-right: 0px;padding-left: 0px; margin-bottom:0">
+
+                <!-- Nav tabs -->
+                <ul class="nav nav-tabs" role="tablist">
+                    <li class="nav-item active">
+                        <a class="nav-link" data-toggle="tab" href="#tree-panel" role="tab"><i
+                                class="fa fa-filter" aria-hidden="true"></i> Annotation</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-toggle="tab" href="#nodes-panel" role="tab"><i
+                                class="fa fa-circle-o"
+                                aria-hidden="true"></i>
+                            Nodes</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-toggle="tab" href="#edges-panel" role="tab"><i
+                                class="fa fa-long-arrow-right" aria-hidden="true"></i> Edges</a>
+                    </li>
+                </ul>
+                <!-- Tab panes -->
+                <div class="tab-content">
+                    <div class="tab-pane active" id="tree-panel" role="tabpanel">
+                        <button type="button" id="refresh-network"
+                                class="btn btn-primary not-rounded width-50 pull-left">
+                            Refresh Network
+                        </button>
+                        <button type="button" id="collapse-tree"
+                                class="btn btn-primary not-rounded width-50 pull-right">
+                            Collapse Annotations
+                        </button>
+                        <input placeholder="Annotation search" id="tree-search"
+                               class="not-rounded form-control pull-left"
+                               aria-describedby="sizing-addon1" type="text"/>
+                        <input class="btn-block" data-toggle="toggle" data-width="100%"
+                               data-style="android" data-on="All Annotations Should Be Present" value=""
+                               id="andortoggle" data-off="Any Annotation Present" type="checkbox">
+                        <div id="tree" style="max-height:425px; overflow:auto;"></div>
                     </div>
-                    <div class="col-lg-4" style="max-height: 550px;height: 550px;"><!-- filters and tools div -->
-                        <!-- Nav tabs -->
-                        <ul class="nav nav-tabs" role="tablist">
-                            <li class="nav-item">
-                                <a class="nav-link active" data-toggle="tab" href="#tree-panel" role="tab"><i
-                                        class="fa fa-filter" aria-hidden="true"></i> Annotation</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link disabled" data-toggle="tab" href="#nodes-panel" role="tab"><i
-                                        class="fa fa-circle-o"
-                                        aria-hidden="true"></i>
-                                    Nodes</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link disabled" data-toggle="tab" href="#edges-panel" role="tab"><i
-                                        class="fa fa-long-arrow-right" aria-hidden="true"></i> Edges</a>
-                            </li>
-                        </ul>
-                        <!-- Tab panes -->
-                        <div class="tab-content">
-                            <div class="tab-pane active" id="tree-panel" role="tabpanel">
-                                <button type="button" id="refresh-network"
-                                        class="btn btn-primary not-rounded width-50 pull-left">
-                                    Refresh Network
-                                </button>
-                                <button type="button" id="collapse-tree"
-                                        class="btn btn-primary not-rounded width-50 pull-right">
-                                    Collapse Annotations
-                                </button>
-                                <input placeholder="Annotation search" id="tree-search"
-                                       class="not-rounded form-control pull-left"
-                                       aria-describedby="sizing-addon1" type="text"/>
-                                <input class="btn-block" data-toggle="toggle" data-width="100%"
-                                       data-style="android" data-on="All Annotations Should Be Present" value=""
-                                       id="andortoggle" data-off="Any Annotation Present" type="checkbox">
-                                <div id="tree" style="max-height: 450px;height: 450px; overflow:auto;"></div>
-                            </div>
-                            <div class="tab-pane not-rounded" id="nodes-panel" role="tabpanel">
-                                <button class='btn btn-primary not-rounded full-width' id='get-checked-nodes'>Show
-                                    Selected Nodes
-                                </button>
-                                <div class="input-group">
-                                        <span class="input-group-addon not-rounded2" id="sizing-addon"><i
-                                                class="fa fa-connectdevelop fa-0.5x"></i></span>
-                                    <input placeholder="Search nodes" id="node-search"
-                                           class="wide form-control not-rounded"
-                                           aria-describedby="sizing-addon1" type="text"/>
-                                </div>
-                                <div class="not-rounded2" id="node-list"
-                                     style="max-height: 450px;height: 450px; overflow:auto;"></div>
-                            </div>
-                            <div class="tab-pane not-rounded" id="edges-panel" role="tabpanel">
-                                <button class='btn btn-primary not-rounded full-width' id='get-checked-edges'>Show
-                                    Selected Edges
-                                </button>
-                                <div class="input-group">
-                                        <span class="input-group-addon not-rounded2" id="sizing-addon"><i
-                                                class="fa fa-connectdevelop fa-0.5x"></i></span>
-                                    <input placeholder="Search edges" id="edge-search"
-                                           class="wide form-control not-rounded"
-                                           aria-describedby="sizing-addon1" type="text"/>
-                                </div>
-                                <div id="edge-list" class="not-rounded2"
-                                     style="max-height: 450px;height: 450px; overflow:auto;"></div>
-                            </div>
+                    <div class="tab-pane not-rounded" id="nodes-panel" role="tabpanel">
+                        <button class='btn btn-primary not-rounded full-width' id='get-checked-nodes'>Show
+                            Selected Nodes
+                        </button>
+                        <div class="input-group">
+                                <span class="input-group-addon not-rounded2" id="sizing-addon"><i
+                                        class="fa fa-connectdevelop fa-0.5x"></i></span>
+                            <input placeholder="Search nodes" id="node-search"
+                                   class="wide form-control not-rounded"
+                                   aria-describedby="sizing-addon1" type="text"/>
                         </div>
+                        <div class="not-rounded2" id="node-list"
+                             style="max-height: 450px;height: 450px; overflow:auto;"></div>
+                    </div>
+                    <div class="tab-pane not-rounded" id="edges-panel" role="tabpanel">
+                        <button class='btn btn-primary not-rounded full-width' id='get-checked-edges'>Show
+                            Selected Edges
+                        </button>
+                        <div class="input-group">
+                                <span class="input-group-addon not-rounded2" id="sizing-addon"><i
+                                        class="fa fa-connectdevelop fa-0.5x"></i></span>
+                            <input placeholder="Search edges" id="edge-search"
+                                   class="wide form-control not-rounded"
+                                   aria-describedby="sizing-addon1" type="text"/>
+                        </div>
+                        <div id="edge-list" class="not-rounded2"
+                             style="max-height: 450px;height: 450px; overflow:auto;"></div>
                     </div>
                 </div>
             </div><!-- visualization row -->
         </div>
         <div class="panel panel-default">
-            <div>
-                <table id="info-table" class="table table-bordered table-hover"></table>
-            </div>
+            <table id="info-table" class="table table-bordered table-hover"></table>
             <div>
                 <button type="button" id="parent-query"
                         class="btn btn-primary not-rounded width-50 pull-left">
@@ -183,8 +178,8 @@
                         class="btn btn-primary not-rounded width-50 pull-right">
                     Original Query
                 </button>
-                <table id="query-table" class="table table-bordered table-hover"></table>
             </div>
+            <table id="query-table" class="table table-bordered table-hover"></table>
         </div>
     </div>
 
@@ -741,7 +736,8 @@
                                 <tr>
                                     <td>
                                         <button type="button" value="collapse_by_central_dogma_to_genes"
-                                                id="central-dogma-to-genes" class="btn btn-info explorer-tool" data-dismiss="modal">
+                                                id="central-dogma-to-genes" class="btn btn-info explorer-tool"
+                                                data-dismiss="modal">
                                             Central Dogma To Genes
                                         </button>
                                     </td>
@@ -750,7 +746,8 @@
                                 <tr>
                                     <td>
                                         <button type="button" value="infer_central_dogma" data-dismiss="modal"
-                                                id="infer-central-dogma" class="btn btn-info explorer-tool">Infer Central Dogma
+                                                id="infer-central-dogma" class="btn btn-info explorer-tool">Infer
+                                            Central Dogma
                                         </button>
                                     </td>
                                     <td>Adds RNAs corresponding to Proteins, then adds Genes corresponding to RNAs and
@@ -760,7 +757,8 @@
                                 <tr>
                                     <td>
                                         <button type="button" value="prune_central_dogma" data-dismiss="modal"
-                                                id="prune-central-dogma" class="btn btn-info explorer-tool">Prune Central Dogma
+                                                id="prune-central-dogma" class="btn btn-info explorer-tool">Prune
+                                            Central Dogma
                                         </button>
                                     </td>
                                     <td>Prunes genes, then RNA</td>
@@ -768,7 +766,8 @@
                                 <tr>
                                     <td>
                                         <button type="button" value="expand_periphery" data-dismiss="modal"
-                                                id="expand-periphery" class="btn btn-info explorer-tool">Expand Periphery
+                                                id="expand-periphery" class="btn btn-info explorer-tool">Expand
+                                            Periphery
                                         </button>
                                     </td>
                                     <td>Expand the periphery of the network</td>
@@ -776,7 +775,8 @@
                                 <tr>
                                     <td>
                                         <button type="button" value="expand_internal" data-dismiss="modal"
-                                                id="expand-internal" class="btn btn-info explorer-tool">Expand Internal Edges
+                                                id="expand-internal" class="btn btn-info explorer-tool">Expand Internal
+                                            Edges
                                         </button>
                                     </td>
                                     <td>Expand edges between nodes in the network</td>
@@ -784,7 +784,8 @@
                                 <tr>
                                     <td>
                                         <button type="button" value="enrich_unqualified" data-dismiss="modal"
-                                                id="enrich-unqualified" class="btn btn-info explorer-tool">Enrich Unqualified Edges
+                                                id="enrich-unqualified" class="btn btn-info explorer-tool">Enrich
+                                            Unqualified Edges
                                         </button>
                                     </td>
                                     <td>Enriches the subgraph with the unqualified edges from the graph</td>
@@ -801,7 +802,8 @@
                                 <tr>
                                     <td>
                                         <button type="button" value="enrich_reactions" data-dismiss="modal"
-                                                id="enrich-reactions" class="btn btn-info explorer-tool">Enrich Reactions
+                                                id="enrich-reactions" class="btn btn-info explorer-tool">Enrich
+                                            Reactions
                                         </button>
                                     </td>
                                     <td>Adds all of the reactants and products of reactions</td>
@@ -809,7 +811,8 @@
                                 <tr>
                                     <td>
                                         <button type="button" value="enrich_composites" data-dismiss="modal"
-                                                id="enrich-composites" class="btn btn-info explorer-tool">Enrich Composites
+                                                id="enrich-composites" class="btn btn-info explorer-tool">Enrich
+                                            Composites
                                         </button>
                                     </td>
                                     <td>Adds all of the members of the composite abundances</td>
@@ -817,7 +820,8 @@
                                 <tr>
                                     <td>
                                         <button type="button" value="enrich_complexes" data-dismiss="modal"
-                                                id="enrich-complexes" class="btn btn-info explorer-tool">Enrich Complexes
+                                                id="enrich-complexes" class="btn btn-info explorer-tool">Enrich
+                                            Complexes
                                         </button>
                                     </td>
                                     <td>Adds all of the members of the complexes</td>
