@@ -620,6 +620,18 @@ function initD3Force(graph, tree) {
                 });
             }
         }
+         {
+            title: "Create a query isolating this node.",
+            action: function (elm, node, i) {
+                $.ajax({
+                    url: "/api/query/" + window.query + "/isolated_node/" + node.id,
+                    dataType: "json"
+                }).done(function (response) {
+                    updateQueryResponse(response, tree);
+                });
+            }
+        }
+
     ];
 
     // Definition of context menu for nodes
