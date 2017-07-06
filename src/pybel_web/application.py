@@ -29,8 +29,8 @@ from flask_security import Security, SQLAlchemyUserDatastore
 from raven.contrib.flask import Sentry
 from werkzeug.routing import BaseConverter
 
-import pybel.constants
 from pybel.constants import PYBEL_CONNECTION
+from pybel.constants import config as pybel_config
 from pybel.manager import build_manager, Base
 from pybel_tools.api import DatabaseService
 from pybel_tools.mutation import expand_nodes_neighborhoods, expand_node_neighborhood
@@ -142,7 +142,7 @@ class FlaskPyBEL:
 
 
 bootstrap = Bootstrap()
-pybel = FlaskPyBEL()
+pybel_extension = FlaskPyBEL()
 mail = Mail()
 security = Security()
 jquery2_cdn = WebCDN('//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/')
@@ -193,7 +193,7 @@ def create_application(get_mail=False, config_location=None, **kwargs):
             log.info('importing config from %s', env_conf_path)
             app.config.from_json(env_conf_path)
 
-    app.config.update(pybel.constants.config)
+    app.config.update(pybel_config)
     app.config.update(kwargs)
 
     # Add converters
@@ -219,32 +219,32 @@ def create_application(get_mail=False, config_location=None, **kwargs):
             with app.app_context():
                 mail.send(startup_message)
 
-    pybel.init_app(app)
-    security.init_app(app, pybel.user_datastore, register_form=ExtendedRegisterForm)
+    pybel_extension.init_app(app)
+    security.init_app(app, pybel_extension.user_datastore, register_form=ExtendedRegisterForm)
 
     @app.before_first_request
     def prepare_service():
         """A filter for preparing the web service when it is started"""
-        pybel.manager.create_all()
+        pybel_extension.manager.create_all()
 
-        admin_role = pybel.user_datastore.find_or_create_role(name='admin', description='Admin of PyBEL Web')
-        scai_role = pybel.user_datastore.find_or_create_role(name='scai', description='Users from SCAI')
+        admin_role = pybel_extension.user_datastore.find_or_create_role(name='admin', description='Admin of PyBEL Web')
+        scai_role = pybel_extension.user_datastore.find_or_create_role(name='scai', description='Users from SCAI')
 
         for email in (CHARLIE_EMAIL, DANIEL_EMAIL, ALEX_EMAIL):
-            admin_user = pybel.user_datastore.find_user(email=email)
+            admin_user = pybel_extension.user_datastore.find_user(email=email)
 
             if admin_user is None:
-                admin_user = pybel.user_datastore.create_user(
+                admin_user = pybel_extension.user_datastore.create_user(
                     email=email,
                     password='pybeladmin',
                     confirmed_at=datetime.datetime.now(),
                 )
 
-            pybel.user_datastore.add_role_to_user(admin_user, admin_role)
-            pybel.user_datastore.add_role_to_user(admin_user, scai_role)
-            pybel.manager.session.add(admin_user)
+            pybel_extension.user_datastore.add_role_to_user(admin_user, admin_role)
+            pybel_extension.user_datastore.add_role_to_user(admin_user, scai_role)
+            pybel_extension.manager.session.add(admin_user)
 
-        pybel.manager.session.commit()
+        pybel_extension.manager.session.commit()
 
     if not get_mail:
         return app
