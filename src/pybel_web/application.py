@@ -29,7 +29,8 @@ from flask_security import Security, SQLAlchemyUserDatastore
 from raven.contrib.flask import Sentry
 from werkzeug.routing import BaseConverter
 
-from pybel.constants import config as pybel_config, PYBEL_CONNECTION
+import pybel.constants
+from pybel.constants import PYBEL_CONNECTION
 from pybel.manager import build_manager, Base
 from pybel_tools.api import DatabaseService
 from pybel_tools.mutation import expand_nodes_neighborhoods, expand_node_neighborhood
@@ -155,29 +156,44 @@ class IntListConverter(BaseConverter):
         return ','.join(BaseConverter.to_url(self, value) for value in values)
 
 
-def create_application(get_mail=False, **kwargs):
+def create_application(get_mail=False, config_location=None, **kwargs):
     """Builds a Flask app for the PyBEL web service
     
     1. Loads default config
     2. Updates with kwargs
     
-    :param dict kwargs: keyword arguments to add to config
     :param bool get_mail: Activate the return have a tuple of (Flask, Mail)
+    :param str config_location: The path to the object that will get loaded for default configuration. Defaults to
+                                :data:`'pybel_web.config.Config'`
+    :param dict kwargs: keyword arguments to add to config
     :rtype: flask.Flask
     """
     app = Flask(__name__)
 
-    app.config.from_object('pybel_web.config.Config')
+    if config_location is not None:
+        log.info('Getting configuration from user supplied argument: %s', config_location)
 
-    if 'PYBEL_WEB_CONFIG' in os.environ:
-        env_conf_path = os.path.expanduser(os.environ['PYBEL_WEB_CONFIG'])
+    elif 'PYBEL_WEB_CONFIG_OBJECT' in os.environ:
+        config_location = os.environ['PYBEL_WEB_CONFIG_OBJECT']
+        log.info('Getting configuration from environment PYBEL_WEB_CONFIG_OBJECT=%s', config_location)
+
+    else:
+        config_location = 'pybel_web.config.Config'
+        log.info('Getting configuration from default %s', config_location)
+
+    app.config.from_object(config_location)
+
+    if 'PYBEL_WEB_CONFIG_JSON' in os.environ:
+        env_conf_path = os.path.expanduser(os.environ['PYBEL_WEB_CONFIG_JSON'])
+
         if not os.path.exists(env_conf_path):
             log.warning('configuration from environment at %s does not exist', env_conf_path)
+
         else:
             log.info('importing config from %s', env_conf_path)
             app.config.from_json(env_conf_path)
 
-    app.config.update(pybel_config)
+    app.config.update(pybel.constants.config)
     app.config.update(kwargs)
 
     # Add converters
