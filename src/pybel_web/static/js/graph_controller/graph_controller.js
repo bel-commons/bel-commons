@@ -619,8 +619,8 @@ function initD3Force(graph, tree) {
                     updateQueryResponse(response, tree);
                 });
             }
-        }
-         {
+        },
+        {
             title: "Create a query isolating this node.",
             action: function (elm, node, i) {
                 $.ajax({
