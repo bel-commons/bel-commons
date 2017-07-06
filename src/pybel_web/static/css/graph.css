@@ -13,11 +13,6 @@
     border-radius: 4px;
 }
 
-.center-table {
-    margin: 0 auto;
-    width: 80%;
-}
-
 .left {
     border-right: 1px solid #888;
     float: left;
