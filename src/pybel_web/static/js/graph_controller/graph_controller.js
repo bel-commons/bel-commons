@@ -851,6 +851,7 @@ function initD3Force(graph, tree) {
             }
         })
         .style("stroke-width", nominalStroke)
+        .style("stroke-opacity", 0.4)
         .on("click", function (d) {
             displayEdgeInfo(d);
         })
