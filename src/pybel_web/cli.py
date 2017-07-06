@@ -86,10 +86,20 @@ def main():
     """PyBEL Tools Command Line Interface"""
 
 
+def map_default_config(c):
+    return {
+        None: None,
+        'local': 'pybel_web.config.LocalConfig',
+        'test': 'pybel_web.config.TestConfig',
+        'prod': 'pybel_web.config.ProductionConfig'
+    }[c]
+
+
 @main.command()
 @click.option('--host', help='Flask host. Defaults to localhost')
 @click.option('--port', type=int, help='Flask port. Defaults to 5000')
-@click.option('--default-config', help='Use different default config object')
+@click.option('--default-config', type=click.Choice(['local', 'test', 'prod']),
+              help='Use different default config object')
 @click.option('-v', '--debug', count=True, help="Turn on debugging. More v's, more debugging")
 @click.option('--flask-debug', is_flag=True, help="Turn on werkzeug debug mode")
 @click.option('--config', type=click.File('r'), help='Additional configuration in a JSON file')
@@ -111,7 +121,11 @@ def run(host, port, default_config, debug, flask_debug, config):
     t = time.time()
 
     config_dict = json.load(config) if config else {}
-    app = create_application(config_object=default_config, **config_dict)
+
+    app = create_application(
+        config_object=map_default_config(default_config),
+        **config_dict
+    )
 
     build_main_service(app)
     build_admin_service(app)
