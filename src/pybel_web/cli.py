@@ -86,13 +86,11 @@ def main():
     """PyBEL Tools Command Line Interface"""
 
 
-def map_default_config(c):
-    return {
-        None: None,
-        'local': 'pybel_web.config.LocalConfig',
-        'test': 'pybel_web.config.TestConfig',
-        'prod': 'pybel_web.config.ProductionConfig'
-    }[c]
+_config_map = {
+    'local': 'pybel_web.config.LocalConfig',
+    'test': 'pybel_web.config.TestConfig',
+    'prod': 'pybel_web.config.ProductionConfig'
+}
 
 
 @main.command()
@@ -120,10 +118,10 @@ def run(host, port, default_config, debug, flask_debug, config):
 
     t = time.time()
 
-    config_dict = json.load(config) if config else {}
+    config_dict = json.load(config) if config is not None else {}
 
     app = create_application(
-        config_object=map_default_config(default_config),
+        config_location=_config_map.get(default_config),
         **config_dict
     )
 
