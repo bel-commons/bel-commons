@@ -242,6 +242,7 @@ def build_main_service(app):
         )
 
     @app.route('/explore/query/<int:query_id>', methods=['GET'])
+    @login_required
     def view_explorer_query(query_id):
         """Renders a page for the user to explore a network"""
         query = manager.session.query(Query).get(query_id)
