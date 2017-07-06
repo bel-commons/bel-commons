@@ -474,7 +474,7 @@ def get_paths(query_id, source_id, target_id):
 
     undirected = UNDIRECTED in request.args
 
-    cutoff = request.args.get('cutoff', 12)
+    cutoff = request.args.get('cutoff', 7)
 
     source = api.get_node_by_id(source_id)
     target = api.get_node_by_id(target_id)
