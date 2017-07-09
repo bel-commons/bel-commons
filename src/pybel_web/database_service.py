@@ -91,9 +91,15 @@ def receive():
     """Receives a JSON serialized BEL graph"""
     try:
         network = pybel.from_json(request.get_json())
-    except:
-        flask.flash('Error parsing json')
-        return redirect(url_for('home'))
+    except Exception as e:
+        if 'next' in request.args:
+            flask.flash('Error parsing json')
+            return redirect(request.args['next'])
+
+        return jsonify({
+            'status': '400',
+            'exception': str(e),
+        })
 
     try:
         network = manager.insert_graph(network)
