@@ -15,7 +15,7 @@ from pybel.manager import build_manager
 from pybel.manager.models import Network
 from pybel.parser.parse_exceptions import InconsistentDefinitionError
 from pybel_tools.constants import BMS_BASE
-from pybel_tools.ioutils import convert_recursive
+from pybel_tools.ioutils import convert_directory
 from pybel_tools.mutation import add_canonical_names, fix_pubmed_citations
 from .application import create_application, create_celery
 from .constants import CHARLIE_EMAIL, DANIEL_EMAIL
@@ -31,7 +31,7 @@ log = get_task_logger(__name__)
 
 def parse_folder(connection, folder, **kwargs):
     manager = build_manager(connection)
-    convert_recursive(
+    convert_directory(
         os.path.join(os.environ[BMS_BASE], folder),
         connection=manager,
         upload=True,
