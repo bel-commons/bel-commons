@@ -50,3 +50,37 @@ Links
 
 - Running docker on mac: https://penandpants.com/2014/03/09/docker-via-homebrew/
 - Using baseimage: http://phusion.github.io/baseimage-docker/
+
+Getting Data
+------------
+Before running the service, some data can be pre-loaded in your cache.
+
+Loading Selventa Corpra
+~~~~~~~~~~~~~~~~~~~~~~~
+The Selventa Small Corpus and Large Corpus are two example BEL documents distributed by the
+`OpenBEL framework <https://wiki.openbel.org/display/home/Summary+of+Large+and+Small+BEL+Corpuses>`_. They are good
+examples of many types of BEL statements and can be used immediately to begin exploring. Add :code:`-v` for more
+logging information during compilation. This is highly suggested for the first run, since it takes a while to cache
+all of the namespaces and annotations. This only has to be done once, and will be much faster the second time!
+
+Small Corpus:
+
+.. code-block:: sh
+
+    $ python3 -m pybel_tools ensure small_corpus -v
+
+Large Corpus:
+
+.. code-block:: sh
+
+    $ python3 -m pybel_tools ensure large_corpus -v
+
+Uploading Precompiled BEL
+~~~~~~~~~~~~~~~~~~~~~~~~~
+A single network stored as a PyBEL gpickle can quickly be uploaded using the following code:
+
+.. code-block:: sh
+
+    $ python3 -m pybel_tools io upload -p /path/to/my_network.gpickle
+
+More examples of getting data into the cache can be found `here <http://pybel-tools.readthedocs.io/en/latest/cookbook.html#getting-data-in-to-the-cache>`_.
