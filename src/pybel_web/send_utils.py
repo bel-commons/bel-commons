@@ -4,7 +4,7 @@ import logging
 
 from flask import send_file, Response, jsonify
 from six import StringIO, BytesIO
-
+from pybel.utils import hash_tuple
 from pybel import to_cx, to_bel_lines, to_graphml, to_bytes, to_csv, to_sif, to_jgif, to_gsea
 from pybel.constants import GRAPH_ANNOTATION_LIST
 from pybel_tools.mutation.metadata import serialize_authors
@@ -28,7 +28,7 @@ def to_json_custom(graph, _id='id', source='source', target='target', key='key')
     mapping = {}
 
     result['nodes'] = []
-    for i, node in enumerate(sorted(graph.nodes_iter())):
+    for i, node in enumerate(sorted(graph.nodes_iter(), key=hash_tuple)):
         nd = graph.node[node].copy()
         nd[_id] = node
         result['nodes'].append(nd)
