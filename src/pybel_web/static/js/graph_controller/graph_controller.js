@@ -121,8 +121,6 @@ function displayEdgeInfo(edge) {
  */
 function displayQueryInfo(query) {
 
-    console.log(query)
-
     var dynamicTable = document.getElementById('query-table');
 
     while (dynamicTable.rows.length > 0) {
@@ -138,14 +136,24 @@ function displayQueryInfo(query) {
         var querySeeding = query.seeding.map(function (object) {
             if (object.type == "annotation") {
 
+                console.log(object)
+
                 var arr = [];
 
-                for (var key in object.data) {
-                    if (object.data.hasOwnProperty(key)) {
-                        arr.push(key + '=' + object.data[key]);
+                if (object.data.or == true) {
+                    var queryType = "Any of the anotation is present in every edge"
+                }
+                else {
+                    var queryType = "All annotations are present in every edge"
+                }
+
+                for (var key in object.data.annotations) {
+                    console.log(key)
+                    if (object.data.annotations.hasOwnProperty(key)) {
+                        arr.push(key + '=' + object.data.annotations[key]);
                     }
                 }
-                return object.type + ": [" + arr.join(',') + "]";
+                return object.type + ": [" + arr.join(',') + "] " + queryType;
             }
             return object.type + ": [" + object.data + "]";
         });
