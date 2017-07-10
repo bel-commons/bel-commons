@@ -19,7 +19,8 @@ from flask import (
     redirect,
     url_for,
     render_template,
-    request
+    request,
+    abort,
 )
 from flask_login import login_required, current_user
 from flask_security import roles_required, roles_accepted
@@ -64,7 +65,8 @@ from .utils import (
     user_datastore,
     query_form_to_dict,
     get_query_ancestor_id,
-    get_network_ids_with_permission_helper
+    get_network_ids_with_permission_helper,
+    user_has_query_rights,
 )
 
 log = logging.getLogger(__name__)
@@ -79,12 +81,12 @@ def get_network_from_request(query_id):
     :return: A BEL graph
     :rtype: pybel.BELGraph
     """
-    try:
-        return manager.session.query(models.Query).get(query_id).run(api)
-    except IntegrityError:
-        flask.flash("You do not have permission to access the queried network")
-        log.exception('User %s trying to access not allowed network', current_user)
-        return redirect(url_for('home'))
+    query = manager.session.query(models.Query).get(query_id)
+
+    if not user_has_query_rights(current_user, query):
+        abort(403, 'Insufficient rights to run query {}'.format(query_id))
+
+    return query.run(api)
 
 
 @api_blueprint.route('/api/receive', methods=['POST'])
@@ -358,7 +360,7 @@ def export_network(network_id, serve_format):
     network_ids = get_network_ids_with_permission_helper(current_user, api)
 
     if network_id not in network_ids:
-        return flask.abort(403, 'You do not have permission to download the selected network')
+        abort(403, 'You do not have permission to download the selected network')
 
     network = api.get_network_by_id(network_id)
 
@@ -398,7 +400,7 @@ def drop_network(network_id):
 def drop_user_network(network_id, user_id):
     """Drops a given network"""
     if current_user.id != user_id:
-        flask.abort(403, 'You do not have permission to drop that network')
+        abort(403, 'You do not have permission to drop that network')
 
     try:
         report = manager.session.query(Report).filter(Report.network_id == network_id,
@@ -443,7 +445,7 @@ def make_network_private(network_id):
 def make_user_network_public(user_id, network_id):
     """Makes a given network public after authenticating that the given user is the owner."""
     if current_user.id != user_id:
-        return flask.abort(403, 'You do not have permission to modify that network')
+        abort(403, 'You do not have permission to modify that network')
 
     report = manager.session.query(Report).filter(Report.network_id == network_id, Report.user_id == user_id).one()
     report.public = True
@@ -458,7 +460,7 @@ def make_user_network_public(user_id, network_id):
 def make_user_network_private(user_id, network_id):
     """Makes a given network private after authenticating that the given user is the owner."""
     if current_user.id != user_id:
-        return flask.abort(403, 'You do not have permission to modify that network')
+        abort(403, 'You do not have permission to modify that network')
 
     report = manager.session.query(Report).filter(Report.network_id == network_id, Report.user_id == user_id).one()
     report.public = False
@@ -469,12 +471,9 @@ def make_user_network_private(user_id, network_id):
 
 
 @api_blueprint.route('/api/query/<int:query_id>/tree/')
-@login_required
 def get_tree_api(query_id):
     """Builds the annotation tree data structure for a given graph"""
-
     network = get_network_from_request(query_id)
-
     return jsonify(api.get_tree_annotations(network))
 
 
@@ -491,7 +490,6 @@ def download_network(query_id, serve_format):
 
 
 @api_blueprint.route('/api/query/<int:query_id>/relabel', methods=['GET'])
-@login_required
 def get_network(query_id):
     """Builds a graph from the given network id and sends it (relabeled) for the explorer"""
     network = get_network_from_request(query_id)
@@ -518,7 +516,7 @@ def get_paths(query_id, source_id, target_id):
     if source not in network or target not in network:
         log.info('Source/target node not in network')
         log.info('Nodes in network: %s', network.nodes())
-        return flask.abort(500, 'Source/target node not in network')
+        abort(500, 'Source/target node not in network')
 
     if undirected:
         network = network.to_undirected()
@@ -779,10 +777,10 @@ def drop_query_by_id(query_id):
     query = manager.session.query(models.Query).get(query_id)
 
     if query is None:
-        return flask.abort(400, 'Invalid Query ID')
+        abort(400, 'Invalid Query ID')
 
     if not (current_user.admin or query.user_id == current_user.id):
-        return flask.abort(403, 'Unauthorized user')
+        abort(403, 'Unauthorized user')
 
     manager.session.delete(query)
     manager.session.commit()
@@ -797,7 +795,7 @@ def drop_user_queries(user_id):
     """Deletes all queries associated to the user"""
 
     if not (current_user.admin or user_id == current_user.id):
-        return flask.abort(403, 'Unauthorized user')
+        abort(403, 'Unauthorized user')
 
     query = manager.session.query(models.Query).filter_by(user_id=current_user.id).delete()
     manager.session.commit()
@@ -814,10 +812,10 @@ def query_to_network(query_id):
 
     # TODO: Make a function to get the query checking permission
     if query is None:
-        return flask.abort(400, 'Invalid Query ID')
+        abort(400, 'Invalid Query ID')
 
     if not (current_user.admin or query.user_id == current_user.id):
-        flask.abort(403, 'Unauthorized user')
+        abort(403, 'Unauthorized user')
 
     j = query.data.to_json()
     j['id'] = query.id
@@ -839,10 +837,10 @@ def get_query_parent(query_id):
     query = manager.session.query(models.Query).get(query_id)
 
     if query is None:
-        return flask.abort(400, 'Invalid Query ID')
+        abort(400, 'Invalid Query ID')
 
     if not (current_user.admin or query.user_id == current_user.id):
-        flask.abort(403, 'Unauthorized User')
+        abort(403, 'Unauthorized User')
 
     if not query.parent:
         return jsonify({
@@ -862,10 +860,10 @@ def get_query_oldest_ancestry(query_id):
     query = manager.session.query(models.Query).get(query_id)
 
     if query is None:
-        return flask.abort(400, 'Invalid Query ID')
+        abort(400, 'Invalid Query ID')
 
     if not (current_user.admin or query.user_id == current_user.id):
-        flask.abort(403)
+        abort(403)
 
     ancestor_id = get_query_ancestor_id(query.id)
 
@@ -1069,7 +1067,7 @@ def get_analysis_median(query_id, analysis_id):
 def delete_analysis_results(analysis_id):
     """Drops an analysis"""
     if not current_user.admin:  # TODO test if it's the user/s analysis
-        flask.abort(403)
+        abort(403)
 
     experiment = manager.session.query(Experiment).get(analysis_id)
 
@@ -1113,7 +1111,7 @@ def grant_network_to_project(network_id, project_id):
 
     # Check that the user is the owner of the the network
     if not network.report.user.id == current_user.id:
-        flask.abort(403)
+        abort(403)
 
     project = manager.session.query(Project).get(project_id)
     project.networks.append(network)
@@ -1135,7 +1133,7 @@ def grant_network_to_user(network_id, user_id):
 
     # Check that the user is the owner of the the network
     if not network.report.user.id == current_user.id:
-        flask.abort(403)
+        abort(403)
 
     user = manager.session.query(User).get(user_id)
     user.networks.append(network)
@@ -1159,7 +1157,7 @@ def drop_project_by_id(project_id):
     project = manager.session.query(Project).get(project_id)
 
     if not current_user.admin and not project.has_user(current_user):
-        flask.abort(403, 'User does not have permission to access this Project')
+        abort(403, 'User does not have permission to access this Project')
 
     manager.session.delete(project)
     manager.session.commit()
