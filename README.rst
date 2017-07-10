@@ -34,6 +34,18 @@ can only be accessed from on bart. Additionally, logging can be shown with ``-v`
 3. Rerun with ``python3 -m pybel_web run --host "0.0.0.0" --port 5000 -vv``
 4. Quit the ``tmux`` session with ``ctrl-b`` then ``d``
 
+Running the Development Server
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Our development address is http://dev.scai.fraunhofer.de. It is proxied to bart:5001.
+
+1. ``tmux a -t pybel_dev_runner``
+2. If not already working on the development environment, ``source ~/pybel_web_dev_venv/bin/activate``
+3. ``pybel-web run -vv --host "0.0.0.0" --port 5001 --config ~/.config/pybel/pybel_dev_config.json``
+4. Quit the ``tmux`` session with ``ctrl-b`` then ``d``
+
+I haven't figured out how to run multiple instances of celery in parallel, so lets refrain from running async jobs
+on the dev server.
+
 Phoenix the Database
 --------------------
 1. ``pybel_web manage drop`` will nuke the database and output a user list
