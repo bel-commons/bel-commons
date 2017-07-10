@@ -21,3 +21,4 @@ pybel
 raven
 matplotlib_venn
 matplotlib
+gitpython

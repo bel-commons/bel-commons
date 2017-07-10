@@ -6,9 +6,9 @@ import csv
 import json
 import logging
 import pickle
-from operator import itemgetter
 
 import flask
+import git
 import networkx as nx
 from flask import (
     Blueprint,
@@ -23,6 +23,7 @@ from flask import (
 )
 from flask_login import login_required, current_user
 from flask_security import roles_required, roles_accepted
+from operator import itemgetter
 from six import StringIO
 from sqlalchemy.exc import IntegrityError
 
@@ -1160,6 +1161,23 @@ def view_config():
 def get_blacklist():
     """Return list of blacklist constants"""
     return jsonify(sorted(BLACK_LIST))
+
+
+@api_blueprint.route('/api/meta/git-update')
+def git_pull_bms():
+    """Updates the Biological Model Store git repository"""
+    git_dir = os.environ['BMS_BASE']
+    g = git.cmd.Git(git_dir)
+    res = g.pull()
+
+    if 'next' in request.args:
+        flask.flash(res)
+        return redirect(request.args['next'])
+
+    return jsonify({
+        'status': 200,
+        'resonse': res
+    })
 
 
 @api_blueprint.route('/api/text/report')
