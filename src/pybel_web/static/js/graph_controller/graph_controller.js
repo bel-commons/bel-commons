@@ -131,24 +131,23 @@ function displayQueryInfo(query) {
 
     queryObject["Query ID"] = query.id;
 
-    queryObject["Assembly (Networks IDs)"] = query.networks.join(", ");
+    queryObject["Assembly"] = query.networks.join(", ");
     if (query.seeding !== "[]") {
         var querySeeding = query.seeding.map(function (object) {
             if (object.type == "annotation") {
 
-                console.log(object)
+                console.log(object);
 
                 var arr = [];
 
                 if (object.data.or == true) {
-                    var queryType = "Any of the anotation is present in every edge"
-                }
-                else {
-                    var queryType = "All annotations are present in every edge"
+                    var queryType = "Any of the annotations are present in a given edge"
+                } else {
+                    var queryType = "All of the annotations are present in a given edge"
                 }
 
                 for (var key in object.data.annotations) {
-                    console.log(key)
+                    console.log(key);
                     if (object.data.annotations.hasOwnProperty(key)) {
                         arr.push(key + '=' + object.data.annotations[key]);
                     }
@@ -237,7 +236,7 @@ function networkSizeChecking(data, tree) {
 
         alert("The network you are trying to render contains: " + data.nodes.length + " nodes and " +
             data.links.length + " edges. To avoid crashing your browser, this network will only be rendered " +
-            "after you click in refresh network.Please consider giving a more specific query or applying some " +
+            "after you click in refresh network. Please consider giving a more specific query or applying some " +
             "filters using the right-hand tree navigator.")
     }
 
