@@ -852,8 +852,7 @@ function initD3Force(graph, tree) {
         .style("stroke", function (d) {
             if ('pybel_highlight' in d) {
                 return d['pybel_highlight']
-            }
-            else {
+            } else {
                 return defaultLinkColor
             }
         })
@@ -875,22 +874,18 @@ function initD3Force(graph, tree) {
         .attr("marker-start", function (d) {
             if ("positiveCorrelation" === d.relation) {
                 return "url(#arrowhead)"
-            }
-            else if ("negativeCorrelation" === d.relation) {
+            } else if ("negativeCorrelation" === d.relation) {
                 return "url(#stub)"
-            }
-            else {
+            } else {
                 return ""
             }
         })
         .attr("marker-end", function (d) {
             if (["increases", "directlyIncreases", "positiveCorrelation"].indexOf(d.relation) >= 0) {
                 return "url(#arrowhead)"
-            }
-            else if (["decreases", "directlyDecreases", "negativeCorrelation"].indexOf(d.relation) >= 0) {
+            } else if (["decreases", "directlyDecreases", "negativeCorrelation"].indexOf(d.relation) >= 0) {
                 return "url(#stub)"
-            }
-            else {
+            } else {
                 return ""
             }
         });
@@ -951,8 +946,7 @@ function initD3Force(graph, tree) {
                 circle.style("stroke", function (d) {
                     if ("pybel_highlight" in d) {
                         return d["pybel_highlight"]
-                    }
-                    else {
+                    } else {
                         return circleColor
                     }
                 });
@@ -960,8 +954,7 @@ function initD3Force(graph, tree) {
                 link.style("stroke", function (d) {
                     if ("pybel_highlight" in d) {
                         return d["pybel_highlight"]
-                    }
-                    else {
+                    } else {
                         return defaultLinkColor
                     }
                 })
@@ -1016,7 +1009,8 @@ function initD3Force(graph, tree) {
      * @param {string} property
      * @example: nodesNotInArray(['AKT1','APP'], 'cname')
      * @example: nodesNotInArray([1,2], 'id')
-     */    function nodesNotInArray(nodeArray, property) {
+     */
+    function nodesNotInArray(nodeArray, property) {
         return svg.selectAll(".node").filter(function (el) {
             return nodeArray.indexOf(el[property]) < 0;
         });
@@ -1055,7 +1049,6 @@ function initD3Force(graph, tree) {
      * Resets default styles for nodes/edges/text on double click
      */
     function resetAttributesDoubleClick() {
-
         // On double click reset attributes (Important disabling the zoom behavior of dbl click because it interferes with this)
         svg.on("dblclick", function () {
             // SET default color
@@ -1117,7 +1110,6 @@ function initD3Force(graph, tree) {
      * @example hideNodesTextInPaths([[1,34,5,56],[123,234,3,4]], false, 'id')
      */
     function hideNodesTextInPaths(data, visualization, property) {
-
         // Array with all nodes in all paths
         var nodesInPaths = [];
 
@@ -1152,7 +1144,6 @@ function initD3Force(graph, tree) {
      * @param {string} property of the edge to filter
      */
     function highlightEdges(edgeArray, property) {
-
         // Array with names of the nodes in the selected edge
         var nodesInEdges = [];
 
@@ -1181,7 +1172,6 @@ function initD3Force(graph, tree) {
      * @param {string} property of the edge to filter
      */
     function highlightNodes(nodeArray, property) {
-
         // Filter not mapped nodes to change opacity
         var nodesNotInArray = svg.selectAll(".node").filter(function (el) {
             return nodeArray.indexOf(el[property]) < 0;
@@ -1204,7 +1194,6 @@ function initD3Force(graph, tree) {
      * @example colorPaths([[1,34,5,56],[123,234,3,4]], false)
      */
     function colorPaths(data, visualization) {
-
         /**
          * Returns a random integer between min (inclusive) and max (inclusive)
          * Using Math.round() will give you a non-uniform distribution!
@@ -1329,9 +1318,8 @@ function initD3Force(graph, tree) {
         // if the node has no duplicate show it in autocompletion with its cname
         if (duplicates.indexOf(value.cname) < 0) {
             nodeNamesToId[value.cname] = value.id;
-        }
-        // if it has a duplicate show also the function after the cname
-        else {
+        } else {
+            // if it has a duplicate show also the function after the cname
             nodeNamesToId[value.cname + ' (' + value.function + ')'] = value.id;
         }
     });
@@ -1358,7 +1346,6 @@ function initD3Force(graph, tree) {
     ///////////////////////////////////////
     // Build the edge selection toggle
     ///////////////////////////////////////
-
 
     // Build the node unordered list
     edgePanel.append("<ul id='edge-list-ul' class='list-group checked-list-box not-rounded'></ul>");
@@ -1431,9 +1418,7 @@ function initD3Force(graph, tree) {
                         hideNodesTextInPaths(paths, checkbox, 'id');
                         colorPaths(paths, checkbox);
                         resetAttributesDoubleClick()
-                    }
-                    else {
-
+                    } else {
                         // Change style in force
                         resetAttributes();
 
@@ -1464,26 +1449,23 @@ function initD3Force(graph, tree) {
     });
 
     // Path validation form
-    pathForm.validate(
-        {
-            rules: {
-                source: {
-                    required: true,
-                    minlength: 2
-                },
-                target: {
-                    required: true,
-                    minlength: 2
-                }
+    pathForm.validate({
+        rules: {
+            source: {
+                required: true,
+                minlength: 2
             },
-            messages: {
-                source: "Please enter a valid source",
-                target: "Please enter a valid target"
+            target: {
+                required: true,
+                minlength: 2
             }
+        },
+        messages: {
+            source: "Please enter a valid source",
+            target: "Please enter a valid target"
         }
-    );
-
-
+    });
+    
     // Path autocompletion input
     var nodeNamesSorted = Object.keys(nodeNamesToId).sort();
 
@@ -1538,9 +1520,7 @@ function initD3Force(graph, tree) {
     betweennessButton.off("click"); // It will unbind the previous click if multiple graphs has been rendered
 
     betweennessButton.on("click", function () {
-
         if (betwennessForm.valid()) {
-
             $.ajax({
                 url: "/api/query/" + window.query + "/centrality/" + betwennessForm.find("input[name='betweenness']").val(),
                 type: betwennessForm.attr("method"),
@@ -1572,19 +1552,17 @@ function initD3Force(graph, tree) {
         }
     });
 
-    betwennessForm.validate(
-        {
-            rules: {
-                betweenness: {
-                    required: true,
-                    digits: true
-                }
-            },
-            messages: {
-                betweenness: "Please enter a number"
+    betwennessForm.validate({
+        rules: {
+            betweenness: {
+                required: true,
+                digits: true
             }
+        },
+        messages: {
+            betweenness: "Please enter a number"
         }
-    );
+    });
 
 
     // Get normalized results from NPA analysis given an experiment ID
@@ -1597,7 +1575,6 @@ function initD3Force(graph, tree) {
 
     npaButton.on("click", function () {
         if (npaForm.valid()) {
-
             var experimentID = $("#analysis_id").val();
 
             $.ajax({
@@ -1636,19 +1613,17 @@ function initD3Force(graph, tree) {
         }
     });
 
-    npaForm.validate(
-        {
-            rules: {
-                analysis_id: {
-                    required: true,
-                    digits: true
-                }
-            },
-            messages: {
-                analysis_id: "Please enter a number corresponding to the ID of an experiment"
+    npaForm.validate({
+        rules: {
+            analysis_id: {
+                required: true,
+                digits: true
             }
+        },
+        messages: {
+            analysis_id: "Please enter a number corresponding to the ID of an experiment"
         }
-    );
+    });
 
     ///////////////////////
     // Tool modal buttons /
@@ -1659,7 +1634,6 @@ function initD3Force(graph, tree) {
     toolButtonClass.off("click");
 
     toolButtonClass.on("click", function () {
-
         $.ajax({
             url: "/api/query/" + window.query + "/add_applier/" + $(this).val(),
             dataType: "json"
@@ -1710,4 +1684,3 @@ function initD3Force(graph, tree) {
         removeHighlightNodeBorder();
     });
 }
-
