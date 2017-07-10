@@ -255,7 +255,20 @@ def render_network_summary(network_id, graph):
     )
 
 
-def run_experiment(file, filename, description, gene_column, data_column, permutations, manager, network_id, sep=','):
+def run_experiment(manager_, file, filename, description, gene_column, data_column, permutations, network, sep=','):
+    """
+
+    :param pybel.manager.CacheManager manager_: A cache manager
+    :param file file:
+    :param str filename:
+    :param str description:
+    :param str gene_column:
+    :param str data_column:
+    :param int permutations:
+    :param Network network:
+    :param str sep:
+    :return:
+    """
     t = time.time()
 
     df = pandas.read_csv(file, sep=sep)
@@ -268,7 +281,6 @@ def run_experiment(file, filename, description, gene_column, data_column, permut
 
     data = {k: v for _, k, v in df.itertuples()}
 
-    network = manager.get_network_by_id(network_id)
     graph = network.as_bel()
 
     remove_nodes_by_namespace(graph, {'MGI', 'RGD'})
@@ -292,23 +304,23 @@ def run_experiment(file, filename, description, gene_column, data_column, permut
         network=network,
     )
 
-    manager.session.add(experiment)
-    manager.session.commit()
+    manager_.session.add(experiment)
+    manager_.session.commit()
 
     return experiment
 
 
-def log_graph(graph, current_user, preparsed=False, failed=False):
+def log_graph(graph, user, preparsed=False, failed=False):
     """
 
     :param pybel.BELGraph graph:
-    :param current_user:
+    :param User user:
     :param bool preparsed:
     :param bool failed:
     """
     reporting_log.info(
         '%s%s %s %s v%s with %d nodes, %d edges, and %d warnings', 'FAILED ' if failed else '',
-        current_user,
+        user,
         'uploaded' if preparsed else 'compiled',
         graph.name,
         graph.version,
@@ -318,8 +330,20 @@ def log_graph(graph, current_user, preparsed=False, failed=False):
     )
 
 
-def add_network_reporting(manager, network, user, number_nodes, number_edges, number_warnings, preparsed=False,
+def add_network_reporting(manager_, network, user, number_nodes, number_edges, number_warnings, preparsed=False,
                           public=True):
+    """
+
+    :param manager_:
+    :param network:
+    :param user:
+    :param number_nodes:
+    :param number_edges:
+    :param number_warnings:
+    :param preparsed:
+    :param public:
+    :return:
+    """
     reporting_log.info(
         '%s %s %s v%s with %d nodes, %d edges, and %d warnings',
         user,
@@ -340,25 +364,25 @@ def add_network_reporting(manager, network, user, number_nodes, number_edges, nu
         number_warnings=number_warnings,
         public=public,
     )
-    manager.session.add(report)
-    manager.session.commit()
+    manager_.session.add(report)
+    manager_.session.commit()
 
 
-def get_recent_reports(manager, weeks=2):
+def get_recent_reports(manager_, weeks=2):
     """Gets reports from the last two weeks
 
-    :param pybel.manager.CacheManager manager: A cache manager
+    :param pybel.manager.CacheManager manager_: A cache manager
     :param int weeks: The number of weeks to look backwards (builds :class:`datetime.timedelta`)
     :return: An iterable of the string that should be reported
     :rtype: iter[str]
     """
     now = datetime.datetime.utcnow()
     delta = datetime.timedelta(weeks=weeks)
-    q = manager.session.query(Report).filter(Report.created - now < delta).join(Network).group_by(Network.name)
+    q = manager_.session.query(Report).filter(Report.created - now < delta).join(Network).group_by(Network.name)
     q1 = q.having(func.min(Report.created)).order_by(Network.name.asc()).all()
     q2 = q.having(func.max(Report.created)).order_by(Network.name.asc()).all()
 
-    q3 = manager.session.query(Report, func.count(Report.network)). \
+    q3 = manager_.session.query(Report, func.count(Report.network)). \
         filter(Report.created - now < delta). \
         join(Network).group_by(Network.name). \
         order_by(Network.name.asc()).all()
@@ -381,8 +405,14 @@ def get_recent_reports(manager, weeks=2):
         yield ''
 
 
-def iterate_user_strings(manager, with_passwords):
-    for u in manager.session.query(User).all():
+def iterate_user_strings(manager_, with_passwords):
+    """Iterates over strings to print describing users
+
+    :param pybel.manager.CacheManager manager_:
+    :param bool with_passwords:
+    :rtype: iter[str]
+    """
+    for u in manager_.session.query(User).all():
         yield '{}\t{}\t{}\t{}{}'.format(
             u.email,
             u.first_name,
@@ -394,7 +424,8 @@ def iterate_user_strings(manager, with_passwords):
 
 def sanitize_pipeline(function_name):
     """Converts method.__name__ from capital and spaced to lower and underscore separated
-    :param str function_name
+
+    :param str function_name:
     :return: function name sanitized
     :rtype: str
     """
@@ -403,9 +434,10 @@ def sanitize_pipeline(function_name):
 
 def sanitize_annotation(annotation_list):
     """Converts annotation (Annotation:value) to tuple
-    :param list annotations
+
+    :param list[str] annotation_list:
     :return: annotation dictionary
-    :rtype: dict
+    :rtype: dict[str,list[str]]
     """
     annotation_dict = defaultdict(list)
 
@@ -416,7 +448,15 @@ def sanitize_annotation(annotation_list):
     return dict(annotation_dict)
 
 
+# TODO @ddomingof document this
 def convert_seed_value(key, form, value):
+    """
+
+    :param key:
+    :param form:
+    :param value:
+    :return:
+    """
     if key == 'annotation':
         query_type = not form.get(AND)
         return {'annotations': sanitize_annotation(form.getlist(value)), 'or': query_type}
@@ -427,7 +467,7 @@ def convert_seed_value(key, form, value):
 
 
 def query_form_to_dict(form):
-    """ Converts a request.form multidict to the query JSON format.
+    """Converts a request.form multidict to the query JSON format.
 
     :param werkzeug.datastructures.ImmutableMultiDict form:
     :return: json representation of the query
@@ -494,6 +534,7 @@ def calculate_overlap_dict(g1, g2, set_labels=('Query 1', 'Query 2')):
 
     :param pybel.BELGraph g1:
     :param pybel.BELGraph g2:
+    :param set_labels: A tuple of length two with the labels for the graphs
     :return: A dictionary containing important information for displaying base64 images
     :rtype: dict
     """
@@ -566,17 +607,18 @@ def calculate_overlap_dict(g1, g2, set_labels=('Query 1', 'Query 2')):
     }
 
 
-def list_public_networks(api):
+def list_public_networks(api_):
     """Lists the graphs that have been made public
 
-    :param DatabaseService api:
+    :param DatabaseService api_:
     :rtype: list[Network]
     """
     return [
         network
-        for network in api.list_recent_networks()
+        for network in api_.list_recent_networks()
         if not network.report or network.report.public
     ]
+
 
 def unique_networks(networks):
     """Only yields unique networks
@@ -614,17 +656,17 @@ def networks_with_permission_iter_helper(user, api_):
     )
 
 
-def get_network_ids_with_permission_helper(user, api):
+def get_network_ids_with_permission_helper(user, api_):
     """Gets the set of networks ids tagged as public or uploaded by the current user
 
     :param models.User user:
-    :param DatabaseService api: The database service
+    :param DatabaseService api_: The database service
     :return: A list of all networks tagged as public or uploaded by the current user
     :rtype: set[int]
     """
     return {
         network.id
-        for network in networks_with_permission_iter_helper(user, api)
+        for network in networks_with_permission_iter_helper(user, api_)
     }
 
 

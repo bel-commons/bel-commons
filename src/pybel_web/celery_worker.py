@@ -271,15 +271,18 @@ def async_parser(lines, connection, current_user_id, current_user_email, public,
 def run_cmpa(connection, network_id, lines, filename, description, gene_column, data_column, permutations, sep):
     log.info('Starting analysis task')
     manager = build_manager(connection)
+
+    network = manager.session.query(Network).get(network_id)
+
     experiment = run_experiment(
+        manager,
         file=StringIO('\n'.join(lines)),
         filename=filename,
         description=description,
         gene_column=gene_column,
         data_column=data_column,
         permutations=permutations,
-        manager=manager,
-        network_id=network_id,
+        network=network,
         sep=sep,
     )
     return experiment.id
