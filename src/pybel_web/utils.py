@@ -415,7 +415,9 @@ def sanitize_annotation(annotation_list):
 
 def convert_seed_value(key, form, value):
     if key == 'annotation':
-        return sanitize_annotation(form.getlist(value))
+        query_type = not form.get(AND)
+        print({'annotations': sanitize_annotation(form.getlist(value)), 'or': query_type})
+        return {'annotations': sanitize_annotation(form.getlist(value)), 'or': query_type}
     elif key in {'pubmed', 'authors'}:
         return form.getlist(value)
     else:

@@ -76,7 +76,16 @@
                                         <span>{{ seed['type']|title }}</span>
                                         <ul>
                                             {% if seed['type'] == 'annotation' %}
-                                                {% for annotation, value in seed['data'].items() %}
+                                                {% if seed['data']['or'] %}
+                                                    <li>
+                                                        Query type: OR
+                                                    </li>
+                                                {% else %}
+                                                    <li>
+                                                        Query type: AND
+                                                    </li>
+                                                {% endif %}
+                                                {% for annotation, value in seed['data']['annotations'].items() %}
                                                     <li>
                                                         {{ annotation }}: {{ value }}
                                                     </li>

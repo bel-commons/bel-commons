@@ -38,12 +38,21 @@
         [data-role="dynamic-fields"] > .form-inline:last-child [data-role="remove"] {
             display: none;
         }
+
+        .toggle-off {
+            background-color: #00967f !important;
+            color: white !important;
+            text-decoration-color: white !important;
+            outline-color: white !important;
+        }
     </style>
     <link rel="stylesheet" type="text/css" href='https://code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css'/>
     <link rel="stylesheet" type="text/css"
           href='https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/css/select2.min.css'/>
     <link rel="stylesheet" type="text/css"
           href='https://cdnjs.cloudflare.com/ajax/libs/select2-bootstrap-theme/0.1.0-beta.10/select2-bootstrap.min.css'/>
+    <link rel="stylesheet" type="text/css"
+          href='https://cdnjs.cloudflare.com/ajax/libs/bootstrap-toggle/2.2.2/css/bootstrap-toggle.min.css'/>
 {% endblock %}
 
 {% block scripts %}
@@ -54,6 +63,8 @@
             src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/js/select2.full.min.js"></script>
     <script type="text/javascript"
             src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+    <script type="text/javascript"
+            src='https://cdnjs.cloudflare.com/ajax/libs/bootstrap-toggle/2.2.2/js/bootstrap-toggle.min.js'></script>
     <script type="text/javascript"
             src="{{ url_for('static', filename='js/home_controller/query_builder_controller.js') }}"></script>
 {% endblock %}
@@ -244,10 +255,14 @@
                             investigated to identify novel overlaps with other canonical pathways implicated in AD.</p>
                         <div class="form-group form-horizontal">
                             <label class="col-md-2 control-label">Annotation Values</label>
-                            <div class="col-md-10">
+                            <div class="col-md-6">
                                 <select style="width: 100%;" multiple="multiple" name="annotation_selection[]"
                                         id="annotation_selection"></select>
                             </div>
+                            <input class="col-md-2" data-toggle="toggle" data-width="25%"
+                                   data-style="android" name="and"
+                                   data-on="All Annotations Should Be Present" value="True" id="andortoggle"
+                                   data-off="Any Annotation Present" type="checkbox">
                         </div>
                     </div>
                 </div>
