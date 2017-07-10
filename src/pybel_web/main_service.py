@@ -2,7 +2,6 @@
 
 """This module runs the dictionary-backed PyBEL API"""
 
-import itertools as itt
 import logging
 import sys
 
@@ -51,33 +50,13 @@ from .utils import (
     get_api,
     get_manager,
     calculate_overlap_dict,
+    unique_networks,
+    networks_with_permission_iter_helper,
+    user_has_query_rights,
+    list_public_networks,
 )
 
 log = logging.getLogger(__name__)
-
-
-def unique_networks(networks):
-    """Only yields unique networks
-
-    :param iter[Network] networks: An iterable of networks
-    :return: An iterable over the unique network identifiers in the original iterator
-    :rtype: iter[Network]
-    """
-    seen_ids = set()
-
-    for network in networks:
-        if network.id not in seen_ids:
-            seen_ids.add(network.id)
-            yield network
-
-
-def _networks_with_permission_iter(api):
-    return itt.chain(
-        api.list_public_networks(),
-        current_user.get_owned_networks(),
-        current_user.get_shared_networks(),
-        current_user.get_project_networks()
-    )
 
 
 def get_networks_with_permission(api):
@@ -88,25 +67,12 @@ def get_networks_with_permission(api):
     :rtype: list[Network]
     """
     if not current_user.is_authenticated:
-        return api.list_public_networks()
+        return list_public_networks(api)
 
     if current_user.admin:
         return api.list_recent_networks()
 
-    return list(unique_networks(_networks_with_permission_iter(api)))
-
-
-def get_network_ids_with_permission(api):
-    """Gets the set of networks ids tagged as public or uploaded by the current user
-
-    :param DatabaseService api: The database service
-    :return: A list of all networks tagged as public or uploaded by the current user
-    :rtype: set[int]
-    """
-    return {
-        network.id
-        for network in _networks_with_permission_iter(api)
-    }
+    return list(unique_networks(networks_with_permission_iter_helper(current_user, api)))
 
 
 def build_dictionary_service_admin(app):
@@ -246,6 +212,9 @@ def build_main_service(app):
     def view_explorer_query(query_id):
         """Renders a page for the user to explore a network"""
         query = manager.session.query(Query).get(query_id)
+
+        if not user_has_query_rights(current_user, query):
+            return abort(403, 'Insufficient rights to run query {}'.format(query_id))
 
         return render_template('explorer.html', query=query)
 

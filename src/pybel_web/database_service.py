@@ -55,7 +55,6 @@ from .main_service import (
     UNDIRECTED,
     BLACK_LIST
 )
-from .main_service import get_network_ids_with_permission
 from .models import Report, User, Experiment, Project
 from .send_utils import serve_network
 from .utils import (
@@ -65,6 +64,7 @@ from .utils import (
     user_datastore,
     query_form_to_dict,
     get_query_ancestor_id,
+    get_network_ids_with_permission_helper
 )
 
 log = logging.getLogger(__name__)
@@ -355,7 +355,7 @@ def get_network_list():
 @login_required
 def export_network(network_id, serve_format):
     """Builds a graph from the given network id and sends it in the given format"""
-    networks_ids = get_network_ids_with_permission(api)
+    network_ids = get_network_ids_with_permission_helper(current_user, api)
 
     if network_id not in network_ids:
         return flask.abort(403, 'You do not have permission to download the selected network')

@@ -14,6 +14,7 @@ from sqlalchemy import or_
 from pybel.manager.models import Network, Namespace, Annotation
 from .application import get_manager, get_api
 from .models import Report, Experiment, Role, User, Query, Assembly, Project
+from .utils import list_public_networks
 
 log = logging.getLogger(__name__)
 
@@ -76,7 +77,7 @@ def build_admin_service(app):
                 network_chain = chain(
                     current_user.get_owned_networks(),
                     current_user.get_shared_networks(),
-                    api.list_public_networks(),
+                    list_public_networks(api),
                 )
 
                 allowed_network_ids = {

@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
 
-import base64
 import datetime
 import itertools as itt
 import logging
 import pickle
-from collections import defaultdict
 
+import base64
 import pandas
+from collections import defaultdict
 from flask import current_app
 from flask import render_template
-from flask_login import current_user
+from flask_security import current_user
 from six import BytesIO
 from sqlalchemy import func
 from werkzeug.local import LocalProxy
@@ -129,7 +129,6 @@ def render_network_summary(network_id, graph):
     
     :param int network_id: 
     :param pybel.BELGraph graph: 
-    :param pybel_tools.api.DatabaseService api:
     """
     hub_data = api.get_top_degree(network_id)
     centrality_data = api.get_top_centrality(network_id)
@@ -138,6 +137,10 @@ def render_network_summary(network_id, graph):
     node_bel_cache = {}
 
     def dcn(node):
+        """Decanonicalizes a node tuple to a BEL string
+
+        :param tuple node: A BEL node
+        """
         if node in node_bel_cache:
             return node_bel_cache[node]
 
@@ -315,11 +318,11 @@ def log_graph(graph, current_user, preparsed=False, failed=False):
     )
 
 
-def add_network_reporting(manager, network, current_user, number_nodes, number_edges, number_warnings,
-                          preparsed=False, public=True):
+def add_network_reporting(manager, network, user, number_nodes, number_edges, number_warnings, preparsed=False,
+                          public=True):
     reporting_log.info(
         '%s %s %s v%s with %d nodes, %d edges, and %d warnings',
-        current_user,
+        user,
         'uploaded' if preparsed else 'compiled',
         network.name,
         network.version,
@@ -330,7 +333,7 @@ def add_network_reporting(manager, network, current_user, number_nodes, number_e
 
     report = Report(
         network=network,
-        user=current_user,
+        user=user,
         precompiled=preparsed,
         number_nodes=number_nodes,
         number_edges=number_edges,
@@ -561,3 +564,97 @@ def calculate_overlap_dict(g1, g2, set_labels=('Query 1', 'Query 2')):
         'citations': citations_overlap_data.decode('utf-8'),
         'annotations': annotations_overlap_data.decode('utf-8')
     }
+
+
+def list_public_networks(api):
+    """Lists the graphs that have been made public
+
+    :param DatabaseService api:
+    :rtype: list[Network]
+    """
+    return [
+        network
+        for network in api.list_recent_networks()
+        if not network.report or network.report.public
+    ]
+
+def unique_networks(networks):
+    """Only yields unique networks
+
+    :param iter[Network] networks: An iterable of networks
+    :return: An iterable over the unique network identifiers in the original iterator
+    :rtype: iter[Network]
+    """
+    seen_ids = set()
+
+    for network in networks:
+        if network.id not in seen_ids:
+            seen_ids.add(network.id)
+            yield network
+
+
+def networks_with_permission_iter_helper(user, api_):
+    """
+
+    :param models.User user:
+    :param DatabaseService api_:
+    :rtype: list[Network]
+    """
+    if not user.is_authenticated:
+        return list_public_networks(api_)
+
+    if user.admin:
+        return api_.get_recent
+
+    return itt.chain(
+        list_public_networks(api_),
+        user.get_owned_networks(),
+        user.get_shared_networks(),
+        user.get_project_networks()
+    )
+
+
+def get_network_ids_with_permission_helper(user, api):
+    """Gets the set of networks ids tagged as public or uploaded by the current user
+
+    :param models.User user:
+    :param DatabaseService api: The database service
+    :return: A list of all networks tagged as public or uploaded by the current user
+    :rtype: set[int]
+    """
+    return {
+        network.id
+        for network in networks_with_permission_iter_helper(user, api)
+    }
+
+
+def user_has_query_rights(user, query):
+    """Checks if the user has rights to run the given query
+
+    :param models.User user: A user object
+    :param models.Query query: A query object
+    :rtype: bool
+    """
+    if user.is_authenticated and user.admin:
+        return True
+
+    permissive_network_ids = get_network_ids_with_permission_helper(user, api)
+
+    return all(
+        network.id in permissive_network_ids
+        for network in query.assembly.networks
+    )
+
+
+def current_user_has_query_rights(query_id):
+    """Checks if the current user has rights to run the given query
+
+    :param int query_id: The database identifier for a query
+    :rtype: bool
+    """
+    if current_user.admin:
+        return True
+
+    query = manager.session.query(Query).get(query_id)
+
+    return user_has_query_rights(current_user, query)
