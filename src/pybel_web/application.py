@@ -92,6 +92,10 @@ class FlaskPyBEL:
                 public_dsn=self.sentry.client.get_public_dsn('https')
             )
 
+        @app.errorhandler(403)
+        def forbidden_error(error):
+            return render_template('403.html')
+
         # register functions from API
         @uni_in_place_mutator
         def expand_nodes_neighborhoods_by_ids(universe, graph, node_ids):

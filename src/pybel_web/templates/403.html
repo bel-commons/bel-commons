@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% import "bootstrap/wtf.html" as wtf %}
+{% import "bootstrap/fixes.html" as fixes %}
+{% import "bootstrap/utils.html" as util %}
+
+{% block title %}403 Error{% endblock %}
+
+{% block content %}
+    <div class="container" style="margin-top: 50px">
+
+        {{ util.flashed_messages(dismissible=True, container=False) }}
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">PyBEL Web Error Page</h3>
+            </div>
+            <div class="panel-body">
+                <h3>Forbidden (403) Error</h3>
+                <p>You don't have the appropriate rights to view this page.</p>
+            </div>
+        </div>
+    </div>
+
+    {% include "footer.html" %}
+{% endblock %}
+
