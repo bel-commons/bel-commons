@@ -10,10 +10,8 @@
     <div class="container">
 
         <div class="page-header">
-            <h1>How to Use PyBEL Web</h1>
+            <h1>Typical Workflow</h1>
         </div>
-
-        <h2>Typical Workflow</h2>
 
         <div class="panel panel-default">
             <div class="panel-heading">
@@ -39,11 +37,6 @@
                         href="https://arty.scai.fraunhofer.de/artifactory/bel/knowledge/selventa-small-corpus/">here</a>.
                 </p>
 
-                <h3>Validate Namespaces</h3>
-                <p>Large terminologies that are curated for projects investigating new diseases and pathologies can be
-                    validated by checking their contents using the Ontology Lookup Service, provided by the EBI to
-                    identify duplicate names and enable better semantic integration. </p>
-
                 <h3>Share</h3>
                 <p>Users can <a href="{{ url_for('project.create_view', url=url_for('home')) }}">create projects</a>
                     that allow them to easily share networks with groups of other users. This is useful when multiple
@@ -52,6 +45,11 @@
                 <iframe src="https://player.vimeo.com/video/224316280" width="640" height="334" frameborder="0"
                         webkitallowfullscreen mozallowfullscreen allowfullscreen>
                 </iframe>
+
+                <h3>Validate Namespaces</h3>
+                <p>Large terminologies that are curated for projects investigating new diseases and pathologies can be
+                    validated by checking their contents using the Ontology Lookup Service, provided by the EBI to
+                    identify duplicate names and enable better semantic integration. </p>
             </div>
         </div>
 
@@ -60,23 +58,25 @@
                 <h3 class="panel-title">2. Summarize a Knowledge Assembly</h3>
             </div>
             <div class="panel-body">
-                <p>Click "List Networks" and find your network. Click "Summary".</p>
+                <p>From the home page, click <a href="{{ url_for('view_networks') }}">List Networks</a>, find your
+                    network, and select "Summarize".
+                </p>
                 <p>This web application organizes high level statistical information about a network, such as the
                     number of nodes, edges, author contributions, citation contributions, and provenance information as
                     well as global network statistics such as the average node degree, network density, number of weakly
                     connected components, etc. When appropriate, it proves feedback on syntax and semantics of the
-                    source BEL document to assist in curation.</p>
-                <p>Finally, the summary page provides an assessment of the "Biological Grammar", or the biological
-                    validity of statements. These analysis include identification of contradictory edges,
-                    unstable biological motifs in pairs and triplets of nodes, and other information that is inferred
-                    to be missing or incoplete.
+                    source BEL document to assist in curation.
                 </p>
 
                 <iframe src="https://player.vimeo.com/video/224197768" width="640" height="334" frameborder="0"
                         webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>
+
+                 <p>Finally, the summary page provides an assessment of the "Biological Grammar", or the biological
+                    validity of statements. These analysis include identification of contradictory edges,
+                    unstable biological motifs in pairs and triplets of nodes, and other information that is inferred
+                    to be missing or incoplete.
+                </p>
             </div>
-
-
         </div>
 
         <div class="panel panel-default">
@@ -84,44 +84,43 @@
                 <h3 class="panel-title">3. Exploration of the Knowledge Base</h3>
             </div>
             <div class="panel-body">
-
-                <p>A query contain three actions:</p>
+                <h3>Query Builder</h3>
+                <p>A query contain three steps:</p>
                 <ol>
-                    <li><strong>Assemble</strong>: a list of networks can be assembled. This is useful to integrate many
+                    <li><strong>Assembly</strong>: A list of networks can be assembled. This is useful to integrate many
                         networks in the same disease area that have been produced at different times and in different
                         places. Additionally, this allows for integration of other static resources such as gene
                         families, orthology information, biochemical reaction databases, and other annotations to fill
                         in the most fine-granular information extracted from structured knowledge bases. We provide
                         several networks publicly for users to add to their assemblies.
                     </li>
-                    <li><strong>Seed</strong>: large assemblies of networks are very difficult to view, especially when
+                    <li><strong>Seeding</strong>: Large assemblies of networks are very difficult to view, especially
+                        when
                         there is
                         a certain point of interest for the user. We provide several network seeding methods to create
                         a more relevant and managable network before performing general queries. For example,
                         subnetworks can be seeded around a given node or list of nodes, based on edges with certain
                         properties, or even by author or citation provenance information.
                     </li>
-                    <li><strong>Mutate and Filter</strong>: finally, networks can be modified using the entire suite of
-                        tools provided by PyBEL. This includes filters for nodes based on certain properties, expansion
-                        around nodes of interest, exclusion of nodes or groups of nodes, and so on.
+                    <li><strong>Mutation and Filtering</strong>: Networks can be modified using the entire
+                        suite of tools provided by PyBEL. This includes filters for nodes based on certain properties,
+                        expansion around nodes of interest, exclusion of nodes or groups of nodes, and more.
                     </li>
                 </ol>
-
-                <p>Finally, the results of queries can be summarised, downloaded in many formats, or explored.</p>
 
                 <iframe src="https://player.vimeo.com/video/224475309" width="640" height="480" frameborder="0"
                         webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>
 
+                 <p>Finally, the results of queries can be summarized, downloaded in many formats, or explored.</p>
+
                 <h3>Interactive Network Explorer</h3>
-                <p>The results of query can be explored interactively with the Biological Network Explorer.
-                    Additional modifications and filters can be applied using the extended query builder interface
-                    in the biological network explorer. Additionally, network algorithms can be readily applied to
-                    networks such as path searches, centrality calulations, and overlaying of external data. These
+                <p>The results of query can be explored interactively with the Biological Network Explorer. Its
+                    tools panel contains an extended query builder interface that can be used to apply additional
+                    mutators and filters. Network algorithms can be readily applied to
+                    networks such as path searches, centrality calculations, and overlaying of external data. These
                     data can come from differential expression experiments, or directly from the results of the CMPA
                     algorithm, which is explained below.
                 </p>
-
-
             </div>
         </div>
 
@@ -139,15 +138,14 @@
                 </p>
                 <p>
                     This algorithm is general enough that other data types could be used, such as copy number variations
-                    on SNPs or clinical measurements of neuroimaginging features, which have been annotated to
+                    on SNPs or clinical measurements of neuro-imaging features, which have been annotated to
                     our Alzheimer Disease Knowledge assembly with NeuroMMSigDB.
                 </p>
                 <p>Data sets can be directly uploaded and analyzed. The results of these experiments can then be
-                    directly overlayed to the interactive network viewer to provide a data-driven analysis of
-                    given networks or subnetworks.
+                    directly overlaid to the interactive network viewer to provide a data-driven analysis of
+                    given networks or sub-networks.
                 </p>
             </div>
         </div>
     </div>
-
 {% endblock %}
