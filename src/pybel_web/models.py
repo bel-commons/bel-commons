@@ -129,6 +129,17 @@ class Project(Base):
     users = relationship('User', secondary=projects_users, backref=backref('projects', lazy='dynamic'))
     networks = relationship('Network', secondary=projects_networks, backref=backref('projects', lazy='dynamic'))
 
+    def has_user(self, user):
+        """Indicates if the given user belongs to the project
+
+        :param User user:
+        :rtype: bool
+        """
+        return any(
+            user.id == u.id
+            for u in self.users
+        )
+
     def __str__(self):
         return self.name
 

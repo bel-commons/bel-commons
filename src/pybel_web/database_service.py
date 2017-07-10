@@ -1157,7 +1157,7 @@ def drop_project_by_id(project_id):
     """
     project = manager.session.query(Project).get(project_id)
 
-    if not current_user.admin and current_user.id not in {user.id for user in project.users}:
+    if not current_user.admin and not project.has_user(current_user):
         flask.abort(403, 'User does not have permission to access this Project')
 
     manager.session.delete(project)
