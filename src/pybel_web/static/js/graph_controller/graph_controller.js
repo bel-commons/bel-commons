@@ -771,6 +771,7 @@ function initD3Force(graph, tree) {
         .attr("markerWidth", 6)
         .attr("markerHeight", 6)
         .attr("orient", "auto")
+        .attr("opacity", 0.3)
         .append("path")
         .attr("d", "M0,-5L10,0L0,5");
 
@@ -784,6 +785,7 @@ function initD3Force(graph, tree) {
         .attr("markerWidth", 6)
         .attr("markerHeight", 6)
         .attr("orient", "auto")
+        .attr("opacity", 0.3)
         .append("path")
         .attr("d", "M 0,0 m -1,-5 L 1,-5 L 1,5 L -1,5 Z");
 
