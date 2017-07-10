@@ -8,8 +8,11 @@ import pickle
 import base64
 import pandas
 from collections import defaultdict
-from flask import current_app
-from flask import render_template
+from flask import (
+    current_app,
+    render_template,
+    abort,
+)
 from flask_security import current_user
 from six import BytesIO
 from sqlalchemy import func
@@ -639,14 +642,14 @@ def networks_with_permission_iter_helper(user, api_):
     """
 
     :param models.User user:
-    :param DatabaseService api_:
+    :param pybel_tools.api.DatabaseService api_:
     :rtype: list[Network]
     """
     if not user.is_authenticated:
         return list_public_networks(api_)
 
     if user.admin:
-        return api_.get_recent
+        return api_.list_recent_networks()
 
     return itt.chain(
         list_public_networks(api_),
@@ -694,9 +697,26 @@ def current_user_has_query_rights(query_id):
     :param int query_id: The database identifier for a query
     :rtype: bool
     """
-    if current_user.admin:
+    if current_user.is_authenticated and current_user.admin:
         return True
 
     query = manager.session.query(Query).get(query_id)
 
     return user_has_query_rights(current_user, query)
+
+
+def safe_get_query(query_id):
+    """Gets a query or raises an abort
+
+    :param int query_id:
+    :rtype: models.Query
+    """
+    query = manager.session.query(Query).get(query_id)
+
+    if query is None:
+        abort(400, 'Query {} not found'.format(query_id))
+
+    if not user_has_query_rights(current_user, query):
+        abort(403, 'Insufficient rights to run query {}'.format(query_id))
+
+    return query

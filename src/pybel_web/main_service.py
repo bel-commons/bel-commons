@@ -52,8 +52,9 @@ from .utils import (
     calculate_overlap_dict,
     unique_networks,
     networks_with_permission_iter_helper,
-    user_has_query_rights,
     list_public_networks,
+    get_network_ids_with_permission_helper,
+    safe_get_query
 )
 
 log = logging.getLogger(__name__)
@@ -196,7 +197,6 @@ def build_main_service(app):
         )
 
     @app.route('/query', methods=['GET', 'POST'])
-    @login_required
     def view_query_builder():
         """Renders the query builder page"""
         networks = get_networks_with_permission(api)
@@ -210,27 +210,26 @@ def build_main_service(app):
     @app.route('/explore/query/<int:query_id>', methods=['GET'])
     def view_explorer_query(query_id):
         """Renders a page for the user to explore a network"""
-        query = manager.session.query(Query).get(query_id)
-
-        if not user_has_query_rights(current_user, query):
-            return abort(403, 'Insufficient rights to run query {}'.format(query_id))
-
+        query = safe_get_query(query_id)
         return render_template('explorer.html', query=query)
 
     @app.route('/explore/network/<int:network_id>', methods=['GET'])
-    @login_required
     def view_explore_network(network_id):
         """Renders a page for the user to explore a network"""
+        if network_id not in get_network_ids_with_permission_helper(current_user, api):
+            abort(403, 'Insufficient rights for network {}'.format(network_id))
 
         query = Query.from_query_args(manager, current_user, network_id)
         manager.session.add(query)
         manager.session.commit()
         return redirect(url_for('view_explorer_query', query_id=query.id))
 
-    @app.route('/summary/<network_id>')
-    @login_required
+    @app.route('/summary/<int:network_id>')
     def view_summary(network_id):
         """Renders a page with the parsing errors for a given BEL script"""
+        if network_id not in get_network_ids_with_permission_helper(current_user, api):
+            abort(403, 'Insufficient rights for network {}'.format(network_id))
+
         try:
             network = manager.get_network_by_id(network_id)
             graph = from_bytes(network.blob, check_version=current_app.config.get('PYBEL_DS_CHECK_VERSION'))

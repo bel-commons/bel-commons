@@ -315,13 +315,17 @@ class Query(Base):
         :param pybel_tools.query.Query query:
         :rtype: Query
         """
-        return Query(
-            user=user,
+        query = Query(
             assembly=Assembly.from_query(manager, query),
             seeding=query.seeding_to_jsons(),
             pipeline_protocol=query.pipeline.to_jsons(),
             dump=query.to_jsons()
         )
+
+        if user.is_authenticated:
+            query.user = user
+
+        return query
 
     @staticmethod
     def from_query_args(manager, user, network_ids, seed_list=None, pipeline=None):

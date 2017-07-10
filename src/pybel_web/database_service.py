@@ -67,6 +67,8 @@ from .utils import (
     get_query_ancestor_id,
     get_network_ids_with_permission_helper,
     user_has_query_rights,
+    current_user_has_query_rights,
+    safe_get_query
 )
 
 log = logging.getLogger(__name__)
@@ -81,11 +83,7 @@ def get_network_from_request(query_id):
     :return: A BEL graph
     :rtype: pybel.BELGraph
     """
-    query = manager.session.query(models.Query).get(query_id)
-
-    if not user_has_query_rights(current_user, query):
-        abort(403, 'Insufficient rights to run query {}'.format(query_id))
-
+    query = safe_get_query(query_id)
     return query.run(api)
 
 
@@ -354,7 +352,6 @@ def get_network_list():
 
 
 @api_blueprint.route('/api/network/<int:network_id>/export/<serve_format>', methods=['GET'])
-@login_required
 def export_network(network_id, serve_format):
     """Builds a graph from the given network id and sends it in the given format"""
     network_ids = get_network_ids_with_permission_helper(current_user, api)
@@ -480,6 +477,15 @@ def get_tree_api(query_id):
 ####################################
 # NETWORK QUERIES
 ####################################
+
+@api_blueprint.route('/api/query/<int:query_id>/rights/')
+def check_query_rights(query_id):
+    """Returns if the current user has rights to the given query"""
+    return jsonify({
+        'status': 200,
+        'query_id': query_id,
+        'allowed': current_user_has_query_rights(query_id)
+    })
 
 
 @api_blueprint.route('/api/query/<int:query_id>/export/<serve_format>', methods=['GET'])
@@ -805,17 +811,12 @@ def drop_user_queries(user_id):
 
 
 @api_blueprint.route('/api/query/<int:query_id>/info', methods=['GET'])
-@login_required
 def query_to_network(query_id):
     """Returns info from a given query ID"""
     query = manager.session.query(models.Query).get(query_id)
 
-    # TODO: Make a function to get the query checking permission
-    if query is None:
-        abort(400, 'Invalid Query ID')
-
-    if not (current_user.admin or query.user_id == current_user.id):
-        abort(403, 'Unauthorized user')
+    if not user_has_query_rights(current_user, query):
+        abort(403, 'Insufficient rights to access query {}'.format(query_id))
 
     j = query.data.to_json()
     j['id'] = query.id
@@ -830,17 +831,12 @@ def query_to_network(query_id):
 
 
 @api_blueprint.route('/api/query/<int:query_id>/parent', methods=['GET'])
-@login_required
 def get_query_parent(query_id):
     """Returns the parent of the query"""
-
     query = manager.session.query(models.Query).get(query_id)
 
-    if query is None:
-        abort(400, 'Invalid Query ID')
-
-    if not (current_user.admin or query.user_id == current_user.id):
-        abort(403, 'Unauthorized User')
+    if not user_has_query_rights(current_user, query):
+        abort(403, 'Insufficient rights to access query {}'.format(query_id))
 
     if not query.parent:
         return jsonify({
@@ -853,17 +849,12 @@ def get_query_parent(query_id):
 
 
 @api_blueprint.route('/api/query/<int:query_id>/ancestor', methods=['GET'])
-@login_required
 def get_query_oldest_ancestry(query_id):
     """Returns the parent of the query"""
-
     query = manager.session.query(models.Query).get(query_id)
 
-    if query is None:
-        abort(400, 'Invalid Query ID')
-
-    if not (current_user.admin or query.user_id == current_user.id):
-        abort(403)
+    if not user_has_query_rights(current_user, query):
+        abort(403, 'Insufficient rights to access query {}'.format(query_id))
 
     ancestor_id = get_query_ancestor_id(query.id)
 
@@ -888,13 +879,15 @@ def add_pipeline_entry(query_id, name, *args, **kwargs):
     log.info('result info: %s', info_str(result))
 
     qo = models.Query(
-        user=current_user,
         assembly=query.assembly,
         seeding=json.dumps(q.seeds),
         pipeline_protocol=q.pipeline.to_jsons(),
         dump=q.to_jsons(),
         parent_id=query_id,
     )
+
+    if current_user.is_authenticated:
+        qo.user = current_user
 
     log.info('result info: %s', info_str(qo.run(api)))
 
@@ -909,7 +902,7 @@ def add_pipeline_entry(query_id, name, *args, **kwargs):
 @api_blueprint.route('/api/query/<int:query_id>/isolated_node/<int:node_id>', methods=['GET'])
 def get_query_from_isolated_node(query_id, node_id):
     """Creates a query with a single node_id"""
-    parent_query = manager.session.query(models.Query).get(query_id)
+    parent_query = safe_get_query(query_id)
 
     child_query = Query.from_json({
         'seeding': [{'type': 'induction', 'data': [api.get_node_by_id(node_id)]}],
@@ -921,13 +914,15 @@ def get_query_from_isolated_node(query_id, node_id):
     })
 
     child_query_model = models.Query(
-        user=current_user,
         assembly=parent_query.assembly,
         seeding=json.dumps(child_query.seeds),
         pipeline_protocol=child_query.pipeline.to_jsons(),
         dump=child_query.to_jsons(),
         parent_id=parent_query.id,
     )
+
+    if current_user.is_authenticated:
+        child_query_model.user = current_user
 
     manager.session.add(child_query_model)
     manager.session.commit()
