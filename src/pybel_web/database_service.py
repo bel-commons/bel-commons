@@ -308,6 +308,33 @@ def drop_network_by_id(network_id):
     return jsonify({'status': 200})
 
 
+@api_blueprint.route('/api/network/<int:network_id>/claim')
+@roles_required('admin')
+def claim_network(network_id):
+    """Adds a report for the given network
+
+    :param int network_id: A network's database identifier
+    """
+    network = manager.session.query(Network).get(network_id)
+
+    if network.report:
+        return jsonify({'status': 200, 'owner_id': network.report.user_id})
+
+    report = Report(
+        network=network,
+        user=current_user
+    )
+
+    manager.session.add(report)
+    manager.session.commit()
+
+    if 'next' in request.args:
+        flask.flash('Claimed {}'.format(network))
+        return redirect(request.args['next'])
+
+    return jsonify({'status': 200, 'owner_id': current_user.id})
+
+
 @api_blueprint.route('/api/network/drop')
 @roles_required('admin')
 def drop_networks():
