@@ -357,8 +357,8 @@ def export_network(network_id, serve_format):
     """Builds a graph from the given network id and sends it in the given format"""
     networks_ids = get_network_ids_with_permission(api)
 
-    if network_id not in networks_ids:
-        return flask.abort(404, 'You have no permission to download the selected network')
+    if network_id not in network_ids:
+        return flask.abort(403, 'You do not have permission to download the selected network')
 
     network = api.get_network_by_id(network_id)
 
@@ -398,7 +398,7 @@ def drop_network(network_id):
 def drop_user_network(network_id, user_id):
     """Drops a given network"""
     if current_user.id != user_id:
-        flask.abort(403)
+        flask.abort(403, 'You do not have permission to drop that network')
 
     try:
         report = manager.session.query(Report).filter(Report.network_id == network_id,
@@ -443,7 +443,7 @@ def make_network_private(network_id):
 def make_user_network_public(user_id, network_id):
     """Makes a given network public after authenticating that the given user is the owner."""
     if current_user.id != user_id:
-        return flask.abort(402)
+        return flask.abort(403, 'You do not have permission to modify that network')
 
     report = manager.session.query(Report).filter(Report.network_id == network_id, Report.user_id == user_id).one()
     report.public = True
@@ -458,7 +458,7 @@ def make_user_network_public(user_id, network_id):
 def make_user_network_private(user_id, network_id):
     """Makes a given network private after authenticating that the given user is the owner."""
     if current_user.id != user_id:
-        return flask.abort(402)
+        return flask.abort(403, 'You do not have permission to modify that network')
 
     report = manager.session.query(Report).filter(Report.network_id == network_id, Report.user_id == user_id).one()
     report.public = False
@@ -779,7 +779,7 @@ def drop_query_by_id(query_id):
     query = manager.session.query(models.Query).get(query_id)
 
     if query is None:
-        return flask.abort(404, 'Invalid Query ID')
+        return flask.abort(400, 'Invalid Query ID')
 
     if not (current_user.admin or query.user_id == current_user.id):
         return flask.abort(403, 'Unauthorized user')
@@ -814,10 +814,10 @@ def query_to_network(query_id):
 
     # TODO: Make a function to get the query checking permission
     if query is None:
-        return flask.abort(404, 'Invalid Query ID')
+        return flask.abort(400, 'Invalid Query ID')
 
     if not (current_user.admin or query.user_id == current_user.id):
-        flask.abort(403)
+        flask.abort(403, 'Unauthorized user')
 
     j = query.data.to_json()
     j['id'] = query.id
@@ -839,10 +839,10 @@ def get_query_parent(query_id):
     query = manager.session.query(models.Query).get(query_id)
 
     if query is None:
-        return flask.abort(404, 'Invalid Query ID')
+        return flask.abort(400, 'Invalid Query ID')
 
     if not (current_user.admin or query.user_id == current_user.id):
-        flask.abort(403)
+        flask.abort(403, 'Unauthorized User')
 
     if not query.parent:
         return jsonify({
@@ -862,7 +862,7 @@ def get_query_oldest_ancestry(query_id):
     query = manager.session.query(models.Query).get(query_id)
 
     if query is None:
-        return flask.abort(404, 'Invalid Query ID')
+        return flask.abort(400, 'Invalid Query ID')
 
     if not (current_user.admin or query.user_id == current_user.id):
         flask.abort(403)
@@ -1084,6 +1084,7 @@ def delete_analysis_results(analysis_id):
 
 
 @api_blueprint.route('/api/analysis/<int:analysis_id>/download')
+@login_required
 def download_analysis(analysis_id):
     """Downloads data from a given experiment as a CSV"""
     experiment = manager.session.query(Experiment).get(analysis_id)
