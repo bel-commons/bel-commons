@@ -12,12 +12,14 @@
         <div class="page-header">
             <h1>How to Use PyBEL Web</h1>
         </div>
+
+        <h2>Typical Workflow</h2>
+
         <div class="panel panel-default">
             <div class="panel-heading">
-                <h3 class="panel-title">Typical Workflow</h3>
+                <h2 class="panel-title">1. Curation</h2>
             </div>
             <div class="panel-body">
-                <h2>1. Curation</h2>
                 <p>PyBEL Web hosts biological knowledge assemblies that are encoded in Biological Expression Language.
                     BEL supports the assembly of context-specific qualitative causal and correlative relations between
                     biological entities across multiple modes and scales in BEL Script with provenance
@@ -47,11 +49,17 @@
                     that allow them to easily share networks with groups of other users. This is useful when multiple
                     curators are uploading related BEL Scripts. Later, they can be assembled and queried.
                 </p>
-                <iframe src="https://player.vimeo.com/video/224316280" width="640" height="334" frameborder="0" 
+                <iframe src="https://player.vimeo.com/video/224316280" width="640" height="334" frameborder="0"
                         webkitallowfullscreen mozallowfullscreen allowfullscreen>
                 </iframe>
+            </div>
+        </div>
 
-                <h2>2. Summarize a Knowledge Assembly</h2>
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">2. Summarize a Knowledge Assembly</h3>
+            </div>
+            <div class="panel-body">
                 <p>Click "List Networks" and find your network. Click "Summary".</p>
                 <p>This web application organizes high level statistical information about a network, such as the
                     number of nodes, edges, author contributions, citation contributions, and provenance information as
@@ -61,17 +69,22 @@
                 <p>Finally, the summary page provides an assessment of the "Biological Grammar", or the biological
                     validity of statements. These analysis include identification of contradictory edges,
                     unstable biological motifs in pairs and triplets of nodes, and other information that is inferred
-                    to be missing or incomplete.
+                    to be missing or incoplete.
                 </p>
 
                 <iframe src="https://player.vimeo.com/video/224197768" width="640" height="334" frameborder="0"
                         webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>
-               
+            </div>
 
-                <h2>3. Exploration of the Knowledge Base</h2>
 
-                <h3>Query Builder</h3>
-                
+        </div>
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">3. Exploration of the Knowledge Base</h3>
+            </div>
+            <div class="panel-body">
+
                 <p>A query contain three actions:</p>
                 <ol>
                     <li><strong>Assemble</strong>: a list of networks can be assembled. This is useful to integrate many
@@ -95,8 +108,8 @@
                 </ol>
 
                 <p>Finally, the results of queries can be summarised, downloaded in many formats, or explored.</p>
-                
-                 <iframe src="https://player.vimeo.com/video/224475309" width="640" height="480" frameborder="0" 
+
+                <iframe src="https://player.vimeo.com/video/224475309" width="640" height="480" frameborder="0"
                         webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>
 
                 <h3>Interactive Network Explorer</h3>
@@ -108,7 +121,17 @@
                     algorithm, which is explained below.
                 </p>
 
-                <h2>4. Analyze a Knowledge Assembly</h2>
+
+            </div>
+        </div>
+
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">4. Analyze a Knowledge Assembly</h3>
+            </div>
+            <div class="panel-body">
+
                 <p>Data sets like differential gene expression can be used to quantify the perturbation amplitude
                     of biological processes in a network using an randomized algorithm based on NPA. Candidate
                     upstream mechanisms are generated for each biological process and a heat diffusion algorithm is used
@@ -127,4 +150,5 @@
             </div>
         </div>
     </div>
+
 {% endblock %}
