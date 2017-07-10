@@ -59,7 +59,7 @@ def serve_network(graph, serve_format=None):
         return jsonify(to_jgif(graph))
 
     if serve_format == 'bytes':
-        data = to_bytes(graph)
+        data = BytesIO(to_bytes(graph))
         return send_file(
             data,
             mimetype='application/octet-stream',
