@@ -338,10 +338,15 @@ def claim_network(network_id):
 @api_blueprint.route('/api/network/drop')
 @roles_required('admin')
 def drop_networks():
-    """Drops all graphs"""
+    """Drops all networks"""
     log.info('dropping all networks')
     api.clear()
     manager.drop_networks()
+
+    if 'next' in request.args:
+        flash('Dropped all networks')
+        return redirect(request.args['next'])
+
     return jsonify({'status': 200})
 
 
@@ -794,6 +799,19 @@ def drop_query_by_id(query_id):
 
     return redirect(url_for('home'))
 
+
+@api_blueprint.route('/api/pipeline/query/drop')
+@roles_required('admin')
+def drop_queries():
+    """Drops all queries"""
+    manager.session.query(models.Query).delete()
+    manager.session.commit()
+
+    if 'next' in request.args:
+        flash('Deleted all queries')
+        return redirect(request.args['next'])
+
+    return jsonify({'status': 200})
 
 @api_blueprint.route('/api/query/dropall/<int:user_id>', methods=['GET'])
 @login_required
