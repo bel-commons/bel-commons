@@ -22,4 +22,3 @@ raven
 matplotlib_venn
 matplotlib
 gitpython
-artifactory
