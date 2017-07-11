@@ -38,7 +38,7 @@ def parse_folder(connection, folder, **kwargs):
         infer_central_dogma=True,
         enrich_citations=True,
         enrich_genes=True,
-        enrich_go=True,
+        enrich_go=False,
         **kwargs
     )
 
