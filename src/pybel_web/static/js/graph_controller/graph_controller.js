@@ -10,6 +10,8 @@
 /**
  * Spinner on Ajax call
  */
+$body = $("body");
+
 $(document).on({
     ajaxStart: function () {
         $body.addClass("loading");
