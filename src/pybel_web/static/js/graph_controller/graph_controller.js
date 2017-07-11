@@ -7,6 +7,18 @@
  *
  */
 
+/**
+ * Spinner on Ajax call
+ */
+$(document).on({
+    ajaxStart: function () {
+        $body.addClass("loading");
+    },
+    ajaxStop: function () {
+        $body.removeClass("loading");
+    }
+});
+
 
 /**
  * Returns object with selected nodes in tree
@@ -1467,7 +1479,7 @@ function initD3Force(graph, tree) {
             target: "Please enter a valid target"
         }
     });
-    
+
     // Path autocompletion input
     var nodeNamesSorted = Object.keys(nodeNamesToId).sort();
 
