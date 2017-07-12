@@ -633,6 +633,9 @@ def unique_networks(networks):
     seen_ids = set()
 
     for network in networks:
+        if not network:
+            continue
+
         if network.id not in seen_ids:
             seen_ids.add(network.id)
             yield network
