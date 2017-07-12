@@ -516,7 +516,15 @@
                     <h4 class="modal-title">Path Mining</h4>
                 </div>
                 <div class="modal-body"><!-- /.Modal body -->
-                    <p>Highlight paths between two nodes</p>
+                    <p>Highlight paths between two nodes depending on the chosen method:</p>
+                    <ul type="circle">
+                        <li>Shortest paths: calculates a shortest path between the selected nodes. Important: there
+                            might be several shortest paths between them
+                        </li>
+                        <li>All paths: calculates all paths between the selected nodes with a max path length of 7.
+                            To increase the max path length please check our <a href="/swagger.json">API</a>.
+                        </li>
+                    </ul>
                     <form id="path-form" class="form-horizontal" method="get">
 
                         <div class="form-group">
