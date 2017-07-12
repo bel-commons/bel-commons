@@ -765,12 +765,14 @@ def get_pipeline():
     ])
 
     qo = models.Query(
-        user=current_user,
         assembly=assembly,
         seeding=json.dumps(q.seeds),
         pipeline_protocol=q.pipeline.to_jsons(),
         dump=q.to_jsons(),
     )
+
+    if current_user.is_authenticated:
+        qo.user = current_user
 
     manager.session.add(qo)
     manager.session.commit()
