@@ -864,9 +864,9 @@ function initD3Force(graph, tree) {
     var link = g.selectAll(".link")
         .data(graph.links)
         .enter().append("line")
-        .style("stroke", function (d) {
-            if ('pybel_highlight' in d) {
-                return d['pybel_highlight']
+        .style("stroke", function (edge) {
+            if ('pybel_highlight' in edge) {
+                return edge['pybel_highlight']
             } else {
                 return defaultLinkColor
             }
@@ -877,28 +877,28 @@ function initD3Force(graph, tree) {
             displayEdgeInfo(d);
         })
         .on("contextmenu", d3.contextMenu(edgeMenu)) // Attach context menu to edge link
-        .attr("class", function (d) {
+        .attr("class", function (edge) {
             if (["decreases", "directlyDecreases", "increases", "directlyIncreases", "negativeCorrelation",
-                    "positiveCorrelation"].indexOf(d.relation) >= 0) {
+                    "positiveCorrelation"].indexOf(edge.relation) >= 0) {
                 return "link link_continuous"
             }
             else {
                 return "link link_dashed"
             }
         })
-        .attr("marker-start", function (d) {
-            if ("positiveCorrelation" === d.relation) {
+        .attr("marker-start", function (edge) {
+            if ("positiveCorrelation" === edge.relation) {
                 return "url(#arrowhead)"
-            } else if ("negativeCorrelation" === d.relation) {
+            } else if ("negativeCorrelation" === edge.relation) {
                 return "url(#stub)"
             } else {
                 return ""
             }
         })
-        .attr("marker-end", function (d) {
-            if (["increases", "directlyIncreases", "positiveCorrelation"].indexOf(d.relation) >= 0) {
+        .attr("marker-end", function (edge) {
+            if (["increases", "directlyIncreases", "positiveCorrelation"].indexOf(edge.relation) >= 0) {
                 return "url(#arrowhead)"
-            } else if (["decreases", "directlyDecreases", "negativeCorrelation"].indexOf(d.relation) >= 0) {
+            } else if (["decreases", "directlyDecreases", "negativeCorrelation"].indexOf(edge.relation) >= 0) {
                 return "url(#stub)"
             } else {
                 return ""
@@ -912,8 +912,8 @@ function initD3Force(graph, tree) {
         // Next two lines -> Pin down functionality
         .on("dblclick", releaseNode)
         // Box info
-        .on("click", function (d) {
-            displayNodeInfo(d);
+        .on("click", function (node) {
+            displayNodeInfo(node);
         })
         // context-menu on right click
         .on("contextmenu", d3.contextMenu(nodeMenu)) // Attach context menu to node"s circle
@@ -922,13 +922,13 @@ function initD3Force(graph, tree) {
 
     var circle = node.append("circle")
         .attr("r", nominalBaseNodeSize)
-        .attr("class", function (d) {
-            return d.function
+        .attr("class", function (node) {
+            return node.function
         })
         .style("stroke-width", nominalStroke)
-        .style("stroke", function (d) {
-            if ('pybel_highlight' in d) {
-                return d['pybel_highlight']
+        .style("stroke", function (node) {
+            if ('pybel_highlight' in node) {
+                return node['pybel_highlight']
             } else {
                 return circleColor
             }
@@ -945,8 +945,8 @@ function initD3Force(graph, tree) {
         });
 
     // Highlight on mouseenter and back to normal on mouseout
-    node.on("mouseenter", function (d) {
-        setHighlight(d);
+    node.on("mouseenter", function (node) {
+        setHighlight(node);
     })
         .on("mousedown", function () {
             d3.event.stopPropagation();
@@ -958,17 +958,17 @@ function initD3Force(graph, tree) {
         highlightNode = null;
         if (focusNode === null) {
             if (highlightNodeBoundering !== circleColor) {
-                circle.style("stroke", function (d) {
-                    if ("pybel_highlight" in d) {
-                        return d["pybel_highlight"]
+                circle.style("stroke", function (node) {
+                    if ("pybel_highlight" in node) {
+                        return node["pybel_highlight"]
                     } else {
                         return circleColor
                     }
                 });
                 text.style("fill", "black");
-                link.style("stroke", function (d) {
-                    if ("pybel_highlight" in d) {
-                        return d["pybel_highlight"]
+                link.style("stroke", function (node) {
+                    if ("pybel_highlight" in node) {
+                        return node["pybel_highlight"]
                     } else {
                         return defaultLinkColor
                     }
@@ -1205,7 +1205,7 @@ function initD3Force(graph, tree) {
     /**
      * Highlights nodes which property is equal to condition
      * @param {string} property of the node that is going to checked
-     * @param {string} condition property condition
+     * @param {string} condition property to be asserted
      */
     function highlightNodesByProperty(property, condition) {
 
@@ -1217,6 +1217,24 @@ function initD3Force(graph, tree) {
         // Set opacity of these nodes to 1
         $.each(nodesToHighlight._groups[0], function (index, node) {
             node.style.setProperty("opacity", "1");
+        });
+    }
+
+    /**
+     * Highlights edges which property is equal to condition
+     * @param {string} property of the edge that is going to checked
+     * @param {string} condition property to be asserted
+     */
+    function highlightEdgesByProperty(property, condition) {
+
+        // Filter not mapped nodes to change opacity
+        var edgeToHighlight = svg.selectAll(".link").filter(function (edge) {
+            return edge[property] === condition;
+        });
+
+        // Set opacity of these edges to 1
+        $.each(edgeToHighlight._groups[0], function (index, edge) {
+            edge.style.setProperty("opacity", "1");
         });
     }
 
@@ -1431,7 +1449,7 @@ function initD3Force(graph, tree) {
                 highlightNodesByProperty(spanClass[1], highlightSpan.id);
             }
             else {
-                // TODO implement
+                highlightEdgesByProperty(spanClass[1], highlightSpan.id);
             }
         });
 
