@@ -344,6 +344,7 @@ function reloadTree(tree) {
 /**
  * Updates network to a previous query
  * @param {object} response
+ * @param {InspireTree} tree
  */
 function backToOldQuery(response, tree) {
     if (response["parent"] === false) {
@@ -1094,7 +1095,6 @@ function initD3Force(graph, tree) {
      * Hides the text of an array of Nodes
      * @param {array} nodeList
      * @param {boolean} visualization. If true: opacity to 0.1, false: 0.0 (hidden)
-     * @param {string} property
      * @example hideNodesText([1,34,5,56], false, 'id')
      */
     function hideNodesText(nodeList, visualization) {
