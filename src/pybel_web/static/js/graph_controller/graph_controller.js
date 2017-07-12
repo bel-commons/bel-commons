@@ -150,8 +150,6 @@ function displayQueryInfo(query) {
         var querySeeding = query.seeding.map(function (object) {
             if (object.type == "annotation") {
 
-                console.log(object);
-
                 var arr = [];
 
                 if (object.data.or == true) {
@@ -161,7 +159,6 @@ function displayQueryInfo(query) {
                 }
 
                 for (var key in object.data.annotations) {
-                    console.log(key);
                     if (object.data.annotations.hasOwnProperty(key)) {
                         arr.push(key + '=' + object.data.annotations[key]);
                     }
@@ -419,6 +416,7 @@ $(document).ready(function () {
     $("#original-query").click(function () {
         backToOldQuery(doAjaxCall("/api/query/" + window.query + "/ancestor"), tree)
     });
+
 });
 
 
@@ -1203,6 +1201,25 @@ function initD3Force(graph, tree) {
         notMappedEdges.style("opacity", "0.1");
     }
 
+
+    /**
+     * Highlights nodes which property is equal to condition
+     * @param {string} property of the node that is going to checked
+     * @param {string} condition property condition
+     */
+    function highlightNodesByProperty(property, condition) {
+
+        // Filter not mapped nodes to change opacity
+        var nodesToHighlight = svg.selectAll(".node").filter(function (node) {
+            return node[property] === condition;
+        });
+
+        // Set opacity of these nodes to 1
+        $.each(nodesToHighlight._groups[0], function (index, node) {
+            node.style.setProperty("opacity", "1");
+        });
+    }
+
     /**
      * Colors an array of node paths
      * @param {array} data array of arrays
@@ -1391,6 +1408,35 @@ function initD3Force(graph, tree) {
         highlightEdges(checkedItems, 'cname');
 
         resetAttributesDoubleClick()
+    });
+
+    var highlightButton = $("#highlight-button");
+    highlightButton.off("click"); // It will unbind the previous click if multiple graphs has been rendered
+
+    // Highlight stuffs
+    highlightButton.click(function (event) {
+        event.preventDefault();
+
+        // Reduce opacity of all nodes/edges to minimum
+        svg.selectAll(".node").style("opacity", "0.1");
+        svg.selectAll(".link").style("opacity", "0.1");
+
+        $(".highlight-checkbox:checked").each(function (idx, li) {
+            var highlightSpan = li.parentElement.parentElement.childNodes[3];
+
+            var spanClass = highlightSpan.className.split("-");
+
+            // If "node" is the first element of the class, call highlight by nodes. Else highlight by edge
+            if (spanClass[0] === "node") {
+                highlightNodesByProperty(spanClass[1], highlightSpan.id);
+            }
+            else {
+                // TODO implement
+            }
+        });
+
+        resetAttributesDoubleClick()
+
     });
 
     var pathForm = $("#path-form");
