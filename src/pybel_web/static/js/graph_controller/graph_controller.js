@@ -21,6 +21,31 @@ $(document).on({
     }
 });
 
+/**
+ * Object from which the random property will be returned
+ * @param {object} obj
+ * @return {str} random property of the object
+ */
+function pickRandomProperty(obj) {
+    var result;
+    var count = 0;
+    for (var prop in obj)
+        if (Math.random() < 1 / ++count)
+            result = prop;
+    return result;
+}
+
+/**
+ * Returns a random integer between min (inclusive) and max (inclusive)
+ * Using Math.round() will give you a non-uniform distribution!
+ * @param {int} min
+ * @param {int} max
+ * @return {int}
+ */
+function getRandomInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
 
 /**
  * Returns object with selected nodes in tree
@@ -1245,13 +1270,6 @@ function initD3Force(graph, tree) {
      * @example colorPaths([[1,34,5,56],[123,234,3,4]], false)
      */
     function colorPaths(data, visualization) {
-        /**
-         * Returns a random integer between min (inclusive) and max (inclusive)
-         * Using Math.round() will give you a non-uniform distribution!
-         */
-        function getRandomInt(min, max) {
-            return Math.floor(Math.random() * (max - min + 1)) + min;
-        }
 
         // data: nested array with all nodes in each path
         // visualization: parameter with visualization info ("hide" || "opaque)
@@ -1334,6 +1352,51 @@ function initD3Force(graph, tree) {
 
             // Select randomly a color and apply to this path
             edgesInPath.style("stroke", colorArray[getRandomInt(0, 21)]);
+        }
+    }
+
+    /**
+     * Process the response of shortest/all paths and highlight nodes/edges in them
+     * @param {array} paths array containing path or paths
+     * @param {string} checkbox boolean (hide other nodes if true)
+     * @param {string} pathMethods if "all" -> all paths else-> shortests
+     * @example colorPaths([[1,34,5,56],[123,234,3,4]], ,false)
+     */
+    function handlePathResponse(paths, checkbox, pathMethods) {
+        if (pathMethods === "all") {
+            if (paths.length === 0) {
+                alert("No paths between the selected nodes");
+            }
+
+            resetAttributes();
+
+            // Apply changes in style for select paths
+            hideNodesTextInPaths(paths, checkbox, 'id');
+            colorPaths(paths, checkbox);
+            resetAttributesDoubleClick()
+        }
+        else {
+            // Change style in force
+            resetAttributes();
+
+            var nodesNotInPath = nodesNotInArray(paths, 'id');
+
+            var edgesNotInPath = g.selectAll(".link").filter(function (el) {
+                // Source and target should be present in the edge and the distance in the array should be one
+                return !((paths.indexOf(el.source.id) >= 0 && paths.indexOf(el.target.id) >= 0)
+                && (Math.abs(paths.indexOf(el.source.id) - paths.indexOf(el.target.id)) === 1));
+            });
+
+            // If checkbox is True -> Hide all, Else -> Opacity 0.1
+            if (checkbox === true) {
+                nodesNotInPath.style("visibility", "hidden");
+                edgesNotInPath.style("visibility", "hidden");
+            } else {
+                nodesNotInPath.style("opacity", "0.1");
+                edgesNotInPath.style("opacity", "0.05");
+            }
+            hideNodesText(paths, checkbox);
+            resetAttributesDoubleClick();
         }
     }
 
@@ -1457,6 +1520,8 @@ function initD3Force(graph, tree) {
 
     });
 
+    //// Path stuffs ////
+
     var pathForm = $("#path-form");
 
     var pathButton = $("#button-paths");
@@ -1486,41 +1551,7 @@ function initD3Force(graph, tree) {
                 dataType: "json",
                 data: $.param(args, true),
                 success: function (paths) {
-
-                    if (args["paths_method"] === "all") {
-                        if (paths.length === 0) {
-                            alert("No paths between the selected nodes");
-                        }
-
-                        resetAttributes();
-
-                        // Apply changes in style for select paths
-                        hideNodesTextInPaths(paths, checkbox, 'id');
-                        colorPaths(paths, checkbox);
-                        resetAttributesDoubleClick()
-                    } else {
-                        // Change style in force
-                        resetAttributes();
-
-                        var nodesNotInPath = nodesNotInArray(paths, 'id');
-
-                        var edgesNotInPath = g.selectAll(".link").filter(function (el) {
-                            // Source and target should be present in the edge and the distance in the array should be one
-                            return !((paths.indexOf(el.source.id) >= 0 && paths.indexOf(el.target.id) >= 0)
-                            && (Math.abs(paths.indexOf(el.source.id) - paths.indexOf(el.target.id)) === 1));
-                        });
-
-                        // If checkbox is True -> Hide all, Else -> Opacity 0.1
-                        if (checkbox === true) {
-                            nodesNotInPath.style("visibility", "hidden");
-                            edgesNotInPath.style("visibility", "hidden");
-                        } else {
-                            nodesNotInPath.style("opacity", "0.1");
-                            edgesNotInPath.style("opacity", "0.05");
-                        }
-                        hideNodesText(paths, checkbox);
-                        resetAttributesDoubleClick();
-                    }
+                    handlePathResponse(paths, checkbox, args["paths_method"]);
                 }, error: function (request) {
                     alert(request.responseText);
                 }
@@ -1545,6 +1576,40 @@ function initD3Force(graph, tree) {
             target: "Please enter a valid target"
         }
     });
+
+    /// Random Paths ////
+
+    var randomPaths = $("#random-paths");
+
+    randomPaths.off("click"); // It will unbind the previous click if multiple graphs has been rendered
+
+    randomPaths.on("click", function () {
+            var checkbox = pathForm.find("input[name='visualization-options']").is(":checked");
+
+            args = {};
+
+            args["paths_method"] = $("input[name=paths_method]:checked", pathForm).val();
+
+            var undirected = pathForm.find("input[name='undirectionalize']").is(":checked");
+
+            if (undirected) {
+                args["undirected"] = undirected;
+            }
+
+            $.ajax({
+                url: "/api/query/" + window.query + "/paths/" + nodeNamesToId[pickRandomProperty(nodeNamesToId)] + "/" +
+                nodeNamesToId[pickRandomProperty(nodeNamesToId)] + "/",
+                type: pathForm.attr("method"),
+                dataType: "json",
+                data: $.param(args, true),
+                success: function (paths) {
+                    handlePathResponse(paths, checkbox, args["paths_method"]);
+                }, error: function (request) {
+                    alert(request.responseText);
+                }
+            })
+        }
+    );
 
     // Path autocompletion input
     var nodeNamesSorted = Object.keys(nodeNamesToId).sort();
