@@ -126,9 +126,7 @@ $(document).ready(function () {
         multiple: true,
         placeholder: 'Please type any node',
         ajax: {
-            url: function (params) {
-                return "/api/nodes/suggestion/";
-            },
+            url: "/api/nodes/suggestion/",
             type: "GET",
             contentType: "application/json; charset=utf-8",
             dataType: "json",
@@ -192,7 +190,7 @@ $(function () {
         function (e) {
             e.preventDefault();
             var container = $(this).closest('[data-role="dynamic-fields"]');
-            new_field_group = container.children().filter('.form-inline:first-child').clone();
+            var new_field_group = container.children().filter('.form-inline:first-child').clone();
             new_field_group.find('input').each(function () {
                 $(this).val(''); // Empty current value and start autocompletion
                 $(this).autocomplete({

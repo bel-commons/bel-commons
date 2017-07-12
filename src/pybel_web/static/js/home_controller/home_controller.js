@@ -12,7 +12,7 @@ $(document).ready(function () {
 
     /**
      * Returns joined string with the properties of selection in a select2Element.
-     * @param {select2} select2Element
+     * @param {jQuery} select2Element
      * @param {string} selectionProperty - text or id
      * @param {string} joinBy
      */
@@ -54,9 +54,7 @@ $(document).ready(function () {
         multiple: true,
         placeholder: 'Please type your nodes of interest here',
         ajax: {
-            url: function (params) {
-                return "/api/nodes/suggestion/";
-            },
+            url:  "/api/nodes/suggestion/",
             type: "GET",
             contentType: "application/json; charset=utf-8",
             dataType: "json",
