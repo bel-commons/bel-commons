@@ -20,7 +20,7 @@
             <div class="panel-body">
                 <a class="btn btn-default" href="{{ url_for('view_summary', network_id=experiment.network.id) }}"
                    role="button">Summarize Network</a>
-                <a class="btn btn-default" href="{{ url_for('view_explorer', network_id=experiment.network.id) }}"
+                <a class="btn btn-default" href="{{ url_for('view_explore_network', network_id=experiment.network.id) }}"
                    role="button">Explore Network</a>
                 <a class="btn btn-default" href="{{ url_for('dbs.download_analysis', analysis_id=experiment.id) }}"
                    role="button"><span class="glyphicon glyphicon-download" aria-hidden="true"></span> Download Results</a>
