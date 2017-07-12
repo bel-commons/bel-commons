@@ -222,12 +222,16 @@ def async_parser(lines, connection, current_user_id, current_user_email, public,
         return message
 
     except OperationalError:
+        manager.session.rollback()
+
         message = 'Database is locked. Unable to upload.'
         log.exception(message)
 
         return message
 
     except Exception as e:
+        manager.session.rollback()
+
         message = "Error storing in database: {}".format(e)
         log.exception(message)
 
@@ -256,11 +260,17 @@ def async_parser(lines, connection, current_user_id, current_user_email, public,
         manager.session.commit()
 
     except IntegrityError:
-        message = 'Problem with reporting service.'
-        log.exception(message)
         manager.session.rollback()
 
+        message = 'Problem with reporting service.'
+        log.exception(message)
+
         return message
+
+    except OperationalError:
+        manager.session.rollback()
+
+        log.exception('Problem with reporting service')
 
     do_okay_mail(current_user_email, graph)
 
