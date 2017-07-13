@@ -687,18 +687,36 @@ function initD3Force(graph, tree) {
         {
             title: "Log evidences to console",
             action: function (elm, edge, i) {
-
-                console.log(edge.source);
-                console.log(edge.target);
-
                 $.ajax({
-                    url: "/api/edge/edge/" + edge.id,
+                    url: "/api/edge/" + edge.id,
                     dataType: "json"
                 }).done(function (response) {
                     console.log(response)
                 });
             },
             disabled: false // optional, defaults to false
+        },
+        {
+            title: "Up Vote",
+            action: function (elm, edge, i) {
+                $.ajax({
+                    url: "/api/edge/" + edge.id + "/vote/up",
+                    dataType: "json"
+                }).done(function (response) {
+                    console.log(response)
+                });
+            },
+        },
+        {
+            title: "Down Vote",
+            action: function (elm, edge, i) {
+                $.ajax({
+                    url: "/api/edge/" + edge.id + "/vote/down",
+                    dataType: "json"
+                }).done(function (response) {
+                    console.log(response)
+                });
+            },
         }
     ];
 
