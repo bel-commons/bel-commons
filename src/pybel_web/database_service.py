@@ -692,6 +692,59 @@ def get_edges(source_id, target_id):
     return jsonify(api.get_edges(source, target))
 
 
+@api_blueprint.route('/api/edges/')
+@roles_required('admin')
+def get_all_edges():
+    """Gets all edges"""
+    return jsonify([
+        {
+            'id': eid,
+            'source': api.get_node_id(u),
+            'target': api.get_node_id(v),
+            'data': d
+        }
+        for eid, (u, v, d) in api.eid_edge.items()
+    ])
+
+
+@api_blueprint.route('/api/edges/<int:edge_id>')
+def get_edge_by_id(edge_id):
+    """Gets an edge data dictionary by id"""
+    source, target, data = api.get_edge_by_id(edge_id)
+
+    return jsonify({
+        'id': edge_id,
+        'source': api.get_node_id(source),
+        'target': api.get_node_id(target),
+        'data': data,
+        'comments':
+    })
+
+
+@api_blueprint.route('/api/edge/<int:edge_id>/vote/up')
+@login_required
+def store_up_vote(edge_id):
+    api.edge_votes[edge_id][current_user.id] = 1
+    return jsonify({'status': 200})
+
+
+@api_blueprint.route('/api/edge/<int:edge_id>/vote/down')
+@login_required
+def store_down_vote(edge_id):
+    api.edge_votes[edge_id][current_user.id] = -1
+    return jsonify({'status': 200})
+
+
+@api_blueprint.route('/api/edge/<int:edge_id>/comment')
+@login_required
+def store_comment(edge_id):
+    if 'comment' not in request.args:
+        abort(402)
+
+    api.edge_comments[edge_id].append((current_user.id, request.args['comment']))
+    return jsonify({'status': 200})
+
+
 ####################################
 # NODES
 ####################################

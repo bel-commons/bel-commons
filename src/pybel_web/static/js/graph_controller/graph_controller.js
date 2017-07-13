@@ -145,6 +145,9 @@ function displayEdgeInfo(edge) {
     if (edge.target.cname) {
         edgeObject["Target"] = edge.target.cname + " (ID: " + edge.target.id + ")";
     }
+    if (edge.id) {
+        edgeObject["Identifier"] = edge.id
+    }
 
     var row = 0;
     $.each(edgeObject, function (key, value) {

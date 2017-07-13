@@ -12,12 +12,13 @@ Resources:
 
 import datetime
 import logging
-import os
 import socket
 import time
 from getpass import getuser
 
+import os
 from celery import Celery
+from collections import defaultdict
 from flask import (
     Flask,
     g,
@@ -71,6 +72,9 @@ class FlaskPyBEL:
         Base.query = self.manager.session.query_property()
 
         self.api = DatabaseService(manager=self.manager)
+        self.api.edge_votes = defaultdict(dict)
+        self.api.edge_comments = defaultdict(list)
+
         self.user_datastore = SQLAlchemyUserDatastore(self.manager, User, Role)
 
         if app.config.get('PYBEL_DS_PRELOAD', False):
