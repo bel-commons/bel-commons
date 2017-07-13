@@ -74,7 +74,7 @@
                     Help
                 </button>
                 <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#paths">
-                    Path Search
+                    Path Mining
                 </button>
                 <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#algorithms">
                     Algorithms
@@ -516,15 +516,20 @@
                     <h4 class="modal-title">Path Mining</h4>
                 </div>
                 <div class="modal-body"><!-- /.Modal body -->
-                    <p>Highlight paths between two nodes depending on the chosen method:</p>
-                    <ul type="circle">
-                        <li>Shortest paths: calculates a shortest path between the selected nodes. Important: there
-                            might be several shortest paths between them
-                        </li>
-                        <li>All paths: calculates all paths between the selected nodes with a max path length of 7.
-                            To increase the max path length please check our <a href="/swagger.json">API</a>.
-                        </li>
-                    </ul>
+                    <p>
+                        Highlight paths between two nodes depending on the chosen method. For presentation purposes,
+                        a button to identify paths between two random nodes in the graph is given.
+                    </p>
+                    <dl class="dl-horizontal">
+                        <dt>Shortest Path</dt>
+                        <dd>Calculate the shortest path between the selected nodes. If there are more than one shortest
+                            path, this algorithm randomly chooses one of them.
+                        </dd>
+                        </dd>
+                        <dt>All Paths</dt>
+                        <dd>Calculates all paths between the selected nodes with a maximum length of 7.
+                        </dd>
+                    </dl>
                     <form id="path-form" class="form-horizontal" method="get">
 
                         <div class="form-group">
@@ -546,10 +551,10 @@
                         <div class="form-group">
                             <div class="col-sm-offset-2 col-sm-10">
                                 <label class="radio-inline">
-                                    <input type="radio" name="paths_method" value="shortest" checked> Shortest path
+                                    <input type="radio" name="paths_method" value="shortest" checked>Shortest Path
                                 </label>
                                 <label class="radio-inline">
-                                    <input type="radio" name="paths_method" value="all"> All paths<br>
+                                    <input type="radio" name="paths_method" value="all">All Paths<br>
                                 </label>
                             </div>
                         </div>
@@ -576,8 +581,7 @@
                                 <input type="button" class="btn btn-primary" id="button-paths" value="Submit"
                                        data-dismiss="modal"/>
                                 <input type="button" class="btn btn-primary pull-right" id="random-paths"
-                                       value="Show Random Paths"
-                                       data-dismiss="modal"/>
+                                       value="Show a Random Path" data-dismiss="modal"/>
                             </div>
                         </div>
 
