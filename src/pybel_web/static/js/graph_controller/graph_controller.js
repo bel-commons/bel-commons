@@ -683,13 +683,13 @@ function initD3Force(graph, tree) {
     var edgeMenu = [
         {
             title: "Log evidences to console",
-            action: function (elm, link, i) {
+            action: function (elm, edge, i) {
 
-                console.log(link.source);
-                console.log(link.target);
+                console.log(edge.source);
+                console.log(edge.target);
 
                 $.ajax({
-                    url: "/api/edges/provenance/" + link.source.id + "/" + link.target.id,
+                    url: "/api/edges/provenance/" + edge.source.id + "/" + edge.target.id,
                     dataType: "json"
                 }).done(function (response) {
                     console.log(response)
