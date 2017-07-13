@@ -692,7 +692,7 @@ function initD3Force(graph, tree) {
                 console.log(edge.target);
 
                 $.ajax({
-                    url: "/api/edges/provenance/" + edge.source.id + "/" + edge.target.id,
+                    url: "/api/edge/edge/" + edge.id,
                     dataType: "json"
                 }).done(function (response) {
                     console.log(response)

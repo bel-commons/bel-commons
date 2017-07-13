@@ -644,58 +644,49 @@ def get_author_suggestion():
 # EDGES
 ####################################
 
-@api_blueprint.route('/api/edges/by_bel/statement/<statement_bel>', methods=['GET'])
+@api_blueprint.route('/api/edge/by_bel/statement/<statement_bel>', methods=['GET'])
 def edges_by_bel_statement(statement_bel):
     """Get edges that match the given BEL"""
     edges = api.query_edges(statement=statement_bel)
     return jsonify(edges)
 
 
-@api_blueprint.route('/api/edges/by_bel/source/<source_bel>', methods=['GET'])
+@api_blueprint.route('/api/edge/by_bel/source/<source_bel>', methods=['GET'])
 def edges_by_bel_source(source_bel):
     """Get edges whose sources match the given BEL"""
     edges = api.query_edges(source=source_bel)
     return jsonify(edges)
 
 
-@api_blueprint.route('/api/edges/by_bel/target/<target_bel>', methods=['GET'])
+@api_blueprint.route('/api/edge/by_bel/target/<target_bel>', methods=['GET'])
 def edges_by_bel_target(target_bel):
     """Gets edges whose targets match the given BEL"""
     edges = api.query_edges(target=target_bel)
     return jsonify(edges)
 
 
-@api_blueprint.route('/api/edges/by_pmid/<int:pmid>', methods=['GET'])
+@api_blueprint.route('/api/edge/by_pmid/<int:pmid>', methods=['GET'])
 def edges_by_pmid(pmid):
     """Gets edges that have a given PubMed identifier"""
     edges = api.query_edges(pmid=pmid)
     return jsonify(edges)
 
 
-@api_blueprint.route('/api/edges/by_author/<author>', methods=['GET'])
+@api_blueprint.route('/api/edge/by_author/<author>', methods=['GET'])
 def edges_by_author(author):
     """Gets edges with a given author"""
     edges = api.query_edges(author=author)
     return jsonify(edges)
 
 
-@api_blueprint.route('/api/edges/by_annotation/<annotation_name>/<annotation_value>', methods=['GET'])
+@api_blueprint.route('/api/edge/by_annotation/<annotation_name>/<annotation_value>', methods=['GET'])
 def edges_by_annotation(annotation_name, annotation_value):
     """Gets edges with the given annotation/value combination"""
     edges = api.query_edges(annotations={annotation_name: annotation_value})
     return jsonify(edges)
 
 
-# TODO rename to get_edges_by_terminals
-@api_blueprint.route('/api/edges/provenance/<int:source_id>/<int:target_id>')
-def get_edges(source_id, target_id):
-    """Gets all edges between the two given nodes"""
-    source = api.get_node_by_id(source_id)
-    target = api.get_node_by_id(target_id)
-    return jsonify(api.get_edges(source, target))
-
-
-@api_blueprint.route('/api/edges/')
+@api_blueprint.route('/api/edge/')
 @roles_required('admin')
 def get_all_edges():
     """Gets all edges"""
@@ -710,7 +701,7 @@ def get_all_edges():
     ])
 
 
-@api_blueprint.route('/api/edges/<int:edge_id>')
+@api_blueprint.route('/api/edge/<int:edge_id>')
 def get_edge_by_id(edge_id):
     """Gets an edge data dictionary by id"""
     source, target, data = api.get_edge_by_id(edge_id)
