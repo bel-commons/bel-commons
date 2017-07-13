@@ -24,6 +24,7 @@ from flask import (
 )
 from flask_login import login_required, current_user
 from flask_security import roles_required, roles_accepted
+from functools import lru_cache
 from operator import itemgetter
 from six import StringIO
 from sqlalchemy.exc import IntegrityError
@@ -76,6 +77,7 @@ log = logging.getLogger(__name__)
 api_blueprint = Blueprint('dbs', __name__)
 
 
+@lru_cache(maxsize=32)
 def get_network_from_request(query_id):
     """Process the GET request returning the filtered network
 
