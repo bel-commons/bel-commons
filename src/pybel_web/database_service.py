@@ -686,18 +686,21 @@ def edges_by_annotation(annotation_name, annotation_value):
     return jsonify(edges)
 
 
-@api_blueprint.route('/api/edge/')
+@api_blueprint.route('/api/edge')
 @roles_required('admin')
 def get_all_edges():
     """Gets all edges"""
     return jsonify([
         {
-            'id': eid,
-            'source': api.get_node_id(u),
-            'target': api.get_node_id(v),
-            'data': d
+            'id': edge_id,
+            'source': api.get_node_id(source),
+            'target': api.get_node_id(target),
+            'data': data,
+            'votes': api.edge_votes[edge_id],
+            'comments': api.edge_comments[edge_id]
+
         }
-        for eid, (u, v, d) in api.eid_edge.items()
+        for edge_id, (source, target, data) in api.eid_edge.items()
     ])
 
 
