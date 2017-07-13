@@ -74,7 +74,7 @@
                                     Admin</a>
                             {% endif %}
                             <a class="btn btn-info" role="button"
-                               href="{{ url_for('dbs.delete_user', user_id=user.id) }}">Remove</a>
+                               href="{{ url_for('dbs.delete_user', user_id=user.id, next=url_for('view_users')) }}">Remove</a>
                         </td>
                     </tr>
                 {% endfor %}
