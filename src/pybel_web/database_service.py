@@ -138,10 +138,17 @@ def list_names(keyword):
 @roles_required('admin')
 def drop_namespace_by_id(namespace_id):
     """Drops a namespace given its identifier"""
+    namespace = manager.session.query(Namespace).get(namespace_id)
     log.info('dropping namespace %s', namespace_id)
-    manager.session.query(Namespace).filter(Namespace.id == namespace_id).delete()
+
+    manager.session.delete(namespace)
     manager.session.commit()
-    return jsonify({'status': 200})
+
+    return jsonify({
+        'status': 200,
+        'namespace_id': namespace_id,
+        'namespace': str(namespace)
+    })
 
 
 @api_blueprint.route('/api/namespace/drop')
@@ -1039,7 +1046,12 @@ def delete_user(user_id):
         flash('Deleted user: {}'.format(user))
         return redirect(request.args['next'])
 
-    return jsonify({'status': 200, 'action': 'deleted user', 'user': str(user)})
+    return jsonify({
+        'status': 200,
+        'action': 'deleted user',
+        'user_id': user.id,
+        'user': str(user)
+    })
 
 
 ####################################
