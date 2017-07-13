@@ -777,6 +777,19 @@ def nodes_by_namespace_name(node_namespace, node_name):
     return jsonify(nodes)
 
 
+@api_blueprint.route('/api/nodes/')
+@roles_required('admin')
+def get_all_nodes():
+    """Gets all nodes"""
+    return jsonify([
+        {
+            'id': nid,
+            'node': node
+        }
+        for nid, node in api.nid_node.items()
+    ])
+
+
 @api_blueprint.route('/api/nodes/<int:node_id>')
 def get_node_hash(node_id):
     """Gets the pybel node tuple
