@@ -686,6 +686,7 @@ def edges_by_annotation(annotation_name, annotation_value):
     return jsonify(edges)
 
 
+# TODO rename to get_edges_by_terminals
 @api_blueprint.route('/api/edges/provenance/<int:source_id>/<int:target_id>')
 def get_edges(source_id, target_id):
     """Gets all edges between the two given nodes"""
@@ -719,7 +720,8 @@ def get_edge_by_id(edge_id):
         'source': api.get_node_id(source),
         'target': api.get_node_id(target),
         'data': data,
-        'comments':
+        'vote': 0 if current_user.id not in api.edge_votes[edge_id] else api.edge_votes[edge_id][current_user.id],
+        'comments': api.edge_comments[edge_id]
     })
 
 
@@ -893,6 +895,7 @@ def drop_queries():
         return redirect(request.args['next'])
 
     return jsonify({'status': 200})
+
 
 @api_blueprint.route('/api/query/dropall/<int:user_id>', methods=['GET'])
 @login_required
