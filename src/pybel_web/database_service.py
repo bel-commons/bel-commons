@@ -144,6 +144,10 @@ def drop_namespace_by_id(namespace_id):
     manager.session.delete(namespace)
     manager.session.commit()
 
+    if 'next' in request.args:
+        flash('dropped namespace: {}'.format(namespace))
+        return redirect(request.args['next'])
+
     return jsonify({
         'status': 200,
         'namespace_id': namespace_id,
