@@ -705,7 +705,7 @@ function initD3Force(graph, tree) {
                 }).done(function (response) {
                     console.log(response)
                 });
-            },
+            }
         },
         {
             title: "Down Vote",
@@ -716,7 +716,7 @@ function initD3Force(graph, tree) {
                 }).done(function (response) {
                     console.log(response)
                 });
-            },
+            }
         }
     ];
 
@@ -812,7 +812,8 @@ function initD3Force(graph, tree) {
 
     const nominalBaseNodeSize = 10; // Default node radius
 
-    var nominalStroke = 2.5;  // Edge width
+    var edgeStroke = 3.5;  // Edge width
+    var circleStroke = 2.5;  // Circle width
     var minZoom = 0.1, maxZoom = 10; // Zoom variables
 
     var svg = d3.select("#graph-chart").append("svg")
@@ -917,7 +918,7 @@ function initD3Force(graph, tree) {
                 return defaultLinkColor
             }
         })
-        .style("stroke-width", nominalStroke)
+        .style("stroke-width", edgeStroke)
         .style("stroke-opacity", 0.4)
         .on("click", function (d) {
             displayEdgeInfo(d);
@@ -971,7 +972,7 @@ function initD3Force(graph, tree) {
         .attr("class", function (node) {
             return node.function
         })
-        .style("stroke-width", nominalStroke)
+        .style("stroke-width", circleStroke)
         .style("stroke", function (node) {
             if ('pybel_highlight' in node) {
                 return node['pybel_highlight']
