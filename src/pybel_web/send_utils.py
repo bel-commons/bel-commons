@@ -8,8 +8,8 @@ from six import StringIO, BytesIO
 from pybel import to_cx, to_bel_lines, to_graphml, to_bytes, to_csv, to_sif, to_jgif, to_gsea
 from pybel.constants import GRAPH_ANNOTATION_LIST
 from pybel.utils import hash_node, hash_edge
-from pybel_tools.api import hash_str_to_int
 from pybel_tools.mutation.metadata import serialize_authors
+from pybel_tools.utils import hash_str_to_int
 
 log = logging.getLogger(__name__)
 
@@ -42,7 +42,6 @@ def to_json_custom(graph, _id='id', source='source', target='target', key='key')
             source: mapping[u],
             target: mapping[v],
             key: k,
-            _id: hash_str_to_int(hash_edge(u, v, k, d))
         }
         ed.update(d)
         result['links'].append(ed)
