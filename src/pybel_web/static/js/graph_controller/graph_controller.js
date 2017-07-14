@@ -1608,9 +1608,7 @@ function initD3Force(graph, tree) {
     randomPaths.on("click", function () {
             var checkbox = pathForm.find("input[name='visualization-options']").is(":checked");
 
-            args = {};
-
-            args["paths_method"] = $("input[name=paths_method]:checked", pathForm).val();
+            var args = {"paths_method": $("input[name=paths_method]:checked", pathForm).val()};
 
             var undirected = pathForm.find("input[name='undirectionalize']").is(":checked");
 
@@ -1618,9 +1616,22 @@ function initD3Force(graph, tree) {
                 args["undirected"] = undirected;
             }
 
+            var randomSource = nodeNamesToId[pickRandomProperty(nodeNamesToId)];
+
+            var randomTarget = randomSource;
+
+            if (Object.keys(nodeNamesToId).length < 2) { // One of no nodes in the query
+                alert("There is only one node present in your query.");
+                return
+            }
+            else { // 2 or more nodes in the graph
+                while (randomSource === randomTarget) { // Guarantees that the source and target node is not the same
+                    var randomTarget = nodeNamesToId[pickRandomProperty(nodeNamesToId)];
+                }
+            }
+
             $.ajax({
-                url: "/api/query/" + window.query + "/paths/" + nodeNamesToId[pickRandomProperty(nodeNamesToId)] + "/" +
-                nodeNamesToId[pickRandomProperty(nodeNamesToId)] + "/",
+                url: "/api/query/" + window.query + "/paths/" + randomSource + "/" + randomTarget + "/",
                 type: pathForm.attr("method"),
                 dataType: "json",
                 data: $.param(args, true),
