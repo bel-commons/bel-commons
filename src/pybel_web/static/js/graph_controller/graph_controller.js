@@ -84,9 +84,6 @@ function displayNodeInfo(node) {
 
     var nodeObject = {};
 
-    if (node.cname) {
-        nodeObject["Node"] = node.cname + " (ID: " + node.id + ")";
-    }
     if (node.name) {
         nodeObject["Name"] = node.cname;
     }
@@ -101,6 +98,9 @@ function displayNodeInfo(node) {
     }
     if (node.description) {
         nodeObject["Description"] = node.description
+    }
+    if (node.id) {
+        nodeObject["Identifier"] = '<a href="/api/nodes/' + node.id + '">' + node.id + "</a>";
     }
 
     var row = 0;
@@ -146,7 +146,7 @@ function displayEdgeInfo(edge) {
         edgeObject["Target"] = edge.target.cname + " (ID: " + edge.target.id + ")";
     }
     if (edge.id) {
-        edgeObject["Identifier"] = edge.id
+        edgeObject["Identifier"] = '<a href="/api/edge/' + edge.id + '">' + edge.id + '</a>';
     }
 
     var row = 0;
