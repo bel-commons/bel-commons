@@ -277,12 +277,14 @@
                 </thead>
                 <tbody>
                 {% for other_network, tanimoto in overlaps %}
-                    <tr>
-                        <td>
-                            <a href="{{ url_for('view_summary', network_id=other_network.id) }}">{{ other_network }}</a>
-                        </td>
-                        <td>{{ tanimoto }}</td>
-                    </tr>
+                    {% if other_network %}
+                        <tr>
+                            <td>
+                                <a href="{{ url_for('view_summary', network_id=other_network.id) }}">{{ other_network }}</a>
+                            </td>
+                            <td>{{ tanimoto }}</td>
+                        </tr>
+                    {% endif %}
                 {% endfor %}
                 </tbody>
             </table>
