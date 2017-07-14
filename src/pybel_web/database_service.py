@@ -722,9 +722,9 @@ def get_edge_by_id(edge_id):
 @api_blueprint.route('/api/edge/<int:edge_id>/vote/up')
 @login_required
 def store_up_vote(edge_id):
-    """Upvotes an edge"""
+    """Up votes an edge"""
     if edge_id not in api.eid_edge:
-        abort(402, 'Edge not found')
+        abort(403, 'Edge {} not found'.format(edge_id))
 
     api.edge_votes[edge_id][current_user.id] = 1
     return jsonify({
@@ -737,9 +737,9 @@ def store_up_vote(edge_id):
 @api_blueprint.route('/api/edge/<int:edge_id>/vote/down')
 @login_required
 def store_down_vote(edge_id):
-    """Downvotes an edge"""
+    """Down votes an edge"""
     if edge_id not in api.eid_edge:
-        abort(402, 'Edge not found')
+        abort(403, 'Edge {} not found'.format(edge_id))
 
     api.edge_votes[edge_id][current_user.id] = -1
     return jsonify({
@@ -752,8 +752,9 @@ def store_down_vote(edge_id):
 @api_blueprint.route('/api/edge/<int:edge_id>/comment')
 @login_required
 def store_comment(edge_id):
+    """Adds a comment to the edge"""
     if 'comment' not in request.args:
-        abort(402)
+        abort(403, 'Edge {} not found'.format(edge_id))
 
     api.edge_comments[edge_id].append((current_user.id, request.args['comment']))
     return jsonify({'status': 200})
