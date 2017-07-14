@@ -7,9 +7,8 @@ from six import StringIO, BytesIO
 
 from pybel import to_cx, to_bel_lines, to_graphml, to_bytes, to_csv, to_sif, to_jgif, to_gsea
 from pybel.constants import GRAPH_ANNOTATION_LIST
-from pybel.utils import hash_node, hash_edge
+from pybel.utils import hash_node
 from pybel_tools.mutation.metadata import serialize_authors
-from pybel_tools.utils import hash_str_to_int
 
 log = logging.getLogger(__name__)
 
