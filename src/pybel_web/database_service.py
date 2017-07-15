@@ -587,6 +587,13 @@ def get_node_hashes():
     return jsonify(api.nid_node)
 
 
+@api_blueprint.route('/api/query/<int:query_id>/summarize')
+def get_query_summary(query_id):
+    """Gets a summary of the results from a given query"""
+    network = get_network_from_request(query_id)
+    return jsonify(info_json(network))
+
+
 ####################################
 # CITATIONS
 ####################################
