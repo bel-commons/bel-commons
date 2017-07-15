@@ -212,6 +212,28 @@ function displayQueryInfo(query) {
         insertRow(dynamicTable, row, key, value);
         row++
     });
+
+    $.ajax({
+        type: "GET",
+        url: "/api/query/" + query.id + "/summarize",
+        dataType: "json",
+        success: function (data) {
+            var networkInfoTable = document.getElementById('network-info-table');
+
+            while (networkInfoTable.rows.length > 0) {
+                networkInfoTable.deleteRow(0);
+            }
+            var row = 0;
+            $.each(data, function (key, value) {
+                insertRow(networkInfoTable, row, key, value);
+                row++
+            });
+        },
+        error: function (request) {
+            alert(request.message);
+        },
+        data: {},
+    });
 }
 
 /**
