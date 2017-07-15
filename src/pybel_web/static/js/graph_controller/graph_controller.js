@@ -267,28 +267,21 @@ function removeHighlightNodeBorder() {
 
 }
 
-
 /**
  * Performs an AJAX call given an URL
  * @param {string} url
+ * @param callback
  */
-function doAjaxCall(url) {
-
-    var result = null;
+function doAjaxCallWithCallback(url, callback) {
     $.ajax({
         type: "GET",
         url: url,
         dataType: "json",
-        success: function (data) {
-            result = data;
-        }, error: function (request) {
+        success: callback,
+        error: function (request) {
             alert(request.message);
         },
-        data: {},
-        async: false
     });
-
-    return result
 }
 
 function networkSizeChecking(data, tree) {
@@ -319,19 +312,21 @@ function updateQueryResponse(response, tree) {
 
     reloadTree(tree); // Inits tree from network annotations
 
-    var networkResponse = doAjaxCall("/api/query/" + window.query + "/relabel"); // Grabs the new network from the API
+    const url = "/api/query/" + window.query + "/relabel";
 
-    window.history.pushState("BiNE", "BiNE", "/explore/query/" + window.query); // Updates the URL
+    doAjaxCallWithCallback(url, function (networkResponse) {
+        window.history.pushState("BiNE", "BiNE", "/explore/query/" + window.query); // Updates the URL
 
-    var data = updateNodePosition(networkResponse, positions); // Loads new data, first empty all created divs and clear the current network
+        var data = updateNodePosition(networkResponse, positions); // Loads new data, first empty all created divs and clear the current network
 
-    clearUsedDivs(); // Cleans up used divs
+        clearUsedDivs(); // Cleans up used divs
 
-    networkSizeChecking(data["jsonNetwork"], tree);
+        networkSizeChecking(data["jsonNetwork"], tree);
 
-    highlightNodeBorder(data["newNodes"]); // Highlights nodes that were not in present query
+        highlightNodeBorder(data["newNodes"]); // Highlights nodes that were not in present query
 
-    updateQueryTable(); // Updates Query Table
+        updateQueryTable(); // Updates Query Table
+    });
 }
 
 
@@ -385,13 +380,13 @@ function initTreeTools(tree) {
  * @param {InspireTree} tree
  */
 function reloadTree(tree) {
+    const url = "/api/query/" + window.query + "/tree/";
 
-    tree.removeAll(); //Clean tree
-
-    // reload TreeNodes
-    tree.load(doAjaxCall("/api/query/" + window.query + "/tree/"));
-
-    initTreeTools(tree);
+    doAjaxCallWithCallback(url, function (response) {
+        tree.removeAll(); //Clean tree
+        tree.load(response);
+        initTreeTools(tree);
+    });
 }
 
 /**
@@ -413,66 +408,75 @@ $(document).ready(function () {
 
     updateQueryTable();  // Renders table info of the given query
 
+    const url = "/api/query/" + window.query + "/tree/";
 
-    // Inits the Annotation tree
-    var tree = new InspireTree({
-        target: "#tree",
-        selection: {
-            mode: "checkbox",
-            multiple: true
-        },
-        data: doAjaxCall("/api/query/" + window.query + "/tree/")
-    });
+    doAjaxCallWithCallback(url, function (response) {
+        // Inits the Annotation tree
+        var tree = new InspireTree({
+            target: "#tree",
+            selection: {
+                mode: "checkbox",
+                multiple: true
+            },
+            data: response
+        });
 
-    initTreeTools(tree); // Enable search/expands tree
+        initTreeTools(tree); // Enable search/expands tree
 
-    $.getJSON("/api/query/" + window.query + "/relabel", function (networkJson) {
-        networkSizeChecking(networkJson, tree);
-    });
+        $.getJSON("/api/query/" + window.query + "/relabel", function (networkJson) {
+            networkSizeChecking(networkJson, tree);
+        });
 
-    $("#refresh-network").on("click", function () {
+        $("#refresh-network").on("click", function () {
 
-        var treeSelection = getSelectedNodesFromTree(tree);
+            var treeSelection = getSelectedNodesFromTree(tree);
 
-        if ($('#andortoggle').prop('checked') === true) {
-            treeSelection["and"] = true;
-        }
+            if ($('#andortoggle').prop('checked') === true) {
+                treeSelection["and"] = true;
+            }
 
-        $.ajax({
-            url: "/api/query/" + window.query + "/add_annotation_filter/?" + $.param(treeSelection, true),
-            dataType: "json"
-        }).done(function (response) {
-            updateQueryResponse(response, tree);
+            // TODO can the params be injected with the ajax function?
+            $.ajax({
+                url: "/api/query/" + window.query + "/add_annotation_filter/?" + $.param(treeSelection, true),
+                dataType: "json"
+            }).done(function (response) {
+                updateQueryResponse(response, tree);
+            });
+        });
+
+        $("#collapse-tree").on("click", function () {
+            tree.collapseDeep();
+        });
+
+        // Export network as an image
+        d3.select("#save-svg-graph").on("click", downloadSvg);
+
+        // Export to BEL
+        $("#bel-button").click(function () {
+            $.ajax({
+                url: "/api/query/" + window.query + "/export/bel",
+                dataType: "text"
+            }).done(function (response) {
+                downloadText(response, "MyNetwork.bel")
+            });
+        });
+
+        // Back to parent query
+        $("#parent-query").click(function () {
+            const url = "/api/query/" + window.query + "/parent";
+            doAjaxCallWithCallback(url, function (response) {
+                backToOldQuery(response, tree);
+            });
+        });
+
+        // Back to original query
+        $("#original-query").click(function () {
+            const url = "/api/query/" + window.query + "/ancestor";
+            doAjaxCallWithCallback(url, function (response) {
+                backToOldQuery(response, tree);
+            });
         });
     });
-
-    $("#collapse-tree").on("click", function () {
-        tree.collapseDeep();
-    });
-
-    // Export network as an image
-    d3.select("#save-svg-graph").on("click", downloadSvg);
-
-    // Export to BEL
-    $("#bel-button").click(function () {
-        $.ajax({
-            url: "/api/query/" + window.query + "/export/bel",
-            dataType: "text"
-        }).done(function (response) {
-            downloadText(response, "MyNetwork.bel")
-        });
-    });
-
-    // Back to parent query
-    $("#parent-query").click(function () {
-        backToOldQuery(doAjaxCall("/api/query/" + window.query + "/parent"), tree);
-    });
-
-    // Back to original query
-    $("#original-query").click(function () {
-        backToOldQuery(doAjaxCall("/api/query/" + window.query + "/ancestor"), tree)
-    });
-
 });
 
 
