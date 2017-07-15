@@ -352,9 +352,15 @@ function insertRow(table, row, column1, column2) {
  * Gets the query info from the API and renders it in a table
  */
 function updateQueryTable() {
-    var queryInfo = doAjaxCall("/api/query/" + window.query + "/info");
-
-    displayQueryInfo(queryInfo);
+    $.ajax({
+        type: "GET",
+        url: "/api/query/" + window.query + "/info",
+        dataType: "json",
+        success: displayQueryInfo,
+        error: function (request) {
+            alert(request.message);
+        },
+    });
 }
 
 /**
