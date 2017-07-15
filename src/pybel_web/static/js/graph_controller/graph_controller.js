@@ -130,8 +130,16 @@ function displayEdgeInfo(edge) {
         edgeObject["Evidence"] = edge.evidence;
     }
     if (edge.citation) {
-        edgeObject["Citation"] = "<a href=https://www.ncbi.nlm.nih.gov/pubmed/" + edge.citation.reference + " target='_blank' " +
-            "style='color: blue; text-decoration: underline'>" + edge.citation.reference + "</a>";
+        if (edge.citation.type === "PubMed") {
+            edgeObject["Citation"] = "<a href=https://www.ncbi.nlm.nih.gov/pubmed/" + edge.citation.reference + " target='_blank' " +
+                "style='text-decoration: underline'>" + edge.citation.reference + "</a>";
+        } else if (edge.citation.type === "URL") {
+            edgeObject["Citation"] = "<a href=" + edge.citation.reference + " target='_blank' " +
+                "style='text-decoration: underline'>" + edge.citation.reference + "</a>";
+        } else {
+            // TODO handle DOIs?
+            edgeObject["Citation"] = edge.citation.reference;
+        }
     }
     if (edge.relation) {
         edgeObject["Relationship"] = edge.relation;
