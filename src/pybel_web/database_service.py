@@ -925,7 +925,7 @@ def drop_user_queries(user_id):
 
 @api_blueprint.route('/api/query/<int:query_id>/info', methods=['GET'])
 def query_to_network(query_id):
-    """Returns info from a given query ID"""
+    """Returns info from a given query identifier"""
     query = manager.session.query(models.Query).get(query_id)
 
     if not user_has_query_rights(current_user, query):
