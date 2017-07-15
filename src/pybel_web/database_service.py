@@ -591,6 +591,7 @@ def get_node_hashes():
 # CITATIONS
 ####################################
 
+
 @api_blueprint.route('/api/citations', methods=['GET'])
 def list_citations():
     """Gets all citations"""
@@ -607,13 +608,12 @@ def list_citations_by_author(author):
 
 @api_blueprint.route('/api/pubmed/suggestion/')
 def get_pubmed_suggestion():
-    """Return list of pubmedids matching the integer keyword"""
-
+    """Return list of PubMed identifiers matching the integer keyword"""
     autocompletion_set = api.get_pubmed_containing_keyword(request.args['search'])
 
     return jsonify([
-        {"text": pubmed, "id": index}
-        for index, pubmed in enumerate(autocompletion_set)
+        {"text": pubmed_identifier, "id": index}
+        for index, pubmed_identifier in enumerate(autocompletion_set)
     ])
 
 
@@ -631,12 +631,11 @@ def get_all_authors(query_id):
 @api_blueprint.route('/api/authors/suggestion/')
 def get_author_suggestion():
     """Return list of authors matching the author keyword"""
-
     autocompletion_set = api.get_authors_containing_keyword(request.args['search'])
 
     return jsonify([
-        {"text": pubmed, "id": index}
-        for index, pubmed in enumerate(autocompletion_set)
+        {"text": pubmed_identifier, "id": index}
+        for index, pubmed_identifier in enumerate(autocompletion_set)
     ])
 
 
