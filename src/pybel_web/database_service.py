@@ -374,7 +374,7 @@ def nodes_by_network(network_id):
 
 @api_blueprint.route('/api/network/<int:network_id>/drop')
 @roles_required('admin')
-def drop_network_by_id(network_id):
+def drop_network(network_id):
     """Drops a specific graph
 
     :param int network_id: The identifier of the network to drop
