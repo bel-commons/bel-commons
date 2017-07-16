@@ -11,9 +11,26 @@ from flask_admin.model.ajax import DEFAULT_PAGE_SIZE
 from flask_security import current_user
 from sqlalchemy import or_
 
+from pybel.manager.models import (
+    Edge,
+    Node,
+    Citation,
+    Evidence,
+Author
+)
 from pybel.manager.models import Network, Namespace, Annotation
 from .application import get_manager, get_api
-from .models import Report, Experiment, Role, User, Query, Assembly, Project
+from .models import (
+    Report,
+    Experiment,
+    Role,
+    User,
+    Query,
+    Assembly,
+    Project,
+    EdgeVote,
+    EdgeComments
+)
 from .utils import list_public_networks
 
 log = logging.getLogger(__name__)
@@ -32,8 +49,24 @@ class ModelView(ModelViewBase):
 
 
 class NetworkView(ModelView):
-    """Special view for PyBEL Web Networks"""
-    column_exclude_list = ['blob', ]
+    """Special view for PyBEL Networks"""
+    column_exclude_list = ['blob', 'sha512']
+
+
+class NodeView(ModelView):
+    """Special view for PyBEL Nodes"""
+    column_exclude_list = ['blob', 'sha512']
+
+
+class EdgeView(ModelView):
+    """Special view for PyBEL Edges"""
+    column_exclude_list = ['blob', 'sha512']
+
+class CitationView(ModelView):
+    column_exclude_list = ['blob', 'sha512']
+
+class EvidenceView(ModelView):
+    column_exclude_list = ['blob', 'sha512']
 
 
 class UserView(ModelView):
@@ -57,10 +90,17 @@ def build_admin_service(app):
     admin.add_view(ModelView(Namespace, manager.session))
     admin.add_view(ModelView(Annotation, manager.session))
     admin.add_view(NetworkView(Network, manager.session))
+    admin.add_view(NodeView(Node, manager.session))
+    admin.add_view(EdgeView(Edge, manager.session))
+    admin.add_view(CitationView(Citation, manager.session))
+    admin.add_view(EvidenceView(Evidence, manager.session))
+    admin.add_view(ModelView(Author, manager.session))
     admin.add_view(ModelView(Report, manager.session))
     admin.add_view(ModelView(Experiment, manager.session))
     admin.add_view(ModelView(Query, manager.session))
     admin.add_view(ModelView(Assembly, manager.session))
+    admin.add_view(ModelView(EdgeVote, manager.session))
+    admin.add_view(ModelView(EdgeComments, manager.session))
 
     class NetworkAjaxModelLoader(QueryAjaxModelLoader):
         def __init__(self):
