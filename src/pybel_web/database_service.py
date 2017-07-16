@@ -715,14 +715,18 @@ def get_edge_by_id(edge_id):
     """Gets an edge data dictionary by id"""
     source, target, data = api.get_edge_by_id(edge_id)
 
-    return jsonify({
+    data = {
         'id': edge_id,
         'source': api.get_node_id(source),
         'target': api.get_node_id(target),
         'data': data,
-        'vote': 0 if current_user.id not in api.edge_votes[edge_id] else api.edge_votes[edge_id][current_user.id],
         'comments': api.edge_comments[edge_id]
-    })
+    }
+
+    if current_user.is_authenticated:
+        data['vote'] = api.edge_votes[edge_id][current_user.id]
+
+    return jsonify(data)
 
 
 @api_blueprint.route('/api/edge/<int:edge_id>/vote/up')
