@@ -263,15 +263,24 @@
                 </div>
             </div><!-- visualization row -->
         </div>
-        <div class="panel panel-default">
+
+        <div class="panel panel-default" id="info-table-container">
             <table id="info-table" class="table table-bordered table-hover"></table>
+        </div>
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Current Query Info</h3>
+            </div>
             <div>
                 <button type="button" id="parent-query"
-                        class="btn btn-primary not-rounded-top-left width-50 pull-left">
+                        class="btn btn-primary not-rounded width-50 pull-left">
+                    <span class="glyphicon glyphicon-backward" aria-hidden="true"></span>
                     Previous Query
                 </button>
                 <button type="button" id="original-query"
-                        class="btn btn-primary not-rounded-top-right width-50 pull-right">
+                        class="btn btn-primary not-rounded width-50 pull-right">
+                    <span class="glyphicon glyphicon-fast-backward" aria-hidden="true"></span>
                     Original Query
                 </button>
             </div>
@@ -280,7 +289,7 @@
 
         <div class="panel panel-default">
             <div class="panel-heading">
-                <h3 class="panel-title">Network Info</h3>
+                <h3 class="panel-title">Current Network Info</h3>
             </div>
             <table id="network-info-table" class="table table-bordered table-hover"></table>
         </div>

@@ -34,18 +34,6 @@
     border-radius: 0 !important;
 }
 
-.not-rounded-top-right {
-    border-top-left-radius: 0 !important;
-    border-bottom-right-radius: 0 !important;
-    border-bottom-left-radius: 0 !important;
-}
-
-.not-rounded-top-left {
-    border-top-right-radius: 0 !important;
-    border-bottom-right-radius: 0 !important;
-    border-bottom-left-radius: 0 !important;
-}
-
 .toggle.android {
     border-radius: 0;
 }

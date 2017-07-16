@@ -118,14 +118,6 @@ function displayEdgeInfo(edge) {
 
     var edgeObject = {};
 
-    var dynamicTable = document.getElementById('info-table');
-
-    while (dynamicTable.rows.length > 0) {
-        dynamicTable.deleteRow(0);
-    }
-
-    // Check if object property exists
-
     if (edge.evidence) {
         edgeObject["Evidence"] = edge.evidence;
     }
@@ -148,13 +140,19 @@ function displayEdgeInfo(edge) {
         edgeObject["Annotations"] = JSON.stringify(edge.annotations);
     }
     if (edge.source.cname) {
-        edgeObject["Source"] = edge.source.cname + " (ID: " + edge.source.id + ")";
+        edgeObject["Source"] = '<a href="/api/nodes/' + edge.source.id + '">' + edge.source.cname + "</a>";
     }
     if (edge.target.cname) {
-        edgeObject["Target"] = edge.target.cname + " (ID: " + edge.target.id + ")";
+        edgeObject["Target"] = '<a href="/api/nodes/' + edge.target.id + '">' + edge.target.cname + "</a>";
     }
     if (edge.id) {
         edgeObject["Identifier"] = '<a href="/api/edge/' + edge.id + '">' + edge.id + '</a>';
+    }
+
+    var dynamicTable = document.getElementById('info-table');
+
+    while (dynamicTable.rows.length > 0) {
+        dynamicTable.deleteRow(0);
     }
 
     var row = 0;
