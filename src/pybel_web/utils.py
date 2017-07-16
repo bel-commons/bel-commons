@@ -60,7 +60,7 @@ from pybel_tools.summary.node_summary import get_unused_namespaces
 from pybel_tools.utils import prepare_c3, count_dict_values
 from .application import get_manager, get_api, get_user_datastore
 from .constants import *
-from .models import User, Report, Experiment, Query
+from .models import User, Report, Experiment, Query, EdgeVote
 
 log = logging.getLogger(__name__)
 
@@ -723,3 +723,14 @@ def safe_get_query(query_id):
         abort(403, 'Insufficient rights to run query {}'.format(query_id))
 
     return query
+
+
+def get_vote(edge_id, user_id):
+    """Gets a vote for the given edge and user
+
+    :param int edge_id:
+    :param int user_id:
+    :rtype: EdgeVote
+    """
+    return manager.session.query(EdgeVote).filter(EdgeVote.edge_id == edge_id,
+                                                  EdgeVote.user_id == user_id).one_or_none()

@@ -4,7 +4,7 @@ import datetime
 import json
 
 from flask_security import RoleMixin, UserMixin
-from sqlalchemy import Column, Integer, ForeignKey, DateTime, Boolean, Text, Binary, Table, String
+from sqlalchemy import Column, Integer, ForeignKey, DateTime, Boolean, Text, Binary, Table, String, Index
 from sqlalchemy.orm import relationship, backref
 
 import pybel_tools.query
@@ -24,6 +24,8 @@ ROLE_USER_TABLE_NAME = 'pybel_roles_users'
 PROJECT_USER_TABLE_NAME = 'pybel_project_user'
 PROJECT_NETWORK_TABLE_NAME = 'pybel_project_network'
 USER_NETWORK_TABLE_NAME = 'pybel_user_network'
+COMMENT_TABLE_NAME = 'pybel_comment'
+VOTE_TABLE_NAME = 'pybel_vote'
 
 
 class Experiment(Base):
@@ -340,3 +342,34 @@ class Query(Base):
         """
         q = pybel_tools.query.Query(network_ids, seed_list=seed_list, pipeline=pipeline)
         return Query.from_query(manager, user, q)
+
+
+class EdgeVote(Base):
+    """Describes the vote on an edge"""
+    __tablename__ = VOTE_TABLE_NAME
+
+    id = Column(Integer, primary_key=True)
+
+    edge_id = Column(Integer, nullable=False, index=True, doc='The hash of the edge for this comment')
+    user_id = Column(Integer, ForeignKey('{}.id'.format(USER_TABLE_NAME)), nullable=False,
+                     doc='The user who made this vote')
+    user = relationship('User', backref=backref('votes', lazy='dynamic'))
+    agreed = Column(Boolean, nullable=False)
+
+
+Index('edgeUserIndex', EdgeVote.edge_id, EdgeVote.user_id)
+
+
+class EdgeComments(Base):
+    """Describes the comments on an edge"""
+    __tablename__ = COMMENT_TABLE_NAME
+
+    id = Column(Integer, primary_key=True)
+
+    edge_id = Column(Integer, nullable=False, index=True, doc='The hash of the edge for this comment')
+    comment = Column(Text, nullable=False)
+    created = Column(DateTime, default=datetime.datetime.utcnow)
+
+    user_id = Column(Integer, ForeignKey('{}.id'.format(USER_TABLE_NAME)), nullable=False,
+                     doc='The user who made this comment')
+    user = relationship('User', backref=backref('comments', lazy='dynamic'))

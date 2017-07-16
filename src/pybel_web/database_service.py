@@ -58,7 +58,14 @@ from .main_service import (
     UNDIRECTED,
     BLACK_LIST
 )
-from .models import Report, User, Experiment, Project
+from .models import (
+    Report,
+    User,
+    Experiment,
+    Project,
+    EdgeComments,
+    EdgeVote,
+)
 from .send_utils import serve_network
 from .utils import (
     get_recent_reports,
@@ -70,7 +77,8 @@ from .utils import (
     get_network_ids_with_permission_helper,
     user_has_query_rights,
     current_user_has_query_rights,
-    safe_get_query
+    safe_get_query,
+    get_vote
 )
 
 log = logging.getLogger(__name__)
@@ -709,15 +717,17 @@ def get_edge_entry(edge_id):
         'data': data,
         'comments': [
             {
-                'user': {'id': user_id, 'email': User.query.get(user_id).email},
-                'comment': comment
+                'user': {'id': ec.user_id, 'email': ec.user.email},
+                'comment': ec.comment,
+                'created': ec.created,
             }
-            for user_id, comment in api.edge_comments[edge_id]
+            for ec in manager.session.query(EdgeComments).filter(EdgeComments.edge_id == edge_id)
         ]
     }
 
     if current_user.is_authenticated:
-        data['vote'] = api.edge_votes[edge_id][current_user.id]
+        vote = get_vote(edge_id, current_user.id)
+        data['vote'] = 0 if vote is None else 1 if vote.agreed else -1
 
     return data
 
@@ -738,14 +748,30 @@ def get_edge_by_id(edge_id):
     return jsonify(get_edge_entry(edge_id))
 
 
+def ensure_vote(edge_id, user_id, agreed):
+    vote = get_vote(edge_id, user_id)
+
+    if vote is None:
+        vote = EdgeVote(
+            edge_id=edge_id,
+            user_id=user_id,
+            agreed=agreed
+        )
+        manager.session.add(vote)
+    else:
+        vote.agreed = agreed
+
+    manager.session.commit()
+
+    return vote
+
+
 @api_blueprint.route('/api/edge/<int:edge_id>/vote/up')
 @login_required
 def store_up_vote(edge_id):
     """Up votes an edge"""
-    if edge_id not in api.eid_edge:
-        abort(403, 'Edge {} not found'.format(edge_id))
+    ensure_vote(edge_id, current_user.id, True)
 
-    api.edge_votes[edge_id][current_user.id] = 1
     return jsonify({
         'status': 200,
         'edge_id': edge_id,
@@ -757,10 +783,8 @@ def store_up_vote(edge_id):
 @login_required
 def store_down_vote(edge_id):
     """Down votes an edge"""
-    if edge_id not in api.eid_edge:
-        abort(403, 'Edge {} not found'.format(edge_id))
+    ensure_vote(edge_id, current_user.id, False)
 
-    api.edge_votes[edge_id][current_user.id] = -1
     return jsonify({
         'status': 200,
         'edge_id': edge_id,
@@ -775,7 +799,15 @@ def store_comment(edge_id):
     if 'comment' not in request.args:
         abort(403, 'Edge {} not found'.format(edge_id))
 
-    api.edge_comments[edge_id].append((current_user.id, request.args['comment']))
+    comment = EdgeComments(
+        user=current_user,
+        edge_id=edge_id,
+        comment=request.args['comment']
+    )
+
+    manager.session.add(comment)
+    manager.session.commit()
+
     return jsonify({'status': 200})
 
 

@@ -73,9 +73,6 @@ class FlaskPyBEL:
         Base.query = self.manager.session.query_property()
 
         self.api = DatabaseService(manager=self.manager)
-        self.api.edge_votes = defaultdict(lambda: defaultdict(int))
-        self.api.edge_comments = defaultdict(list)
-
         self.user_datastore = SQLAlchemyUserDatastore(self.manager, User, Role)
 
         if app.config.get('PYBEL_DS_PRELOAD', False):
