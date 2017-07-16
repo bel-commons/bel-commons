@@ -19,6 +19,7 @@ from getpass import getuser
 import os
 from celery import Celery
 from collections import defaultdict
+from flasgger import Swagger
 from flask import (
     Flask,
     g,
@@ -153,6 +154,7 @@ bootstrap = Bootstrap()
 pybel_extension = FlaskPyBEL()
 mail = Mail()
 security = Security()
+swagger = Swagger()
 jquery2_cdn = WebCDN('//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/')
 
 
@@ -203,6 +205,17 @@ def create_application(get_mail=False, config_location=None, **kwargs):
 
     app.config.update(pybel_config)
     app.config.update(kwargs)
+    app.config.setdefault('SWAGGER', {
+        'title': 'PyBEL Web API',
+        'description': 'This exposes the functions of PyBEL as a RESTful API',
+        'contact': {
+            'responsibleOrganization': 'Fraunhofer SCAI',
+            'responsibleDeveloper': 'Charles Tapley Hoyt',
+            'email': 'charles.hoyt@scai.fraunhofer.de',
+            'url': 'https://www.scai.fraunhofer.de/de/geschaeftsfelder/bioinformatik.html',
+        },
+        'version': '0.1.0',
+    })
 
     # Add converters
     app.url_map.converters['intlist'] = IntListConverter
@@ -229,6 +242,7 @@ def create_application(get_mail=False, config_location=None, **kwargs):
 
     pybel_extension.init_app(app)
     security.init_app(app, pybel_extension.user_datastore, register_form=ExtendedRegisterForm)
+    swagger.init_app(app)
 
     @app.before_first_request
     def prepare_service():

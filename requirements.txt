@@ -5,6 +5,7 @@ flask-bootstrap
 flask-wtf
 flask-security
 flask-admin
+flasgger
 networkx
 pybel
 click

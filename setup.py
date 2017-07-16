@@ -30,6 +30,7 @@ INSTALL_REQUIRES = [
     'flask-wtf',
     'flask-security',
     'flask-admin',
+    'flasgger',
     'networkx',
     'pybel',
     'click',
