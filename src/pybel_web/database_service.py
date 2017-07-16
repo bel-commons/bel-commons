@@ -325,9 +325,19 @@ def nodes_by_network(network_id):
 def drop_network_by_id(network_id):
     """Drops a specific graph"""
     log.info('dropping graphs %s', network_id)
+
     api.forget_network(network_id)
     manager.drop_network_by_id(network_id)
-    return jsonify({'status': 200})
+
+    if 'next' in request.args:
+        flash('Dropped network {}'.format(network_id))
+        return redirect(request.args['next'])
+
+    return jsonify({
+        'status': 200,
+        'action': 'drop network',
+        'network_id': network_id,
+    })
 
 
 @api_blueprint.route('/api/network/<int:network_id>/claim')
