@@ -151,6 +151,7 @@ function displayEdgeInfo(edge) {
         edgeObject["Feedback"] = '<button type="button" class="btn btn-primary" data-toggle="modal" data-target="#edge-feedback" data-edge="' + edge.id + '">Give Feedback</button>';
     }
 
+
     var dynamicTable = document.getElementById('info-table');
 
     while (dynamicTable.rows.length > 0) {
@@ -300,9 +301,7 @@ function networkSizeChecking(data, tree) {
             data.links.length + " edges. To avoid crashing your browser, this network will only be rendered " +
             "after you click in refresh network. Please consider giving a more specific query or applying some " +
             "filters using the right-hand tree navigator.")
-    }
-
-    else {
+    } else {
         initD3Force(data, tree);
     }
 }
@@ -405,8 +404,7 @@ function reloadTree(tree) {
 function backToOldQuery(response, tree) {
     if (response["parent"] === false) {
         alert("The current query has no parent");
-    }
-    else {
+    } else {
         updateQueryResponse(response, tree);
     }
 }
@@ -1614,7 +1612,8 @@ function initD3Force(graph, tree) {
                 data: $.param(args, true),
                 success: function (paths) {
                     handlePathResponse(paths, checkbox, args["paths_method"]);
-                }, error: function (request) {
+                },
+                error: function (request) {
                     alert(request.responseText);
                 }
             })
@@ -1677,7 +1676,8 @@ function initD3Force(graph, tree) {
                 data: $.param(args, true),
                 success: function (paths) {
                     handlePathResponse(paths, checkbox, args["paths_method"]);
-                }, error: function (request) {
+                },
+                error: function (request) {
                     alert(request.responseText);
                 }
             })
