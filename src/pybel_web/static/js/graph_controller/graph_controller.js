@@ -441,9 +441,9 @@ $(document).ready(function () {
                 treeSelection["and"] = true;
             }
 
-            // TODO can the params be injected with the ajax function?
             $.ajax({
-                url: "/api/query/" + window.query + "/add_annotation_filter/?" + $.param(treeSelection, true),
+                url: "/api/query/" + window.query + "/add_annotation_filter/",
+                data: $.param(treeSelection, true),
                 dataType: "json"
             }).done(function (response) {
                 updateQueryResponse(response, tree);
@@ -966,8 +966,7 @@ function initD3Force(graph, tree) {
             if (["decreases", "directlyDecreases", "increases", "directlyIncreases", "negativeCorrelation",
                     "positiveCorrelation"].indexOf(edge.relation) >= 0) {
                 return "link link_continuous"
-            }
-            else {
+            } else {
                 return "link link_dashed"
             }
         })
@@ -1171,7 +1170,6 @@ function initD3Force(graph, tree) {
         // Show node names
         svg.selectAll(".node-name").style("visibility", "visible").style("opacity", "1");
         svg.selectAll(".node-name").style("display", "block");
-
     }
 
     /**
@@ -1434,8 +1432,7 @@ function initD3Force(graph, tree) {
             hideNodesTextInPaths(paths, checkbox, 'id');
             colorPaths(paths, checkbox);
             resetAttributesDoubleClick()
-        }
-        else {
+        } else {
             // Change style in force
             resetAttributes();
 
@@ -1570,8 +1567,7 @@ function initD3Force(graph, tree) {
             // If "node" is the first element of the class, call highlight by nodes. Else highlight by edge
             if (spanClass[0] === "node") {
                 highlightNodesByProperty(spanClass[1], highlightSpan.id);
-            }
-            else {
+            } else {
                 highlightEdgesByProperty(spanClass[1], highlightSpan.id);
             }
         });
@@ -1662,8 +1658,7 @@ function initD3Force(graph, tree) {
             if (Object.keys(nodeNamesToId).length < 2) { // One of no nodes in the query
                 alert("There is only one node present in your query.");
                 return
-            }
-            else { // 2 or more nodes in the graph
+            } else { // 2 or more nodes in the graph
                 while (randomSource === randomTarget) { // Guarantees that the source and target node is not the same
                     var randomTarget = nodeNamesToId[pickRandomProperty(nodeNamesToId)];
                 }
