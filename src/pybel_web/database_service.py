@@ -1197,11 +1197,14 @@ def get_analysis_median(query_id, analysis_id):
 @api_blueprint.route('/api/analysis/<int:analysis_id>/drop')
 @login_required
 def delete_analysis_results(analysis_id):
-    """Drops an analysis"""
-    if not current_user.admin:  # TODO test if it's the user/s analysis
-        abort(403)
+    """Drops an analysis
 
+    :param int analysis_id: The identifier of the analysis
+    """
     experiment = manager.session.query(Experiment).get(analysis_id)
+
+    if not current_user.admin or current_user.id == experiment.user_id:
+        abort(403, 'You do not have rights to this experiment')
 
     manager.session.delete(experiment)
     manager.session.commit()
@@ -1210,7 +1213,13 @@ def delete_analysis_results(analysis_id):
         flash('Dropped Experiment #{}'.format(experiment.id))
         return redirect(request.args['next'])
 
-    return jsonify({'status': 200})
+    return jsonify({
+        'status': 200,
+        'experiment': {
+            'id': analysis_id,
+            'description': experiment.description
+        }
+    })
 
 
 @api_blueprint.route('/api/analysis/<int:analysis_id>/download')
@@ -1218,6 +1227,10 @@ def delete_analysis_results(analysis_id):
 def download_analysis(analysis_id):
     """Downloads data from a given experiment as a CSV"""
     experiment = manager.session.query(Experiment).get(analysis_id)
+
+    if not current_user.admin or current_user.id == experiment.user_id:
+        abort(403, 'You do not have rights to this experiment')
+
     si = StringIO()
     cw = csv.writer(si)
     csv_list = [('Namespace', 'Name') + tuple(RESULT_LABELS)]
@@ -1254,7 +1267,12 @@ def grant_network_to_project(network_id, project_id):
         flash('Added rights for {} to {}'.format(network, project))
         return redirect(request.args['next'])
 
-    return jsonify({'status': 200})
+    return jsonify({
+        'status': 200,
+        'network': {
+            'id': network.id,
+        }
+    })
 
 
 @api_blueprint.route('/api/network/<int:network_id>/grant_user/<int:user_id>')
