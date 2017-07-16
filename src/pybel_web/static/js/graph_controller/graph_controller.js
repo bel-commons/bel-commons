@@ -733,28 +733,6 @@ function initD3Force(graph, tree) {
                 });
             },
             disabled: false // optional, defaults to false
-        },
-        {
-            title: "Up Vote",
-            action: function (elm, edge, i) {
-                $.ajax({
-                    url: "/api/edge/" + edge.id + "/vote/up",
-                    dataType: "json"
-                }).done(function (response) {
-                    console.log(response)
-                });
-            }
-        },
-        {
-            title: "Down Vote",
-            action: function (elm, edge, i) {
-                $.ajax({
-                    url: "/api/edge/" + edge.id + "/vote/down",
-                    dataType: "json"
-                }).done(function (response) {
-                    console.log(response)
-                });
-            }
         }
     ];
 
