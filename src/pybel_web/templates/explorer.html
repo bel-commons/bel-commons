@@ -827,7 +827,6 @@
         </div><!-- /.Modal dialog -->
     </div><!-- /.controls-graph Modal -->
 
-
     <div id="network-tools" class="modal fade"><!-- /.tools-graph Modal -->
         <div class="modal-dialog"><!-- /.Modal dialog -->
             <div class="modal-content"><!-- /.Modal content -->
@@ -966,6 +965,52 @@
             </div><!-- /.Modal content -->
         </div><!-- /.Modal dialog -->
     </div><!-- /.Network-tools Modal -->
+
+    <div id="edge-feedback" class="modal fade">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"></h5>
+                </div>
+                <div class="modal-body">
+                    <div id="edge-feedback-votes">
+                        <h5>Vote</h5>
+                        <p>We would like your feedback. Does this edge make sense?</p>
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-default" id="edge-feedback-vote-up"
+                                    data-dismiss="modal">
+                                Agree
+                                <span class="glyphicon glyphicon-thumbs-up" aria-hidden="true"></span>
+                            </button>
+                            <button type="button" class="btn btn-default" id="edge-feedback-vote-down"
+                                    data-dismiss="modal">
+                                Disagree
+                                <span class="glyphicon glyphicon-thumbs-down" aria-hidden="true"></span>
+                            </button>
+                        </div>
+                    </div>
+                    <hr>
+                    <div id="edge-feedback-comments">
+                        <h5>Feedback</h5>
+                        <p>Have more to say? Type it here.</p>
+                        <div id="edge-feedback-comments-list" class="list-group"></div>
+                        <form id="edge-feedback-input">
+                            <div class="input-group">
+                                <input type="text" class="form-control" name="comment_text" id="comment-text"
+                                       placeholder="Comment here"/>
+                                <span class="input-group-btn">
+                                <input type="button" class="btn btn-primary" id="comment-button" value="Submit"/>
+                            </span>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div class="loading_modal"><!-- Spinner div --></div>
 

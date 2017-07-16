@@ -147,6 +147,8 @@ function displayEdgeInfo(edge) {
     }
     if (edge.id) {
         edgeObject["Identifier"] = '<a href="/api/edge/' + edge.id + '">' + edge.id + '</a>';
+
+        edgeObject["Feedback"] = '<button type="button" class="btn btn-primary" data-toggle="modal" data-target="#edge-feedback" data-edge="' + edge.id + '">Give Feedback</button>';
     }
 
     var dynamicTable = document.getElementById('info-table');
@@ -1899,4 +1901,92 @@ function initD3Force(graph, tree) {
     removeNodeHighlighting.on("click", function () {
         removeHighlightNodeBorder();
     });
+
+
+    // Edge feedback
+    const voteUpButton = $('#edge-feedback-vote-up')
+        .on('click', function () {
+            $.ajax({
+                url: "/api/edge/" + $(this).data('edge') + "/vote/up",
+                dataType: "json",
+                success: function (buttonResponse) {
+                    $(this).removeClass('btn-default').addClass('btn-success');
+                }
+            });
+        });
+
+    const voteDownButton = $('#edge-feedback-vote-down')
+        .on('click', function () {
+            $.ajax({
+                url: "/api/edge/" + $(this).data('edge') + "/vote/down",
+                dataType: "json",
+                success: function (buttonResponse) {
+                    $(this).removeClass('btn-default').addClass('btn-warning');
+                }
+            });
+        });
+
+    const commentTextBox = $('#comment-text');
+
+    const commentButton = $('#comment-button')
+        .on('click', function () {
+            var commentText = commentTextBox.val();
+
+            $.ajax({
+                url: "/api/edge/" + $(this).data('edge') + "/comment",
+                data: {
+                    'comment': commentText
+                },
+                dataType: "json",
+                success: function (buttonResponse) {
+                    commentList.append('<div class="list-group-item"><h4 class="list-group-item-heading">Me</h4><p class="list-group-item-text">' + commentText + "</p></div>");
+                    commentTextBox.val("");
+                }
+            });
+        });
+
+    const commentList = $('#edge-feedback-comments-list');
+
+    const edgeFeedbackModal = $('#edge-feedback')
+        .on('show.bs.modal', function (event) {
+            var button = $(event.relatedTarget); // Button that triggered the modal
+            var edge_id = button.data('edge'); // Extract info from data-* attributes
+            // If necessary, you could initiate an AJAX request here (and then do the updating in a callback).
+            // Update the modal's content. We'll use jQuery here, but you could use a data binding library or other methods instead.
+
+            voteUpButton.data('edge', edge_id);
+            voteDownButton.data('edge', edge_id);
+            commentButton.data('edge', edge_id);
+
+            var modal = $(this);
+            modal.find('.modal-title').text('Edge ' + edge_id);
+
+            $.ajax({
+                url: "/api/edge/" + edge_id,
+                dataType: "json",
+                success: function (response) {
+                    vote = response.vote;
+
+                    if (vote === 1) {
+                        voteUpButton.removeClass('btn-default').addClass('btn-success');
+                    } else if (vote === -1) {
+                        voteDownButton.removeClass('btn-default').addClass('btn-danger');
+                    }
+
+                    commentList.empty();
+                    $.each(response.comments, function (index, val) {
+                        commentList.append('<div class="list-group-item"><h4 class="list-group-item-heading">' + val.user.email + '</h4><p class="list-group-item-text">' + val.comment + "</p></div>");
+                    });
+                },
+                error: function (request) {
+                    alert(request.message);
+                }
+            });
+        })
+        .on('hide.bs.modal', function (event) {
+            voteUpButton.removeClass('btn-success').addClass('btn-default');
+            voteDownButton.removeClass('btn-danger').addClass('btn-default');
+            commentTextBox.val('');
+        });
+
 }
