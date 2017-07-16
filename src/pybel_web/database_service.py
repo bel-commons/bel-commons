@@ -915,6 +915,7 @@ def get_pipeline():
     )
 
     if current_user.is_authenticated:
+        assembly.user = current_user
         qo.user = current_user
 
     manager.session.add(qo)

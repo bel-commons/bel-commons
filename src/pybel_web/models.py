@@ -317,14 +317,17 @@ class Query(Base):
         :param pybel_tools.query.Query query:
         :rtype: Query
         """
+        assembly = Assembly.from_query(manager, query)
+
         query = Query(
-            assembly=Assembly.from_query(manager, query),
+            assembly=assembly,
             seeding=query.seeding_to_jsons(),
             pipeline_protocol=query.pipeline.to_jsons(),
             dump=query.to_jsons()
         )
 
         if user.is_authenticated:
+            assembly.user = user
             query.user = user
 
         return query
