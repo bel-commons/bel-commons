@@ -375,7 +375,10 @@ def nodes_by_network(network_id):
 @api_blueprint.route('/api/network/<int:network_id>/drop')
 @roles_required('admin')
 def drop_network_by_id(network_id):
-    """Drops a specific graph"""
+    """Drops a specific graph
+
+    :param int network_id: The identifier of the network to drop
+    """
     log.info('dropping graphs %s', network_id)
 
     api.forget_network(network_id)
@@ -471,18 +474,6 @@ def get_network_name_by_id(network_id):
 
     network = api.get_network_by_id(network_id)
     return jsonify(network.name)
-
-
-@api_blueprint.route('/api/network/<int:network_id>/drop')
-@roles_required('admin')
-def drop_network(network_id):
-    """Drops a given network
-
-    :param int network_id: The identifier of the network to drop
-    """
-    manager.drop_network_by_id(network_id)
-    flash('Dropped network {}'.format(network_id))
-    return redirect(url_for('view_networks'))
 
 
 @api_blueprint.route('/api/network/<int:network_id>/drop/<int:user_id>')
