@@ -13,7 +13,8 @@ from flask_login import login_required, current_user
 
 from pybel.constants import GENE, PYBEL_CONNECTION
 from pybel.manager.models import Network
-from pybel_tools.analysis import npa
+from pybel_tools.analysis.npa import calculate_average_npa_on_subgraphs as calculate_average_cmpa_on_subgraphs
+from pybel_tools.analysis.npa import RESULT_LABELS
 from pybel_tools.filters import remove_nodes_by_namespace
 from pybel_tools.generation import generate_bioprocess_mechanisms
 from pybel_tools.integration import overlay_type_data
@@ -58,7 +59,7 @@ def view_analysis_results(analysis_id):
     return render_template(
         'analysis_results.html',
         experiment=experiment,
-        columns=npa.RESULT_LABELS,
+        columns=RESULT_LABELS,
         data=sorted(data, key=itemgetter(1)),
         current_user=current_user
     )
@@ -146,7 +147,7 @@ def view_analysis_uploader(network_id):
     overlay_type_data(graph, data, LABEL, GENE, 'HGNC', overwrite=False, impute=0)
 
     candidate_mechanisms = generate_bioprocess_mechanisms(graph, LABEL)
-    scores = npa.calculate_average_npa_on_subgraphs(candidate_mechanisms, LABEL, runs=form.permutations.data)
+    scores = calculate_average_cmpa_on_subgraphs(candidate_mechanisms, LABEL, runs=form.permutations.data)
 
     log.info('done running CMPA in %.2fs', time.time() - t)
 

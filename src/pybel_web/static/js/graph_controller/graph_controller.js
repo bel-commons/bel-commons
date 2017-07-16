@@ -1785,19 +1785,19 @@ function initD3Force(graph, tree) {
 
     // Get normalized results from NPA analysis given an experiment ID
 
-    var npaForm = $("#npa-form");
+    var cmpaForm = $("#cmpa-form");
 
-    var npaButton = $("#npa-button");
+    var cmpaButton = $("#cmpa-button");
 
-    npaButton.off("click"); // It will unbind the previous click if multiple graphs has been rendered
+    cmpaButton.off("click"); // It will unbind the previous click if multiple graphs has been rendered
 
-    npaButton.on("click", function () {
-        if (npaForm.valid()) {
+    cmpaButton.on("click", function () {
+        if (cmpaForm.valid()) {
             var experimentID = $("#analysis_id").val();
 
             $.ajax({
                 url: "/api/query/" + window.query + "/analysis/" + experimentID + "/median",
-                type: npaForm.attr("method"),
+                type: cmpaForm.attr("method"),
                 dataType: "json",
                 success: function (data) {
 
@@ -1831,7 +1831,7 @@ function initD3Force(graph, tree) {
         }
     });
 
-    npaForm.validate({
+    cmpaForm.validate({
         rules: {
             analysis_id: {
                 required: true,

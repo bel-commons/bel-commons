@@ -23,7 +23,7 @@ from pybel.canonicalize import decanonicalize_node
 from pybel.constants import RELATION, GENE
 from pybel.manager import Network
 from pybel.struct.filters import filter_edges
-from pybel_tools.analysis import npa
+from pybel_tools.analysis.npa import calculate_average_npa_on_subgraphs as calculate_average_cmpa_on_subgraphs
 from pybel_tools.analysis.stability import *
 from pybel_tools.filters import remove_nodes_by_namespace
 from pybel_tools.filters.edge_filters import edge_has_pathology_causal
@@ -293,7 +293,7 @@ def run_experiment(manager_, file, filename, description, gene_column, data_colu
     overlay_type_data(graph, data, LABEL, GENE, 'HGNC', overwrite=False, impute=0)
 
     candidate_mechanisms = generate_bioprocess_mechanisms(graph, LABEL)
-    scores = npa.calculate_average_npa_on_subgraphs(candidate_mechanisms, LABEL, runs=permutations)
+    scores = calculate_average_cmpa_on_subgraphs(candidate_mechanisms, LABEL, runs=permutations)
 
     log.info('done running CMPA in %.2fs', time.time() - t)
 
