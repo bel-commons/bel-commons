@@ -153,7 +153,7 @@ def build_dictionary_service_admin(app):
         """Uploads the gpickles in the AETIONOMY section of the Biological Model Store repository"""
         t = time.time()
         upload_recursive(os.path.join(os.environ[BMS_BASE], 'aetionomy'), connection=manager)
-        flash('Uploaded the AETIONOMY folder in {:.2f}'.format(time.time() - t))
+        flash('Uploaded the AETIONOMY folder in {:.2f} seconds'.format(time.time() - t))
         return redirect(url_for('home'))
 
     @app.route('/api/database/nuke/')
