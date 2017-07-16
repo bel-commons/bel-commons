@@ -13,8 +13,8 @@ from flask_login import login_required, current_user
 
 from pybel.constants import GENE, PYBEL_CONNECTION
 from pybel.manager.models import Network
-from pybel_tools.analysis.npa import calculate_average_npa_on_subgraphs as calculate_average_cmpa_on_subgraphs
-from pybel_tools.analysis.npa import RESULT_LABELS
+from pybel_tools.analysis.cmpa import calculate_average_scores_on_subgraphs as calculate_average_cmpa_on_subgraphs
+from pybel_tools.analysis.cmpa import RESULT_LABELS
 from pybel_tools.filters import remove_nodes_by_namespace
 from pybel_tools.generation import generate_bioprocess_mechanisms
 from pybel_tools.integration import overlay_type_data

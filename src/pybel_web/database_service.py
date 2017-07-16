@@ -37,7 +37,7 @@ from pybel.constants import (
 )
 from pybel.manager import Namespace, Annotation, Network
 from pybel_tools import pipeline
-from pybel_tools.analysis.npa import RESULT_LABELS
+from pybel_tools.analysis.cmpa import RESULT_LABELS
 from pybel_tools.definition_utils import write_namespace
 from pybel_tools.query import Query
 from pybel_tools.selection.induce_subgraph import get_subgraph_by_annotations
