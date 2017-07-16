@@ -43,13 +43,14 @@ from pybel_tools.query import Query
 from pybel_tools.selection.induce_subgraph import get_subgraph_by_annotations
 from pybel_tools.summary import (
     info_json,
+    info_str,
+    info_list,
     get_authors,
     get_pubmed_identifiers,
     get_undefined_namespace_names,
     get_incorrect_names,
     get_naked_names,
 )
-from pybel_tools.summary import info_str
 from . import models
 from .constants import *
 from .main_service import (
@@ -1298,6 +1299,36 @@ def drop_project_by_id(project_id):
         return redirect(request.args['next'])
 
     return jsonify({'status': 200})
+
+
+@api_blueprint.route('/api/project/<int:project_id>/summarize')
+@login_required
+def summarize_project(project_id):
+    """Provides a summary of all networks in a project as a CSV file
+
+    :param int project_id:
+    """
+    project = manager.session.query(Project).get(project_id)
+
+    if not current_user.admin and not project.has_user(current_user):
+        abort(403, 'User does not have permission to access this Project')
+
+    si = StringIO()
+    cw = csv.writer(si)
+    csv_list = [
+        ('Name', 'Version', 'Nodes', 'Edges', 'Citations', 'Authors', 'Density', 'Components', 'AvgDegree', 'Warnings')]
+
+    for network in project.networks:
+        csv_list.append((network.name, network.version) + tuple(
+            v
+            for _, v in info_list(api.get_network_by_id(network.id))
+        ))
+
+    cw.writerows(csv_list)
+    output = make_response(si.getvalue())
+    output.headers["Content-Disposition"] = "attachment; filename={}_summary.csv".format(project.name.replace(' ', '_'))
+    output.headers["Content-type"] = "text/csv"
+    return output
 
 
 ####################################
