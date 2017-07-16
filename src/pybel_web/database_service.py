@@ -23,7 +23,7 @@ from flask import (
     abort,
 )
 from flask_login import login_required, current_user
-from flask_security import roles_required, roles_accepted
+from flask_security import roles_required
 from functools import lru_cache
 from operator import itemgetter
 from six import StringIO
@@ -479,59 +479,43 @@ def drop_user_network(network_id, user_id):
     return redirect(url_for('view_networks'))
 
 
-@api_blueprint.route('/api/network/<int:network_id>/make_public')
-@roles_accepted('admin', 'scai')
-def make_network_public(network_id):
-    """Makes a given network public using admin powers"""
+def update_network_status(network_id, status):
     report = manager.session.query(Report).filter(Report.network_id == network_id).one()
-    report.public = True
+
+    if not current_user.admin or current_user.id != report.user_id:
+        abort(403, 'You do not have permission to modify that network')
+
+    report.public = status
     manager.session.commit()
 
-    flash('Made {} public'.format(report.network))
-    return redirect(url_for('view_networks'))
+    if 'next' in request.args:
+        flash('Set public={} on {}'.format(status, report.network))
+        return redirect(request.args['next'])
+
+    return jsonify({
+        'status': 200,
+        'network_id': report.network_id,
+        'public': status,
+    })
+
+
+@api_blueprint.route('/api/network/<int:network_id>/make_public')
+@login_required
+def make_network_public(network_id):
+    """Makes a given network public using admin powers"""
+    return update_network_status(network_id, True)
 
 
 @api_blueprint.route('/api/network/<int:network_id>/make_private')
-@roles_accepted('admin', 'scai')
+@login_required
 def make_network_private(network_id):
     """Makes a given network private using admin powers"""
-    report = manager.session.query(Report).filter(Report.network_id == network_id).one()
-    report.public = False
-    manager.session.commit()
-
-    flash('Made {} private'.format(report.network))
-    return redirect(url_for('view_networks'))
+    return update_network_status(network_id, False)
 
 
-@api_blueprint.route('/api/network/<int:network_id>/make_public/<int:user_id>')
-@login_required
-def make_user_network_public(user_id, network_id):
-    """Makes a given network public after authenticating that the given user is the owner."""
-    if current_user.id != user_id:
-        abort(403, 'You do not have permission to modify that network')
-
-    report = manager.session.query(Report).filter(Report.network_id == network_id, Report.user_id == user_id).one()
-    report.public = True
-    manager.session.commit()
-
-    flash('Made {} public'.format(report.network))
-    return redirect(url_for('view_networks'))
-
-
-@api_blueprint.route('/api/network/make_private/<int:user_id>/<int:network_id>')
-@login_required
-def make_user_network_private(user_id, network_id):
-    """Makes a given network private after authenticating that the given user is the owner."""
-    if current_user.id != user_id:
-        abort(403, 'You do not have permission to modify that network')
-
-    report = manager.session.query(Report).filter(Report.network_id == network_id, Report.user_id == user_id).one()
-    report.public = False
-    manager.session.commit()
-
-    flash('Made {} private'.format(report.network))
-    return redirect(url_for('view_networks'))
-
+####################################
+# NETWORK QUERIES
+####################################
 
 @api_blueprint.route('/api/query/<int:query_id>/tree/')
 def get_tree_api(query_id):
@@ -539,10 +523,6 @@ def get_tree_api(query_id):
     network = get_network_from_request(query_id)
     return jsonify(api.get_tree_annotations(network))
 
-
-####################################
-# NETWORK QUERIES
-####################################
 
 @api_blueprint.route('/api/query/<int:query_id>/rights/')
 def check_query_rights(query_id):
