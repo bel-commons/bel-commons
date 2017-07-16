@@ -1989,4 +1989,8 @@ function initD3Force(graph, tree) {
             commentTextBox.val('');
         });
 
+
+    $(".explorer-download").click(function () {
+        window.location.href = '/api/query/' + window.query + '/export/' + $(this).data('format');
+    });
 }
