@@ -692,27 +692,13 @@ def edges_by_annotation(annotation_name, annotation_value):
     return jsonify(edges)
 
 
-@api_blueprint.route('/api/edge')
-@roles_required('admin')
-def get_all_edges():
-    """Gets all edges"""
-    return jsonify([
-        {
-            'id': edge_id,
-            'source': api.get_node_id(source),
-            'target': api.get_node_id(target),
-            'data': data,
-            'votes': api.edge_votes[edge_id],
-            'comments': api.edge_comments[edge_id]
+def get_edge_entry(edge_id):
+    """Gets edge information by edge identifier
 
-        }
-        for edge_id, (source, target, data) in api.eid_edge.items()
-    ])
-
-
-@api_blueprint.route('/api/edge/<int:edge_id>')
-def get_edge_by_id(edge_id):
-    """Gets an edge data dictionary by id"""
+    :param int edge_id: The identifier of a given edge
+    :return: A dictionary representing the information about the given edge
+    :rtype: dict
+    """
     source, target, data = api.get_edge_by_id(edge_id)
 
     data = {
@@ -720,13 +706,35 @@ def get_edge_by_id(edge_id):
         'source': api.get_node_id(source),
         'target': api.get_node_id(target),
         'data': data,
-        'comments': api.edge_comments[edge_id]
+        'comments': [
+            {
+                'user': {'id': user_id, 'email': User.query.get(user_id).email},
+                'comment': comment
+            }
+            for user_id, comment in api.edge_comments[edge_id]
+        ]
     }
 
     if current_user.is_authenticated:
         data['vote'] = api.edge_votes[edge_id][current_user.id]
 
-    return jsonify(data)
+    return data
+
+
+@api_blueprint.route('/api/edge')
+@roles_required('admin')
+def get_all_edges():
+    """Gets all edges"""
+    return jsonify([
+        get_edge_entry(edge_id)
+        for edge_id in api.eid_edge
+    ])
+
+
+@api_blueprint.route('/api/edge/<int:edge_id>')
+def get_edge_by_id(edge_id):
+    """Gets an edge data dictionary by id"""
+    return jsonify(get_edge_entry(edge_id))
 
 
 @api_blueprint.route('/api/edge/<int:edge_id>/vote/up')
@@ -759,7 +767,7 @@ def store_down_vote(edge_id):
     })
 
 
-@api_blueprint.route('/api/edge/<int:edge_id>/comment')
+@api_blueprint.route('/api/edge/<int:edge_id>/comment', methods=('GET', 'POST'))
 @login_required
 def store_comment(edge_id):
     """Adds a comment to the edge"""
