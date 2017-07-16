@@ -379,10 +379,18 @@ def drop_network_by_id(network_id):
 
     :param int network_id: The identifier of the network to drop
     """
-    log.info('dropping graphs %s', network_id)
+    network = manager.session.query(Network).get(network_id)
+
+    if not current_user.admin and (not network.report or current_user.id != network.report.user_id):
+        abort(403, 'You do not have permission to drop network {}'.format(network_id))
+
+    if network.report:
+        manager.session.delete(network.report)
+
+    manager.session.delete(network)
+    manager.session.commit()
 
     api.forget_network(network_id)
-    manager.drop_network_by_id(network_id)
 
     if 'next' in request.args:
         flash('Dropped network {}'.format(network_id))
@@ -393,7 +401,6 @@ def drop_network_by_id(network_id):
         'action': 'drop network',
         'network_id': network_id,
     })
-
 
 @api_blueprint.route('/api/network/<int:network_id>/claim')
 @roles_required('admin')
@@ -474,27 +481,6 @@ def get_network_name_by_id(network_id):
 
     network = api.get_network_by_id(network_id)
     return jsonify(network.name)
-
-
-@api_blueprint.route('/api/network/<int:network_id>/drop/<int:user_id>')
-@login_required
-def drop_user_network(network_id, user_id):
-    """Drops a given network"""
-    if current_user.id != user_id:
-        abort(403, 'You do not have permission to drop that network')
-
-    try:
-        report = manager.session.query(Report).filter(Report.network_id == network_id,
-                                                      Report.user_id == user_id).one()
-        manager.session.delete(report.network)
-        manager.session.delete(report)
-        manager.session.commit()
-        flash('Dropped network {}'.format(network_id))
-    except Exception:
-        manager.session.rollback()
-        flash('Problem dropping network {}'.format(network_id), category='error')
-
-    return redirect(url_for('view_networks'))
 
 
 def update_network_status(network_id, status):

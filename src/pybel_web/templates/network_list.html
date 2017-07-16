@@ -117,29 +117,41 @@
                             <p>{{ network.description }}</p>
                             <ul class="list-inline">
                                 {% if current_user.is_authenticated and current_user.admin %}
-                                    <li><span class="btn btn-info">{{ network.id }}</span></li>
+                                    <li>
+                                        <span class="btn btn-info">{{ network.id }}</span>
+                                    </li>
                                 {% endif %}
-                                <li><a href="{{ url_for('view_summary', network_id=network.id) }}"
+                                <li>
+                                    <a href="{{ url_for('view_summary', network_id=network.id) }}"
                                        class="btn btn-default">Summarize</a>
                                 </li>
-                                <li><a href="{{ url_for('view_explore_network', network_id=network.id) }}"
+                                <li>
+                                    <a href="{{ url_for('view_explore_network', network_id=network.id) }}"
                                        class="btn btn-default">Explore</a>
                                 </li>
                                 <li>
                                     <a href="{{ url_for('analysis.view_analysis_uploader', network_id=network.id) }}"
-                                       class="btn btn-default">Analyze</a></li>
-                                <li><a href="{{ url_for('analysis.view_analyses', network_id=network.id) }}"
-                                       class="btn btn-default">Results</a></li>
+                                       class="btn btn-default">Analyze</a>
+                                </li>
+                                <li>
+                                    <a href="{{ url_for('analysis.view_analyses', network_id=network.id) }}"
+                                       class="btn btn-default">Results</a>
+                                </li>
                                 {% if current_user.is_authenticated %}
                                     {% if network.report and network.report.user == current_user %}
-                                        <li><a class="btn btn-danger" role="button"
-                                               href="{{ url_for('dbs.drop_user_network', network_id=network.id, user_id=current_user.id, next=url_for('view_networks')) }}">Drop</a>
+                                        <li>
+                                            <a class="btn btn-warning" role="button"
+                                               href="{{ url_for('dbs.drop_network', network_id=network.id, next=url_for('view_networks')) }}">Drop</a>
                                         </li>
                                     {% elif current_user.admin %}
-                                        <li><a class="btn btn-danger" role="button"
-                                               href="{{ url_for('dbs.drop_network', network_id=network.id, next=url_for('view_networks')) }}">
-                                            Sudo Drop</a>
+                                        <li>
+                                            <a class="btn btn-danger" role="button"
+                                               href="{{ url_for('dbs.drop_network', network_id=network.id, next=url_for('view_networks')) }}">Sudo
+                                                Drop</a>
                                         </li>
+                                    {% endif %}
+
+                                    {% if current_user.admin %}
                                         <li>
                                             <a class="btn btn-danger" role="button"
                                                href="{{ url_for('dbs.load_edge_store_by_network_id', network_id=network.id, next=url_for('view_networks')) }}">
@@ -159,21 +171,25 @@
                                         {% if not network.report.public %}
                                             <li>
                                                 <a href="{{ url_for('dbs.make_network_public', network_id=network.id, next=url_for('view_networks')) }}"
-                                                   class="btn btn-success" role="button">Make Public</a></li>
+                                                   class="btn btn-success" role="button">Make Public</a>
+                                            </li>
                                         {% else %}
                                             <li>
                                                 <a href="{{ url_for('dbs.make_network_private', network_id=network.id, next=url_for('view_networks')) }}"
-                                                   class="btn btn-warning" role="button">Make Private</a></li>
+                                                   class="btn btn-warning" role="button">Make Private</a>
+                                            </li>
                                         {% endif %}
                                     {% elif current_user.has_role('scai') or current_user.admin %}
                                         {% if network.report and not network.report.public %}
                                             <li>
                                                 <a href="{{ url_for('dbs.make_network_public', network_id=network.id, next=url_for('view_networks')) }}"
-                                                   class="btn btn-danger" role="button">Sudo Make Public</a></li>
+                                                   class="btn btn-danger" role="button">Sudo Make Public</a>
+                                            </li>
                                         {% elif network.report and network.report.public %}
                                             <li>
                                                 <a href="{{ url_for('dbs.make_network_private', network_id=network.id, next=url_for('view_networks')) }}"
-                                                   class="btn btn-danger" role="button">Sudo Make Private</a></li>
+                                                   class="btn btn-danger" role="button">Sudo Make Private</a>
+                                            </li>
                                         {% endif %}
                                     {% endif %}
                                 {% endif %}
