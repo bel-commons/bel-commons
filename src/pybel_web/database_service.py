@@ -963,13 +963,13 @@ def drop_queries():
 @login_required
 def drop_user_queries(user_id):
     """Deletes all queries associated to the user"""
-
     if not (current_user.admin or user_id == current_user.id):
         abort(403, 'Unauthorized user')
 
-    query = manager.session.query(models.Query).filter_by(user_id=current_user.id).delete()
+    manager.session.query(models.Query).filter_by(user_id=current_user.id).delete()
     manager.session.commit()
-    flash('Deleted query {}'.format('All queries associated with your user has been deleted'))
+
+    flash('All queries associated with your user have been deleted')
 
     return redirect(url_for('home'))
 
@@ -1004,11 +1004,13 @@ def get_query_parent(query_id):
 
     if not query.parent:
         return jsonify({
-            'id': query.id, 'parent': False
+            'id': query.id,
+            'parent': False
         })
 
     return jsonify({
-        'id': query.parent.id, 'parent': True
+        'id': query.parent.id,
+        'parent': True
     })
 
 
