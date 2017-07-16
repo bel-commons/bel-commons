@@ -277,6 +277,35 @@ def suggest_annotation():
 # NETWORKS
 ####################################
 
+@api_blueprint.route('/api/network/<int:network_id>/store_edges')
+@roles_required('admin')
+def load_edge_store_by_network_id(network_id):
+    """Edge stores a network"""
+    network = manager.session.query(Network).get(network_id)
+    graph = network.as_bel()
+
+    t = time.time()
+
+    for url in graph.namespace_url.values():
+        manager.ensure_namespace(url, cache_objects=True)
+
+    for url in graph.annotation_url.values():
+        manager.ensure_annotation(url, objects=True)
+
+    manager.store_graph_parts(network, graph)
+    manager.session.commit()
+
+    t = time.time() - t
+
+    if 'next' in request.args:
+        flash('Edge stored {} in {:.2f} seconds'.format(network, t))
+        return redirect(request.args['next'])
+
+    return jsonify({
+        'status': 200,
+        'time': t
+    })
+
 
 @api_blueprint.route('/api/network/<int:network_id>/namespaces', methods=['GET'])
 def namespaces_by_network(network_id):
