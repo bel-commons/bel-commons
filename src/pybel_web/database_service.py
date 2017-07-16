@@ -124,7 +124,14 @@ def receive():
         log.exception('Upload error')
         manager.session.rollback()
 
-    return redirect(url_for('home'))
+    if 'next' in request.args:
+        flask.flash('Success')
+        return redirect(request.args['next'])
+
+    return jsonify({
+        'status': '200',
+        'network_id': network.id,
+    })
 
 
 ####################################
@@ -173,6 +180,11 @@ def drop_namespaces():
     log.info('dropping all namespaces')
     manager.session.query(Namespace).delete()
     manager.session.commit()
+
+    if 'next' in request.args:
+        flash('dropped all namespaces')
+        return redirect(request.args['next'])
+
     return jsonify({'status': 200})
 
 
@@ -246,9 +258,15 @@ def list_annotation_names(keyword):
 @roles_required('admin')
 def drop_annotation_by_id(annotation_id):
     """Drops an annotation given its identifier"""
-    log.info('dropping annotation %s', annotation_id)
-    manager.session.query(Annotation).filter(Annotation.id == annotation_id).delete()
+    annotation = manager.session.query(Annotation).get(annotation_id)
+
+    manager.session.delete(annotation)
     manager.session.commit()
+
+    if 'next' in request.args:
+        flash('dropped annotation: {}'.format(annotation))
+        return redirect(request.args['next'])
+
     return jsonify({'status': 200})
 
 
@@ -259,6 +277,11 @@ def drop_annotations():
     log.info('dropping all annotations')
     manager.session.query(Annotation).delete()
     manager.session.commit()
+
+    if 'next' in request.args:
+        flash('dropped all annotations')
+        return redirect(request.args['next'])
+
     return jsonify({'status': 200})
 
 
@@ -379,6 +402,10 @@ def claim_network(network_id):
     network = manager.session.query(Network).get(network_id)
 
     if network.report:
+        if 'next' in request.args:
+            flask.flash('Already claimed by {}'.format(network.report.user))
+            return redirect(request.args['next'])
+
         return jsonify({'status': 200, 'owner_id': network.report.user_id})
 
     report = Report(
