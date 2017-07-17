@@ -201,11 +201,14 @@ def load(ctx, file):
 def drop(ctx, yes):
     """Drops database"""
     if yes or click.confirm('Drop database at {}?'.format(ctx.obj.connection)):
+        click.echo('Dumped users to {}'.format(user_dump_path))
         with open(user_dump_path, 'w') as f:
             for s in iterate_user_strings(ctx.obj, True):
                 print(s, file=f)
-        click.echo('Dumped users to {}'.format(user_dump_path))
+        click.echo('Done')
+        click.echo('Dropping database')
         ctx.obj.drop_database()
+        click.echo('Done')
 
 
 @manage.command()
