@@ -108,13 +108,18 @@
                 {% for network in networks %}
                     <div class="list-group-item">
                         <h4 class="list-group-item-heading">{{ network.name }}
-                            <small class="text-muted">{{ network.version }}</small>
+                            <small class="text-muted">
+                                {{ network.version }}
+
+                                {% if network.report %}
+                                    by {{ network.report.user }}
+                                {% endif %}
+                            </small>
+
                             {% if not network.report or network.report.public %}
                                 <span class="glyphicon glyphicon-globe" aria-hidden="true"></span>
-                                {% if network.report %}
-                                    <span> {{ network.report.user }}</span>
-                                {% endif %}
                             {% endif %}
+
                         </h4>
                         <div class="list-group-item-text">
                             <p>{{ network.description }}</p>
