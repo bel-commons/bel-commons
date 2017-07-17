@@ -397,13 +397,26 @@ def drop_network(network_id):
     if not current_user.admin and (not network.report or current_user.id != network.report.user_id):
         abort(403, 'You do not have permission to drop network {}'.format(network_id))
 
-    if network.report:
-        manager.session.delete(network.report)
+    try:
+        if network.report:
+            manager.session.delete(network.report)
 
-    manager.session.delete(network)
-    manager.session.commit()
+        manager.session.delete(network)
+        manager.session.commit()
 
-    api.forget_network(network_id)
+        api.forget_network(network_id)
+    except:
+        manager.session.rollback()
+
+        if 'next' in request.args:
+            flash('Dropped network {} failed'.format(network_id), category='error')
+            return redirect(request.args['next'])
+
+        return jsonify({
+            'status': 400,
+            'action': 'drop network',
+            'network_id': network_id,
+        })
 
     if 'next' in request.args:
         flash('Dropped network {}'.format(network_id))
