@@ -16,7 +16,7 @@ from pybel.manager.models import (
     Node,
     Citation,
     Evidence,
-Author
+    Author
 )
 from pybel.manager.models import Network, Namespace, Annotation
 from .application import get_manager, get_api
@@ -62,11 +62,17 @@ class EdgeView(ModelView):
     """Special view for PyBEL Edges"""
     column_exclude_list = ['blob', 'sha512']
 
+
 class CitationView(ModelView):
     column_exclude_list = ['blob', 'sha512']
 
+
 class EvidenceView(ModelView):
     column_exclude_list = ['blob', 'sha512']
+
+
+class ExperimentView(ModelView):
+    column_exclude_list = ['source', 'result', ]
 
 
 class UserView(ModelView):
@@ -96,7 +102,7 @@ def build_admin_service(app):
     admin.add_view(EvidenceView(Evidence, manager.session))
     admin.add_view(ModelView(Author, manager.session))
     admin.add_view(ModelView(Report, manager.session))
-    admin.add_view(ModelView(Experiment, manager.session))
+    admin.add_view(ExperimentView(Experiment, manager.session))
     admin.add_view(ModelView(Query, manager.session))
     admin.add_view(ModelView(Assembly, manager.session))
     admin.add_view(ModelView(EdgeVote, manager.session))
