@@ -405,17 +405,18 @@ def drop_network(network_id):
         manager.session.commit()
 
         api.forget_network(network_id)
-    except:
+    except Exception as e:
         manager.session.rollback()
 
         if 'next' in request.args:
-            flash('Dropped network {} failed'.format(network_id), category='error')
+            flash('Dropped network {} failed: {}'.format(network_id, e), category='error')
             return redirect(request.args['next'])
 
         return jsonify({
             'status': 400,
             'action': 'drop network',
             'network_id': network_id,
+            'exception': str(e),
         })
 
     if 'next' in request.args:
