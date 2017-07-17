@@ -183,7 +183,7 @@ function displayQueryInfo(query) {
     queryObject["Query ID"] = query.id;
 
     queryObject["Assembly"] = query.networks.join(", ");
-    if (query.seeding !== "[]") {
+    if (query.seeding.length !== 0) {
         var querySeeding = query.seeding.map(function (object) {
             if (object.type == "annotation") {
 
@@ -207,13 +207,12 @@ function displayQueryInfo(query) {
         queryObject["Seeding"] = querySeeding;
     }
 
-    if (query.pipeline !== "[]") {
+    if (query.pipeline.length !== 0) {
         var queryPipeline = query.pipeline.map(function (object) {
             return object.function;
         });
 
         queryObject["Pipeline"] = queryPipeline.join(", ");
-
     }
 
     var row = 0;
