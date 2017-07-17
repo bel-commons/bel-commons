@@ -19,14 +19,14 @@ from __future__ import print_function
 import datetime
 import json
 import logging
-import os
 import sys
 import time
 
 import click
+import os
 from flask_security import SQLAlchemyUserDatastore
 
-from pybel.constants import get_cache_connection
+from pybel.constants import get_cache_connection, PYBEL_CONNECTION
 from pybel.manager.cache import build_manager
 from pybel.manager.models import Base, Network
 from pybel.utils import get_version as pybel_version
@@ -143,10 +143,16 @@ def run(host, port, default_config, debug, flask_debug, config):
 
 @main.group()
 @click.option('-c', '--connection', help='Cache connection. Defaults to {}'.format(get_cache_connection()))
+@click.option('--config', type=click.File('r'), help='Specify configuration JSON file')
 @click.pass_context
-def manage(ctx, connection):
+def manage(ctx, connection, config):
     """Manage database"""
-    ctx.obj = build_manager(connection)
+    if config:
+        file = json.load(config)
+        ctx.obj = build_manager(file.get(PYBEL_CONNECTION, get_cache_connection()))
+    else:
+        ctx.obj = build_manager(connection)
+
     Base.metadata.bind = ctx.obj.engine
     Base.query = ctx.obj.session.query_property()
 
@@ -194,7 +200,7 @@ def load(ctx, file):
 @click.option('-y', '--yes', is_flag=True)
 def drop(ctx, yes):
     """Drops database"""
-    if yes or click.confirm('Drop database?'):
+    if yes or click.confirm('Drop database at {}?'.format(ctx.obj.connection)):
         with open(user_dump_path, 'w') as f:
             for s in iterate_user_strings(ctx.obj, True):
                 print(s, file=f)
