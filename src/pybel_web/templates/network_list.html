@@ -111,6 +111,9 @@
                             <small class="text-muted">{{ network.version }}</small>
                             {% if not network.report or network.report.public %}
                                 <span class="glyphicon glyphicon-globe" aria-hidden="true"></span>
+                                {% if network.report %}
+                                    <span> {{ network.report.user }}</span>
+                                {% endif %}
                             {% endif %}
                         </h4>
                         <div class="list-group-item-text">
@@ -120,34 +123,51 @@
                                     <li>
                                         <span class="btn btn-info">{{ network.id }}</span>
                                     </li>
+
                                 {% endif %}
                                 <li>
                                     <a href="{{ url_for('view_summary', network_id=network.id) }}"
-                                       class="btn btn-default">Summarize</a>
+                                       class="btn btn-default">
+                                        <span class="glyphicon glyphicon-signal" aria-hidden="true"></span>
+                                        Summarize
+                                    </a>
                                 </li>
                                 <li>
                                     <a href="{{ url_for('view_explore_network', network_id=network.id) }}"
-                                       class="btn btn-default">Explore</a>
+                                       class="btn btn-default">
+                                        <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
+                                        Explore
+                                    </a>
                                 </li>
                                 <li>
                                     <a href="{{ url_for('analysis.view_analysis_uploader', network_id=network.id) }}"
-                                       class="btn btn-default">Analyze</a>
+                                       class="btn btn-default">
+                                        <span class="glyphicon glyphicon-flash" aria-hidden="true"></span>
+                                        Analyze
+                                    </a>
                                 </li>
                                 <li>
                                     <a href="{{ url_for('analysis.view_analyses', network_id=network.id) }}"
-                                       class="btn btn-default">Results</a>
+                                       class="btn btn-default">
+                                        <span class="glyphicon glyphicon-tasks" aria-hidden="true"></span>
+                                        Results
+                                    </a>
                                 </li>
                                 {% if current_user.is_authenticated %}
                                     {% if network.report and network.report.user == current_user %}
                                         <li>
                                             <a class="btn btn-warning" role="button"
-                                               href="{{ url_for('dbs.drop_network', network_id=network.id, next=url_for('view_networks')) }}">Drop</a>
+                                               href="{{ url_for('dbs.drop_network', network_id=network.id, next=url_for('view_networks')) }}">
+                                                <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
+                                                Drop
+                                            </a>
                                         </li>
                                     {% elif current_user.admin %}
                                         <li>
                                             <a class="btn btn-danger" role="button"
-                                               href="{{ url_for('dbs.drop_network', network_id=network.id, next=url_for('view_networks')) }}">Sudo
-                                                Drop</a>
+                                               href="{{ url_for('dbs.drop_network', network_id=network.id, next=url_for('view_networks')) }}">
+                                                <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
+                                                Sudo Drop</a>
                                         </li>
                                     {% endif %}
 
@@ -171,24 +191,38 @@
                                         {% if not network.report.public %}
                                             <li>
                                                 <a href="{{ url_for('dbs.make_network_public', network_id=network.id, next=url_for('view_networks')) }}"
-                                                   class="btn btn-success" role="button">Make Public</a>
+                                                   class="btn btn-success" role="button">
+                                                    <span class="glyphicon glyphicon-globe" aria-hidden="true"></span>
+                                                    Make Public
+                                                </a>
                                             </li>
                                         {% else %}
                                             <li>
                                                 <a href="{{ url_for('dbs.make_network_private', network_id=network.id, next=url_for('view_networks')) }}"
-                                                   class="btn btn-warning" role="button">Make Private</a>
+                                                   class="btn btn-warning" role="button">
+                                                    <span class="glyphicon glyphicon-ban-circle"
+                                                          aria-hidden="true"></span>
+                                                    Make Private
+                                                </a>
                                             </li>
                                         {% endif %}
                                     {% elif current_user.has_role('scai') or current_user.admin %}
                                         {% if network.report and not network.report.public %}
                                             <li>
                                                 <a href="{{ url_for('dbs.make_network_public', network_id=network.id, next=url_for('view_networks')) }}"
-                                                   class="btn btn-danger" role="button">Sudo Make Public</a>
+                                                   class="btn btn-danger" role="button">
+                                                    <span class="glyphicon glyphicon-globe" aria-hidden="true"></span>
+                                                    Sudo Make Public
+                                                </a>
                                             </li>
                                         {% elif network.report and network.report.public %}
                                             <li>
                                                 <a href="{{ url_for('dbs.make_network_private', network_id=network.id, next=url_for('view_networks')) }}"
-                                                   class="btn btn-danger" role="button">Sudo Make Private</a>
+                                                   class="btn btn-danger" role="button">
+                                                    <span class="glyphicon glyphicon-ban-circle "
+                                                          aria-hidden="true"></span>
+                                                    Sudo Make Private
+                                                </a>
                                             </li>
                                         {% endif %}
                                     {% endif %}
