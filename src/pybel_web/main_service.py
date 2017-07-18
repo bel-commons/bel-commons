@@ -141,6 +141,15 @@ def build_dictionary_service_admin(app):
         flash('Queued task to parse the Selventa folder: {}'.format(task))
         return redirect(url_for('home'))
 
+    @app.route('/admin/ensure/bms')
+    @roles_required('admin')
+    def ensure_bms():
+        """Parses and stores the entire Biological Model Store repository"""
+        celery = create_celery(current_app)
+        task = celery.send_task('parse-bms', args=[current_app.config.get(PYBEL_CONNECTION)])
+        flash('Queued task to parse the BMS: {}'.format(task))
+        return redirect(url_for('home'))
+
     @app.route('/admin/list/bms/pickles')
     @roles_required('admin')
     def list_bms_pickles():

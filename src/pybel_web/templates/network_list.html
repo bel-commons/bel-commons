@@ -85,10 +85,12 @@
                             Pickles</a>
                         <a class="btn btn-warning" href="{{ url_for('upload_aetionomy') }}" role="button">Sync Upload
                             AETIONOMY Pickles</a>
-                        <a class="btn btn-danger" href="{{ url_for('ensure_selventa') }}" role="button">Async Parse
-                            Selventa</a>
-                        <a class="btn btn-danger" href="{{ url_for('ensure_aetionomy') }}" role="button">Async Parse
-                            AETIONOMY</a>
+                    </p>
+                    <h4>Async Parse Folders</h4>
+                    <p>
+                        <a class="btn btn-danger" href="{{ url_for('ensure_selventa') }}" role="button">Selventa</a>
+                        <a class="btn btn-danger" href="{{ url_for('ensure_aetionomy') }}" role="button">AETIONOMY</a>
+                        <a class="btn btn-danger" href="{{ url_for('ensure_bms') }}" role="button">BMS</a>
                     </p>
                 </div>
             </div>

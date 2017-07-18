@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
-import hashlib
 import logging
-import os
 
+import hashlib
+import os
 import requests.exceptions
 from celery.utils.log import get_task_logger
 from flask_mail import Message
@@ -32,7 +32,7 @@ log = get_task_logger(__name__)
 def parse_folder(connection, folder, **kwargs):
     manager = build_manager(connection)
     convert_directory(
-        os.path.join(os.environ[BMS_BASE], folder),
+        folder,
         connection=manager,
         upload=True,
         infer_central_dogma=True,
@@ -67,13 +67,21 @@ def do_okay_mail(current_user_email, graph):
 @celery.task(name='parse-aetionomy')
 def parse_aetionomy(connection):
     """Converts the Aetionomy folder in the BMS"""
+    folder = os.path.join(os.environ[BMS_BASE], 'aetionomy')
     parse_folder(connection, 'aetionomy')
 
 
 @celery.task(name='parse-selventa')
 def parse_selventa(connection):
     """Converts the Selventa folder in the BMS"""
-    parse_folder(connection, 'selventa', citation_clearing=False)
+    folder = os.path.join(os.environ[BMS_BASE], 'selventa')
+    parse_folder(connection, folder, citation_clearing=False)
+
+
+@celery.task(name='parse-bms')
+def parse_selventa(connection):
+    """Converts the entire BMS"""
+    parse_folder(connection, os.environ[BMS_BASE])
 
 
 @celery.task(name='parse-url')
