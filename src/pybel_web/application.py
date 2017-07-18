@@ -18,7 +18,6 @@ from getpass import getuser
 
 import os
 from celery import Celery
-from collections import defaultdict
 from flasgger import Swagger
 from flask import (
     Flask,
@@ -88,6 +87,14 @@ class FlaskPyBEL:
 
         @app.errorhandler(500)
         def internal_server_error(error):
+            """Call this filter when there's an internal server error.
+
+            Run a rollback and send some information to Sentry.
+            """
+
+            # Lets just assume everything went to shit
+            self.manager.session.rollback()
+
             return render_template(
                 '500.html',
                 event_id=g.sentry_event_id,
