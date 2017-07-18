@@ -62,35 +62,59 @@
                 <div class="panel-body">
                     <h4>Actions</h4>
                     <p>
-                        <a class="btn btn-info" href="{{ url_for('view_reports') }}" role="button">View Pretty
-                            Reporting</a>
-                        <a class="btn btn-info" href="{{ url_for('dbs.list_reporting') }}" role="button">View Reporting
-                            Log</a>
-                        <a class="btn btn-success" href="{{ url_for('run_reload') }}" role="button">Reload Networks</a>
-                        <a class="btn btn-danger" href="{{ url_for('dbs.drop_networks') }}" role="button"
-                           data-toggle="confirmation" data-btn-ok-icon="glyphicon glyphicon-share-alt"
+                        <a class="btn btn-info" href="{{ url_for('view_reports') }}" role="button">
+                            View Pretty Reporting
+                        </a>
+                        <a class="btn btn-info" href="{{ url_for('dbs.list_reporting') }}" role="button">
+                            View Reporting Log
+                        </a>
+                        <a class="btn btn-success" href="{{ url_for('run_reload', next=url_for('home')) }}"
+                           role="button">
+                            Reload Networks
+                        </a>
+                        <a class="btn btn-danger" href="{{ url_for('dbs.drop_networks', next=url_for('home')) }}"
+                           role="button" data-toggle="confirmation" data-btn-ok-icon="glyphicon glyphicon-share-alt"
                            data-btn-ok-class="btn-success" data-btn-cancel-icon="glyphicon glyphicon-ban-circle"
-                           data-btn-cancel-class="btn-danger">Drop All Networks</a>
+                           data-btn-cancel-class="btn-danger">
+                            Drop All Networks
+                        </a>
                     </p>
                     <h4>Ensure Remote BEL Documents</h4>
                     <p>
-                        <a class="btn btn-success" href="{{ url_for('ensure_simple') }}" role="button">Sync Parse
-                            Simple</a>
-                        <a class="btn btn-success" href="{{ url_for('ensure_gfam') }}" role="button">Sync Parse Gene
-                            Families</a>
+                        <a class="btn btn-success" href="{{ url_for('ensure_simple', next=url_for('home')) }}"
+                           role="button">
+                            Sync Parse Simple
+                        </a>
+                        <a class="btn btn-success" href="{{ url_for('ensure_gfam', next=url_for('home')) }}"
+                           role="button">
+                            Sync Parse Gene Families
+                        </a>
                     </p>
                     <h4>Ensure BMS BEL Documents</h4>
                     <p>
-                        <a class="btn btn-info" href="{{ url_for('list_bms_pickles') }}" role="button">List BMS
-                            Pickles</a>
-                        <a class="btn btn-warning" href="{{ url_for('upload_aetionomy') }}" role="button">Sync Upload
-                            AETIONOMY Pickles</a>
+                        <a class="btn btn-info" href="{{ url_for('list_bms_pickles', next=url_for('home')) }}"
+                           role="button">
+                            List BMS Pickles
+                        </a>
+                        <a class="btn btn-warning" href="{{ url_for('upload_aetionomy', next=url_for('home')) }}"
+                           role="button">
+                            Sync Upload AETIONOMY Pickles
+                        </a>
                     </p>
                     <h4>Async Parse Folders</h4>
                     <p>
-                        <a class="btn btn-danger" href="{{ url_for('ensure_selventa') }}" role="button">Selventa</a>
-                        <a class="btn btn-danger" href="{{ url_for('ensure_aetionomy') }}" role="button">AETIONOMY</a>
-                        <a class="btn btn-danger" href="{{ url_for('ensure_bms') }}" role="button">BMS</a>
+                        <a class="btn btn-danger" href="{{ url_for('ensure_selventa', next=url_for('home')) }}"
+                           role="button">
+                            Selventa
+                        </a>
+                        <a class="btn btn-danger" href="{{ url_for('ensure_aetionomy', next=url_for('home')) }}"
+                           role="button">
+                            AETIONOMY
+                        </a>
+                        <a class="btn btn-danger" href="{{ url_for('ensure_bms', next=url_for('home')) }}"
+                           role="button">
+                            BMS
+                        </a>
                     </p>
                 </div>
             </div>

@@ -54,7 +54,8 @@ from .utils import (
     networks_with_permission_iter_helper,
     list_public_networks,
     get_network_ids_with_permission_helper,
-    safe_get_query
+    safe_get_query,
+    next_or_jsonify,
 )
 
 log = logging.getLogger(__name__)
@@ -87,21 +88,21 @@ def build_dictionary_service_admin(app):
         """Reloads the networks and supernetwork"""
         api.clear()
         api.cache_networks(force_reload=True)
-        return jsonify({'status': 200})
+        return next_or_jsonify('reloaded networks')
 
     @app.route('/admin/rollback')
     @roles_required('admin')
     def rollback():
         """Rolls back the transaction for when something bad happens"""
         manager.session.rollback()
-        return jsonify({'status': 200})
+        return next_or_jsonify('rolled back')
 
     @app.route('/admin/enrich')
     @roles_required('admin')
     def run_enrich_authors():
         """Enriches information in network. Be patient"""
         fix_pubmed_citations(api.universe)
-        return jsonify({'status': 200})
+        return next_or_jsonify('enriched authors')
 
     @app.route('/admin/ensure/simple')
     @roles_required('admin')
@@ -110,8 +111,7 @@ def build_dictionary_service_admin(app):
         url = 'https://raw.githubusercontent.com/pybel/pybel/develop/tests/bel/test_bel.bel'
         celery = create_celery(current_app)
         task = celery.send_task('parse-url', args=[current_app.config.get(PYBEL_CONNECTION), url])
-        flash('Queued task to parse PyBEL Test 1: {}'.format(task))
-        return redirect(url_for('home'))
+        return next_or_jsonify('Queued task to parse PyBEL Test 1: {}'.format(task))
 
     @app.route('/admin/ensure/gfam')
     @roles_required('admin')
@@ -120,8 +120,7 @@ def build_dictionary_service_admin(app):
         url = FRAUNHOFER_RESOURCES + 'gfam_members.bel'
         celery = create_celery(current_app)
         task = celery.send_task('parse-url', args=[current_app.config.get(PYBEL_CONNECTION), url])
-        flash('Queued task to parse HGNC Gene Families: {}'.format(task))
-        return redirect(url_for('home'))
+        return next_or_jsonify('Queued task to parse HGNC Gene Families: {}'.format(task))
 
     @app.route('/admin/ensure/aetionomy')
     @roles_required('admin')
@@ -129,8 +128,7 @@ def build_dictionary_service_admin(app):
         """Parses and stores the AETIONOMY resources from the Biological Model Store repository"""
         celery = create_celery(current_app)
         task = celery.send_task('parse-aetionomy', args=[current_app.config.get(PYBEL_CONNECTION)])
-        flash('Queued task to parse the AETIONOMY folder: {}'.format(task))
-        return redirect(url_for('home'))
+        return next_or_jsonify('Queued task to parse the AETIONOMY folder: {}'.format(task))
 
     @app.route('/admin/ensure/selventa')
     @roles_required('admin')
@@ -138,8 +136,7 @@ def build_dictionary_service_admin(app):
         """Parses and stores the Selventa resources from the Biological Model Store repository"""
         celery = create_celery(current_app)
         task = celery.send_task('parse-selventa', args=[current_app.config.get(PYBEL_CONNECTION)])
-        flash('Queued task to parse the Selventa folder: {}'.format(task))
-        return redirect(url_for('home'))
+        return next_or_jsonify('Queued task to parse the Selventa folder: {}'.format(task))
 
     @app.route('/admin/ensure/bms')
     @roles_required('admin')
@@ -147,8 +144,7 @@ def build_dictionary_service_admin(app):
         """Parses and stores the entire Biological Model Store repository"""
         celery = create_celery(current_app)
         task = celery.send_task('parse-bms', args=[current_app.config.get(PYBEL_CONNECTION)])
-        flash('Queued task to parse the BMS: {}'.format(task))
-        return redirect(url_for('home'))
+        return next_or_jsonify('Queued task to parse the BMS: {}'.format(task))
 
     @app.route('/admin/list/bms/pickles')
     @roles_required('admin')
