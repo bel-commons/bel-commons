@@ -11,6 +11,7 @@ from six import StringIO
 from sqlalchemy.exc import IntegrityError, OperationalError
 
 from pybel import from_lines, from_url, to_bytes
+from pybel.constants import METADATA_DESCRIPTION, METADATA_CONTACT, METADATA_LICENSES
 from pybel.manager import build_manager
 from pybel.manager.models import Network
 from pybel.parser.parse_exceptions import InconsistentDefinitionError
@@ -27,6 +28,12 @@ app, mail = create_application(get_mail=True)
 celery = create_celery(app)
 
 log = get_task_logger(__name__)
+
+dumb_belief_stuff = {
+    METADATA_DESCRIPTION: {'Document description'},
+    METADATA_CONTACT: {'your@email.com'},
+    METADATA_LICENSES: {'Document license'}
+}
 
 
 def parse_folder(connection, folder, **kwargs):
@@ -156,6 +163,25 @@ def async_parser(lines, connection, current_user_id, current_user_email, public,
         with app.app_context():
             mail.send(Message(
                 subject='Parsing Failed',
+                recipients=[current_user_email],
+                body=message,
+                sender=("PyBEL Web", 'pybel@scai.fraunhofer.de'),
+            ))
+
+        return message
+
+    problem = {
+        k: v
+        for k, v in graph.document.items()
+        if k in dumb_belief_stuff and v in dumb_belief_stuff[k]
+    }
+
+    if problem:
+        message = 'Your document was rejected because it has "default" metadata: {}'.format(problem)
+
+        with app.app_context():
+            mail.send(Message(
+                subject='Document Rejected',
                 recipients=[current_user_email],
                 body=message,
                 sender=("PyBEL Web", 'pybel@scai.fraunhofer.de'),
