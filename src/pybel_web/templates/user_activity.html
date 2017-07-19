@@ -73,6 +73,66 @@
 
         <div class="panel panel-default">
             <div class="panel-heading">
+                <h3 class="panel-title">My Uploaded Networks</h3>
+            </div>
+            <table class="table table-striped table-responsive">
+                <thead>
+                <tr>
+                    <th>Network</th>
+                    <th>Date of Upload</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for report in user.reports %}
+                    {% if report.network is not none %}
+                        <tr>
+                            <td>
+                                <a href="{{ url_for('view_summary', network_id=report.network.id) }}">{{ report.network }}</a>
+                            </td>
+                            <td>{{ report.created }}</td>
+                        </tr>
+                    {% endif %}
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">My Experiments</h3>
+            </div>
+            <div class="panel-body">
+                <p>As an example pipeline, we recommend using the data from GEO experiment <a
+                        href="https://owncloud.scai.fraunhofer.de/index.php/s/1kbzCIhbfZLauuJ">GSE28146</a> with the
+                    Alzheimer's Disease Knowledge Assembly.
+                </p>
+            </div>
+            <table class="table table-striped table-responsive">
+                <thead>
+                <tr>
+                    <th></th>
+                    <th>Description</th>
+                    <th>Network</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for experiment in user.experiments %}
+                    <tr>
+                        <td>
+                            <a href="{{ url_for('analysis.view_analysis_results', analysis_id=experiment.id) }}">{{ experiment.id }}</a>
+                        </td>
+                        <td>{{ experiment.description }}</td>
+                        <td>
+                            <a href="{{ url_for('view_explore_network', network_id=experiment.network.id) }}">{{ experiment.network }}</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
                 <h3 class="panel-title">Queries</h3>
             </div>
             <table class="table table-striped table-responsive">
@@ -166,65 +226,7 @@
             </table>
         </div>
 
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                <h3 class="panel-title">My Networks</h3>
-            </div>
-            <table class="table table-striped table-responsive">
-                <thead>
-                <tr>
-                    <th>Network</th>
-                    <th>Date of Upload</th>
-                </tr>
-                </thead>
-                <tbody>
-                {% for report in user.reports %}
-                    {% if report.network is not none %}
-                        <tr>
-                            <td>
-                                <a href="{{ url_for('view_summary', network_id=report.network.id) }}">{{ report.network }}</a>
-                            </td>
-                            <td>{{ report.created }}</td>
-                        </tr>
-                    {% endif %}
-                {% endfor %}
-                </tbody>
-            </table>
-        </div>
 
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                <h3 class="panel-title">My Experiments</h3>
-            </div>
-            <div class="panel-body">
-                <p>As an example pipeline, we recommend using the data from GEO experiment <a
-                        href="https://owncloud.scai.fraunhofer.de/index.php/s/1kbzCIhbfZLauuJ">GSE28146</a> with the
-                    Alzheimer's Disease Knowledge Assembly.
-                </p>
-            </div>
-            <table class="table table-striped table-responsive">
-                <thead>
-                <tr>
-                    <th></th>
-                    <th>Description</th>
-                    <th>Network</th>
-                </tr>
-                </thead>
-                <tbody>
-                {% for experiment in user.experiments %}
-                    <tr>
-                        <td>
-                            <a href="{{ url_for('analysis.view_analysis_results', analysis_id=experiment.id) }}">{{ experiment.id }}</a>
-                        </td>
-                        <td>{{ experiment.description }}</td>
-                        <td>
-                            <a href="{{ url_for('view_explore_network', network_id=experiment.network.id) }}">{{ experiment.network }}</a>
-                        </td>
-                    </tr>
-                {% endfor %}
-                </tbody>
-            </table>
-        </div>
 
     </div>
 
