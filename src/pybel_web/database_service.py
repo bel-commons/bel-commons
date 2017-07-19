@@ -78,7 +78,8 @@ from .utils import (
     user_has_query_rights,
     current_user_has_query_rights,
     safe_get_query,
-    get_vote
+    get_vote,
+    next_or_jsonify,
 )
 
 log = logging.getLogger(__name__)
@@ -1453,6 +1454,30 @@ def export_project_network(project_id, serve_format):
 ####################################
 # METADATA
 ####################################
+
+@api_blueprint.route('/api/pillage')
+@roles_required('admin')
+def pillage():
+    """Claims all unclaimed networks"""
+    counter = 0
+
+    for network in manager.session.query(Network):
+        if network.report is not None:
+            continue
+
+        counter += 1
+
+        report = Report(
+            network=network,
+            user=current_user
+        )
+
+        manager.session.add(report)
+
+    manager.session.commit()
+
+    return next_or_jsonify('Claimed {} networks'.format(counter))
+
 
 @api_blueprint.route('/api/meta/config')
 @roles_required('admin')
