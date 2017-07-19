@@ -55,6 +55,8 @@ class FlaskPyBEL:
         self.manager = None
         self.user_datastore = None
         self.api = None
+        self.admin_role = None
+        self.scai_role = None
 
         if app is not None:
             self.init_app(app)
@@ -73,6 +75,17 @@ class FlaskPyBEL:
 
         self.api = DatabaseService(manager=self.manager)
         self.user_datastore = SQLAlchemyUserDatastore(self.manager, User, Role)
+
+        self.manager.create_all()
+
+        self.admin_role = pybel_extension.user_datastore.find_or_create_role(
+            name='admin',
+            description='Admin of PyBEL Web'
+        )
+        self.scai_role = pybel_extension.user_datastore.find_or_create_role(
+            name='scai',
+            description='Users from SCAI'
+        )
 
         if app.config.get('PYBEL_DS_PRELOAD', False):
             log.info('preloading networks')
@@ -251,11 +264,6 @@ def create_application(get_mail=False, config_location=None, **kwargs):
     @app.before_first_request
     def prepare_service():
         """A filter for preparing the web service when it is started"""
-        pybel_extension.manager.create_all()
-
-        admin_role = pybel_extension.user_datastore.find_or_create_role(name='admin', description='Admin of PyBEL Web')
-        scai_role = pybel_extension.user_datastore.find_or_create_role(name='scai', description='Users from SCAI')
-
         for email in (CHARLIE_EMAIL, DANIEL_EMAIL, ALEX_EMAIL):
             admin_user = pybel_extension.user_datastore.find_user(email=email)
 
@@ -266,8 +274,8 @@ def create_application(get_mail=False, config_location=None, **kwargs):
                     confirmed_at=datetime.datetime.now(),
                 )
 
-            pybel_extension.user_datastore.add_role_to_user(admin_user, admin_role)
-            pybel_extension.user_datastore.add_role_to_user(admin_user, scai_role)
+            pybel_extension.user_datastore.add_role_to_user(admin_user, pybel_extension.admin_role)
+            pybel_extension.user_datastore.add_role_to_user(admin_user, pybel_extension.scai_role)
             pybel_extension.manager.session.add(admin_user)
 
         pybel_extension.manager.session.commit()
@@ -349,3 +357,12 @@ def get_sentry(app):
     :rtype: raven.Sentry
     """
     return get_pybel(app).sentry
+
+
+def get_scai_role(app):
+    """Gets the SCAI role from the Flask app
+
+    :param flask.Flask app:
+    :rtype: Role
+    """
+    return get_pybel(app).scai_role

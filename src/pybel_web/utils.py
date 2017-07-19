@@ -62,7 +62,7 @@ from pybel_tools.summary.export import info_list
 from pybel_tools.summary.node_properties import count_variants
 from pybel_tools.summary.node_summary import get_unused_namespaces
 from pybel_tools.utils import prepare_c3, count_dict_values
-from .application import get_manager, get_api, get_user_datastore
+from .application import get_manager, get_api, get_user_datastore, get_scai_role
 from .constants import *
 from .models import User, Report, Experiment, Query, EdgeVote
 
@@ -99,6 +99,8 @@ def get_userdatastore_proxy():
 manager = get_manager_proxy()
 api = get_api_proxy()
 user_datastore = get_userdatastore_proxy()
+
+scai_role = LocalProxy(lambda: get_scai_role(current_app))
 
 
 def create_timeline(year_counter):
@@ -646,24 +648,28 @@ def unique_networks(networks):
 
 
 def networks_with_permission_iter_helper(user, api_):
-    """
+    """Gets an iterator over all the networks from all the sources
 
     :param models.User user:
     :param pybel_tools.api.DatabaseService api_:
-    :rtype: list[Network]
+    :rtype: iter[Network]
     """
     if not user.is_authenticated:
-        return list_public_networks(api_)
+        yield from list_public_networks(api_)
 
     if user.admin:
-        return api_.list_recent_networks()
+        yield from api_.list_recent_networks()
 
-    return itt.chain(
-        list_public_networks(api_),
-        user.get_owned_networks(),
-        user.get_shared_networks(),
-        user.get_project_networks()
-    )
+    yield from list_public_networks(api_)
+    yield from user.get_owned_networks()
+    yield from user.get_shared_networks()
+    yield from user.get_project_networks()
+
+    if user.has_role('scai'):
+        for user in scai_role.users:
+            yield from user.get_owned_networks()
+            yield from user.get_project_networks()
+            yield from user.get_shared_networks()
 
 
 def get_network_ids_with_permission_helper(user, api_):
