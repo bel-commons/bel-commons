@@ -1410,7 +1410,7 @@ def drop_project_by_id(project_id):
 def summarize_project(project_id):
     """Provides a summary of all networks in a project as a CSV file
 
-    :param int project_id:
+    :param int project_id: The identifier of the project
     """
     project = manager.session.query(Project).get(project_id)
 
@@ -1427,6 +1427,8 @@ def summarize_project(project_id):
             v
             for _, v in info_list(api.get_network_by_id(network.id))
         ))
+
+    csv_list.append(('Total', '') + tuple(v for _, v in info_list(project.as_bel())))
 
     cw.writerows(csv_list)
     output = make_response(si.getvalue())
