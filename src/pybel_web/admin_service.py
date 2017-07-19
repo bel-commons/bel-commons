@@ -50,7 +50,7 @@ class ModelView(ModelViewBase):
 
 class NetworkView(ModelView):
     """Special view for PyBEL Networks"""
-    column_exclude_list = ['blob', 'sha512']
+    column_exclude_list = ['blob', 'sha512', 'authors', 'description', 'copyright', 'disclaimer', 'licenses']
 
 
 class NodeView(ModelView):
