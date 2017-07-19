@@ -1435,6 +1435,19 @@ def summarize_project(project_id):
     return output
 
 
+@api_blueprint.route('/api/project/<project_id>/export/<serve_format>', methods=['GET'])
+def export_project_network(project_id, serve_format):
+    """Builds a graph the networks belonging to the given project and sends it in the given format"""
+    project = manager.session.query(Project).get(project_id)
+
+    if not project.has_user(current_user):
+        abort(403, 'You do not belong to this project')
+
+    network = project.as_bel()
+
+    return serve_network(network, serve_format)
+
+
 ####################################
 # METADATA
 ####################################

@@ -142,6 +142,14 @@ class Project(Base):
             for u in self.users
         )
 
+    def as_bel(self):
+        """Returns a merged instance of all of the contained networks
+
+        :return: A merged BEL graph
+        :rtype: pybel.BELGraph
+        """
+        return union(network.as_bel() for network in self.networks)
+
     def __str__(self):
         return self.name
 
