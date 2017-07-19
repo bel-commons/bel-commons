@@ -161,6 +161,15 @@ def build_dictionary_service_admin(app):
         flash('Uploaded the AETIONOMY folder in {:.2f} seconds'.format(time.time() - t))
         return redirect(url_for('home'))
 
+    @app.route('/admin/upload/bms')
+    @roles_required('admin')
+    def upload_bms():
+        """Synchronously uploads the gpickles in the Biological Model Store repository"""
+        t = time.time()
+        upload_recursive(os.path.join(os.environ[BMS_BASE]), connection=manager)
+        flash('Uploaded the BMS folder in {:.2f} seconds'.format(time.time() - t))
+        return redirect(url_for('home'))
+
     @app.route('/api/database/nuke/')
     @roles_required('admin')
     def nuke():
