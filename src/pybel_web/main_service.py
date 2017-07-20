@@ -335,11 +335,18 @@ def build_main_service(app):
         """Renders a list of users"""
         return render_template('view_users.html', users=manager.session.query(User))
 
-    @app.route('/my_activity')
+    @app.route('/user')
     @login_required
     def view_current_user_activity():
-        """Returns all user history."""
+        """Returns the current user's history."""
         return render_template('user_activity.html', user=current_user)
+
+    @app.route('/user/<int:user_id>')
+    @roles_required('admin')
+    def view_user_activity(user_id):
+        """Returns the given user's history"""
+        user = manager.session.query(User).get(user_id)
+        return render_template('user_activity.html', user=user)
 
     @app.route('/swagger.json')
     def get_swagger():
