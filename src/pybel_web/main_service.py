@@ -27,7 +27,6 @@ from six import BytesIO
 
 from pybel import from_bytes
 from pybel.constants import (
-    FRAUNHOFER_RESOURCES,
     PYBEL_CONNECTION,
 )
 from pybel.manager.models import (
@@ -38,6 +37,7 @@ from pybel.manager.models import (
 from pybel.utils import get_version as get_pybel_version
 from pybel_tools.api import DatabaseService
 from pybel_tools.constants import BMS_BASE
+from pybel_tools.constants import GENE_FAMILIES
 from pybel_tools.ioutils import upload_recursive, get_paths_recursive
 from pybel_tools.mutation.metadata import fix_pubmed_citations
 from pybel_tools.pipeline import no_arguments_map
@@ -117,9 +117,8 @@ def build_dictionary_service_admin(app):
     @roles_required('admin')
     def ensure_gfam():
         """Parses and stores the HGNC Gene Family Definitions"""
-        url = FRAUNHOFER_RESOURCES + 'gfam_members.bel'
         celery = create_celery(current_app)
-        task = celery.send_task('parse-url', args=[current_app.config.get(PYBEL_CONNECTION), url])
+        task = celery.send_task('parse-url', args=[current_app.config.get(PYBEL_CONNECTION), GENE_FAMILIES])
         return next_or_jsonify('Queued task to parse HGNC Gene Families: {}'.format(task))
 
     @app.route('/admin/ensure/aetionomy')
