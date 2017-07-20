@@ -28,6 +28,7 @@ SOURCE_NODE = 'source'
 TARGET_NODE = 'target'
 UNDIRECTED = 'undirected'
 FORMAT = 'format'
+PATHOLOGY_FILTER = 'pathology_filter'
 PATHS_METHOD = 'paths_method'
 QUERY = 'query'
 AND = 'and'
@@ -38,6 +39,7 @@ BLACK_LIST = {
     TARGET_NODE,
     UNDIRECTED,
     FORMAT,
+    PATHOLOGY_FILTER,
     PATHS_METHOD,
     QUERY,
     AND,

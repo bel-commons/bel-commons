@@ -40,6 +40,8 @@ from pybel_tools import pipeline
 from pybel_tools.analysis.cmpa import RESULT_LABELS
 from pybel_tools.definition_utils import write_namespace
 from pybel_tools.query import Query
+from pybel_tools.filters.node_filters import exclude_pathology_filter
+from pybel_tools.selection.induce_subgraph import get_subgraph_by_node_filter
 from pybel_tools.selection.induce_subgraph import get_subgraph_by_annotations
 from pybel_tools.summary import (
     info_json,
@@ -591,6 +593,8 @@ def get_paths(query_id, source_id, target_id):
 
     undirected = UNDIRECTED in request.args
 
+    remove_pathologies = PATHOLOGY_FILTER in request.args
+
     cutoff = request.args.get('cutoff', 7)
 
     source = api.get_node_by_id(source_id)
@@ -605,6 +609,9 @@ def get_paths(query_id, source_id, target_id):
 
     if undirected:
         network = network.to_undirected()
+
+    if remove_pathologies:
+        network = get_subgraph_by_node_filter(network, exclude_pathology_filter)
 
     if method == 'all':
         all_paths = nx.all_simple_paths(network, source=source, target=target, cutoff=cutoff)
