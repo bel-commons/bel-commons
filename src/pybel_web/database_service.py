@@ -1101,8 +1101,17 @@ def add_pipeline_entry(query_id, name, *args, **kwargs):
     q = query.data
     q.pipeline.append(name, *args, **kwargs)
 
-    result = q.run(api)
-    log.info('result info: %s', info_str(result))
+    try:
+        result = q.run(api)
+        log.info('result info: %s', info_str(result))
+    except Exception as e:
+        return jsonify(
+            status=400,
+            query_id=query_id,
+            args=args,
+            kwargs=kwargs,
+            exception=str(e)
+        )
 
     qo = models.Query(
         assembly=query.assembly,
@@ -1121,6 +1130,7 @@ def add_pipeline_entry(query_id, name, *args, **kwargs):
     manager.session.commit()
 
     return jsonify({
+        'status': 200,
         'id': qo.id
     })
 
