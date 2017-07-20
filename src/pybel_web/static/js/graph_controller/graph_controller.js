@@ -145,6 +145,10 @@ function displayEdgeInfo(edge) {
     if (edge.target.cname) {
         edgeObject["Target"] = '<a href="/api/nodes/' + edge.target.id + '">' + edge.target.cname + "</a>";
     }
+    if (edge.source.id && edge.target.id) {
+        edgeObject["See Also"] = '<a target="_blank" href="/edges/' + edge.source.id + '/'  + edge.target.id + '">All evidences</a>';
+    }
+
     if (edge.id) {
         edgeObject["Identifier"] = '<a href="/api/edge/' + edge.id + '">' + edge.id + '</a>';
 

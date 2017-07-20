@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% import "bootstrap/wtf.html" as wtf %}
+{% import "bootstrap/fixes.html" as fixes %}
+{% import "bootstrap/utils.html" as util %}
+
+{% block title %}Evidences{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div class="page-header">
+            <h1>Evidences
+
+                <small>
+                    <code>{{ source_bel }}</code> to <code>{{ target_bel }}</code>
+                </small>
+            </h1>
+        </div>
+
+        {{ util.flashed_messages(dismissible=True, container=False) }}
+
+        {% for evidence, relations in data.items() %}
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">
+                        {% if ev2cit[evidence]['type'] == 'PubMed' %}
+                            PubMed
+                            <a href="https://www.ncbi.nlm.nih.gov/pubmed/{{ ev2cit[evidence]['reference'] }}">
+                                {{ ev2cit[evidence]['reference'] }}
+                            </a>
+                        {% else %}
+                            {{ ev2cit[evidence]['type'] }}
+                            {{ ev2cit[evidence]['reference'] }}
+                        {% endif %}
+                    </h3>
+                </div>
+                <div class="panel-body">
+                    <p>{{ evidence }}</p>
+                </div>
+                <div class="list-group">
+                    {% for relation in relations %}
+                        <div class="list-group-item-text">
+                            <dl class="dl-horizontal">
+                                <dt>Relation</dt>
+                                <dd>{{ relation['relation'] }}</dd>
+
+                                {% if 'subject' in relation %}
+                                    <dt>Subject</dt>
+                                    <dd>{{ relation['subject'] }}</dd>
+                                {% endif %}
+
+                                {% if 'object' in relation %}
+                                    <dt>Object</dt>
+                                    <dd>{{ relation['object'] }}</dd>
+                                {% endif %}
+
+                                <dt>Annotations</dt>
+                                <dd>{{ relation['annotations'] }}</dd>
+                            </dl>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    {% include "footer.html" %}
+{% endblock %}

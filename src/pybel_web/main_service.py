@@ -6,6 +6,7 @@ import logging
 import sys
 
 import pandas as pd
+from collections import defaultdict
 from flask import (
     current_app,
     request,
@@ -28,6 +29,8 @@ from six import BytesIO
 from pybel import from_bytes
 from pybel.constants import (
     PYBEL_CONNECTION,
+    EVIDENCE,
+    CITATION,
 )
 from pybel.manager.models import (
     Namespace,
@@ -386,4 +389,35 @@ def build_main_service(app):
             query_1_id=query_1_id,
             query_2_id=query_2_id,
             data=data,
+        )
+
+    @app.route('/edges/<int:source_id>/<int:target_id>')
+    @login_required
+    def view_relations(source_id, target_id):
+        """View a list of all relations between two nodes"""
+        source = api.get_node_by_id(source_id)
+        target = api.get_node_by_id(target_id)
+
+        relations = api.get_edges(
+            source,
+            target,
+            both_ways=('undirected' in request.args),
+        )
+
+        d = defaultdict(list)
+
+        ev2cit = {}
+
+        for relation in relations:
+            ev = relation.get(EVIDENCE)
+            d[ev].append(relation)
+
+            ev2cit[ev] = relation[CITATION]
+
+        return render_template(
+            'evidence_list.html',
+            data=d,
+            ev2cit=ev2cit,
+            source_bel=api.id_bel[source_id],
+            target_bel=api.id_bel[target_id],
         )
