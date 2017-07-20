@@ -67,8 +67,10 @@ class FlaskPyBEL:
         """
         self.manager = build_manager(app.config.get(PYBEL_CONNECTION))
 
-        self.sentry = Sentry(app,
-                             dsn='https://0e311acc3dc7491fb31406f4e90b07d9:7709d72100f04327b8ef3b2ea673b7ee@sentry.io/183619')
+        self.sentry = Sentry(
+            app,
+            dsn='https://0e311acc3dc7491fb31406f4e90b07d9:7709d72100f04327b8ef3b2ea673b7ee@sentry.io/183619'
+        )
 
         Base.metadata.bind = self.manager.engine
         Base.query = self.manager.session.query_property()
