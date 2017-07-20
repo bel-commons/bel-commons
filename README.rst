@@ -43,8 +43,7 @@ Our development address is http://dev.scai.fraunhofer.de. It is proxied to bart:
 3. ``pybel-web run -vv --host "0.0.0.0" --port 5001 --config ~/.config/pybel/pybel_dev_config.json``
 4. Quit the ``tmux`` session with ``ctrl-b`` then ``d``
 
-I haven't figured out how to run multiple instances of celery in parallel, so lets refrain from running async jobs
-on the dev server.
+Celery can handle both the development and production at the same time, as far as I can tell.
 
 Phoenix the Database
 --------------------
