@@ -657,19 +657,20 @@ def networks_with_permission_iter_helper(user, api_):
     if not user.is_authenticated:
         yield from list_public_networks(api_)
 
-    if user.admin:
+    elif user.admin:
         yield from api_.list_recent_networks()
 
-    yield from list_public_networks(api_)
-    yield from user.get_owned_networks()
-    yield from user.get_shared_networks()
-    yield from user.get_project_networks()
+    else:
+        yield from list_public_networks(api_)
+        yield from user.get_owned_networks()
+        yield from user.get_shared_networks()
+        yield from user.get_project_networks()
 
-    if user.has_role('scai'):
-        for user in scai_role.users:
-            yield from user.get_owned_networks()
-            yield from user.get_project_networks()
-            yield from user.get_shared_networks()
+        if user.has_role('scai'):
+            for user in scai_role.users:
+                yield from user.get_owned_networks()
+                yield from user.get_project_networks()
+                yield from user.get_shared_networks()
 
 
 def get_network_ids_with_permission_helper(user, api_):
