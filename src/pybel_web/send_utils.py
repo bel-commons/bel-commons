@@ -6,7 +6,7 @@ from flask import send_file, Response, jsonify
 from six import StringIO, BytesIO
 
 from pybel import to_cx, to_bel_lines, to_graphml, to_bytes, to_csv, to_sif, to_jgif, to_gsea
-from pybel.constants import GRAPH_ANNOTATION_LIST
+from pybel.constants import GRAPH_ANNOTATION_LIST, RELATION
 from pybel.utils import hash_node
 from pybel_tools.mutation.metadata import serialize_authors
 
@@ -35,8 +35,14 @@ def to_json_custom(graph, _id='id', source='source', target='target', key='key')
         result['nodes'].append(nd)
         mapping[node] = i
 
+    edge_set = set()
+
     result['links'] = []
     for u, v, k, d in graph.edges_iter(keys=True, data=True):
+
+        if (u, v, d[RELATION]) in edge_set:  # Avoids duplicate sending multiple edges between nodes with same relation
+            continue
+
         ed = {
             source: mapping[u],
             target: mapping[v],
@@ -44,6 +50,8 @@ def to_json_custom(graph, _id='id', source='source', target='target', key='key')
         }
         ed.update(d)
         result['links'].append(ed)
+
+        edge_set.add((u, v, d[RELATION]))
 
     return result
 
