@@ -4,16 +4,14 @@
 
 import logging
 import sys
-
-import pandas as pd
 from collections import defaultdict
+
 from flask import (
     current_app,
     request,
     jsonify,
     url_for,
     redirect,
-    make_response,
     send_file,
     flash,
     render_template,
@@ -24,7 +22,6 @@ from flask_security import (
     current_user,
     login_required
 )
-from six import BytesIO
 
 from pybel import from_bytes
 from pybel.constants import (
@@ -80,32 +77,11 @@ def get_networks_with_permission(api):
     return list(unique_networks(networks_with_permission_iter_helper(current_user, api)))
 
 
-def build_dictionary_service_admin(app):
-    """Dictionary Service Admin Functions"""
-    manager = get_manager(app)
-    api = get_api(app)
+def build_ensure_service(app):
+    """Group all ensure services
 
-    @app.route('/admin/reload')
-    @roles_required('admin')
-    def run_reload():
-        """Reloads the networks and supernetwork"""
-        api.clear()
-        api.cache_networks(force_reload=True)
-        return next_or_jsonify('reloaded networks')
-
-    @app.route('/admin/rollback')
-    @roles_required('admin')
-    def rollback():
-        """Rolls back the transaction for when something bad happens"""
-        manager.session.rollback()
-        return next_or_jsonify('rolled back')
-
-    @app.route('/admin/enrich')
-    @roles_required('admin')
-    def run_enrich_authors():
-        """Enriches information in network. Be patient"""
-        fix_pubmed_citations(api.universe)
-        return next_or_jsonify('enriched authors')
+    :param flask.Flask app: A Flask app
+    """
 
     @app.route('/admin/ensure/simple')
     @roles_required('admin')
@@ -140,6 +116,30 @@ def build_dictionary_service_admin(app):
         task = celery.send_task('parse-selventa', args=[current_app.config.get(PYBEL_CONNECTION)])
         return next_or_jsonify('Queued task to parse the Selventa folder: {}'.format(task))
 
+    @app.route('/admin/ensure/ptsd')
+    @roles_required('admin')
+    def ensure_ptsd():
+        """Parses and stores the PTSD resources from the Biological Model Store repository"""
+        celery = create_celery(current_app)
+        task = celery.send_task('parse-ptsd', args=[current_app.config.get(PYBEL_CONNECTION)])
+        return next_or_jsonify('Queued task to parse the Selventa folder: {}'.format(task))
+
+    @app.route('/admin/ensure/tbi')
+    @roles_required('admin')
+    def ensure_tbi():
+        """Parses and stores the TBI resources from the Biological Model Store repository"""
+        celery = create_celery(current_app)
+        task = celery.send_task('parse-tbi', args=[current_app.config.get(PYBEL_CONNECTION)])
+        return next_or_jsonify('Queued task to parse the TBI folder: {}'.format(task))
+
+    @app.route('/admin/ensure/bel4imocede')
+    @roles_required('admin')
+    def ensure_bel4imocede():
+        """Parses and stores the BEL4IMOCEDE resources from the Biological Model Store repository"""
+        celery = create_celery(current_app)
+        task = celery.send_task('parse-bel4imocede', args=[current_app.config.get(PYBEL_CONNECTION)])
+        return next_or_jsonify('Queued task to parse the BEL4IMOCEDE folder: {}'.format(task))
+
     @app.route('/admin/ensure/bms')
     @roles_required('admin')
     def ensure_bms():
@@ -147,6 +147,36 @@ def build_dictionary_service_admin(app):
         celery = create_celery(current_app)
         task = celery.send_task('parse-bms', args=[current_app.config.get(PYBEL_CONNECTION)])
         return next_or_jsonify('Queued task to parse the BMS: {}'.format(task))
+
+
+def build_dictionary_service_admin(app):
+    """Dictionary Service Admin Functions"""
+    manager = get_manager(app)
+    api = get_api(app)
+
+    build_ensure_service(app)
+
+    @app.route('/admin/reload')
+    @roles_required('admin')
+    def run_reload():
+        """Reloads the networks and supernetwork"""
+        api.clear()
+        api.cache_networks(force_reload=True)
+        return next_or_jsonify('reloaded networks')
+
+    @app.route('/admin/rollback')
+    @roles_required('admin')
+    def rollback():
+        """Rolls back the transaction for when something bad happens"""
+        manager.session.rollback()
+        return next_or_jsonify('rolled back')
+
+    @app.route('/admin/enrich')
+    @roles_required('admin')
+    def run_enrich_authors():
+        """Enriches information in network. Be patient"""
+        fix_pubmed_citations(api.universe)
+        return next_or_jsonify('enriched authors')
 
     @app.route('/admin/list/bms/pickles')
     @roles_required('admin')
@@ -264,30 +294,6 @@ def build_main_service(app):
             annotations=manager.session.query(Annotation).order_by(Annotation.keyword).all(),
             current_user=current_user,
         )
-
-    @app.route('/overlap')
-    def view_overlap():
-        """Produces an image assessing the overlaps between networks using PyUpset"""
-        import pyupset as pyu
-        import matplotlib.pyplot as plt
-
-        network_ids = request.args.get('networks')
-        if not network_ids:
-            return abort(500)
-
-        networks = [
-            api.get_network_by_id(int(network_id.strip()))
-            for network_id in network_ids.split(',')
-        ]
-
-        data_dict = {network.name.replace('_', ' '): pd.DataFrame(network.nodes()) for network in networks}
-        pyu.plot(data_dict)
-        buf = BytesIO()
-        plt.savefig(buf, format='png')
-        buf.seek(0)
-        output = make_response(buf.getvalue())
-        output.headers["Content-type"] = "image/png"
-        return output
 
     @app.route('/imprint')
     def view_imprint():

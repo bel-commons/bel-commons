@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
-import logging
-
 import hashlib
+import logging
 import os
+
 import requests.exceptions
 from celery.utils.log import get_task_logger
 from flask_mail import Message
@@ -83,6 +83,27 @@ def parse_selventa(connection):
     """Converts the Selventa folder in the BMS"""
     folder = os.path.join(os.environ[BMS_BASE], 'selventa')
     parse_folder(connection, folder, citation_clearing=False)
+
+
+@celery.task(name='parse-bel4imocede')
+def parse_bel4imocede(connection):
+    """Converts the BEL4IMOCEDE folder in the BMS"""
+    folder = os.path.join(os.environ[BMS_BASE], 'BEL4IMOCEDE')
+    parse_folder(connection, folder)
+
+
+@celery.task(name='parse-ptsd')
+def parse_ptsd(connection):
+    """Converts the CVBIO PTSD folder in the BMS"""
+    folder = os.path.join(os.environ[BMS_BASE], 'cvbio', 'PTSD')
+    parse_folder(connection, folder)
+
+
+@celery.task(name='parse-tbi')
+def parse_tbi(connection):
+    """Converts the CVBIO TBI folder in the BMS"""
+    folder = os.path.join(os.environ[BMS_BASE], 'cvbio', 'TBI')
+    parse_folder(connection, folder)
 
 
 @celery.task(name='parse-bms')
