@@ -37,12 +37,21 @@
             <div class="panel-body">
                 <a class="btn btn-primary" href="{{ url_for('view_networks') }}" role="button">List Networks</a>
                 <a class="btn btn-default" href="{{ url_for('view_explore_network', network_id=network_id) }}"
-                   role="button">Explore</a>
+                   role="button">
+                    <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
+                    Explore
+                </a>
                 <a class="btn btn-default"
                    href="{{ url_for('analysis.view_analysis_uploader', network_id=network_id) }}"
-                   role="button">Analyze</a>
+                   role="button">
+                    <span class="glyphicon glyphicon-flash" aria-hidden="true"></span>
+                    Analyze
+                </a>
                 <a class="btn btn-default" href="{{ url_for('analysis.view_analyses', network_id=network_id) }}"
-                   role="button">Results</a>
+                   role="button">
+                    <span class="glyphicon glyphicon-tasks" aria-hidden="true"></span>
+                    Results
+                </a>
 
                 {% if current_user.is_authenticated %}
                     <a class="btn btn-default" role="button"
@@ -57,8 +66,11 @@
                 {% endif %}
 
                 {% if current_user.admin %}
-                    <a class="btn btn-danger" href="{{ url_for('dbs.drop_network', network_id=network_id) }}"
-                       role="button">Drop</a>
+                    <a class="btn btn-danger" role="button"
+                       href="{{ url_for('dbs.drop_network', network_id=network_id, next=url_for('home')) }}">
+                        <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
+                        Drop
+                    </a>
                 {% endif %}
             </div>
         </div>
