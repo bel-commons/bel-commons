@@ -672,6 +672,21 @@ def networks_with_permission_iter_helper(user, api_):
                 yield from user.get_shared_networks()
 
 
+def get_networks_with_permission(api_):
+    """Gets all networks tagged as public or uploaded by the current user
+
+    :param DatabaseService api_: The database service
+    :return: A list of all networks tagged as public or uploaded by the current user
+    :rtype: list[Network]
+    """
+    if not current_user.is_authenticated:
+        return list_public_networks(api_)
+
+    if current_user.admin:
+        return api_.list_recent_networks()
+
+    return list(unique_networks(networks_with_permission_iter_helper(current_user, api_)))
+
 def get_network_ids_with_permission_helper(user, api_):
     """Gets the set of networks ids tagged as public or uploaded by the current user
 

@@ -32,10 +32,8 @@ from pybel.constants import (
 from pybel.manager.models import (
     Namespace,
     Annotation,
-    Network,
 )
 from pybel.utils import get_version as get_pybel_version
-from pybel_tools.api import DatabaseService
 from pybel_tools.constants import BMS_BASE
 from pybel_tools.constants import GENE_FAMILIES
 from pybel_tools.ioutils import upload_recursive, get_paths_recursive
@@ -50,31 +48,13 @@ from .utils import (
     get_api,
     get_manager,
     calculate_overlap_dict,
-    unique_networks,
-    networks_with_permission_iter_helper,
-    list_public_networks,
     get_network_ids_with_permission_helper,
+    get_networks_with_permission,
     safe_get_query,
     next_or_jsonify,
 )
 
 log = logging.getLogger(__name__)
-
-
-def get_networks_with_permission(api):
-    """Gets all networks tagged as public or uploaded by the current user
-    
-    :param DatabaseService api: The database service
-    :return: A list of all networks tagged as public or uploaded by the current user
-    :rtype: list[Network]
-    """
-    if not current_user.is_authenticated:
-        return list_public_networks(api)
-
-    if current_user.admin:
-        return api.list_recent_networks()
-
-    return list(unique_networks(networks_with_permission_iter_helper(current_user, api)))
 
 
 def build_ensure_service(app):
