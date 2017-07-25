@@ -239,7 +239,7 @@ def render_network_summary(network_id, graph):
         chart_7_data=prepare_c3(hub_data, 'Top Hubs'),
         chart_8_data=prepare_c3(centrality_data, 'Top Central'),
         chart_9_data=prepare_c3(disease_data, 'Pathologies'),
-        chart_10_data=prepare_c3_time_series(citation_years, 'Number of articles'),
+        chart_10_data=prepare_c3_time_series(citation_years, 'Number of articles') if citation_years else None,
         error_groups=count_dict_values(group_errors(graph)).most_common(20),
         info_list=info_list(graph),
         contradictions=contradictory_pairs,

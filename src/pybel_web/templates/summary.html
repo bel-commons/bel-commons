@@ -1197,27 +1197,31 @@
             }
         });
 
-        var chart10 = c3.generate({
-            data: {
-                x: 'x',
-                columns: {{ chart_10_data|safe}}
-            },
-            bindto: '#chart10',
-            axis: {
-                x: {
-                    type: 'timeseries',
-                    tick: {
-                        format: '%Y'
+
+        {% if chart_10_data|safe %}
+
+            var chart10 = c3.generate({
+                data: {
+                    x: 'x',
+                    columns: {{ chart_10_data|safe}}
+                },
+                bindto: '#chart10',
+                axis: {
+                    x: {
+                        type: 'timeseries',
+                        tick: {
+                            format: '%Y'
+                        }
                     }
                 }
-            }
-            , title: {
-                text: 'Publication Years'
-            },
-            legend: {
-                show: false
-            }
-        });
+                , title: {
+                    text: 'Publication Years'
+                },
+                legend: {
+                    show: false
+                }
+            });
+        {% endif %}
 
 
     </script>
