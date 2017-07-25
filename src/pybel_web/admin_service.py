@@ -19,7 +19,7 @@ from pybel.manager.models import (
     Author
 )
 from pybel.manager.models import Network, Namespace, Annotation
-from .application import get_manager, get_api
+from .application import get_manager, get_api, get_scai_role
 from .models import (
     Report,
     Experiment,
@@ -112,6 +112,8 @@ def build_admin_service(app):
         def __init__(self):
             super(NetworkAjaxModelLoader, self).__init__('networks', manager.session, Network, fields=[Network.name])
 
+            self.scai_role = get_scai_role(app)
+
         def get_list(self, term, offset=0, limit=DEFAULT_PAGE_SIZE):
             """Overrides get_list to be lazy and tricky about only getting current user's networks"""
             query = self.session.query(self.model)
@@ -130,6 +132,11 @@ def build_admin_service(app):
                     network.id
                     for network in network_chain
                 }
+
+                if current_user.has_role('scai'):
+                    for user in self.scai_role.users:
+                        for network in user.get_owned_networks():
+                            allowed_network_ids.add(network.id)
 
                 if not allowed_network_ids:  # If the current user doesn't have any networks, then return nothing
                     return []
