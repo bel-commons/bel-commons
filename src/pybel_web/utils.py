@@ -748,12 +748,13 @@ def get_vote(edge_id, user_id):
                                                   EdgeVote.user_id == user_id).one_or_none()
 
 
-def next_or_jsonify(message, category='message'):
+def next_or_jsonify(message, category='message', **kwargs):
     if 'next' in request.args:
         flash(message, category=category)
         return redirect(request.args['next'])
 
-    return jsonify({
-        'status': 200,
-        'message': message,
-    })
+    return jsonify(
+        status=200,
+        message=message,
+        **kwargs
+    )
