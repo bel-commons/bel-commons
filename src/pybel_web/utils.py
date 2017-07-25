@@ -59,9 +59,10 @@ from pybel_tools.summary.error_summary import (
     get_namespaces_with_incorrect_names
 )
 from pybel_tools.summary.export import info_list
+from pybel_tools.summary.provenance import count_citation_years
 from pybel_tools.summary.node_properties import count_variants
 from pybel_tools.summary.node_summary import get_unused_namespaces
-from pybel_tools.utils import prepare_c3, count_dict_values
+from pybel_tools.utils import prepare_c3, prepare_c3_histogram, count_dict_values
 from .application import get_manager, get_api, get_user_datastore, get_scai_role
 from .constants import *
 from .models import User, Report, Experiment, Query, EdgeVote
@@ -213,7 +214,7 @@ def render_network_summary(network_id, graph):
         for node in iter_undefined_families(graph, ['SFAM', 'GFAM'])
     ]
 
-    # citation_years = create_timeline(count_citation_years(graph))
+    citation_years = create_timeline(count_citation_years(graph))
 
     overlap_counter = api.get_node_overlap(network_id)
     overlaps = [
@@ -238,7 +239,7 @@ def render_network_summary(network_id, graph):
         chart_7_data=prepare_c3(hub_data, 'Top Hubs'),
         chart_8_data=prepare_c3(centrality_data, 'Top Central'),
         chart_9_data=prepare_c3(disease_data, 'Pathologies'),
-        # chart_10_data=prepare_c3(citation_years, 'Most cited years'),
+        chart_10_data=prepare_c3_histogram(citation_years, 'Number of articles'),
         error_groups=count_dict_values(group_errors(graph)).most_common(20),
         info_list=info_list(graph),
         contradictions=contradictory_pairs,
