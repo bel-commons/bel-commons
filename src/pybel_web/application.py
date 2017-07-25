@@ -280,7 +280,7 @@ def create_application(get_mail=False, config_location=None, **kwargs):
             pybel_extension.user_datastore.add_role_to_user(admin_user, pybel_extension.scai_role)
             pybel_extension.manager.session.add(admin_user)
 
-        test_scai_user = pybel_extension.user_datastore.find(email='test@scai.fraunhofer.de')
+        test_scai_user = pybel_extension.user_datastore.find_user(email='test@scai.fraunhofer.de')
 
         if test_scai_user is None:
             test_scai_user = pybel_extension.user_datastore.create_user(
