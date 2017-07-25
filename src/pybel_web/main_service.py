@@ -122,7 +122,7 @@ def build_ensure_service(app):
         """Parses and stores the PTSD resources from the Biological Model Store repository"""
         celery = create_celery(current_app)
         task = celery.send_task('parse-ptsd', args=[current_app.config.get(PYBEL_CONNECTION)])
-        return next_or_jsonify('Queued task to parse the Selventa folder: {}'.format(task))
+        return next_or_jsonify('Queued task to parse the PTSD folder: {}'.format(task))
 
     @app.route('/admin/ensure/tbi')
     @roles_required('admin')
