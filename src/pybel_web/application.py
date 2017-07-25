@@ -12,11 +12,11 @@ Resources:
 
 import datetime
 import logging
+import os
 import socket
 import time
 from getpass import getuser
 
-import os
 from celery import Celery
 from flasgger import Swagger
 from flask import (
@@ -279,6 +279,17 @@ def create_application(get_mail=False, config_location=None, **kwargs):
             pybel_extension.user_datastore.add_role_to_user(admin_user, pybel_extension.admin_role)
             pybel_extension.user_datastore.add_role_to_user(admin_user, pybel_extension.scai_role)
             pybel_extension.manager.session.add(admin_user)
+
+        test_scai_user = pybel_extension.user_datastore.find(email='test@scai.fraunhofer.de')
+
+        if test_scai_user is None:
+            test_scai_user = pybel_extension.user_datastore.create_user(
+                email='test@scai.fraunhofer.de',
+                password='pybeltest',
+                confirmed_at=datetime.datetime.now(),
+            )
+            pybel_extension.user_datastore.add_role_to_user(test_scai_user, pybel_extension.scai_role)
+            pybel_extension.manager.session.add(test_scai_user)
 
         pybel_extension.manager.session.commit()
 
