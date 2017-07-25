@@ -391,8 +391,11 @@ def nodes_by_network(network_id):
 def drop_network_helper(network_id):
     network = manager.session.query(Network).get(network_id)
 
-    if not current_user.admin and (not network.report or current_user.id != network.report.user_id):
-        abort(403, 'You do not have permission to drop network {}'.format(network_id))
+    if not current_user.admin:
+        if not network.report:
+            abort(403, 'You do not have permission to drop public network {}'.format(network_id))
+        elif network.report.user_id != current_user.id:
+            abort(403, 'You do not own network {}'.format(network_id))
 
     try:
         if network.report:
@@ -428,7 +431,7 @@ def drop_network_helper(network_id):
 
 
 @api_blueprint.route('/api/network/<int:network_id>/drop')
-@roles_required('admin')
+@login_required
 def drop_network(network_id):
     """Drops a specific graph
 
