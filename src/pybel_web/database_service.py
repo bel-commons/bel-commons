@@ -6,6 +6,8 @@ import csv
 import json
 import logging
 import pickle
+from functools import lru_cache
+from operator import itemgetter
 
 import flask
 import git
@@ -24,8 +26,6 @@ from flask import (
 )
 from flask_login import login_required, current_user
 from flask_security import roles_required
-from functools import lru_cache
-from operator import itemgetter
 from six import StringIO
 from sqlalchemy.exc import IntegrityError
 
@@ -39,10 +39,10 @@ from pybel.manager import Namespace, Annotation, Network
 from pybel_tools import pipeline
 from pybel_tools.analysis.cmpa import RESULT_LABELS
 from pybel_tools.definition_utils import write_namespace
-from pybel_tools.query import Query
 from pybel_tools.filters.node_filters import exclude_pathology_filter
-from pybel_tools.selection.induce_subgraph import get_subgraph_by_node_filter
+from pybel_tools.query import Query
 from pybel_tools.selection.induce_subgraph import get_subgraph_by_annotations
+from pybel_tools.selection.induce_subgraph import get_subgraph_by_node_filter
 from pybel_tools.summary import (
     info_json,
     info_str,
@@ -388,13 +388,7 @@ def nodes_by_network(network_id):
     return jsonify(nodes)
 
 
-@api_blueprint.route('/api/network/<int:network_id>/drop')
-@roles_required('admin')
-def drop_network(network_id):
-    """Drops a specific graph
-
-    :param int network_id: The identifier of the network to drop
-    """
+def drop_network_helper(network_id):
     network = manager.session.query(Network).get(network_id)
 
     if not current_user.admin and (not network.report or current_user.id != network.report.user_id):
@@ -433,6 +427,30 @@ def drop_network(network_id):
     })
 
 
+@api_blueprint.route('/api/network/<int:network_id>/drop')
+@roles_required('admin')
+def drop_network(network_id):
+    """Drops a specific graph
+
+    :param int network_id: The identifier of the network to drop
+    """
+    return drop_network_helper(network_id)
+
+
+@api_blueprint.route('/api/network/drop')
+@roles_required('admin')
+def drop_networks():
+    """Drops all networks"""
+    log.info('dropping all networks')
+
+    for network_id, in manager.session.query(Network.id).all():
+        drop_network_helper(network_id)
+
+    api.clear()
+
+    return next_or_jsonify('Dropped all networks')
+
+
 @api_blueprint.route('/api/network/<int:network_id>/claim')
 @roles_required('admin')
 def claim_network(network_id):
@@ -462,21 +480,6 @@ def claim_network(network_id):
         return redirect(request.args['next'])
 
     return jsonify({'status': 200, 'owner_id': current_user.id})
-
-
-@api_blueprint.route('/api/network/drop')
-@roles_required('admin')
-def drop_networks():
-    """Drops all networks"""
-    log.info('dropping all networks')
-    api.clear()
-    manager.drop_networks()
-
-    if 'next' in request.args:
-        flash('Dropped all networks')
-        return redirect(request.args['next'])
-
-    return jsonify({'status': 200})
 
 
 @api_blueprint.route('/api/network/list', methods=['GET'])
