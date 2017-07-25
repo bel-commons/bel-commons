@@ -68,10 +68,11 @@
                         <a class="btn btn-info" href="{{ url_for('dbs.list_reporting') }}" role="button">
                             View Reporting Log
                         </a>
-                        <a class="btn btn-info" href="{{ url_for('dbs.pillage') }}" role="button">
+                        <a class="btn btn-info" href="{{ url_for('dbs.pillage', next=url_for('view_networks')) }}"
+                           role="button">
                             Pillage
                         </a>
-                        <a class="btn btn-success" href="{{ url_for('run_reload', next=url_for('home')) }}"
+                        <a class="btn btn-success" href="{{ url_for('run_reload', next=url_for('view_networks')) }}"
                            role="button">
                             Reload Networks
                         </a>
