@@ -218,8 +218,6 @@
                     <div class="col-md-4">
                         <div id="chart2"></div>
                     </div>
-                </div>
-                <div class="row">
                     <div class="col-md-4">
                         <div id="chart4"></div>
                     </div>
@@ -229,19 +227,12 @@
                     <div class="col-md-4">
                         <div id="chart6"></div>
                     </div>
-                </div>
-                <div class="row">
                     <div class="col-md-4">
                         <div id="chart7"></div>
                     </div>
                     <div class="col-md-4">
-                        <div id="chart8"></div>
-                    </div>
-                    <div class="col-md-4">
                         <div id="chart9"></div>
                     </div>
-                </div>
-                <div class="row">
                     <div class="col-md-4">
                         <div id="chart10"></div>
                     </div>
@@ -1129,34 +1120,6 @@
             },
             title: {
                 text: 'Top Hub Nodes'
-            },
-            axis: {
-                rotated: true,
-                x: {
-                    type: 'category'
-                }
-            },
-            legend: {
-                show: false
-            }
-        });
-
-        var chart8 = c3.generate({
-            padding: {
-                top: 15,
-                left: 100
-            },
-            size: {
-                height: 350
-            },
-            bindto: '#chart8',
-            data: {
-                x: 'x',
-                columns: {{ chart_8_data|safe}},
-                type: 'bar'
-            },
-            title: {
-                text: 'Most Central Nodes'
             },
             axis: {
                 rotated: true,

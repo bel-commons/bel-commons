@@ -141,7 +141,6 @@ def render_network_summary(network_id, graph):
     :param pybel.BELGraph graph: 
     """
     hub_data = api.get_top_degree(network_id)
-    centrality_data = api.get_top_centrality(network_id)
     disease_data = api.get_top_pathologies(network_id)
 
     node_bel_cache = {}
@@ -237,7 +236,6 @@ def render_network_summary(network_id, graph):
         chart_5_data=prepare_c3(count_variants(graph), 'Node Variants'),
         chart_6_data=prepare_c3(count_namespaces(graph), 'Namespaces'),
         chart_7_data=prepare_c3(hub_data, 'Top Hubs'),
-        chart_8_data=prepare_c3(centrality_data, 'Top Central'),
         chart_9_data=prepare_c3(disease_data, 'Pathologies'),
         chart_10_data=prepare_c3_time_series(citation_years, 'Number of articles') if citation_years else None,
         error_groups=count_dict_values(group_errors(graph)).most_common(20),
