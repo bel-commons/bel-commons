@@ -19,11 +19,11 @@ from __future__ import print_function
 import datetime
 import json
 import logging
+import os
 import sys
 import time
 
 import click
-import os
 from flask_security import SQLAlchemyUserDatastore
 
 from pybel.constants import get_cache_connection, PYBEL_CONNECTION
@@ -39,7 +39,7 @@ from .constants import log_path, CHARLIE_EMAIL
 from .curation_service import curation_blueprint
 from .database_service import api_blueprint
 from .main_service import build_main_service
-from .models import Role, User, Report
+from .models import Role, User, Report, Project
 from .parser_async_service import parser_async_blueprint
 from .parser_endpoint import build_parser_service
 from .upload_service import upload_blueprint
@@ -347,6 +347,19 @@ def ls(ctx):
     """Lists roles"""
     for r in ctx.obj.session.query(Role).all():
         click.echo('{}\t{}'.format(r.name, r.description))
+
+
+@manage.group()
+def projects():
+    """Manage projects"""
+
+
+@projects.command()
+@click.pass_context
+def ls(ctx):
+    """Lists projects"""
+    for project in ctx.obj.session.query(Project).all():
+        click.echo('{}\t{}'.format(project.name, ','.join(map(str, project.users))))
 
 
 if __name__ == '__main__':
