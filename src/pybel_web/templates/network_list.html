@@ -165,6 +165,8 @@
 
                             {% if not network.report or network.report.public %}
                                 <span class="glyphicon glyphicon-globe" aria-hidden="true"></span>
+                            {% elif current_user.is_authenticated and network.report.user != current_user %}
+                                <span class="glyphicon glyphicon-tent" aria-hidden="true"></span>
                             {% endif %}
 
                         </h4>
@@ -214,32 +216,7 @@
                                                 Drop
                                             </a>
                                         </li>
-                                    {% elif current_user.admin %}
-                                        <li>
-                                            <a class="btn btn-danger" role="button"
-                                               href="{{ url_for('dbs.drop_network', network_id=network.id, next=url_for('view_networks')) }}">
-                                                <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
-                                                Sudo Drop</a>
-                                        </li>
-                                    {% endif %}
 
-                                    {% if current_user.admin %}
-                                        <li>
-                                            <a class="btn btn-danger" role="button"
-                                               href="{{ url_for('dbs.load_edge_store_by_network_id', network_id=network.id, next=url_for('view_networks')) }}">
-                                                Store Edges</a>
-                                        </li>
-                                    {% endif %}
-
-                                    {% if (current_user.has_role('scai') or current_user.admin) and not network.report %}
-                                        <li>
-                                            <a class="btn btn-danger" role="button"
-                                               href="{{ url_for('dbs.claim_network', network_id=network.id, next=url_for('view_networks')) }}">Sudo
-                                                Claim</a>
-                                        </li>
-                                    {% endif %}
-
-                                    {% if network.report and network.report.user == current_user %}
                                         {% if not network.report.public %}
                                             <li>
                                                 <a href="{{ url_for('dbs.make_network_public', network_id=network.id, next=url_for('view_networks')) }}"
@@ -258,7 +235,16 @@
                                                 </a>
                                             </li>
                                         {% endif %}
-                                    {% elif current_user.has_role('scai') or current_user.admin %}
+
+                                    {% elif current_user.admin %}
+                                        <li>
+                                            <a class="btn btn-danger" role="button"
+                                               href="{{ url_for('dbs.drop_network', network_id=network.id, next=url_for('view_networks')) }}">
+                                                <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
+                                                Sudo Drop
+                                            </a>
+                                        </li>
+
                                         {% if network.report and not network.report.public %}
                                             <li>
                                                 <a href="{{ url_for('dbs.make_network_public', network_id=network.id, next=url_for('view_networks')) }}"
@@ -277,6 +263,24 @@
                                                 </a>
                                             </li>
                                         {% endif %}
+                                    {% endif %}
+
+                                    {% if current_user.admin %}
+                                        <li>
+                                            <a class="btn btn-danger" role="button"
+                                               href="{{ url_for('dbs.load_edge_store_by_network_id', network_id=network.id, next=url_for('view_networks')) }}">
+                                                Store Edges
+                                            </a>
+                                        </li>
+                                    {% endif %}
+
+                                    {% if (current_user.has_role('scai') or current_user.admin) and not network.report %}
+                                        <li>
+                                            <a class="btn btn-danger" role="button"
+                                               href="{{ url_for('dbs.claim_network', network_id=network.id, next=url_for('view_networks')) }}">
+                                                Sudo Claim
+                                            </a>
+                                        </li>
                                     {% endif %}
                                 {% endif %}
                             </ul>
