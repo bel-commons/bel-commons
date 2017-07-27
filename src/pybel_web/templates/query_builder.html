@@ -81,21 +81,38 @@
 
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <h3 class="panel-title">Assembly</h3>
+                    <h3 class="panel-title">Assemble</h3>
                 </div>
                 <div class="panel-body">
-                    <p>Choose networks to assemble for the query.</p>
-                    <div class="form-group">
+                    <p>
+                        Choose networks to assemble for the query. All public networks, networks that you have uploaded,
+                        and networks shared with projects in which you participate are shown.
+                    </p>
+                </div>
+                <div class="form-group">
+                    <table class="table table-striped">
+                        <thead>
+                        <tr>
+                            <th></th>
+                            <th>Name</th>
+                            <th>Version</th>
+                            <th>Created</th>
+                        </tr>
+                        </thead>
+                        <tbody>
                         {% for network in networks %}
-                            <div class="checkbox">
-                                <label>
+                            <tr>
+                                <td>
                                     <input type="checkbox" class="networks" name="network_ids[]"
                                            value="{{ network.id }}"/>
-                                    {{ network }} from {{ network.created }}
-                                </label>
-                            </div>
+                                </td>
+                                <td>{{ network.name }}</td>
+                                <td>{{ network.version }}</td>
+                                <td>{{ network.created }}</td>
+                            </tr>
                         {% endfor %}
-                    </div>
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
