@@ -1000,7 +1000,9 @@ def get_pipeline():
 
     return render_template(
         'run_query.html',
-        query=qo
+        query=qo,
+        url_root=request.url_root.rstrip('/'),
+        current_user=current_user,
     )
 
 
