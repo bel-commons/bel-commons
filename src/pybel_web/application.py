@@ -36,7 +36,7 @@ from pybel.manager import build_manager, Base
 from pybel_tools.api import DatabaseService
 from pybel_tools.mutation import expand_nodes_neighborhoods, expand_node_neighborhood
 from pybel_tools.pipeline import uni_in_place_mutator, in_place_mutator
-from .constants import CHARLIE_EMAIL, DANIEL_EMAIL, ALEX_EMAIL
+from .constants import CHARLIE_EMAIL, DANIEL_EMAIL, ALEX_EMAIL, PYBEL_WEB_VERSION
 from .forms import ExtendedRegisterForm
 from .models import Role, User
 
@@ -252,7 +252,12 @@ def create_application(get_mail=False, config_location=None, **kwargs):
         if app.config.get('PYBEL_WEB_STARTUP_NOTIFY'):
             startup_message = Message(
                 subject="PyBEL Web - Startup",
-                body="PyBEL Web was started on {} by {} at {}".format(socket.gethostname(), getuser(), time.asctime()),
+                body="PyBEL Web v{} was started on {} by {} at {}".format(
+                    PYBEL_WEB_VERSION,
+                    socket.gethostname(),
+                    getuser(),
+                    time.asctime()
+                ),
                 sender=("PyBEL Web", 'pybel@scai.fraunhofer.de'),
                 recipients=[app.config.get('PYBEL_WEB_STARTUP_NOTIFY')]
             )
