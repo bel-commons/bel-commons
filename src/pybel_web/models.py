@@ -119,6 +119,17 @@ class Role(Base, RoleMixin):
     def __str__(self):
         return self.name
 
+    def to_json(self):
+        """Outputs this role as a JSON dictionary
+
+        :rtype: dict
+        """
+        return {
+            'id': self.id,
+            'name': self.name,
+            'description': self.description,
+        }
+
 
 class Project(Base):
     """Stores projects"""
@@ -152,6 +163,25 @@ class Project(Base):
 
     def __str__(self):
         return self.name
+
+    def to_json(self):
+        """Outputs this project as a JSON dictionary
+
+        :rtype: dict
+        """
+        return {
+            'id': self.id,
+            'name': self.name,
+            'description': self.description,
+            'users': [
+                user.id
+                for user in self.users
+            ],
+            'networks': [
+                network.id
+                for network in self.networks
+            ]
+        }
 
 
 class User(Base, UserMixin):
@@ -212,6 +242,20 @@ class User(Base, UserMixin):
 
     def __repr__(self):
         return self.email
+
+    def to_json(self):
+        """Outputs this User as a JSON dictionary
+
+        :rtype: dict
+        """
+        return {
+            'id': self.id,
+            'email': self.email,
+            'roles': [
+                role.name
+                for role in self.roles
+            ],
+        }
 
 
 assembly_network = Table(

@@ -1419,6 +1419,18 @@ def grant_network_to_user(network_id, user_id):
     return jsonify({'status': 200})
 
 
+@api_blueprint.route('/api/project/<int:project_id>')
+@login_required
+def get_project(project_id):
+    """Returns the project as a JSON file"""
+    project = manager.session.query(Project).get(project_id)
+
+    if not current_user.admin and not project.has_user(current_user):
+        abort(403, 'User does not have permission to access this Project')
+
+    return jsonify(**project.to_json())
+
+
 @api_blueprint.route('/api/project/<int:project_id>/drop')
 @login_required
 def drop_project_by_id(project_id):
