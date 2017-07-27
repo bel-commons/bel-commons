@@ -175,7 +175,10 @@
                             <ul class="list-inline">
                                 {% if current_user.is_authenticated and current_user.admin %}
                                     <li>
-                                        <span class="btn btn-info">{{ network.id }}</span>
+                                        <a class="btn btn-info" target="_blank"
+                                           href="{{ url_for('dbs.get_network_metadata', network_id=network.id) }}">
+                                            {{ network.id }}
+                                        </a>
                                     </li>
 
                                 {% endif %}
