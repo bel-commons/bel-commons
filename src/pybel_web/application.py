@@ -252,11 +252,12 @@ def create_application(get_mail=False, config_location=None, **kwargs):
         if app.config.get('PYBEL_WEB_STARTUP_NOTIFY'):
             startup_message = Message(
                 subject="PyBEL Web - Startup",
-                body="PyBEL Web v{} was started on {} by {} at {}".format(
+                body="PyBEL Web v{} was started on {} by {} at {}.\n\nDeployed to: {}".format(
                     PYBEL_WEB_VERSION,
                     socket.gethostname(),
                     getuser(),
-                    time.asctime()
+                    time.asctime(),
+                    app.config.get('SERVER_NAME')
                 ),
                 sender=("PyBEL Web", 'pybel@scai.fraunhofer.de'),
                 recipients=[app.config.get('PYBEL_WEB_STARTUP_NOTIFY')]
