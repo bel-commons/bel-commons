@@ -136,7 +136,11 @@
                                 <div class="pull-right">
                                     <a class="btn btn-default btn-xs"
                                        href="{{ url_for('view_summary', network_id=report.network.id) }}">
-                                        <span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span>
+                                        <span class="glyphicon glyphicon-signal" aria-hidden="true"></span>
+                                    </a>
+                                    <a class="btn btn-default btn-xs"
+                                       href="{{ url_for('view_explore_network', network_id=report.network.id) }}">
+                                        <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
                                     </a>
                                     <a class="btn btn-default btn-xs"
                                        href="{{ url_for('dbs.drop_network', network_id=report.network.id) }}">
@@ -274,7 +278,7 @@
                             <div class="pull-right">
                                 <a class="btn btn-default btn-xs"
                                    href="{{ url_for('view_explorer_query', query_id=query.id) }}">
-                                    <span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span>
+                                    <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
                                 </a>
                                 <a class="btn btn-default btn-xs"
                                    href="{{ url_for('dbs.drop_query_by_id', query_id=query.id, next=url_for('view_current_user_activity')) }}">
