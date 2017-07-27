@@ -23,6 +23,7 @@ from flask_security import (
     login_required
 )
 
+import pybel_tools.query
 from pybel import from_bytes
 from pybel.constants import (
     PYBEL_CONNECTION,
@@ -34,15 +35,14 @@ from pybel.manager.models import (
     Annotation,
 )
 from pybel.utils import get_version as get_pybel_version
-from pybel_tools.constants import BMS_BASE
-from pybel_tools.constants import GENE_FAMILIES
+from pybel_tools.constants import BMS_BASE, GENE_FAMILIES
 from pybel_tools.ioutils import upload_recursive, get_paths_recursive
 from pybel_tools.mutation.metadata import fix_pubmed_citations
 from pybel_tools.pipeline import no_arguments_map
 from pybel_tools.utils import get_version as get_pybel_tools_version
 from .application import create_celery
 from .constants import *
-from .models import User, Report, Query
+from .models import User, Report, Query, Project
 from .utils import (
     render_network_summary,
     get_api,
@@ -238,6 +238,24 @@ def build_main_service(app):
         """Renders a page for the user to explore a network"""
         query = safe_get_query(query_id)
         return render_template('explorer.html', query=query)
+
+    @app.route('/explore/project/<int:project_id>', methods=['GET'])
+    @login_required
+    def view_explore_project(project_id):
+        """Renders a page for the user to explore the full network from a project"""
+        project = manager.session.query(Project).get(project_id)
+
+        q = pybel_tools.query.Query(network_ids=[
+            network.id
+            for network in project.networks
+        ])
+
+        query = Query.from_query(manager, current_user, q)
+        query.assembly.name = '{} query of {}'.format(time.asctime(), project.name)
+
+        manager.session.add(query)
+        manager.session.commit()
+        return redirect(url_for('view_explorer_query', query_id=query.id))
 
     @app.route('/explore/network/<int:network_id>', methods=['GET'])
     def view_explore_network(network_id):

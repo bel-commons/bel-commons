@@ -303,6 +303,14 @@ def suggest_annotation():
 # NETWORKS
 ####################################
 
+@api_blueprint.route('/api/network/<int:network_id>')
+@roles_required('admin')
+def get_network_metadata(network_id):
+    """Returns network metadata"""
+    network = manager.session.query(Network).get(network_id)
+    return jsonify(**network.data)
+
+
 @api_blueprint.route('/api/network/<int:network_id>/store_edges')
 @roles_required('admin')
 def load_edge_store_by_network_id(network_id):
@@ -1020,9 +1028,8 @@ def drop_query_by_id(query_id):
 
     manager.session.delete(query)
     manager.session.commit()
-    flash('Deleted query {}'.format(query_id))
 
-    return redirect(url_for('home'))
+    return next_or_jsonify('Deleted query {}'.format(query_id))
 
 
 @api_blueprint.route('/api/pipeline/query/drop')
@@ -1032,11 +1039,7 @@ def drop_queries():
     manager.session.query(models.Query).delete()
     manager.session.commit()
 
-    if 'next' in request.args:
-        flash('Deleted all queries')
-        return redirect(request.args['next'])
-
-    return jsonify({'status': 200})
+    return next_or_jsonify('Deleted all queries')
 
 
 @api_blueprint.route('/api/query/dropall/<int:user_id>', methods=['GET'])
@@ -1049,9 +1052,7 @@ def drop_user_queries(user_id):
     manager.session.query(models.Query).filter_by(user_id=current_user.id).delete()
     manager.session.commit()
 
-    flash('All queries associated with your user have been deleted')
-
-    return redirect(url_for('home'))
+    return next_or_jsonify('Deleted all queries associated with your account')
 
 
 @api_blueprint.route('/api/query/<int:query_id>/info', methods=['GET'])
@@ -1106,11 +1107,13 @@ def get_query_oldest_ancestry(query_id):
 
     if not query.parent:
         return jsonify({
-            'id': ancestor_id, 'parent': False
+            'id': ancestor_id,
+            'parent': False
         })
 
     return jsonify({
-        'id': ancestor_id, 'parent': True
+        'id': ancestor_id,
+        'parent': True
     })
 
 
@@ -1423,7 +1426,7 @@ def grant_network_to_user(network_id, user_id):
 
 @api_blueprint.route('/api/project/<int:project_id>')
 @login_required
-def get_project(project_id):
+def get_project_metadata(project_id):
     """Returns the project as a JSON file"""
     project = manager.session.query(Project).get(project_id)
 
