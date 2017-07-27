@@ -91,7 +91,7 @@
                                 <label>
                                     <input type="checkbox" class="networks" name="network_ids[]"
                                            value="{{ network.id }}"/>
-                                    {{ network.name }}
+                                    {{ network }} from {{ network.created }}
                                 </label>
                             </div>
                         {% endfor %}
@@ -111,9 +111,13 @@
                         <a data-toggle="tab" href="#node-panel">
                             <button type="button" class="btn btn-primary">Nodes</button>
                         </a>
-                        <a data-toggle="tab" href="#name-panel">
-                            <button type="button" class="btn btn-primary">Names</button>
-                        </a>
+
+                        {% if current_user.is_authenticated and current_user.admin %}
+                            <a data-toggle="tab" href="#name-panel">
+                                <button type="button" class="btn btn-warning">Names (Experimental)</button>
+                            </a>
+                        {% endif %}
+
                         <a data-toggle="tab" href="#pubmed-panel">
                             <button type="button" class="btn btn-primary" value="pmids">PubMeds</button>
                         </a>
