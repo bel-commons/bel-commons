@@ -25,16 +25,6 @@
                     <div class="list-group-item">
                         <h4 class="list-group-item-heading">{{ project.name }}</h4>
                         <div class="list-group-item-text">
-                            <ul>
-                                {% for project_network in project.networks %}
-                                    <li>
-                                        <a href="{{ url_for('view_summary', network_id=project_network.id) }}">
-                                            {{ project_network }}
-                                        </a>
-                                    </li>
-                                {% endfor %}
-                            </ul>
-
                             <p>
                                 {% if project.description %}
                                     {{ project.description }}
@@ -91,6 +81,31 @@
                                     </a>
                                 </li>
                             </ul>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h5>Networks</h5>
+                                    <ul>
+                                        {% for project_network in project.networks %}
+                                            <li>
+                                                <a href="{{ url_for('view_summary', network_id=project_network.id) }}">
+                                                    {{ project_network }}
+                                                </a>
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                                <h5>Members</h5>
+                                <div class="col-md-6">
+                                    <ul>
+                                        {% for user in project.users %}
+                                            <li>
+                                                {{ user }}
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 {% endfor %}
