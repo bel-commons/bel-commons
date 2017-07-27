@@ -325,6 +325,7 @@ def build_main_service(app):
             ('Python Version', sys.version),
             ('PyBEL Version', get_pybel_version()),
             ('PyBEL Tools Version', get_pybel_tools_version()),
+            ('PyBEL Web version', PYBEL_WEB_VERSION)
         ]
         return render_template(
             'sitemap.html',
