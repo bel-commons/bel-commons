@@ -23,7 +23,7 @@ from .parser_async_service import parser_async_blueprint
 from .parser_endpoint import build_parser_service
 from .upload_service import upload_blueprint
 
-__version__ = '0.1.0'
+__version__ = '0.1.1-dev'
 
 __title__ = 'pybel_web'
 __description__ = 'PyBEL Web'
