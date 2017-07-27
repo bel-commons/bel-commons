@@ -530,7 +530,7 @@ def update_network_status(network_id, status):
     manager.session.commit()
 
     if 'next' in request.args:
-        flash('Set public={} on {}'.format(status, report.network))
+        flash('Set public to {} for {}'.format(status, report.network))
         return redirect(request.args['next'])
 
     return jsonify({
