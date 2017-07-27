@@ -26,13 +26,22 @@
                         <h4 class="list-group-item-heading">{{ project.name }}</h4>
                         <ul>
                             {% for project_network in project.networks %}
-                                <li><a href="{{ url_for('view_summary', network_id=project_network.id) }}">{{ project_network }}</a></li>
+                                <li>
+                                    <a href="{{ url_for('view_summary', network_id=project_network.id) }}">
+                                        {{ project_network }}
+                                    </a>
+                                </li>
                             {% endfor %}
                         </ul>
                         <div class="list-group-item-text">
                             <p>{{ project.description }}</p>
 
                             <ul class="list-inline">
+                                {% if current_user.is_authenticated and current_user.admin %}
+                                    <li>
+                                        <span class="btn btn-info">{{ project.id }}</span>
+                                    </li>
+                                {% endif %}
                                 {% if project.networks %}
                                     {# Make sure that there's networks or don't show download buttons #}
                                     <li>
@@ -225,9 +234,6 @@
                 </tbody>
             </table>
         </div>
-
-
-
     </div>
 
     {% include "footer.html" %}
