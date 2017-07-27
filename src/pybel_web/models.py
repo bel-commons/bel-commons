@@ -290,13 +290,16 @@ class Assembly(Base):
     def from_query(manager, query):
         """Builds an assembly from a query
 
+        :param manager: A PyBEL cache manager
         :param pybel_tools.query.Query query:
         :rtype: Assembly
         """
-        return Assembly(networks=[
-            manager.session.query(Network).get(network_id)
-            for network_id in query.network_ids
-        ])
+        return Assembly(
+            networks=[
+                manager.session.query(Network).get(network_id)
+                for network_id in query.network_ids
+            ],
+        )
 
     def __repr__(self):
         return '<Assembly {}>'.format(', '.join(str(network.id) for network in self.networks))
