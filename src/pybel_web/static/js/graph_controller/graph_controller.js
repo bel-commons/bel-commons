@@ -184,7 +184,7 @@ function displayQueryInfo(query) {
 
     var queryObject = {};
 
-    queryObject["Query ID"] = query.id;
+    queryObject["Identifier"] = query.id;
     queryObject["Creator"] = query.creator;
 
     queryObject["Assembly"] = query.networks.join(", ");
