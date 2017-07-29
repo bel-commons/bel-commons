@@ -50,7 +50,7 @@ from pybel_tools.summary import (
     get_authors,
     get_pubmed_identifiers,
     get_undefined_namespace_names,
-    get_incorrect_names,
+    get_incorrect_names_by_namespace,
     get_naked_names,
 )
 from . import models
@@ -227,7 +227,7 @@ def download_undefined_namespace(network_id, namespace):
 def download_missing_namespace(network_id, namespace):
     """Outputs a namespace built from the missing names in the given namespace"""
     graph = api.get_network_by_id(network_id)
-    names = get_incorrect_names(graph, namespace)
+    names = get_incorrect_names_by_namespace(graph, namespace)
     return _build_namespace_helper(graph, namespace, names)
 
 
