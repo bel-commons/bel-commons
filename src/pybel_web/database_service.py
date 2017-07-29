@@ -1065,6 +1065,7 @@ def query_to_network(query_id):
 
     j = query.data.to_json()
     j['id'] = query.id
+    j['creator'] = str(query.user)
 
     network_ids = j['network_ids']
     j['networks'] = [
