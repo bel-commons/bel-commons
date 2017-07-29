@@ -297,6 +297,19 @@ def build_main_service(app):
 
         return render_network_summary(network_id, graph)
 
+    @app.route('/summary/<int:network_id>/induction-query/')
+    def build_summary_link_query(network_id):
+        nodes = [
+            api.get_node_by_id(node)
+            for node in request.args.getlist('nodes', type=int)
+        ]
+        q = pybel_tools.query.Query(network_id)
+        q.add_seed_induction(nodes)
+        qo = Query.from_query(manager, current_user, q)
+        manager.session.add(qo)
+        manager.session.commit()
+        return redirect(url_for('view_explorer_query', query_id=qo.id))
+
     @app.route('/definitions')
     def view_definitions():
         """Displays a page listing the namespaces and annotations."""
