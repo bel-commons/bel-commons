@@ -22,8 +22,7 @@ from flask import (
     request,
     abort,
 )
-from flask_login import login_required, current_user
-from flask_security import roles_required
+from flask_security import roles_required, login_required, current_user
 from six import StringIO
 from sqlalchemy.exc import IntegrityError
 
@@ -86,6 +85,7 @@ from .utils import (
     safe_get_query,
     get_vote,
     next_or_jsonify,
+    assert_user_owns_network,
 )
 
 log = logging.getLogger(__name__)
@@ -404,10 +404,7 @@ def drop_network_helper(network_id):
     network = manager.session.query(Network).get(network_id)
 
     if not current_user.admin:
-        if not network.report:
-            abort(403, 'You do not have permission to drop public network {}'.format(network_id))
-        elif network.report.user_id != current_user.id:
-            abort(403, 'You do not own network {}'.format(network_id))
+        assert_user_owns_network(network, current_user)
 
     try:
         if network.report:
@@ -1351,9 +1348,7 @@ def grant_network_to_project(network_id, project_id):
     """Adds rights to a network to a project"""
     network = manager.session.query(Network).get(network_id)
 
-    # Check that the user is the owner of the the network
-    if not network.report.user.id == current_user.id:
-        abort(403)
+    assert_user_owns_network(network, current_user)
 
     project = manager.session.query(Project).get(project_id)
     project.networks.append(network)
@@ -1378,9 +1373,7 @@ def grant_network_to_user(network_id, user_id):
     """Adds rights to a network to a anther user"""
     network = manager.session.query(Network).get(network_id)
 
-    # Check that the user is the owner of the the network
-    if not network.report.user.id == current_user.id:
-        abort(403)
+    assert_user_owns_network(network, current_user)
 
     user = manager.session.query(User).get(user_id)
     user.networks.append(network)

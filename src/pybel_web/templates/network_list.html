@@ -149,7 +149,8 @@
                 <p>Each curated network is backed by a BEL script. Below are options to summarize the networks'
                     contents, explore them with an in-browser navigator, or run analyses with data sets such as
                     differential gene expression data. Upload more networks
-                    <a href="{{ url_for('parser.view_parser') }}">here</a>.</p>
+                    <a href="{{ url_for('parser.view_parser') }}">here</a>.
+                </p>
             </div>
             <div class="list-group">
                 {% for network in networks %}
@@ -163,7 +164,7 @@
                                 {% endif %}
                             </small>
 
-                            {% if not network.report or network.report.public %}
+                            {% if network.report and network.report.public %}
                                 <span class="glyphicon glyphicon-globe" aria-hidden="true"></span>
                             {% elif current_user.is_authenticated and network.report.user != current_user %}
                                 <span class="glyphicon glyphicon-tent" aria-hidden="true"></span>
@@ -281,7 +282,7 @@
                                         <li>
                                             <a class="btn btn-danger" role="button"
                                                href="{{ url_for('dbs.claim_network', network_id=network.id, next=url_for('view_networks')) }}">
-                                                Sudo Claim
+                                                Claim
                                             </a>
                                         </li>
                                     {% endif %}

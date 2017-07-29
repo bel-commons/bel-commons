@@ -618,7 +618,7 @@ def list_public_networks(api_):
     return [
         network
         for network in api_.list_recent_networks()
-        if not network.report or network.report.public
+        if network.report and network.report.public
     ]
 
 
@@ -757,6 +757,14 @@ def get_vote(edge_id, user_id):
 
 
 def next_or_jsonify(message, category='message', **kwargs):
+    """Neatly wraps a redirect to a new URL if the ``next`` argument is set in the request otherwise sends JSON
+    feedback.
+
+    :param str message:
+    :param str category:
+    :param dict kwargs:
+    :return: A Flask Response object
+    """
     if 'next' in request.args:
         flash(message, category=category)
         return redirect(request.args['next'])
@@ -766,3 +774,13 @@ def next_or_jsonify(message, category='message', **kwargs):
         message=message,
         **kwargs
     )
+
+
+def assert_user_owns_network(network, user):
+    """Check that the user is the owner of the the network. Sends a Flask abort 403 signal if not.
+
+    :param Network network: A network
+    :param User user: A user
+    """
+    if not network.report or user != network.report.user:
+        abort(403, 'You do not own this network')
