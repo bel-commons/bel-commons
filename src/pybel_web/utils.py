@@ -60,7 +60,7 @@ from pybel_tools.summary import (
     count_citation_years,
 )
 from pybel_tools.utils import prepare_c3, prepare_c3_time_series, count_dict_values
-from .application import get_manager, get_api, get_user_datastore, get_scai_role
+from .application_utils import get_api, get_manager, get_scai_role, get_user_datastore
 from .constants import *
 from .models import User, Report, Experiment, Query, EdgeVote
 

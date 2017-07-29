@@ -19,7 +19,7 @@ from pybel.manager.models import (
     Author
 )
 from pybel.manager.models import Network, Namespace, Annotation
-from .application import get_manager, get_api, get_scai_role
+from .application_utils import get_api, get_manager, get_scai_role
 from .models import (
     Report,
     Experiment,

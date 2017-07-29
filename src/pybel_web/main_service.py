@@ -42,12 +42,11 @@ from pybel_tools.pipeline import no_arguments_map
 from pybel_tools.utils import get_version as get_pybel_tools_version
 from . import models
 from .application import create_celery
+from .application_utils import get_api, get_manager
 from .constants import *
 from .models import User, Report, Query, Project
 from .utils import (
     render_network_summary,
-    get_api,
-    get_manager,
     calculate_overlap_dict,
     get_network_ids_with_permission_helper,
     get_networks_with_permission,
