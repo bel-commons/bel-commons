@@ -3,12 +3,11 @@
 import logging
 from itertools import chain
 
-from flask import redirect, url_for, request
+from flask import redirect, request
 from flask_admin import Admin
-from flask_admin.contrib.sqla import ModelView as ModelViewBase
 from flask_admin.contrib.sqla.ajax import QueryAjaxModelLoader
 from flask_admin.model.ajax import DEFAULT_PAGE_SIZE
-from flask_security import current_user
+from flask_security import url_for_security, current_user
 from sqlalchemy import or_
 
 from pybel.manager.models import (
@@ -19,6 +18,17 @@ from pybel.manager.models import (
     Author
 )
 from pybel.manager.models import Network, Namespace, Annotation
+from .admin_utils import (
+    ModelViewBase,
+    ModelView,
+    UserView,
+    NetworkView,
+    NodeView,
+    CitationView,
+    EdgeView,
+    EvidenceView,
+    ExperimentView
+)
 from .application_utils import get_api, get_manager, get_scai_role
 from .models import (
     Report,
@@ -34,50 +44,6 @@ from .models import (
 from .utils import list_public_networks
 
 log = logging.getLogger(__name__)
-
-
-class ModelView(ModelViewBase):
-    """Adds plugin for Flask-Security to Flask-Admin model views"""
-
-    def is_accessible(self):
-        """Checks the current user is an admin"""
-        return current_user.is_authenticated and current_user.admin
-
-    def inaccessible_callback(self, name, **kwargs):
-        """redirect to login page if user doesn't have access"""
-        return redirect(url_for('login', next=request.url))
-
-
-class NetworkView(ModelView):
-    """Special view for PyBEL Networks"""
-    column_exclude_list = ['blob', 'sha512', 'authors', 'description', 'copyright', 'disclaimer', 'licenses']
-
-
-class NodeView(ModelView):
-    """Special view for PyBEL Nodes"""
-    column_exclude_list = ['blob', 'sha512']
-
-
-class EdgeView(ModelView):
-    """Special view for PyBEL Edges"""
-    column_exclude_list = ['blob', 'sha512']
-
-
-class CitationView(ModelView):
-    column_exclude_list = ['blob', 'sha512']
-
-
-class EvidenceView(ModelView):
-    column_exclude_list = ['blob', 'sha512']
-
-
-class ExperimentView(ModelView):
-    column_exclude_list = ['source', 'result', ]
-
-
-class UserView(ModelView):
-    """Special view for PyBEL Web Users"""
-    column_exclude_list = ['password', ]
 
 
 def build_admin_service(app):
@@ -148,11 +114,21 @@ def build_admin_service(app):
     class ProjectView(ModelViewBase):
         """Special view to allow users of given projects to manage them"""
 
+        def is_accessible(self):
+            """Checks the current user is logged in"""
+            return current_user.is_authenticated
+
+        def inaccessible_callback(self, name, **kwargs):
+            """redirect to login page if user doesn't have access"""
+            return redirect(url_for_security('login', next=request.url))
+
         def get_query(self):
+            """Only show projects that the user is part of"""
             return super(ProjectView, self).get_query().filter(
                 Project.id.in_(project.id for project in current_user.projects))
 
         def on_model_change(self, form, model, is_created):
+            """Hacky - automatically add user when they create a project"""
             model.users.append(current_user)
 
         form_ajax_refs = {
