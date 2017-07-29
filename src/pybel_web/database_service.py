@@ -19,8 +19,6 @@ from flask import (
     current_app,
     jsonify,
     redirect,
-    url_for,
-    render_template,
     request,
     abort,
 )
@@ -41,9 +39,14 @@ from pybel_tools.analysis.cmpa import RESULT_LABELS
 from pybel_tools.definition_utils import write_namespace
 from pybel_tools.filters.node_filters import exclude_pathology_filter
 from pybel_tools.query import Query
-from pybel_tools.selection.induce_subgraph import get_subgraph_by_annotations
-from pybel_tools.selection.induce_subgraph import get_subgraph_by_node_filter
+from pybel_tools.selection import get_subgraph_by_annotations, get_subgraph_by_node_filter
 from pybel_tools.summary import (
+    count_functions,
+    count_relations,
+    get_translocated,
+    get_degradations,
+    get_activities,
+    count_namespaces,
     info_json,
     info_str,
     info_list,
@@ -52,6 +55,8 @@ from pybel_tools.summary import (
     get_undefined_namespace_names,
     get_incorrect_names_by_namespace,
     get_naked_names,
+    count_citation_years,
+    count_variants,
 )
 from . import models
 from .constants import *
@@ -74,7 +79,6 @@ from .utils import (
     manager,
     api,
     user_datastore,
-    query_form_to_dict,
     get_query_ancestor_id,
     get_network_ids_with_permission_helper,
     user_has_query_rights,
@@ -978,6 +982,7 @@ def get_pipeline_function_names():
         if request.args['term'].casefold() in p.replace("_", " ").casefold()
     ])
 
+
 @api_blueprint.route('/api/pipeline/query/<int:query_id>/drop', methods=['GET', 'POST'])
 @login_required
 def drop_query_by_id(query_id):
@@ -1543,3 +1548,69 @@ def get_recent_report():
 def list_reporting():
     """Sends the reporting log as a text file"""
     return flask.send_file(os.path.join(PYBEL_LOG_DIR, 'reporting.txt'))
+
+
+@api_blueprint.route('/api/network/overlap')
+@roles_required('admin')
+def list_all_network_overview():
+    """Returns a meta-network describing the overlaps of all networks"""
+    node_elements = []
+    edge_elements = []
+
+    for source_network_id in api.get_network_ids():
+        source_network = api.get_network_by_id(network_id=source_network_id)
+        overlap = api.get_node_overlap(source_network_id)
+
+        node_elements.append({
+            'data': {
+                'id': source_network_id,
+                'name': source_network.name,
+                'size': source_network.number_of_nodes()
+            }
+        })
+
+        for target_network_id, weight in overlap.items():
+            weight = int(100 * weight)
+
+            if weight < 25:
+                continue  # don't have a complete graph
+
+            if source_network_id < target_network_id:
+                continue  # no duplicates
+
+            edge_elements.append({
+                'data': {
+                    'id': 'edge{}'.format(len(edge_elements)),
+                    'source': source_network_id,
+                    'target': target_network_id,
+                    'weight': weight
+                }
+            })
+
+    return jsonify(node_elements + edge_elements)
+
+
+@api_blueprint.route('/api/network/overview')
+@roles_required('admin')
+def universe_summary():
+    """Renders the graph summary page"""
+
+    graph = api.universe
+
+    chart_data = {
+        'entities': count_functions(graph),
+        'relations': count_relations(graph),
+        'modifiers': {
+            'Translocations': len(get_translocated(graph)),
+            'Degradations': len(get_degradations(graph)),
+            'Molecular Activities': len(get_activities(graph))
+        },
+        'variants': count_variants(graph),
+        'namespaces': count_namespaces(graph),
+        'citations_years': count_citation_years(graph),
+        'info': info_json(graph)
+    }
+
+    chart_data['networks'] = {'count': len(api.networks)},
+
+    return jsonify(**chart_data)

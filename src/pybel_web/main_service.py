@@ -40,11 +40,10 @@ from pybel_tools.ioutils import upload_recursive, get_paths_recursive
 from pybel_tools.mutation.metadata import fix_pubmed_citations
 from pybel_tools.pipeline import no_arguments_map
 from pybel_tools.utils import get_version as get_pybel_tools_version
+from . import models
 from .application import create_celery
 from .constants import *
-from .models import User, Report, Query, Project, Network, Assembly
-from . import models
-import json
+from .models import User, Report, Query, Project
 from .utils import (
     render_network_summary,
     get_api,
@@ -448,3 +447,8 @@ def build_main_service(app):
             source_bel=api.id_bel[source_id],
             target_bel=api.id_bel[target_id],
         )
+
+    @app.route('/overview')
+    def view_overview():
+        """Views the overview"""
+        return render_template('overview.html')

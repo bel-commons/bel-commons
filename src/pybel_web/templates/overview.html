@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% import "bootstrap/wtf.html" as wtf %}
+{% import "bootstrap/fixes.html" as fixes %}
+{% import "bootstrap/utils.html" as util %}
+
+{% block title %}Overview{% endblock %}
+
+
+{% block head %}
+    {{ super() }}
+
+    <script type="text/javascript"
+            src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.1.4/cytoscape.min.js"></script>
+{% endblock %}
+
+
+{% block styles %}
+    {{ super() }}
+
+    <style>
+        #cy {
+            width: 100%;
+            height: 800px;
+        }
+    </style>
+{% endblock %}
+
+
+{% block scripts %}
+    {{ super() }}
+
+    <script>
+        $.ajax({
+            type: "GET",
+            url: "{{ url_for('dbs.list_all_network_overview') }}",
+            dataType: "json",
+            success: function (elements) {
+                const cy = cytoscape({
+                    container: document.getElementById('cy'),
+                    elements: elements,
+                    style: [
+                        {
+                            selector: 'node',
+                            style: {
+                                label: 'data(name)',
+                                width: 'mapData(size, 0, 4000, 20, 60)',
+                                height: 'mapData(size, 0, 4000, 20, 60)',
+                                'text-valign': 'center',
+                                'color': 'white',
+                                'text-outline-width': 2,
+                                'text-outline-color': '#888',
+                                'background-color': '#888'
+                            }
+                        },
+                        {
+                            selector: 'edge',
+                            style: {
+                                width: 'mapData(weight, 30, 100, 1, 10)',
+                                'curve-style': 'bezier'
+                            }
+                        }
+                    ],
+                    layout: {
+                        name: 'cose'
+                    }
+                });
+            },
+        });
+
+        $.ajax({
+            type: "GET",
+            url: "{{ url_for('dbs.universe_summary') }}",
+            dataType: "json",
+            success: function (data) {
+
+                const summary = $('#universe-summary');
+
+                $.each(data, function (key, value) {
+                    summary.append('<h3>' + key + '</h3><dl class="dl-horizontal">');
+
+                    $.each(value, function (ikey, ivalue) {
+                       summary.append('<dt>' + ikey + '</dt><dd>' + ivalue + "</dd>");
+                    });
+
+                    summary.append('</dl>');
+                })
+            },
+        });
+
+    </script>
+{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Network Overlaps</h3>
+            </div>
+            <div class="panel-body">
+                <div id="cy"></div>
+            </div>
+        </div>
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Summary</h3>
+            </div>
+            <div class="panel-body" id="universe-summary"></div>
+        </div>
+    </div>
+{% endblock %}
