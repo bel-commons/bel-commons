@@ -42,7 +42,9 @@ from pybel_tools.pipeline import no_arguments_map
 from pybel_tools.utils import get_version as get_pybel_tools_version
 from .application import create_celery
 from .constants import *
-from .models import User, Report, Query, Project
+from .models import User, Report, Query, Project, Network, Assembly
+from . import models
+import json
 from .utils import (
     render_network_summary,
     get_api,
@@ -52,6 +54,7 @@ from .utils import (
     get_networks_with_permission,
     safe_get_query,
     next_or_jsonify,
+    query_form_to_dict
 )
 
 log = logging.getLogger(__name__)
@@ -222,7 +225,7 @@ def build_main_service(app):
             current_user=current_user,
         )
 
-    @app.route('/query', methods=['GET', 'POST'])
+    @app.route('/query/build', methods=['GET', 'POST'])
     def view_query_builder():
         """Renders the query builder page"""
         networks = get_networks_with_permission(api)
@@ -232,6 +235,18 @@ def build_main_service(app):
             networks=networks,
             current_user=current_user,
         )
+
+    @app.route('/query/compile', methods=['POST'])
+    def get_pipeline():
+        """Executes a pipeline"""
+        d = query_form_to_dict(request.form)
+        q = pybel_tools.query.Query.from_json(d)
+        qo = models.Query.from_query(manager, current_user, q)
+
+        manager.session.add(qo)
+        manager.session.commit()
+
+        return redirect(url_for('view_explorer_query', query_id=qo.id))
 
     @app.route('/explore/query/<int:query_id>', methods=['GET'])
     def view_explorer_query(query_id):

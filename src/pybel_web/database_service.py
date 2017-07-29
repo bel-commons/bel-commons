@@ -978,42 +978,6 @@ def get_pipeline_function_names():
         if request.args['term'].casefold() in p.replace("_", " ").casefold()
     ])
 
-
-@api_blueprint.route('/api/pipeline/query', methods=['POST'])
-def get_pipeline():
-    """Executes a pipeline"""
-
-    d = query_form_to_dict(request.form)
-
-    q = Query.from_json(d)
-
-    assembly = models.Assembly(networks=[
-        manager.session.query(Network).get(network_id)
-        for network_id in q.network_ids
-    ])
-
-    qo = models.Query(
-        assembly=assembly,
-        seeding=json.dumps(q.seeds),
-        pipeline_protocol=q.pipeline.to_jsons(),
-        dump=q.to_jsons(),
-    )
-
-    if current_user.is_authenticated:
-        assembly.user = current_user
-        qo.user = current_user
-
-    manager.session.add(qo)
-    manager.session.commit()
-
-    return render_template(
-        'run_query.html',
-        query=qo,
-        url_root=request.url_root.rstrip('/'),
-        current_user=current_user,
-    )
-
-
 @api_blueprint.route('/api/pipeline/query/<int:query_id>/drop', methods=['GET', 'POST'])
 @login_required
 def drop_query_by_id(query_id):
