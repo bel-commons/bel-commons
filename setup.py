@@ -30,6 +30,7 @@ INSTALL_REQUIRES = [
     'flask-wtf',
     'flask-security',
     'flask-admin',
+    'werkzeug',
     'flasgger',
     'networkx',
     'pybel',
@@ -46,6 +47,7 @@ INSTALL_REQUIRES = [
     'matplotlib_venn',
     'matplotlib',
     'gitpython',
+    'six',
 ]
 EXTRAS_REQUIRE = {
     'speed': ['python-Levenshtein', ]  # Activates c-based speed improvements for fuzzywuzzy

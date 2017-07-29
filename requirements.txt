@@ -5,6 +5,7 @@ flask-bootstrap
 flask-wtf
 flask-security
 flask-admin
+werkzeug
 flasgger
 networkx
 pybel
@@ -23,3 +24,4 @@ raven
 matplotlib_venn
 matplotlib
 gitpython
+six
