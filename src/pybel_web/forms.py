@@ -51,14 +51,14 @@ class SeedSubgraphForm(FlaskForm):
     seed_method = RadioField(
         'Expansion Method',
         choices=[
-            (SEED_TYPE_INDUCTION, 'Induce a subgraph over the given nodes'),
             (SEED_TYPE_NEIGHBORS, 'Induce a subgraph over the given nodes and expand to their first neighbors'),
             (SEED_TYPE_DOUBLE_NEIGHBORS, 'Induce a subgraph over the given nodes and expand to their second neighbors'),
             (SEED_TYPE_PATHS, 'Induce a subgraph over the nodes in all shortest paths between the given nodes'),
             (SEED_TYPE_UPSTREAM, 'Generate an upstream candidate mechanism'),
             (SEED_TYPE_DOWNSTREAM, 'Generate a downstream candidate mechanism'),
+            (SEED_TYPE_INDUCTION, 'Only induce a subgraph over the given nodes'),
         ],
-        default=SEED_TYPE_INDUCTION)
+        default=SEED_TYPE_NEIGHBORS)
     filter_pathologies = BooleanField('Filter pathology nodes', default=False)
     submit_subgraph = SubmitField('Submit Subgraph')
 
