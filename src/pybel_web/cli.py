@@ -45,7 +45,7 @@ from .parser_endpoint import build_parser_service
 from .upload_service import upload_blueprint
 from .utils import iterate_user_strings
 
-log = logging.getLogger(__name__)
+log = logging.getLogger('pybel_web')
 
 datefmt = '%H:%M:%S'
 fmt = "%(asctime)s - %(levelname)s - %(name)s - %(message)s"
@@ -70,7 +70,8 @@ def set_debug(level):
     pbt_log.setLevel(level)
     pbt_log.addHandler(fh)
 
-    log.setLevel(level)
+    pbw_log = logging.getLogger('pybel_web')
+    pbw_log.setLevel(level)
 
 
 def set_debug_param(debug):
