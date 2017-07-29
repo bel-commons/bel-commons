@@ -18,7 +18,8 @@ from pybel.parser.parse_exceptions import InconsistentDefinitionError
 from pybel_tools.constants import BMS_BASE
 from pybel_tools.ioutils import convert_directory
 from pybel_tools.mutation import add_canonical_names, fix_pubmed_citations
-from .application import create_application, create_celery
+from .application import create_application
+from .celery_utils import create_celery
 from .constants import CHARLIE_EMAIL, DANIEL_EMAIL
 from .constants import integrity_message
 from .models import Report, User

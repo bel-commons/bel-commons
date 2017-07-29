@@ -19,7 +19,7 @@ from pybel_tools.filters import remove_nodes_by_namespace
 from pybel_tools.generation import generate_bioprocess_mechanisms
 from pybel_tools.integration import overlay_type_data
 from pybel_tools.mutation import collapse_by_central_dogma_to_genes, rewire_variants_to_genes
-from .application import create_celery
+from .celery_utils import create_celery
 from .forms import DifferentialGeneExpressionForm
 from .models import Experiment
 from .utils import manager

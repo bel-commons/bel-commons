@@ -9,7 +9,7 @@ from flask import render_template, current_app, Blueprint, flash
 from flask_security import current_user, login_required
 
 from pybel.constants import PYBEL_CONNECTION
-from .application import create_celery
+from .celery_utils import create_celery
 from .constants import reporting_log
 from .forms import ParserForm, ParseUrlForm
 

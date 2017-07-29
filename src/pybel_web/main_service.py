@@ -41,7 +41,7 @@ from pybel_tools.mutation.metadata import fix_pubmed_citations
 from pybel_tools.pipeline import no_arguments_map
 from pybel_tools.utils import get_version as get_pybel_tools_version
 from . import models
-from .application import create_celery
+from .celery_utils import create_celery
 from .application_utils import get_api, get_manager
 from .constants import *
 from .models import User, Report, Query, Project
