@@ -146,7 +146,7 @@ function displayEdgeInfo(edge) {
         edgeObject["Target"] = '<a href="/api/nodes/' + edge.target.id + '">' + edge.target.cname + "</a>";
     }
     if (edge.source.id && edge.target.id) {
-        edgeObject["See Also"] = '<a target="_blank" href="/edges/' + edge.source.id + '/'  + edge.target.id + '">All evidences</a>';
+        edgeObject["See Also"] = '<a target="_blank" href="/edges/' + edge.source.id + '/' + edge.target.id + '">All evidences</a>';
     }
 
     if (edge.id) {
@@ -1371,7 +1371,7 @@ function initD3Force(graph, tree) {
             var path = link.filter(function (el) {
                 // Source and target should be present in the edge and the distance in the array should be one
                 return ((data[x].indexOf(el.source.id) >= 0 && data[x].indexOf(el.target.id) >= 0)
-                && (Math.abs(data[x].indexOf(el.source.id) - data[x].indexOf(el.target.id)) === 1));
+                    && (Math.abs(data[x].indexOf(el.source.id) - data[x].indexOf(el.target.id)) === 1));
             });
 
             edgesInPaths.push(path);
@@ -1387,7 +1387,7 @@ function initD3Force(graph, tree) {
             var edgesInPath = link.filter(function (el) {
                 // Source and target should be present in the edge and the distance in the array should be one
                 return ((data[i].indexOf(el.source.id) >= 0 && data[i].indexOf(el.target.id) >= 0)
-                && (Math.abs(data[i].indexOf(el.source.id) - data[i].indexOf(el.target.id)) === 1));
+                    && (Math.abs(data[i].indexOf(el.source.id) - data[i].indexOf(el.target.id)) === 1));
             });
 
             // Select randomly a color and apply to this path
@@ -1423,7 +1423,7 @@ function initD3Force(graph, tree) {
             var edgesNotInPath = g.selectAll(".link").filter(function (el) {
                 // Source and target should be present in the edge and the distance in the array should be one
                 return !((paths.indexOf(el.source.id) >= 0 && paths.indexOf(el.target.id) >= 0)
-                && (Math.abs(paths.indexOf(el.source.id) - paths.indexOf(el.target.id)) === 1));
+                    && (Math.abs(paths.indexOf(el.source.id) - paths.indexOf(el.target.id)) === 1));
             });
 
             // If checkbox is True -> Hide all, Else -> Opacity 0.1
@@ -1682,6 +1682,7 @@ function initD3Force(graph, tree) {
         searchText = searchText.replace(/\s+/g, "");
 
         $.each($("#node-list-ul")[0].childNodes, updateNodeArray);
+
         function updateNodeArray() {
             var currentLiText = $(this).find("span")[0].innerHTML,
                 showCurrentLi = ((currentLiText.toLowerCase()).replace(/\s+/g, "")).indexOf(searchText) !== -1;
@@ -1697,6 +1698,7 @@ function initD3Force(graph, tree) {
         searchText = searchText.replace(/\s+/g, "");
 
         $.each($("#edge-list-ul")[0].childNodes, updateEdgeArray);
+
         function updateEdgeArray() {
 
             var currentLiText = $(this).find("span")[0].innerHTML,
