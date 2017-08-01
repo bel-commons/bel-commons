@@ -1454,6 +1454,7 @@ def summarize_project(project_id):
 
 
 @api_blueprint.route('/api/project/<project_id>/export/<serve_format>', methods=['GET'])
+@login_required
 def export_project_network(project_id, serve_format):
     """Builds a graph the networks belonging to the given project and sends it in the given format"""
     project = manager.session.query(Project).get(project_id)
