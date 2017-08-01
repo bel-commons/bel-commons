@@ -35,6 +35,7 @@ from pybel_tools.utils import get_version as pybel_tools_get_version
 from .admin_service import build_admin_service
 from .analysis_service import analysis_blueprint
 from .application import create_application
+from .belief_service import belief_blueprint
 from .constants import log_path, CHARLIE_EMAIL
 from .curation_service import curation_blueprint
 from .database_service import api_blueprint
@@ -133,6 +134,7 @@ def run(host, port, default_config, debug, flask_debug, config):
     app.register_blueprint(upload_blueprint)
     app.register_blueprint(api_blueprint)
     app.register_blueprint(analysis_blueprint)
+    app.register_blueprint(belief_blueprint)
 
     if app.config.get('PYBEL_WEB_PARSER_API'):
         build_parser_service(app)
