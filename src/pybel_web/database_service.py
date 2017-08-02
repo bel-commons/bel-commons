@@ -1035,7 +1035,7 @@ def query_to_network(query_id):
 
     network_ids = j['network_ids']
     j['networks'] = [
-        api.get_network_by_id(network_id).name
+        str(api.get_network_by_id(network_id))
         for network_id in network_ids
     ]
 
