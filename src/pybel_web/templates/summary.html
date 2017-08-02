@@ -123,6 +123,11 @@
                     {% if unused_annotations is defined and unused_annotations|length > 0 %}
                         <li><a href="#unused-annotations">Unused Annotations</a></li>
                     {% endif %}
+
+                    {% if graph.annotation_list|length > 0 %}
+                        <li><a href="#list-annotations">List Annotations</a></li>
+                    {% endif %}
+
                     {% if unused_list_annotation_values is defined and unused_list_annotation_values|length > 0 %}
                         <li><a href="#unused-list-annotations">Unused List Annotation Values</a></li>
                     {% endif %}
@@ -330,6 +335,37 @@
                     <ul>
                         {% for unused_namespace in unused_namespaces %}
                             <li>{{ unused_namespace }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        {% endif %}
+
+        {% if graph.annotation_list|length > 0 %}
+            <a id="list-annotations"></a>
+            <div class="panel panel-warning">
+                <div class="panel-heading">
+                    <h3 class="panel-title">List Annotations
+                        <span class="badge">{{ graph.annotation_list|length }}</span>
+                        <a class="pull-right" href="#top">
+                            <span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span>
+                        </a>
+                    </h3>
+                </div>
+                <div class="panel-body">
+                    <p>
+                        The source BEL script contained annotations defined as a list. Click each link to export
+                        the list definition as a <code>BELANNO</code> file that can hosted externally to promote
+                        reusability and interoperability. After, you can replace the list definition in the source
+                        BEL with a <code>SET ANNOTATION X AS URL "Y"</code> definition.
+                    </p>
+                    <ul class="row">
+                        {% for list_annotation in graph.annotation_list %}
+                            <li class="col-lg-3 col-md-4 col-sm-6">
+                                <a href="{{ url_for('dbs.download_list_annotation', network_id=network.id, annotation=list_annotation) }}">
+                                    {{ list_annotation }}
+                                </a>
+                            </li>
                         {% endfor %}
                     </ul>
                 </div>
