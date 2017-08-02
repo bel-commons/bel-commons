@@ -80,8 +80,9 @@
                 <div class="panel-heading">
                     <h3 class="panel-title">Versions
                         <span class="badge">{{ network_versions|length }}</span>
-                        <a class="pull-right" href="#top"><span class="glyphicon glyphicon-arrow-up"
-                                                                aria-hidden="true"></span></a>
+                        <a class="pull-right" href="#top">
+                            <span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span>
+                        </a>
                     </h3>
                 </div>
                 <div class="panel-body">
@@ -114,51 +115,66 @@
                     <li><a href="#network-statistics">Network Statistics</a></li>
                     <li><a href="#content-statistics">Content Statistics</a></li>
                     <li><a href="#overlap">Overlaps</a></li>
+
                     {% if unused_namespaces is defined and unused_namespaces|length > 0 %}
                         <li><a href="#unused-namespaces">Unused Namespaces</a></li>
                     {% endif %}
+
                     {% if unused_annotations is defined and unused_annotations|length > 0 %}
                         <li><a href="#unused-annotations">Unused Annotations</a></li>
                     {% endif %}
                     {% if unused_list_annotation_values is defined and unused_list_annotation_values|length > 0 %}
                         <li><a href="#unused-list-annotations">Unused List Annotations</a></li>
                     {% endif %}
+
                     {% if graph.warnings|length > 0 %}
                         <li><a href="#graph-warnings">Graph Warnings</a></li>
                     {% endif %}
+
                     {% if error_groups is defined and error_groups|length > 0 %}
                         <li><a href="#error-groups">Top Warnings</a></li>
                     {% endif %}
+
                     {% if naked_names is defined and naked_names|length > 0 %}
                         <li><a href="#naked-names">Naked Names</a></li>
                     {% endif %}
+
                     {% if undefined_namespaces is defined and undefined_namespaces|length > 0 %}
                         <li><a href="#undefined-namespaces">Undefined Namespaces</a></li>
                     {% endif %}
+
                     {% if undefined_annotation is defined and undefined_annotations|length > 0 %}
                         <li><a href="#undefined-annotations">Undefined Annotations</a></li>
                     {% endif %}
+
                     {% if namespaces_with_incorrect_names is defined and namespaces_with_incorrect_names|length > 0 %}
                         <li><a href="#incorrect-namespaces">Namespaces with Incorrect Names</a></li>
                     {% endif %}
+
                     {% if regulatory_pairs is defined and regulatory_pairs|length > 0 %}
                         <li><a href="#regulatory-pairs">Regulatory Pairs</a></li>
                     {% endif %}
+
                     {% if contradictions is defined and contradictions|length > 0 %}
                         <li><a href="#contradictory-pairs">Contradictory Pairs</a></li>
                     {% endif %}
+
                     {% if unstable_pairs is defined and unstable_pairs|length > 0 %}
                         <li><a href="#unstable-pairs">Unstable Pairs</a></li>
                     {% endif %}
+
                     {% if contradictory_triplets is defined and contradictory_triplets|length > 0 %}
                         <li><a href="#contradictory-triplets">Contradictory Triplets</a></li>
                     {% endif %}
+
                     {% if unstable_triplets is defined and unstable_triplets|length > 0 %}
                         <li><a href="#unstable-triplets">Unstable Triplets</a></li>
                     {% endif %}
+
                     {% if causal_pathologies is defined and causal_pathologies|length > 0 %}
                         <li><a href="#causal-pathologies">Causal Pathologies</a></li>
                     {% endif %}
+
                     {% if undefined_families is defined and undefined_families|length > 0 %}
                         <li><a href="#undefined-families">Undefined Families</a></li>
                     {% endif %}
@@ -302,8 +318,9 @@
                 <div class="panel-heading">
                     <h3 class="panel-title">Unused Namespaces
                         <span class="badge">{{ unused_namespaces|length }}</span>
-                        <a class="pull-right" href="#top"><span class="glyphicon glyphicon-arrow-up"
-                                                                aria-hidden="true"></span></a>
+                        <a class="pull-right" href="#top">
+                            <span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span>
+                        </a>
                     </h3>
                 </div>
                 <div class="panel-body">
@@ -325,8 +342,9 @@
                 <div class="panel-heading">
                     <h3 class="panel-title">Unused Annotations
                         <span class="badge">{{ unused_annotations|length }}</span>
-                        <a class="pull-right" href="#top"><span class="glyphicon glyphicon-arrow-up"
-                                                                aria-hidden="true"></span></a>
+                        <a class="pull-right" href="#top">
+                            <span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span>
+                        </a>
                     </h3>
                 </div>
                 <div class="panel-body">
@@ -350,8 +368,9 @@
                 <div class="panel-heading">
                     <h3 class="panel-title">Unused List Annotation Values
                         <span class="badge">{{ unused_list_annotation_values|length }}</span>
-                        <a class="pull-right" href="#top"><span class="glyphicon glyphicon-arrow-up"
-                                                                aria-hidden="true"></span></a>
+                        <a class="pull-right" href="#top">
+                            <span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span>
+                        </a>
                     </h3>
                 </div>
                 <div class="panel-body">
@@ -421,8 +440,9 @@
             <div class="panel panel-danger panel-table">
                 <div class="panel-heading">
                     <h3 class="panel-title">Top Warnings
-                        <a class="pull-right" href="#top"><span class="glyphicon glyphicon-arrow-up"
-                                                                aria-hidden="true"></span></a>
+                        <a class="pull-right" href="#top">
+                            <span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span>
+                        </a>
                     </h3>
                 </div>
                 <table class="table table-hover table-responsive table-striped">
@@ -450,8 +470,9 @@
                 <div class="panel-heading">
                     <h3 class="panel-title">Naked Names
                         <span class="badge">{{ naked_names|length }}</span>
-                        <a class="pull-right" href="#top"><span class="glyphicon glyphicon-arrow-up"
-                                                                aria-hidden="true"></span></a>
+                        <a class="pull-right" href="#top">
+                            <span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span>
+                        </a>
                     </h3>
                 </div>
                 <div class="panel-body">
@@ -469,8 +490,9 @@
                 <div class="panel-heading">
                     <h3 class="panel-title">Undefined Namespaces
                         <span class="badge">{{ undefined_namespaces|length }}</span>
-                        <a class="pull-right" href="#top"><span class="glyphicon glyphicon-arrow-up"
-                                                                aria-hidden="true"></span></a>
+                        <a class="pull-right" href="#top">
+                            <span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span>
+                        </a>
                     </h3>
                 </div>
                 <div class="panel-body">
@@ -517,8 +539,9 @@
                 <div class="panel-heading">
                     <h3 class="panel-title">Namespaces with Incorrect Names
                         <span class="badge">{{ namespaces_with_incorrect_names|length }}</span>
-                        <a class="pull-right" href="#top"><span class="glyphicon glyphicon-arrow-up"
-                                                                aria-hidden="true"></span></a>
+                        <a class="pull-right" href="#top">
+                            <span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span>
+                        </a>
                     </h3>
                 </div>
                 <div class="panel-body">
@@ -583,8 +606,9 @@
                 <div class="panel-heading">
                     <h3 class="panel-title">Contradictory Edges
                         <span class="badge">{{ contradictions|length }}</span>
-                        <a class="pull-right" href="#top"><span class="glyphicon glyphicon-arrow-up"
-                                                                aria-hidden="true"></span></a>
+                        <a class="pull-right" href="#top">
+                            <span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span>
+                        </a>
                     </h3>
                 </div>
                 <div class="panel-body">
@@ -607,8 +631,10 @@
                     {% for source, source_id, target, target_id, relations in contradictions %}
                         <tr>
                             <td>
-                                <a href="{{ url_for('build_summary_link_query', network_id=network_id, nodes=[source_id, target_id]) }}"><span
-                                        class="glyphicon glyphicon-eye-open" aria-hidden="true"></span></a></td>
+                                <a href="{{ url_for('build_summary_link_query', network_id=network_id, nodes=[source_id, target_id]) }}">
+                                    <span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span>
+                                </a>
+                            </td>
                             <td>{{ source }}</td>
                             <td>{{ ', '.join(relations) }}</td>
                             <td>{{ target }}</td>
@@ -625,8 +651,9 @@
                 <div class="panel-heading">
                     <h3 class="panel-title">Unstable Pairs
                         <span class="badge">{{ unstable_pairs|length }}</span>
-                        <a class="pull-right" href="#top"><span class="glyphicon glyphicon-arrow-up"
-                                                                aria-hidden="true"></span></a>
+                        <a class="pull-right" href="#top">
+                            <span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span>
+                        </a>
                     </h3>
                 </div>
                 <div class="panel-body">
@@ -678,8 +705,9 @@
                 <div class="panel-heading">
                     <h3 class="panel-title">Contradictory Triplets
                         <span class="badge">{{ contradictory_triplets|length }}</span>
-                        <a class="pull-right" href="#top"><span class="glyphicon glyphicon-arrow-up"
-                                                                aria-hidden="true"></span></a>
+                        <a class="pull-right" href="#top">
+                            <span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span>
+                        </a>
                     </h3>
                 </div>
                 <div class="panel-body">
@@ -743,8 +771,9 @@
                 <div class="panel-heading">
                     <h3 class="panel-title">Unstable Triplets
                         <span class="badge">{{ unstable_triplets|length }}</span>
-                        <a class="pull-right" href="#top"><span class="glyphicon glyphicon-arrow-up"
-                                                                aria-hidden="true"></span></a>
+                        <a class="pull-right" href="#top">
+                            <span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span>
+                        </a>
                     </h3>
                 </div>
                 <div class="panel-body">
@@ -798,8 +827,9 @@
                 <div class="panel-heading">
                     <h3 class="panel-title">Causal Pathologies
                         <span class="badge">{{ causal_pathologies|length }}</span>
-                        <a class="pull-right" href="#top"><span class="glyphicon glyphicon-arrow-up"
-                                                                aria-hidden="true"></span></a>
+                        <a class="pull-right" href="#top">
+                            <span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span>
+                        </a>
                     </h3>
                 </div>
                 <div class="panel-body">
