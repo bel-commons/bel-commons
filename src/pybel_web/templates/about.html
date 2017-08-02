@@ -41,7 +41,12 @@
                                     <a href="https://www.openapis.org/">OpenAPI</a> specification.
                                 </p>
                                 <p>
-                                    <a href="{{ url_for('get_swagger') }}" class="btn btn-primary" role="button">Swagger.json</a>
+                                    <a href="{{ url_for('flasgger.apidocs') }}" class="btn btn-primary">
+                                        Swagger UI
+                                    </a>
+                                    <a href="{{ url_for('flasgger.apispec_1') }}" class="btn btn-primary">
+                                        OpenAPI Spec
+                                    </a>
                                 </p>
                             </div>
                         </div>

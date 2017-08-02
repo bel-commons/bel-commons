@@ -379,11 +379,6 @@ def build_main_service(app):
         user = manager.session.query(User).get(user_id)
         return render_template('user_activity.html', user=user)
 
-    @app.route('/swagger.json')
-    def get_swagger():
-        """Gets the Swagger definition of this API"""
-        return send_file('static/json/swagger.json')
-
     @app.route('/reporting', methods=['GET'])
     def view_reports():
         """Shows the uploading reporting"""
