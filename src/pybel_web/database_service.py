@@ -218,7 +218,7 @@ def _build_namespace_helper(graph, namespace, names):
     return output
 
 
-@api_blueprint.route('/api/namespace/builder/undefined/<network_id>/<namespace>')
+@api_blueprint.route('/api/namespace/builder/undefined/<int:network_id>/<namespace>')
 def download_undefined_namespace(network_id, namespace):
     """Outputs a namespace built for this undefined namespace"""
     """Outputs a namespace built for this undefined namespace"""
@@ -227,7 +227,7 @@ def download_undefined_namespace(network_id, namespace):
     return _build_namespace_helper(network, namespace, names)
 
 
-@api_blueprint.route('/api/namespace/builder/incorrect/<network_id>/<namespace>')
+@api_blueprint.route('/api/namespace/builder/incorrect/<int:network_id>/<namespace>')
 def download_missing_namespace(network_id, namespace):
     """Outputs a namespace built from the missing names in the given namespace"""
     graph = api.get_network_by_id(network_id)
@@ -235,7 +235,7 @@ def download_missing_namespace(network_id, namespace):
     return _build_namespace_helper(graph, namespace, names)
 
 
-@api_blueprint.route('/api/namespace/builder/naked/<network_id>/')
+@api_blueprint.route('/api/namespace/builder/naked/<int:network_id>/')
 def download_naked_names(network_id):
     """Outputs a namespace built from the naked names in the given namespace"""
     graph = api.get_network_by_id(network_id)
