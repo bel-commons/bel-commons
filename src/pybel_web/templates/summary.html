@@ -285,18 +285,21 @@
             <div class="panel-heading">
                 <h3 class="panel-title">Overlap
                     <a class="pull-right" href="#top">
-                        <span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span></a>
+                        <span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span>
+                    </a>
                 </h3>
             </div>
             <div class="panel-body">
-                <p>The overlap between networks is calculated by the overlap of their contained nodes. The top 10 are
-                    shown below.</p>
+                <p>
+                    The overlap between networks is calculated by the overlap of their contained nodes. The top 10 are
+                    shown below.
+                </p>
             </div>
             <table class="table table-hover table-responsive table-striped">
                 <thead>
                 <tr>
                     <th>Network</th>
-                    <th>Overlap</th>
+                    <th>Node Overlap</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -306,7 +309,7 @@
                             <td>
                                 <a href="{{ url_for('view_summary', network_id=other_network.id) }}">{{ other_network }}</a>
                             </td>
-                            <td>{{ tanimoto }}</td>
+                            <td>{{ (100*tanimoto)|round|int }}%</td>
                         </tr>
                     {% endif %}
                 {% endfor %}
@@ -389,9 +392,11 @@
                         and parsing speed.</p>
                     <p><strong>Note:</strong> this may be due to errors occurring in all statements with these
                         annotations.</p>
-                    <ul>
+                    <ul class="row">
                         {% for unused_annotation in unused_annotations %}
-                            <li>{{ unused_annotation }}</li>
+                            <li class="col-lg-3 col-md-4 col-sm-6">
+                                {{ unused_annotation }}
+                            </li>
                         {% endfor %}
                     </ul>
                 </div>
@@ -1086,7 +1091,7 @@
                 type: 'bar'
             },
             title: {
-                text: 'Nodes'
+                text: 'Node Types'
             },
             axis: {
                 rotated: true,
@@ -1114,7 +1119,7 @@
                 type: 'bar'
             },
             title: {
-                text: 'Edges'
+                text: 'Edge Types'
             },
             axis: {
                 rotated: true,
@@ -1142,7 +1147,7 @@
                 type: 'bar'
             },
             title: {
-                text: 'Warnings'
+                text: 'Warning Types'
             },
             axis: {
                 rotated: true,
@@ -1254,7 +1259,7 @@
                 type: 'bar'
             },
             title: {
-                text: 'Top Hub Nodes'
+                text: 'Node Degrees'
             },
             axis: {
                 rotated: true,
@@ -1282,7 +1287,7 @@
                 type: 'bar'
             },
             title: {
-                text: 'Diseases'
+                text: 'Pathologies'
             },
             axis: {
                 rotated: true,
@@ -1299,10 +1304,17 @@
         {% if chart_10_data|safe %}
 
             var chart10 = c3.generate({
+                padding: {
+                    top: 15
+                },
+                size: {
+                    height: 350
+                },
                 data: {
                     x: 'x',
                     columns: {{ chart_10_data|safe}}
                 },
+
                 bindto: '#chart10',
                 axis: {
                     x: {
