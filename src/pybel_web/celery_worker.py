@@ -1,5 +1,13 @@
 # -*- coding: utf-8 -*-
 
+"""
+Run the celery worker with:
+
+:code:`python3 -m celery -A pybel_web.celery_worker.celery worker`
+
+While also laughing at how ridiculously redundant this nomenclature is.
+"""
+
 import hashlib
 import logging
 import os
