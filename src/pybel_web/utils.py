@@ -732,7 +732,7 @@ def safe_get_query(query_id):
     """Gets a query or raises an abort
 
     :param int query_id:
-    :rtype: models.Query
+    :rtype: pybel_web.models.Query
     """
     query = manager.session.query(Query).get(query_id)
 
