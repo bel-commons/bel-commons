@@ -35,7 +35,7 @@ from pybel.constants import (
 from pybel.manager import Namespace, Annotation, Network
 from pybel_tools import pipeline
 from pybel_tools.analysis.cmpa import RESULT_LABELS
-from pybel_tools.definition_utils import write_namespace
+from pybel_tools.definition_utils import write_namespace, write_annotation
 from pybel_tools.filters.node_filters import exclude_pathology_filter
 from pybel_tools.query import Query
 from pybel_tools.selection import get_subgraph_by_annotations, get_subgraph_by_node_filter
@@ -246,7 +246,26 @@ def download_naked_names(network_id):
 @api_blueprint.route('/api/annotation/builder/list/<int:network_id>/<annotation>')
 def download_list_annotation(network_id, annotation):
     """Outputs an annotation built from the given list definition"""
-    abort(501, 'This method has not yet been implemented')
+    graph = api.get_network_by_id(network_id)
+
+    if annotation not in graph.annotation_list:
+        abort(400, 'Graph does not contain this list annotation')
+
+    values = graph.annotation_list[annotation]
+
+    si = StringIO()
+
+    write_annotation(
+        keyword=annotation,
+        values=values,
+        citation_name=graph.document.get(METADATA_NAME),
+        file=si,
+    )
+
+    output = make_response(si.getvalue())
+    output.headers["Content-Disposition"] = "attachment; filename={}.belanno".format(annotation)
+    output.headers["Content-type"] = "text/plain"
+    return output
 
 
 ####################################
