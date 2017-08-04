@@ -82,7 +82,7 @@ def do_okay_mail(current_user_email, graph):
 
 @celery.task(name='parse-aetionomy')
 def parse_aetionomy(connection):
-    """Converts the Aetionomy folder in the BMS"""
+    """Converts the AETIONOMY folder in the BMS"""
     folder = os.path.join(os.environ[BMS_BASE], 'aetionomy')
     parse_folder(connection, folder)
 
@@ -116,7 +116,7 @@ def parse_tbi(connection):
 
 
 @celery.task(name='parse-bms')
-def parse_selventa(connection):
+def parse_bms(connection):
     """Converts the entire BMS"""
     parse_folder(connection, os.environ[BMS_BASE])
 
