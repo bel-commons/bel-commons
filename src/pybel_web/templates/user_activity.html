@@ -168,22 +168,42 @@
             <table class="table table-striped table-responsive">
                 <thead>
                 <tr>
-                    <th></th>
+                    <th>EID</th>
+                    <th>QID</th>
+                    <th>Source</th>
+                    <th>Permutations</th>
                     <th>Description</th>
-                    <th>Network</th>
+                    <th></th>
                 </tr>
                 </thead>
                 <tbody>
                 {% for experiment in user.experiments %}
                     <tr>
                         <td>
-                            <a href="{{ url_for('analysis.view_analysis_results', analysis_id=experiment.id) }}">{{ experiment.id }}</a>
-                        </td>
-                        <td>{{ experiment.description }}</td>
-                        <td>
-                            <a href="{{ url_for('view_explore_network', network_id=experiment.network.id) }}">
-                                {{ experiment.network }}
+                            <a href="{{ url_for('analysis.view_analysis_results', analysis_id=experiment.id) }}">
+                                {{ experiment.id }}
                             </a>
+                        </td>
+                        <td>
+                            <a href="{{ url_for('view_explorer_query', query_id=experiment.query.id) }}">
+                                {{ experiment.query.id }}
+                            </a>
+                        </td>
+                        <td>{{ experiment.source_name }}</td>
+                        <td>{{ experiment.permutations}}</td>
+                        <td>{{ experiment.description }}</td>
+
+                        <td>
+                            <div class="pull-right">
+                                <a href="{{ url_for('analysis.view_analysis_results', analysis_id=experiment.id) }}"
+                                   class="btn btn-default btn-xs">
+                                    <span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span>
+                                </a>
+                                <a class="btn btn-default btn-xs"
+                                   href="{{ url_for('view_explorer_query', query_id=experiment.query.id) }}">
+                                    <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
+                                </a>
+                            </div>
                         </td>
                     </tr>
                 {% endfor %}

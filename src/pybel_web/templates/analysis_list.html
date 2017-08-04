@@ -30,34 +30,36 @@
             <table class="table table-striped">
                 <thead>
                 <tr>
-                    <th>ID</th>
-                    <th></th>
-                    <th></th>
-                    <th>Network</th>
-                    <th>Version</th>
+                    <th>EID</th>
+                    <th>QID</th>
                     <th>Source Data</th>
                     <th>Description</th>
                     <th>Permutations</th>
                     <th>Created</th>
+                    <th></th>
                 </tr>
                 </thead>
                 <tbody>
-                {% for experiment in experiments if experiment.network is not none %}
+                {% for experiment in experiments if experiment.query is not none %}
                     <tr>
                         <td>{{ experiment.id }} </td>
-                        <td><a href="{{ url_for('analysis.view_analysis_results', analysis_id=experiment.id) }}"><span
-                                class="glyphicon glyphicon-eye-open"
-                                aria-hidden="true"></span></a></td>
-                        <td><a href="{{ url_for('dbs.download_analysis', analysis_id=experiment.id) }}"><span
-                                class="glyphicon glyphicon-download" aria-hidden="true"></span></a></td>
-                        <td>
-                            <a href="{{ url_for('view_summary', network_id=experiment.network.id) }}">{{ experiment.network.name }}</a>
-                        </td>
-                        <td>{{ experiment.network.version }}</td>
+                        <td>{{ experiment.query.id }}</td>
                         <td>{{ experiment.source_name }}</td>
                         <td>{{ experiment.description }}</td>
                         <td>{{ experiment.permutations }}</td>
                         <td>{{ experiment.created }}</td>
+                        <td>
+                            <div class="pull-right">
+                                <a href="{{ url_for('dbs.download_analysis', analysis_id=experiment.id) }}"
+                                   class="btn btn-default btn-xs">
+                                    <span class="glyphicon glyphicon-download" aria-hidden="true"></span>
+                                </a>
+                                <a href="{{ url_for('analysis.view_analysis_results', analysis_id=experiment.id) }}"
+                                   class="btn btn-default btn-xs">
+                                    <span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span>
+                                </a>
+                            </div>
+                        </td>
                     </tr>
                 {% endfor %}
                 </tbody>

@@ -204,13 +204,6 @@
                                         Analyze
                                     </a>
                                 </li>
-                                <li>
-                                    <a href="{{ url_for('analysis.view_analyses', network_id=network.id) }}"
-                                       class="btn btn-default">
-                                        <span class="glyphicon glyphicon-tasks" aria-hidden="true"></span>
-                                        Results
-                                    </a>
-                                </li>
                                 {% if current_user.is_authenticated %}
                                     {% if network.report and network.report.user == current_user %}
                                         <li>

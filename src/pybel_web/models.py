@@ -41,8 +41,8 @@ class Experiment(Base):
     source = Column(Binary, doc='The source document holding the data')
     result = Column(Binary, doc='The result python dictionary')
 
-    network_id = Column(Integer, ForeignKey('{}.id'.format(NETWORK_TABLE_NAME)))
-    network = relationship('Network', backref=backref("experiments"))
+    query_id = Column(Integer, ForeignKey('{}.id'.format(QUERY_TABLE_NAME)))
+    query = relationship('Query', backref=backref("experiments"))
 
     user_id = Column(Integer, ForeignKey('{}.id'.format(USER_TABLE_NAME)))
     user = relationship('User', backref=backref('experiments', lazy='dynamic'))
