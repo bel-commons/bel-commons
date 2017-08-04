@@ -40,7 +40,7 @@ from .constants import log_path, CHARLIE_EMAIL
 from .curation_service import curation_blueprint
 from .database_service import api_blueprint
 from .main_service import build_main_service
-from .models import Role, User, Report, Project
+from .models import Role, User, Report, Project, Experiment
 from .parser_async_service import parser_async_blueprint
 from .parser_endpoint import build_parser_service
 from .upload_service import upload_blueprint
@@ -363,6 +363,19 @@ def ls(ctx):
     """Lists projects"""
     for project in ctx.obj.session.query(Project).all():
         click.echo('{}\t{}'.format(project.name, ','.join(map(str, project.users))))
+
+
+@manage.group()
+def experiments():
+    """Manage experiments"""
+
+
+@experiments.command()
+@click.pass_context
+def dropall(ctx):
+    """Drops all experiments"""
+    if click.confirm('Drop all experiments at {}?'.format(ctx.obj.connection)):
+        ctx.obj.session.query(Experiment).delete()
 
 
 if __name__ == '__main__':
