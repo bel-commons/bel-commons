@@ -1347,7 +1347,7 @@ def download_analysis(analysis_id):
     """Downloads data from a given experiment as a CSV"""
     experiment = manager.session.query(Experiment).get(analysis_id)
 
-    if not current_user.admin or current_user.id == experiment.user_id:
+    if not current_user.admin and (current_user != experiment.user):
         abort(403, 'You do not have rights to this experiment')
 
     si = StringIO()
