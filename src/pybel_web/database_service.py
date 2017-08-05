@@ -170,7 +170,7 @@ def drop_namespace_by_id(namespace_id):
     manager.session.commit()
 
     if 'next' in request.args:
-        flash('dropped namespace: {}'.format(namespace))
+        flash('Dropped namespace: {}'.format(namespace))
         return redirect(request.args['next'])
 
     return jsonify({
@@ -189,7 +189,7 @@ def drop_namespaces():
     manager.session.commit()
 
     if 'next' in request.args:
-        flash('dropped all namespaces')
+        flash('Dropped all namespaces')
         return redirect(request.args['next'])
 
     return jsonify({'status': 200})
@@ -296,7 +296,7 @@ def drop_annotation_by_id(annotation_id):
     manager.session.commit()
 
     if 'next' in request.args:
-        flash('dropped annotation: {}'.format(annotation))
+        flash('Dropped annotation: {}'.format(annotation))
         return redirect(request.args['next'])
 
     return jsonify({'status': 200})
@@ -311,7 +311,7 @@ def drop_annotations():
     manager.session.commit()
 
     if 'next' in request.args:
-        flash('dropped all annotations')
+        flash('Dropped all annotations')
         return redirect(request.args['next'])
 
     return jsonify({'status': 200})
@@ -443,7 +443,7 @@ def drop_network_helper(network_id):
         manager.session.rollback()
 
         if 'next' in request.args:
-            flash('Dropped network {} failed: {}'.format(network_id, e), category='error')
+            flash('Dropped network #{} failed: {}'.format(network_id, e), category='error')
             return redirect(request.args['next'])
 
         return jsonify({
@@ -454,7 +454,7 @@ def drop_network_helper(network_id):
         })
 
     if 'next' in request.args:
-        flash('Dropped network {}'.format(network_id))
+        flash('Dropped network #{}'.format(network_id))
         return redirect(request.args['next'])
 
     return jsonify({
@@ -1020,7 +1020,7 @@ def drop_query_by_id(query_id):
     manager.session.delete(query)
     manager.session.commit()
 
-    return next_or_jsonify('Deleted query {}'.format(query_id))
+    return next_or_jsonify('Dropped query #{}'.format(query_id))
 
 
 @api_blueprint.route('/api/pipeline/query/drop')
@@ -1030,7 +1030,7 @@ def drop_queries():
     manager.session.query(models.Query).delete()
     manager.session.commit()
 
-    return next_or_jsonify('Deleted all queries')
+    return next_or_jsonify('Dropped all queries')
 
 
 @api_blueprint.route('/api/query/dropall/<int:user_id>', methods=['GET'])
@@ -1043,7 +1043,7 @@ def drop_user_queries(user_id):
     manager.session.query(models.Query).filter_by(user_id=current_user.id).delete()
     manager.session.commit()
 
-    return next_or_jsonify('Deleted all queries associated with your account')
+    return next_or_jsonify('Dropped all queries associated with your account')
 
 
 @api_blueprint.route('/api/query/<int:query_id>/info', methods=['GET'])
@@ -1267,12 +1267,12 @@ def delete_user(user_id):
     user_datastore.commit()
 
     if 'next' in request.args:
-        flash('Deleted user: {}'.format(user))
+        flash('Dropped user: {}'.format(user))
         return redirect(request.args['next'])
 
     return jsonify({
         'status': 200,
-        'action': 'deleted user',
+        'action': 'dropped user',
         'user_id': user.id,
         'user': str(user)
     })
