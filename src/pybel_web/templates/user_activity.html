@@ -190,7 +190,7 @@
                             </a>
                         </td>
                         <td>{{ experiment.source_name }}</td>
-                        <td>{{ experiment.permutations}}</td>
+                        <td>{{ experiment.permutations }}</td>
                         <td>{{ experiment.description }}</td>
 
                         <td>
@@ -202,6 +202,10 @@
                                 <a class="btn btn-default btn-xs"
                                    href="{{ url_for('view_explorer_query', query_id=experiment.query.id) }}">
                                     <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
+                                </a>
+                                <a class="btn btn-default btn-xs"
+                                   href="{{ url_for('analysis.drop_experiment_by_id', experiment_id=experiment.id, next=url_for('view_current_user_activity')) }}">
+                                    <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
                                 </a>
                             </div>
                         </td>
@@ -299,6 +303,10 @@
                                 <a class="btn btn-default btn-xs"
                                    href="{{ url_for('view_explorer_query', query_id=query.id) }}">
                                     <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
+                                </a>
+                                <a class="btn btn-default btn-xs"
+                                   href="{{ url_for('analysis.view_query_analysis_uploader', query_id=query.id) }}">
+                                    <span class="glyphicon glyphicon-flash" aria-hidden="true"></span>
                                 </a>
                                 <a class="btn btn-default btn-xs"
                                    href="{{ url_for('dbs.drop_query_by_id', query_id=query.id, next=url_for('view_current_user_activity')) }}">

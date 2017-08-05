@@ -47,6 +47,11 @@ class Experiment(Base):
     user_id = Column(Integer, ForeignKey('{}.id'.format(USER_TABLE_NAME)))
     user = relationship('User', backref=backref('experiments', lazy='dynamic'))
 
+    gene_column = Column(Text, nullable=False)
+    data_column = Column(Text, nullable=False)
+
+    completed = Column(Boolean, default=False)
+
     def __repr__(self):
         return '<Experiment on {}>'.format(self.network)
 

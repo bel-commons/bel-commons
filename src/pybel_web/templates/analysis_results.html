@@ -6,29 +6,31 @@
 
 {% block title %}Results{% endblock %}
 
+
 {% block content %}
     <div class="container">
         <div class="page-header">
-            <h1>Analysis of {{ experiment.network.name }}
-                <small class="text-muted">{{ experiment.network.version }}</small>
-            </h1>
+            <h1>Analysis of Query {{ experiment.query.id }}</h1>
         </div>
 
         {{ util.flashed_messages(dismissible=True, container=False) }}
 
         <div class="panel panel-default">
             <div class="panel-body">
-                <a class="btn btn-default" href="{{ url_for('view_summary', network_id=experiment.network.id) }}"
-                   role="button">Summarize Network</a>
-                <a class="btn btn-default" href="{{ url_for('view_explore_network', network_id=experiment.network.id) }}"
-                   role="button">Explore Network</a>
-                <a class="btn btn-default" href="{{ url_for('dbs.download_analysis', analysis_id=experiment.id) }}"
-                   role="button"><span class="glyphicon glyphicon-download" aria-hidden="true"></span> Download Results</a>
-                {% if current_user.admin %}
-                    <a class="btn btn-danger"
-                       href="{{ url_for('dbs.delete_analysis_results', analysis_id=experiment.id, next=url_for('home')) }}"
-                       role="button">Delete Analysis</a>
-                {% endif %}
+                <a class="btn btn-default"
+                   href="{{ url_for('view_explorer_query', query_id=experiment.query.id) }}">
+                    <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
+                    Explore
+                </a>
+                <a class="btn btn-default" href="{{ url_for('dbs.download_analysis', analysis_id=experiment.id) }}">
+                    <span class="glyphicon glyphicon-download" aria-hidden="true"></span>
+                    Download Results
+                </a>
+                <a class="btn btn-danger"
+                   href="{{ url_for('dbs.drop_experiment_by_id', experiment_id=experiment.id, next=url_for('home')) }}">
+                    <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
+                    Delete Analysis
+                </a>
             </div>
         </div>
 

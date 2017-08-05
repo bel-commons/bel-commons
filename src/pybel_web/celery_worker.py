@@ -11,11 +11,11 @@ While also laughing at how ridiculously redundant this nomenclature is.
 import hashlib
 import logging
 import os
+import pickle
 
 import requests.exceptions
 from celery.utils.log import get_task_logger
 from flask_mail import Message
-from six import StringIO
 from sqlalchemy.exc import IntegrityError, OperationalError
 
 from pybel import from_lines, from_url, to_bytes
@@ -28,10 +28,9 @@ from pybel_tools.ioutils import convert_directory
 from pybel_tools.mutation import add_canonical_names, fix_pubmed_citations
 from .application import create_application
 from .celery_utils import create_celery
-from .constants import CHARLIE_EMAIL, DANIEL_EMAIL
-from .constants import integrity_message
-from .models import Report, User
-from .utils import run_experiment
+from .constants import CHARLIE_EMAIL, DANIEL_EMAIL, integrity_message
+from .models import Report, User, Experiment
+from .utils import calculate_scores
 
 app, mail = create_application(get_mail=True)
 celery = create_celery(app)
@@ -342,24 +341,47 @@ def async_parser(lines, connection, current_user_id, current_user_email, public,
 
 
 @celery.task(name='run-cmpa')
-def run_cmpa(connection, network_id, lines, filename, description, gene_column, data_column, permutations, sep):
-    log.info('Starting analysis task')
+def run_cmpa(connection, experiment_id):
+    """Runs the CMPA analysis
+
+    :param str connection:
+    :param int experiment_id:
+    """
+    log.info('Running experiment %s', experiment_id)
     manager = build_manager(connection)
 
-    network = manager.session.query(Network).get(network_id)
+    experiment = manager.session.query(Experiment).get(experiment_id)
 
-    experiment = run_experiment(
-        manager,
-        file=StringIO('\n'.join(lines)),
-        filename=filename,
-        description=description,
-        gene_column=gene_column,
-        data_column=data_column,
-        permutations=permutations,
-        network=network,
-        sep=sep,
+    graph = experiment.query.run(manager)
+
+    df = pickle.loads(experiment.source)
+
+    gene_column = experiment.gene_column
+    data_column = experiment.data_column
+
+    data = {
+        k: v
+        for _, k, v in df.loc[df[gene_column].notnull(), [gene_column, data_column]].itertuples()
+    }
+
+    scores = calculate_scores(graph, data, experiment.permutations)
+
+    experiment.result = pickle.dumps(scores)
+    experiment.completed = True
+
+    manager.session.commit()
+
+    do_mail(
+        experiment.user.email,
+        subject='CMPA Analysis complete',
+        body='Experiment {} on query {} with {} has completed'.format(
+            experiment_id,
+            experiment.query_id,
+            experiment.source_name
+        )
     )
-    return experiment.id
+
+    return experiment_id
 
 
 @celery.on_after_configure.connect

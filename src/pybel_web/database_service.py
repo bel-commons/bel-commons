@@ -1313,14 +1313,14 @@ def get_analysis_median(query_id, analysis_id):
     return jsonify(results)
 
 
-@api_blueprint.route('/api/analysis/<int:analysis_id>/drop')
+@api_blueprint.route('/api/experiment/<experiment_id>/drop')
 @login_required
-def delete_analysis_results(analysis_id):
-    """Drops an analysis
+def drop_experiment_by_id(experiment_id):
+    """Drops an experiment
 
-    :param int analysis_id: The identifier of the analysis
+    :param int experiment_id: The identifier of the analysis
     """
-    experiment = manager.session.query(Experiment).get(analysis_id)
+    experiment = manager.session.query(Experiment).get(experiment_id)
 
     if not current_user.admin or current_user.id == experiment.user_id:
         abort(403, 'You do not have rights to this experiment')
@@ -1335,7 +1335,7 @@ def delete_analysis_results(analysis_id):
     return jsonify({
         'status': 200,
         'experiment': {
-            'id': analysis_id,
+            'id': experiment_id,
             'description': experiment.description
         }
     })

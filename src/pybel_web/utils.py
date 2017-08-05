@@ -797,3 +797,16 @@ def assert_user_owns_network(network, user):
     """
     if not network.report or user != network.report.user:
         abort(403, 'You do not own this network')
+
+
+def calculate_scores(graph, data, runs):
+    remove_nodes_by_namespace(graph, {'MGI', 'RGD'})
+    collapse_by_central_dogma_to_genes(graph)
+    rewire_variants_to_genes(graph)
+
+    overlay_type_data(graph, data, LABEL, GENE, 'HGNC', overwrite=False, impute=0)
+
+    candidate_mechanisms = generate_bioprocess_mechanisms(graph, LABEL)
+    scores = calculate_average_cmpa_on_subgraphs(candidate_mechanisms, LABEL, runs=runs)
+
+    return scores
