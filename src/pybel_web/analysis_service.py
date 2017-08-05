@@ -110,18 +110,14 @@ def view_query_analysis_uploader(query_id):
     manager.session.add(experiment)
     manager.session.commit()
 
-    log.info('stored data for analysis in %.2f seconds', time.time() - t)
+    log.debug('stored data for analysis in %.2f seconds', time.time() - t)
 
     celery = create_celery(current_app)
-
-    log.info('created celery')
 
     task = celery.send_task('run-cmpa', args=(
         current_app.config.get(PYBEL_CONNECTION),
         experiment.id,
     ))
-
-    log.info('sent task %s', task)
 
     flask.flash('Queued Experiment {} with task {}'.format(experiment.id, task))
     return redirect(url_for('home'))
