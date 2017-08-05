@@ -1322,8 +1322,8 @@ def drop_experiment_by_id(experiment_id):
     """
     experiment = manager.session.query(Experiment).get(experiment_id)
 
-    if not current_user.admin or current_user.id == experiment.user_id:
-        abort(403, 'You do not have rights to this experiment')
+    if not current_user.admin and (current_user != experiment.user):
+        abort(403, 'You do not have rights to drop this experiment')
 
     manager.session.delete(experiment)
     manager.session.commit()
