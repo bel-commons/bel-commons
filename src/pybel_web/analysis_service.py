@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import json
 import logging
 import pickle
 import time
@@ -15,7 +16,7 @@ from pybel_tools.analysis.cmpa import RESULT_LABELS
 from .celery_utils import create_celery
 from .forms import DifferentialGeneExpressionForm
 from .models import Experiment, Query
-from .utils import manager, safe_get_query, get_network_ids_with_permission_helper, api, next_or_jsonify
+from .utils import manager, safe_get_query, get_network_ids_with_permission_helper, api
 
 log = logging.getLogger(__name__)
 
@@ -60,6 +61,7 @@ def view_analysis_results(analysis_id):
         experiment=experiment,
         columns=RESULT_LABELS,
         data=sorted(data, key=itemgetter(1)),
+        d3_data=json.dumps([v[3] for _, v in data]),
         current_user=current_user,
     )
 
