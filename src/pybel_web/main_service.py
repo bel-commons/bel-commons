@@ -456,6 +456,7 @@ def build_main_service(app):
         )
 
     @app.route('/overview')
+    @roles_required('admin')
     def view_overview():
         """Views the overview"""
         return render_template('overview.html')

@@ -12,6 +12,8 @@
 
     <script type="text/javascript"
             src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.1.4/cytoscape.min.js"></script>
+    <script src="{{ url_for('static', filename='js/d3.3.5.17.min.js') }}" charset="utf-8"></script>
+    <script src="{{ url_for('static', filename='js/c3.min.js') }}"></script>
 {% endblock %}
 
 
@@ -62,31 +64,68 @@
                         }
                     ],
                     layout: {
-                        name: 'cose'
+                        name: 'cose',
+                        animate: true,
+                        edgeElasticity: 20,
+                        gravity: 100
                     }
                 });
             },
         });
 
-        $.ajax({
-            type: "GET",
-            url: "{{ url_for('dbs.universe_summary') }}",
-            dataType: "json",
-            success: function (data) {
 
-                const summary = $('#universe-summary');
+        function make_c3_data(data) {
+            var labels = [],
+                values = [];
 
-                $.each(data, function (key, value) {
-                    summary.append('<h3>' + key + '</h3><dl class="dl-horizontal">');
+            labels.push('x');
+            values.push(title);
 
-                    $.each(value, function (ikey, ivalue) {
-                       summary.append('<dt>' + ikey + '</dt><dd>' + ivalue + "</dd>");
-                    });
+            $.each(data, function (key, value) {
+                labels.push(key);
+                values.push(value);
+            });
 
-                    summary.append('</dl>');
-                })
-            },
-        });
+            return [labels, values]
+        }
+
+        function make_c3_bar(data, bindto, title) {
+            c3.generate({
+                padding: {
+                    top: 15,
+                    left: 100
+                },
+                size: {
+                    height: 350
+                },
+                bindto: bindto,
+                data: {
+                    x: 'x',
+                    columns: make_c3_data(data),
+                    type: 'bar'
+                },
+                title: {
+                    text: title
+                },
+                axis: {
+                    rotated: true,
+                    x: {
+                        type: 'category'
+                    }
+                },
+                legend: {
+                    show: false
+                }
+            });
+        }
+
+        d3.json("{{ url_for('dbs.universe_summary') }}", function (error, data) {
+            make_c3_bar(data.entities, '#chart1', 'Nodes');
+            make_c3_bar(data.relations, '#chart2', 'Edges');
+            make_c3_bar(data.modifiers, '#chart3', 'Modifiers');
+            make_c3_bar(data.namespaces, '#chart4', 'Namespaces');
+            make_c3_bar(data.variants, '#chart5', 'Variations');
+        })
 
     </script>
 {% endblock %}
@@ -99,6 +138,11 @@
             </div>
             <div class="panel-body">
                 <div id="cy"></div>
+                <p>This data comes from
+                    <a href="{{ url_for('dbs.list_all_network_overview') }}">
+                        {{ url_for('dbs.list_all_network_overview') }}
+                    </a>.
+                </p>
             </div>
         </div>
 
@@ -106,7 +150,21 @@
             <div class="panel-heading">
                 <h3 class="panel-title">Summary</h3>
             </div>
-            <div class="panel-body" id="universe-summary"></div>
+
+            <div class="panel-body" id="universe-summary">
+                <p>This data comes from
+                    <a href="{{ url_for('dbs.universe_summary') }}">
+                        {{ url_for('dbs.universe_summary') }}
+                    </a>
+                </p>
+                <div class="row">
+                    <div class="col-lg-6" id="chart1"></div>
+                    <div class="col-lg-6" id="chart2"></div>
+                    <div class="col-lg-6" id="chart3"></div>
+                    <div class="col-lg-6" id="chart4"></div>
+                    <div class="col-lg-6" id="chart5"></div>
+                </div>
+            </div>
         </div>
     </div>
 {% endblock %}
