@@ -49,7 +49,13 @@
                         <td>{{ experiment.description }}</td>
                         <td>{{ experiment.permutations }}</td>
                         <td>{{ experiment.created }}</td>
-                        <td>{{ experiment.completed }}</td>
+                        <td>
+                            {% if experiment.completed %}
+                                <span class="glyphicon glyphicon-ok-circle" aria-hidden="true"></span>
+                            {% else %}
+                                <span class="glyphicon glyphicon glyphicon-remove-circle" aria-hidden="true"></span>
+                            {% endif %}
+                        </td>
                         <td>
                             {% if experiment.completed %}
                                 <div class="pull-right">

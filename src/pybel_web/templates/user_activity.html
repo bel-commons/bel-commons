@@ -173,6 +173,7 @@
                     <th>Source</th>
                     <th>Permutations</th>
                     <th>Description</th>
+                    <th>Complete</th>
                     <th></th>
                 </tr>
                 </thead>
@@ -192,7 +193,13 @@
                         <td>{{ experiment.source_name }}</td>
                         <td>{{ experiment.permutations }}</td>
                         <td>{{ experiment.description }}</td>
-
+                        <td>
+                            {% if experiment.completed %}
+                                <span class="glyphicon glyphicon-ok-circle" aria-hidden="true"></span>
+                            {% else %}
+                                <span class="glyphicon glyphicon glyphicon-remove-circle" aria-hidden="true"></span>
+                            {% endif %}
+                        </td>
                         <td>
                             <div class="pull-right">
                                 <a href="{{ url_for('analysis.view_analysis_results', analysis_id=experiment.id) }}"
