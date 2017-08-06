@@ -769,21 +769,25 @@ def get_vote(edge_id, user_id):
                                                   EdgeVote.user_id == user_id).one_or_none()
 
 
-def next_or_jsonify(message, category='message', **kwargs):
+def next_or_jsonify(message, *args, status=200, category='message', **kwargs):
     """Neatly wraps a redirect to a new URL if the ``next`` argument is set in the request otherwise sends JSON
     feedback.
 
     :param str message:
+    :param int status:
     :param str category:
     :param dict kwargs:
     :return: A Flask Response object
     """
+    if args:
+        raise ValueError("don't give args to this function")
+
     if 'next' in request.args:
         flash(message, category=category)
         return redirect(request.args['next'])
 
     return jsonify(
-        status=200,
+        status=status,
         message=message,
         **kwargs
     )
