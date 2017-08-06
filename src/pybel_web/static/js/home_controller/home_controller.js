@@ -54,7 +54,7 @@ $(document).ready(function () {
         multiple: true,
         placeholder: 'Please type your nodes of interest here',
         ajax: {
-            url:  "/api/nodes/suggestion/",
+            url:  "/api/node/suggestion/",
             type: "GET",
             contentType: "application/json; charset=utf-8",
             dataType: "json",
@@ -84,7 +84,7 @@ $(document).ready(function () {
         placeholder: "Please type your authors of interest here",
         ajax: {
             url: function () {
-                return "/api/authors/suggestion/";
+                return "/api/author/suggestion/";
             },
             type: "GET",
             contentType: "application/json; charset=utf-8",
@@ -115,7 +115,7 @@ $(document).ready(function () {
         placeholder: "Please type your PubMed identifiers of interest here",
         ajax: {
             url: function () {
-                return "/api/pubmed/suggestion/";
+                return "/api/citation/pubmed/suggestion/";
             },
             type: "GET",
             contentType: "application/json; charset=utf-8",

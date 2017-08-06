@@ -28,7 +28,7 @@ $(document).ready(function () {
         placeholder: "Please type any authors",
         ajax: {
             url: function () {
-                return "/api/authors/suggestion/";
+                return "/api/author/suggestion/";
             },
             type: "GET",
             contentType: "application/json; charset=utf-8",
@@ -61,7 +61,7 @@ $(document).ready(function () {
         placeholder: "Please type PubMed identifiers",
         ajax: {
             url: function () {
-                return "/api/pubmed/suggestion/";
+                return "/api/citation/pubmed/suggestion/";
             },
             type: "GET",
             contentType: "application/json; charset=utf-8",
@@ -126,7 +126,7 @@ $(document).ready(function () {
         multiple: true,
         placeholder: 'Please type any node',
         ajax: {
-            url: "/api/nodes/suggestion/",
+            url: "/api/node/suggestion/",
             type: "GET",
             contentType: "application/json; charset=utf-8",
             dataType: "json",
