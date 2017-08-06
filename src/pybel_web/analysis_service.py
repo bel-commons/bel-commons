@@ -9,7 +9,7 @@ from operator import itemgetter
 import flask
 import pandas
 from flask import current_app, redirect, url_for, render_template, Blueprint, abort
-from flask_login import login_required, current_user
+from flask_security import login_required, current_user
 
 from pybel.constants import PYBEL_CONNECTION
 from pybel_tools.analysis.cmpa import RESULT_LABELS
@@ -40,13 +40,14 @@ def view_analyses(query_id=None):
     )
 
 
-@analysis_blueprint.route('/analysis/<int:analysis_id>/results/')
+@analysis_blueprint.route('/analysis/<int:experiment_id>/results/')
 @login_required
-def view_analysis_results(analysis_id):
+def view_analysis_results(experiment_id):
     """View the results of a given analysis"""
-    experiment = manager.session.query(Experiment).get(analysis_id)
+    experiment = manager.session.query(Experiment).get(experiment_id)
 
-    # TODO check if user has rights to this experiment
+    if not current_user.admin and (current_user != experiment.user):
+        abort(403, 'You do not have rights to drop this experiment')
 
     experiment_data = pickle.loads(experiment.result)
 
@@ -66,7 +67,7 @@ def view_analysis_results(analysis_id):
     )
 
 
-@analysis_blueprint.route('/query/<query_id>/analysis/upload', methods=('GET', 'POST'))
+@analysis_blueprint.route('/query/<int:query_id>/analysis/upload', methods=('GET', 'POST'))
 @login_required
 def view_query_analysis_uploader(query_id):
     """Renders the asynchronous analysis page"""

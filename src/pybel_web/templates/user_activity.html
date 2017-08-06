@@ -181,7 +181,7 @@
                 {% for experiment in user.experiments %}
                     <tr>
                         <td>
-                            <a href="{{ url_for('analysis.view_analysis_results', analysis_id=experiment.id) }}">
+                            <a href="{{ url_for('analysis.view_analysis_results', experiment_id=experiment.id) }}">
                                 {{ experiment.id }}
                             </a>
                         </td>
@@ -203,7 +203,7 @@
                         <td>
                             {% if experiment.completed %}
                                 <div class="pull-right">
-                                    <a href="{{ url_for('analysis.view_analysis_results', analysis_id=experiment.id) }}"
+                                    <a href="{{ url_for('analysis.view_analysis_results', experiment_id=experiment.id) }}"
                                        class="btn btn-default btn-xs">
                                         <span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span>
                                     </a>
