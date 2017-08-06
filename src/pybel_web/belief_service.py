@@ -24,6 +24,7 @@ def semantic_merge():
     ---
     parameters:
       - name: urls
+        in: query
         description: A list of URLs to BEL documents
         required: true
         schema:
