@@ -223,10 +223,13 @@ def render_network_summary(network_id, graph):
     citation_years = create_timeline(count_citation_years(graph))
 
     overlap_counter = api.get_node_overlap(network_id)
+    allowed_network_ids = get_network_ids_with_permission_helper(current_user, api)
     overlaps = [
         (api.manager.get_network_by_id(network_id), v)
-        for network_id, v in overlap_counter.most_common(10)
+        for network_id, v in overlap_counter.most_common()
+        if network_id in allowed_network_ids
     ]
+    top_overlaps = overlaps[:10]
 
     naked_names = get_naked_names(graph)
 
@@ -265,7 +268,7 @@ def render_network_summary(network_id, graph):
         network_versions=versions,
         causal_pathologies=causal_pathologies,
         undefined_families=undefined_sfam,
-        overlaps=overlaps,
+        overlaps=top_overlaps,
         naked_names=naked_names,
     )
 
