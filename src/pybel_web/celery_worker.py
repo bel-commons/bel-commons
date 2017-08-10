@@ -16,8 +16,6 @@ import pickle
 import requests.exceptions
 from celery.utils.log import get_task_logger
 from flask_mail import Message
-from sqlalchemy.exc import IntegrityError, OperationalError
-
 from pybel import from_lines, from_url, to_bytes
 from pybel.constants import METADATA_DESCRIPTION, METADATA_CONTACT, METADATA_LICENSES
 from pybel.manager import build_manager
@@ -26,16 +24,21 @@ from pybel.parser.parse_exceptions import InconsistentDefinitionError
 from pybel_tools.constants import BMS_BASE
 from pybel_tools.ioutils import convert_directory
 from pybel_tools.mutation import add_canonical_names, fix_pubmed_citations
+from pybel_tools.utils import enable_cool_mode
+from sqlalchemy.exc import IntegrityError, OperationalError
+
 from .application import create_application
 from .celery_utils import create_celery
 from .constants import CHARLIE_EMAIL, DANIEL_EMAIL, integrity_message
 from .models import Report, User, Experiment
 from .utils import calculate_scores
 
+log = get_task_logger(__name__)
+
+enable_cool_mode()  # turn off warnings for compilation
+
 app, mail = create_application(get_mail=True)
 celery = create_celery(app)
-
-log = get_task_logger(__name__)
 
 dumb_belief_stuff = {
     METADATA_DESCRIPTION: {'Document description'},
