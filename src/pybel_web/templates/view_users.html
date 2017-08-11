@@ -23,9 +23,8 @@
                 <thead>
                 <tr>
                     <th></th>
+                    <th></th>
                     <th>Email</th>
-                    <th>First Name</th>
-                    <th>Last Name</th>
                     <th>Roles</th>
                     <th>Networks</th>
                     <th>Actions</th>
@@ -35,13 +34,18 @@
                 {% for user in users %}
                     <tr>
                         <td>{{ user.id }}</td>
-                        <td>{{ user.email }}</td>
-                        <td>{{ user.first_name }}</td>
-                        <td>{{ user.last_name }}</td>
                         <td>
-                            {% for role in user.roles %}
-                                {{ role }}
-                            {% endfor %}
+                            <a href="{{ url_for('view_user_activity', user_id=user.id) }}">
+                                <span class="glyphicon glyphicon-eye-open"></span>
+                            </a>
+                        </td>
+                        <td>{{ user.email }}</td>
+                        <td>
+                            <ul>
+                                {% for role in user.roles %}
+                                    <li>{{ role }}</li>
+                                {% endfor %}
+                            </ul>
                         </td>
                         <td>
                             <ul>
@@ -56,24 +60,24 @@
                         </td>
                         <td>
                             {% if user.has_role('scai') %}
-                                <a class="btn btn-danger" role="button"
+                                <a class="btn btn-danger btn-xs" role="button"
                                    href="{{ url_for('dbs.remove_user_role', user=user.email, role='scai') }}">Remove
                                     SCAI</a>
                             {% else %}
-                                <a class="btn btn-info" role="button"
+                                <a class="btn btn-info btn-xs" role="button"
                                    href="{{ url_for('dbs.add_user_role', user=user.email, role='scai') }}">Add
                                     SCAI</a>
                             {% endif %}
                             {% if user.has_role('admin') %}
-                                <a class="btn btn-danger" role="button"
+                                <a class="btn btn-danger btn-xs" role="button"
                                    href="{{ url_for('dbs.remove_user_role', user=user.email, role='admin') }}">Remove
                                     Admin</a>
                             {% else %}
-                                <a class="btn btn-info" role="button"
+                                <a class="btn btn-info btn-xs" role="button"
                                    href="{{ url_for('dbs.add_user_role', user=user.email, role='admin') }}">Add
                                     Admin</a>
                             {% endif %}
-                            <a class="btn btn-info" role="button"
+                            <a class="btn btn-info btn-xs" role="button"
                                href="{{ url_for('dbs.delete_user', user_id=user.id, next=url_for('view_users')) }}">Remove</a>
                         </td>
                     </tr>
