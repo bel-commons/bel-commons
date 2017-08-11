@@ -146,6 +146,4 @@ def build_admin_service(app):
 
     admin.add_view(ProjectView(Project, manager.session))
 
-    log.info('Added admin service for %s', app)
-
     return admin
