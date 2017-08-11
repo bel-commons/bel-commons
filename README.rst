@@ -4,14 +4,14 @@ PyBEL Web
 Deployment
 ----------
 
-Server Map
-~~~~~~~~~~
-- pybel.scai.fraunhofer.de:80 points to bart:5000
-- dev.pybel.scai.fraunhofer.de:80 points to bart:5001
+Servers
+~~~~~~~
+- Internal Test Server: http://lisa:5000
+- External Test Server: https://dev.pybel.scai.fraunhofer.de:80 points to http://bart:5001
+- External Production Server: https://pybel.scai.fraunhofer.de:80 points to http://bart:5000
 
 Running from the Command Line
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 To start, type ``tmux ls`` to see the sessions already opened.
 
 Celery Worker
