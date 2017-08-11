@@ -4,7 +4,7 @@
 
 How to Run PyBEL Web
 
-``gunicorn pybel_web.run:app``
+``gunicorn w 4 -b 0.0.0.0:5000 pybel_web.run:app``
 
 """
 
