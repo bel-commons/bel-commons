@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 """
 
 How to Run PyBEL Web
@@ -5,6 +7,7 @@ How to Run PyBEL Web
 ``gunicorn pybel_web.run:app``
 
 """
+
 import logging
 import os
 
