@@ -660,7 +660,7 @@
             <a id="contradictory-pairs"></a>
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <h3 class="panel-title">Contradictory Edges
+                    <h3 class="panel-title">Contradictory Statements
                         <span class="badge">{{ contradictions|length }}</span>
                         <a class="pull-right" href="#top">
                             <span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span>
@@ -670,7 +670,7 @@
                 <div class="panel-body">
                     <p>These pairs of nodes have a contradiction in their causal relationships, meaning they have more
                         than one of <code>INCREASES</code>, <code>DECREASES</code>, or <code>CAUSES NO CHANGE</code>.
-                        This may be due to different experimental conditions, so these edges need to be carefully
+                        This may be due to different experimental conditions, so these statements need to be carefully
                         considered in analyses.
                     </p>
                 </div>
@@ -1119,7 +1119,7 @@
                 type: 'bar'
             },
             title: {
-                text: 'Edge Types'
+                text: 'Relation Types'
             },
             axis: {
                 rotated: true,
