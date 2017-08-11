@@ -124,8 +124,17 @@ def build_admin_service(app):
 
         def get_query(self):
             """Only show projects that the user is part of"""
-            return super(ProjectView, self).get_query().filter(
-                Project.id.in_(project.id for project in current_user.projects))
+            parent_query = super(ProjectView, self).get_query()
+
+            if current_user.admin:
+                return parent_query
+
+            current_projects = {
+                project.id
+                for project in current_user.projects
+            }
+
+            return parent_query.filter(Project.id.in_(current_projects))
 
         def on_model_change(self, form, model, is_created):
             """Hacky - automatically add user when they create a project"""
