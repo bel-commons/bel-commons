@@ -12,7 +12,7 @@ from flask import (
     Blueprint,
     request,
 )
-from flask_login import login_required, current_user
+from flask_security import current_user, roles_required
 from sqlalchemy.exc import IntegrityError, OperationalError
 
 from pybel import from_bytes
@@ -28,7 +28,7 @@ upload_blueprint = Blueprint('upload', __name__)
 
 
 @upload_blueprint.route('/upload', methods=['GET', 'POST'])
-@login_required
+@roles_required('admin')
 def view_upload():
     """An upload form for a BEL script"""
     form = UploadForm()
