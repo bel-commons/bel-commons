@@ -161,18 +161,18 @@ def manage(ctx, connection, config):
 
 
 @manage.command()
-@click.pass_context
-def setup(ctx):
+@click.pass_obj
+def setup(manager):
     """Creates the database"""
-    ctx.obj.create_all()
+    manager.create_all()
 
 
 @manage.command()
 @click.option('-f', '--file', type=click.File('r'), default=user_dump_path, help='Input user/role file')
-@click.pass_context
-def load(ctx, file):
+@click.pass_obj
+def load(manager, file):
     """Dump stuff for loading later (in lieu of having proper migrations)"""
-    ds = SQLAlchemyUserDatastore(ctx.obj, User, Role)
+    ds = SQLAlchemyUserDatastore(manager, User, Role)
     for line in file:
         email, first, last, roles, password = line.strip().split('\t')
         u = ds.find_user(email=email)
@@ -199,30 +199,30 @@ def load(ctx, file):
 
 
 @manage.command()
-@click.pass_context
 @click.option('-y', '--yes', is_flag=True)
-def drop(ctx, yes):
+@click.pass_obj
+def drop(manager, yes):
     """Drops database"""
-    if yes or click.confirm('Drop database at {}?'.format(ctx.obj.connection)):
+    if yes or click.confirm('Drop database at {}?'.format(manager.connection)):
         click.echo('Dumped users to {}'.format(user_dump_path))
         with open(user_dump_path, 'w') as f:
-            for s in iterate_user_strings(ctx.obj, True):
+            for s in iterate_user_strings(manager, True):
                 print(s, file=f)
         click.echo('Done')
         click.echo('Dropping database')
-        ctx.obj.drop_database()
+        manager.drop_database()
         click.echo('Done')
 
 
 @manage.command()
-@click.pass_context
-def sanitize_reports(ctx):
+@click.pass_obj
+def sanitize_reports(manager):
     """Adds charlie as the owner of all non-reported graphs"""
-    ds = SQLAlchemyUserDatastore(ctx.obj, User, Role)
+    ds = SQLAlchemyUserDatastore(manager, User, Role)
     u = ds.find_user(email=CHARLIE_EMAIL)
     click.echo('Adding {} as owner of unreported uploads'.format(u))
 
-    for network in ctx.obj.session.query(Network):
+    for network in manager.session.query(Network):
         if network.report is not None:
             continue
 
@@ -231,11 +231,11 @@ def sanitize_reports(ctx):
             user=u
         )
 
-        ctx.obj.session.add(report)
+        manager.session.add(report)
 
         click.echo('Sanitizing {}'.format(network))
 
-    ctx.obj.session.commit()
+    manager.session.commit()
 
 
 @manage.group()
@@ -245,10 +245,10 @@ def user():
 
 @user.command()
 @click.option('-p', '--with-passwords', is_flag=True)
-@click.pass_context
-def ls(ctx, with_passwords):
+@click.pass_obj
+def ls(manager, with_passwords):
     """Lists all users"""
-    for s in iterate_user_strings(ctx.obj, with_passwords):
+    for s in iterate_user_strings(manager, with_passwords):
         click.echo(s)
 
 
@@ -257,10 +257,10 @@ def ls(ctx, with_passwords):
 @click.argument('password')
 @click.option('-a', '--admin', is_flag=True, help="Add admin role")
 @click.option('-s', '--scai', is_flag=True, help="Add SCAI role")
-@click.pass_context
-def add(ctx, email, password, admin, scai):
+@click.pass_obj
+def add(manager, email, password, admin, scai):
     """Creates a new user"""
-    ds = SQLAlchemyUserDatastore(ctx.obj, User, Role)
+    ds = SQLAlchemyUserDatastore(manager, User, Role)
     try:
         u = ds.create_user(email=email, password=password, confirmed_at=datetime.datetime.now())
 
@@ -277,10 +277,10 @@ def add(ctx, email, password, admin, scai):
 
 @user.command()
 @click.argument('email')
-@click.pass_context
-def rm(ctx, email):
+@click.pass_obj
+def rm(manager, email):
     """Deletes a user"""
-    ds = SQLAlchemyUserDatastore(ctx.obj, User, Role)
+    ds = SQLAlchemyUserDatastore(manager, User, Role)
     u = ds.find_user(email=email)
     ds.delete_user(u)
     ds.commit()
@@ -288,10 +288,10 @@ def rm(ctx, email):
 
 @user.command()
 @click.argument('email')
-@click.pass_context
-def make_admin(ctx, email):
+@click.pass_obj
+def make_admin(manager, email):
     """Makes a given user an admin"""
-    ds = SQLAlchemyUserDatastore(ctx.obj, User, Role)
+    ds = SQLAlchemyUserDatastore(manager, User, Role)
     try:
         ds.add_role_to_user(email, 'admin')
         ds.commit()
@@ -302,10 +302,10 @@ def make_admin(ctx, email):
 @user.command()
 @click.argument('email')
 @click.argument('role')
-@click.pass_context
-def add_role(ctx, email, role):
+@click.pass_obj
+def add_role(manager, email, role):
     """Adds a role to a user"""
-    ds = SQLAlchemyUserDatastore(ctx.obj, User, Role)
+    ds = SQLAlchemyUserDatastore(manager, User, Role)
     try:
         ds.add_role_to_user(email, role)
         ds.commit()
@@ -321,10 +321,10 @@ def role():
 @role.command()
 @click.argument('name')
 @click.option('-d', '--description')
-@click.pass_context
-def add(ctx, name, description):
+@click.pass_obj
+def add(manager, name, description):
     """Creates a new role"""
-    ds = SQLAlchemyUserDatastore(ctx.obj, User, Role)
+    ds = SQLAlchemyUserDatastore(manager, User, Role)
     try:
         ds.create_role(name=name, description=description)
         ds.commit()
@@ -334,10 +334,10 @@ def add(ctx, name, description):
 
 @role.command()
 @click.argument('name')
-@click.pass_context
-def rm(ctx, name):
+@click.pass_obj
+def rm(manager, name):
     """Deletes a user"""
-    ds = SQLAlchemyUserDatastore(ctx.obj, User, Role)
+    ds = SQLAlchemyUserDatastore(manager, User, Role)
     u = ds.find_role(name)
     if u:
         ds.delete(u)
@@ -345,10 +345,10 @@ def rm(ctx, name):
 
 
 @role.command()
-@click.pass_context
-def ls(ctx):
+@click.pass_obj
+def ls(manager):
     """Lists roles"""
-    for r in ctx.obj.session.query(Role).all():
+    for r in manager.session.query(Role).all():
         click.echo('{}\t{}'.format(r.name, r.description))
 
 
@@ -358,10 +358,10 @@ def projects():
 
 
 @projects.command()
-@click.pass_context
-def ls(ctx):
+@click.pass_obj
+def ls(manager):
     """Lists projects"""
-    for project in ctx.obj.session.query(Project).all():
+    for project in manager.session.query(Project).all():
         click.echo('{}\t{}'.format(project.name, ','.join(map(str, project.users))))
 
 
@@ -371,11 +371,11 @@ def experiments():
 
 
 @experiments.command()
-@click.pass_context
-def dropall(ctx):
+@click.pass_obj
+def dropall(manager):
     """Drops all experiments"""
-    if click.confirm('Drop all experiments at {}?'.format(ctx.obj.connection)):
-        ctx.obj.session.query(Experiment).delete()
+    if click.confirm('Drop all experiments at {}?'.format(manager.connection)):
+        manager.session.query(Experiment).delete()
 
 
 if __name__ == '__main__':
