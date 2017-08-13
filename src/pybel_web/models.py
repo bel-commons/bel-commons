@@ -333,6 +333,9 @@ class Query(Base):
     # TODO remove dump completely and have it reconstruct from parts
     dump = Column(Text, doc="The stringified JSON representing this query")
 
+    def __repr__(self):
+        return '<Query {}>'.format(self.id)
+
     @property
     def data(self):
         """Converts this object to a :class:`pybel_tools.query.Query` object
