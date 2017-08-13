@@ -172,6 +172,10 @@ def drop_namespace_by_id(namespace_id):
         - namespace
     """
     namespace = manager.session.query(Namespace).get(namespace_id)
+
+    if namespace is None:
+        abort(404)
+
     log.info('dropping namespace %s', namespace_id)
 
     manager.session.delete(namespace)
@@ -334,6 +338,9 @@ def drop_annotation_by_id(annotation_id):
     """
     annotation = manager.session.query(Annotation).get(annotation_id)
 
+    if annotation is None:
+        abort(404)
+
     manager.session.delete(annotation)
     manager.session.commit()
 
@@ -386,6 +393,10 @@ def get_network_metadata(network_id):
         - network
     """
     network = manager.session.query(Network).get(network_id)
+
+    if network is None:
+        abort(404)
+
     return jsonify(**network.data)
 
 
@@ -399,6 +410,10 @@ def load_edge_store_by_network_id(network_id):
         - network
     """
     network = manager.session.query(Network).get(network_id)
+
+    if network is None:
+        abort(404)
+
     graph = network.as_bel()
 
     t = time.time()
@@ -505,6 +520,9 @@ def nodes_by_network(network_id):
 def drop_network_helper(network_id):
     network = manager.session.query(Network).get(network_id)
 
+    if network is None:
+        abort(404)
+
     if not current_user.admin:
         assert_user_owns_network(network, current_user)
 
@@ -581,11 +599,14 @@ def claim_network(network_id):
     """
     network = manager.session.query(Network).get(network_id)
 
+    if network is None:
+        abort(404)
+
     if network.report:
         if 'next' in request.args:
             return next_or_jsonify(
                 'Already claimed by {}'.format(network.report.user),
-                network={'id':network.id},
+                network={'id': network.id},
                 owner={'id': network.report.user.id},
             )
 
@@ -599,8 +620,8 @@ def claim_network(network_id):
 
     return next_or_jsonify(
         'Claimed {}'.format(network),
-        network={'id':network.id},
-        owner={'id':current_user.id}
+        network={'id': network.id},
+        owner={'id': current_user.id}
     )
 
 
@@ -660,17 +681,23 @@ def get_network_name_by_id(network_id):
 
 
 def update_network_status(network_id, status):
-    report = manager.session.query(Report).filter(Report.network_id == network_id).one()
+    network = manager.session.query(Network).get(network_id)
 
-    if not current_user.admin or current_user.id != report.user_id:
+    if network is None:
+        abort(404)
+
+    if network.report is None:
+        abort(400)
+
+    if not current_user.admin or current_user.id != network.report.user_id:
         abort(403, 'You do not have permission to modify that network')
 
-    report.public = status
+    network.report.public = status
     manager.session.commit()
 
     return next_or_jsonify(
-        'Set public to {} for {}'.format(status, report.network),
-        network_id=report.network_id,
+        'Set public to {} for {}'.format(status, network),
+        network_id=network_id,
         public=status,
     )
 
@@ -1325,7 +1352,7 @@ def drop_user_queries(user_id):
     if not (current_user.admin or user_id == current_user.id):
         abort(403, 'Unauthorized user')
 
-    manager.session.query(models.Query).filter_by(user_id=current_user.id).delete()
+    manager.session.query(models.Query).filter(models.Query.user == current_user).delete()
     manager.session.commit()
 
     return next_or_jsonify('Dropped all queries associated with your account')
@@ -1340,6 +1367,9 @@ def query_to_network(query_id):
         - query
     """
     query = manager.session.query(models.Query).get(query_id)
+
+    if query is None:
+        abort(404)
 
     if not user_has_query_rights(current_user, query):
         abort(403, 'Insufficient rights to access query {}'.format(query_id))
@@ -1367,6 +1397,9 @@ def get_query_parent(query_id):
     """
     query = manager.session.query(models.Query).get(query_id)
 
+    if query is None:
+        abort(404)
+
     if not user_has_query_rights(current_user, query):
         abort(403, 'Insufficient rights to access query {}'.format(query_id))
 
@@ -1392,6 +1425,9 @@ def get_query_oldest_ancestry(query_id):
     """
     query = manager.session.query(models.Query).get(query_id)
 
+    if query is None:
+        abort(404)
+
     if not user_has_query_rights(current_user, query):
         abort(403, 'Insufficient rights to access query {}'.format(query_id))
 
@@ -1406,6 +1442,9 @@ def get_query_oldest_ancestry(query_id):
 def add_pipeline_entry(query_id, name, *args, **kwargs):
     """Adds an entry to the pipeline and """
     query = manager.session.query(models.Query).get(query_id)
+
+    if query is None:
+        abort(404)
 
     q = query.data
     q.pipeline.append(name, *args, **kwargs)
@@ -1594,6 +1633,9 @@ def delete_user(user_id):
     """
     user = User.query.get(user_id)
 
+    if user is None:
+        abort(404)
+
     user_datastore.delete_user(user)
     user_datastore.commit()
 
@@ -1621,7 +1663,11 @@ def get_analysis(query_id, experiment_id):
     """
     # TODO user rights management
     network = get_network_from_request(query_id)
+
     experiment = manager.session.query(Experiment).get(experiment_id)
+    if experiment is None:
+        abort(404)
+
     data = pickle.loads(experiment.result)
     results = [
         {'node': api.get_node_id(node), 'data': data[node]}
@@ -1642,7 +1688,12 @@ def get_analysis_median(query_id, experiment_id):
     """
     # TODO user rights management
     network = get_network_from_request(query_id)
+
     experiment = manager.session.query(Experiment).get(experiment_id)
+
+    if experiment is None:
+        abort(404, 'Experiment {} does not exist'.format(experiment_id))
+
     data = pickle.loads(experiment.result)
     # position 3 is the 'median' score
     results = {
@@ -1671,6 +1722,9 @@ def drop_experiment_by_id(experiment_id):
         format: int32
     """
     experiment = manager.session.query(Experiment).get(experiment_id)
+
+    if experiment is None:
+        abort(404)
 
     if not current_user.admin and (current_user != experiment.user):
         abort(403, 'You do not have rights to drop this experiment')
@@ -1708,6 +1762,9 @@ def download_analysis(experiment_id):
     """
     experiment = manager.session.query(Experiment).get(experiment_id)
 
+    if experiment is None:
+        abort(404)
+
     if not current_user.admin and (current_user != experiment.user):
         abort(403, 'You do not have rights to this experiment')
 
@@ -1743,6 +1800,9 @@ def grant_network_to_project(network_id, project_id):
     """
     network = manager.session.query(Network).get(network_id)
 
+    if network is None:
+        abort(404)
+
     assert_user_owns_network(network, current_user)
 
     project = manager.session.query(Project).get(project_id)
@@ -1769,6 +1829,9 @@ def grant_network_to_user(network_id, user_id):
     """
     network = manager.session.query(Network).get(network_id)
 
+    if network is None:
+        abort(404)
+
     assert_user_owns_network(network, current_user)
 
     user = manager.session.query(User).get(user_id)
@@ -1790,6 +1853,9 @@ def get_project_metadata(project_id):
     """
     project = manager.session.query(Project).get(project_id)
 
+    if project is None:
+        abort(404)
+
     if not current_user.admin and not project.has_user(current_user):
         abort(403, 'User does not have permission to access this Project')
 
@@ -1808,6 +1874,9 @@ def drop_project_by_id(project_id):
         - project
     """
     project = manager.session.query(Project).get(project_id)
+
+    if project is None:
+        abort(404)
 
     if not current_user.admin and not project.has_user(current_user):
         abort(403, 'User does not have permission to access this Project')
@@ -1830,6 +1899,9 @@ def summarize_project(project_id):
         - project
     """
     project = manager.session.query(Project).get(project_id)
+
+    if project is None:
+        abort(404)
 
     if not current_user.admin and not project.has_user(current_user):
         abort(403, 'User does not have permission to access this Project')
@@ -1864,6 +1936,9 @@ def export_project_network(project_id, serve_format):
         - project
     """
     project = manager.session.query(Project).get(project_id)
+
+    if project is None:
+        abort(404)
 
     if not current_user.admin and not project.has_user(current_user):
         abort(403, 'User does not have permission to access this Project')

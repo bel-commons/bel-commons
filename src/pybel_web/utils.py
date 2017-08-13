@@ -753,7 +753,7 @@ def safe_get_query(query_id):
     query = manager.session.query(Query).get(query_id)
 
     if query is None:
-        abort(400, 'Query {} not found'.format(query_id))
+        abort(404, 'Query {} not found'.format(query_id))
 
     if not user_has_query_rights(current_user, query):
         abort(403, 'Insufficient rights to run query {}'.format(query_id))
