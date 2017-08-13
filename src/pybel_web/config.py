@@ -35,7 +35,7 @@ class Config:
     #: Should the difficult to calculate (citations, centrality measures) be precalculated as well?
     PYBEL_DS_EAGER = False
     #: Should networks be saved to the edge store?
-    PYBEL_USE_EDGE_STORE = False
+    PYBEL_USE_EDGE_STORE = True
 
 
 class EmailConfig:
