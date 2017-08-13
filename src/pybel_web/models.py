@@ -41,7 +41,7 @@ class Experiment(Base):
     source = Column(Binary, doc='The source document holding the data')
     result = Column(Binary, doc='The result python dictionary')
 
-    query_id = Column(Integer, ForeignKey('{}.id'.format(QUERY_TABLE_NAME)))
+    query_id = Column(Integer, ForeignKey('{}.id'.format(QUERY_TABLE_NAME)), nullable=False)
     query = relationship('Query', backref=backref("experiments"))
 
     user_id = Column(Integer, ForeignKey('{}.id'.format(USER_TABLE_NAME)))
@@ -53,7 +53,7 @@ class Experiment(Base):
     completed = Column(Boolean, default=False)
 
     def __repr__(self):
-        return '<Experiment on {}>'.format(self.network)
+        return '<Experiment on {}>'.format(self.query)
 
 
 class Report(Base):
