@@ -89,11 +89,10 @@
                         <div class="thumbnail home-link">
                             <!--<img src="http://placehold.it/350x150" alt="...">-->
                             <div class="caption">
-                                <h3>Parse</h3>
+                                <h3>Upload</h3>
                                 <p>
-                                    Parse BEL script, validate its contents, and generate a network summary.
-                                    Additionally, pre-parsed BEL scripts can be uploaded as <a
-                                        href="http://pybel.readthedocs.io/en/latest/io.html#bytes">Pickles</a>.
+                                    Parse BEL script, validate its contents, perform automatic enrichment, and
+                                    generate a network summary.
                                 </p>
                                 <p>
                                     <a href="{{ url_for('parser.view_parser') }}" class="btn btn-primary btn-block">
@@ -109,13 +108,14 @@
                             <!--<img src="http://placehold.it/350x150" alt="...">-->
                             <div class="caption home-link">
                                 <h3>Summarize</h3>
-                                <p>Select from a list of curated networks, then begin to explore with through
-                                    automatically generated network analyses, interactive visualizations, and
-                                    data-driven network <a href="{{ url_for('analysis.view_analyses') }}">analyses</a>.
+                                <p>
+                                    List curated networks and explore with automatically generated network analyses,
+                                    interactive visualizations, and data-driven
+                                    <a href="{{ url_for('analysis.view_analyses') }}">analyses</a>.
                                 </p>
-                                <a href="{{ url_for('view_networks') }}" class="btn btn-primary btn-block"
-                                   role="button">List
-                                    Networks</a>
+                                <a href="{{ url_for('view_networks') }}" class="btn btn-primary btn-block">
+                                    List Networks
+                                </a>
                             </div>
                         </div>
                     </div>
@@ -181,13 +181,9 @@
                                         href="https://github.com/pybel/pybel">core</a>, <a
                                         href="https://github.com/pybel/pybel-tools">analytical tools</a>, or <a
                                         href="https://github.com/pybel/pybel-notebooks">notebooks</a> repositories for
-                                    upcoming code, protocols, and pipelines. Future ideas include:
+                                    upcoming code, protocols, and pipelines and additional entries in
+                                    <a href="https://github.com/bio2bel">Bio2BEL</a>
                                 </p>
-                                <ul>
-                                    <li>Chemical Enrichment Server</li>
-                                    <li>Additional Entries in <a href="https://github.com/cthoyt/bio2bel">bio2bel</a>
-                                    </li>
-                                </ul>
                             </div>
                         </div>
                     </div>
