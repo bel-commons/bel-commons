@@ -146,7 +146,7 @@ def parse_by_url(connection, url):
 
 @celery.task(name='pybelparser')
 def async_parser(lines, connection, current_user_id, current_user_email, public, allow_nested=False,
-                 citation_clearing=False, store_parts=False):
+                 citation_clearing=False, store_parts=True):
     """Asynchronously parses a BEL script and sends email feedback"""
     log.info('Starting parse task')
     manager = build_manager(connection)

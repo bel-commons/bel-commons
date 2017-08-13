@@ -72,7 +72,7 @@ def view_parser():
         return redirect(url_for('view_parser'))
 
     try:
-        network = manager.insert_graph(graph, store_parts=current_app.config.get('PYBEL_USE_EDGE_STORE'))
+        network = manager.insert_graph(graph, store_parts=current_app.config.get('PYBEL_USE_EDGE_STORE', True))
     except IntegrityError:
         log_graph(graph, current_user, preparsed=False, failed=True)
         log.exception('integrity error')

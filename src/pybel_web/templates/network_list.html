@@ -262,15 +262,6 @@
                                         {% endif %}
                                     {% endif %}
 
-                                    {% if current_user.admin %}
-                                        <li>
-                                            <a class="btn btn-danger" role="button"
-                                               href="{{ url_for('dbs.load_edge_store_by_network_id', network_id=network.id, next=url_for('view_networks')) }}">
-                                                Store Edges
-                                            </a>
-                                        </li>
-                                    {% endif %}
-
                                     {% if (current_user.has_role('scai') or current_user.admin) and not network.report %}
                                         <li>
                                             <a class="btn btn-danger" role="button"
