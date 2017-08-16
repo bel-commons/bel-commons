@@ -131,7 +131,7 @@ def view_network_analysis_uploader(network_id):
     if network_id not in get_network_ids_with_permission_helper(current_user, api):
         abort(403, 'Insufficient rights for network {}'.format(network_id))
 
-    query = Query.from_query_args(manager, current_user, network_id)
+    query = Query.from_query_args(manager, network_id, current_user)
     manager.session.add(query)
     manager.session.commit()
 

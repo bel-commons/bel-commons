@@ -372,7 +372,7 @@ class Query(Base):
         return self.data.run(manager)
 
     @staticmethod
-    def from_query(manager, user, query):
+    def from_query(manager, query, user=None):
         """Builds a orm query from a pybel-tools query
 
         :param pybel.manager.CacheManager manager:
@@ -389,14 +389,14 @@ class Query(Base):
             dump=query.to_jsons()
         )
 
-        if user.is_authenticated:
+        if user is not None and user.is_authenticated:
             assembly.user = user
             query.user = user
 
         return query
 
     @staticmethod
-    def from_query_args(manager, user, network_ids, seed_list=None, pipeline=None):
+    def from_query_args(manager, network_ids, user=None, seed_list=None, pipeline=None):
         """Builds a orm query from the arguments for a pybel-tools query
 
         :param pybel.manager.CacheManager manager:
@@ -407,7 +407,7 @@ class Query(Base):
         :rtype: Query
         """
         q = pybel_tools.query.Query(network_ids, seed_list=seed_list, pipeline=pipeline)
-        return Query.from_query(manager, user, q)
+        return Query.from_query(manager, q, user=user)
 
 
 class EdgeVote(Base):

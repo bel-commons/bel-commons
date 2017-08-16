@@ -239,7 +239,7 @@ def build_main_service(app):
         """Executes a pipeline"""
         d = query_form_to_dict(request.form)
         q = pybel_tools.query.Query.from_json(d)
-        qo = models.Query.from_query(manager, current_user, q)
+        qo = models.Query.from_query(manager, q, current_user)
 
         manager.session.add(qo)
         manager.session.commit()
@@ -263,7 +263,7 @@ def build_main_service(app):
             for network in project.networks
         ])
 
-        query = Query.from_query(manager, current_user, q)
+        query = Query.from_query(manager, q, current_user)
         query.assembly.name = '{} query of {}'.format(time.asctime(), project.name)
 
         manager.session.add(query)
@@ -276,7 +276,7 @@ def build_main_service(app):
         if network_id not in get_network_ids_with_permission_helper(current_user, api):
             abort(403, 'Insufficient rights for network {}'.format(network_id))
 
-        query = Query.from_query_args(manager, current_user, network_id)
+        query = Query.from_query_args(manager, network_id, current_user)
         manager.session.add(query)
         manager.session.commit()
         return redirect(url_for('view_explorer_query', query_id=query.id))
@@ -304,7 +304,7 @@ def build_main_service(app):
         ]
         q = pybel_tools.query.Query(network_id)
         q.add_seed_induction(nodes)
-        qo = Query.from_query(manager, current_user, q)
+        qo = Query.from_query(manager, q, current_user)
         manager.session.add(qo)
         manager.session.commit()
         return redirect(url_for('view_explorer_query', query_id=qo.id))
