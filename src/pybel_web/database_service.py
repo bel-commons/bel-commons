@@ -897,6 +897,8 @@ def get_neurommsigs():
 
     network = get_subgraph_by_annotations(alzheimers_network, {'Subgraph': subgraph_annotations}, True)
 
+    network = api.relabel_nodes_to_identifiers(network)
+
     return serve_network(network)
 
 
