@@ -22,6 +22,7 @@ from flask import (
     request,
     abort,
 )
+from flask_cors import cross_origin
 from flask_security import roles_required, login_required, current_user
 from six import StringIO
 from sqlalchemy.exc import IntegrityError
@@ -886,20 +887,17 @@ def get_query_summary(query_id):
 
 
 @api_blueprint.route('/api/get_alzheimers_subgraphs/')
+@cross_origin()
 def get_neurommsigs():
     """Returns AD NeuroMMSigs"""
 
-    subgraph_annotations = request.args.getlist('subgraphs')
+    subgraph_annotations = request.args.getlist('subgraphs[]')
 
     alzheimers_network = api.get_network_by_name("Alzheimer's Disease Knowledge Assembly")
 
     network = get_subgraph_by_annotations(alzheimers_network, {'Subgraph': subgraph_annotations}, True)
 
-    json_response = serve_network(network)
-
-    json_response["Access-Control-Allow-Origin"] = "*"
-
-    return json_response
+    return serve_network(network)
 
 
 ####################################
