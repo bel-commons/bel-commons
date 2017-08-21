@@ -894,7 +894,12 @@ def get_neurommsigs():
     alzheimers_network = api.get_network_by_name("Alzheimer's Disease Knowledge Assembly")
 
     network = get_subgraph_by_annotations(alzheimers_network, {'Subgraph': subgraph_annotations}, True)
-    return serve_network(network)
+
+    json_response = serve_network(network)
+
+    json_response["Access-Control-Allow-Origin"] = "*"
+
+    return json_response
 
 
 ####################################
