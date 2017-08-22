@@ -7,6 +7,7 @@ recursive-include docs/source *.rst
 recursive-include migrations/*
 recursive-include migrations *.mako
 recursive-include migrations *.py
+recursive-include migrations *.rst
 
 recursive-include docs Makefile
 global-exclude docs/*
