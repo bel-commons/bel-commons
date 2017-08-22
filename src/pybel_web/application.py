@@ -88,6 +88,8 @@ class FlaskPyBEL:
             description='Users from SCAI'
         )
 
+        pybel_extension.user_datastore.commit()
+
         if app.config.get('PYBEL_DS_PRELOAD', False):
             log.info('preloading networks')
             self.api.cache_networks(
