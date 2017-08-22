@@ -16,6 +16,8 @@ import pickle
 import requests.exceptions
 from celery.utils.log import get_task_logger
 from flask_mail import Message
+from sqlalchemy.exc import IntegrityError, OperationalError
+
 from pybel import from_lines, from_url, to_bytes
 from pybel.constants import METADATA_DESCRIPTION, METADATA_CONTACT, METADATA_LICENSES
 from pybel.manager import build_manager
@@ -25,17 +27,13 @@ from pybel_tools.constants import BMS_BASE
 from pybel_tools.ioutils import convert_directory
 from pybel_tools.mutation import add_canonical_names, fix_pubmed_citations
 from pybel_tools.utils import enable_cool_mode
-from sqlalchemy.exc import IntegrityError, OperationalError
-
 from .application import create_application
 from .celery_utils import create_celery
-from .constants import CHARLIE_EMAIL, DANIEL_EMAIL, integrity_message
+from .constants import CHARLIE_EMAIL, DANIEL_EMAIL, integrity_message, log_worker_path
 from .models import Report, User, Experiment
 from .utils import calculate_scores
 
 log = get_task_logger(__name__)
-
-enable_cool_mode()  # turn off warnings for compilation
 
 app, mail = create_application(get_mail=True)
 celery = create_celery(app)
@@ -396,5 +394,9 @@ def setup_periodic_tasks(sender, **kwargs):
 
 if __name__ == '__main__':
     logging.basicConfig(level=20)
-    logging.getLogger('pybel.parser').setLevel(50)
+    enable_cool_mode()  # turn off warnings for compilation
     log.setLevel(20)
+
+    fh = logging.FileHandler(log_worker_path)
+    fh.setLevel(logging.DEBUG)
+    log.addHandler(fh)

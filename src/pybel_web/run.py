@@ -14,7 +14,7 @@ import os
 from .admin_service import build_admin_service
 from .analysis_service import analysis_blueprint
 from .application import create_application
-from .constants import log_path
+from .constants import log_runner_path
 from .curation_service import curation_blueprint
 from .database_service import api_blueprint
 from .main_service import build_main_service
@@ -28,7 +28,7 @@ fmt = "%(asctime)s - %(levelname)s - %(name)s - %(message)s"
 data_path = os.path.join(os.path.expanduser('~'), '.pybel', 'data')
 user_dump_path = os.path.join(data_path, 'users.tsv')
 
-fh = logging.FileHandler(log_path)
+fh = logging.FileHandler(log_runner_path)
 fh.setLevel(logging.DEBUG)
 fh.setFormatter(logging.Formatter(fmt))
 

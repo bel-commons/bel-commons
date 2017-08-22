@@ -388,7 +388,7 @@ def build_main_service(app):
     @app.route('/logging', methods=['GET'])
     def view_logging():
         """Shows the logging"""
-        return send_file(log_path)
+        return send_file(log_runner_path)
 
     @app.route('/how_to_use', methods=['GET'])
     def view_how_to_use():

@@ -26,7 +26,7 @@ import time
 import click
 from flask_security import SQLAlchemyUserDatastore
 
-from pybel.constants import get_cache_connection, PYBEL_CONNECTION
+from pybel.constants import get_cache_connection, PYBEL_CONNECTION, PYBEL_DATA_DIR
 from pybel.manager.cache import build_manager
 from pybel.manager.models import Base, Network
 from pybel.utils import get_version as pybel_version
@@ -36,7 +36,7 @@ from .admin_service import build_admin_service
 from .analysis_service import analysis_blueprint
 from .application import create_application
 from .belief_service import belief_blueprint
-from .constants import log_path, CHARLIE_EMAIL
+from .constants import log_runner_path, CHARLIE_EMAIL
 from .curation_service import curation_blueprint
 from .database_service import api_blueprint
 from .main_service import build_main_service
@@ -51,10 +51,9 @@ log = logging.getLogger('pybel_web')
 datefmt = '%H:%M:%S'
 fmt = "%(asctime)s - %(levelname)s - %(name)s - %(message)s"
 
-data_path = os.path.join(os.path.expanduser('~'), '.pybel', 'data')
-user_dump_path = os.path.join(data_path, 'users.tsv')
+user_dump_path = os.path.join(PYBEL_DATA_DIR, 'users.tsv')
 
-fh = logging.FileHandler(log_path)
+fh = logging.FileHandler(log_runner_path)
 fh.setLevel(logging.DEBUG)
 fh.setFormatter(logging.Formatter(fmt))
 log.addHandler(fh)
