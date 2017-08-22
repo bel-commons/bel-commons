@@ -25,6 +25,7 @@ from flask import (
 from flask_cors import cross_origin
 from flask_security import roles_required, login_required, current_user
 from six import StringIO
+from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
 
 import pybel
@@ -1597,6 +1598,11 @@ def add_annotation_filter_to_query(query_id):
 ####################################
 # USER
 ####################################
+
+@api_blueprint.route('/api/user/count')
+def get_number_users():
+    """Return the number of users"""
+    return jsonify(count=manager.session.query(func.count(User.id)).scalar())
 
 
 @api_blueprint.route('/api/user/<user>/add_role/<role>')

@@ -7,6 +7,8 @@ Reference for testing Flask
 - Flask Cookbook: http://flask.pocoo.org/docs/0.12/tutorial/testing/
 """
 
+from flask import Response
+
 import datetime
 import json
 import logging
@@ -66,69 +68,86 @@ class WebTest(unittest.TestCase):
         self.app_instance.register_blueprint(upload_blueprint)
 
         self.pybel = FlaskPyBEL(self.app_instance)
+
         self.manager = self.pybel.manager
         self.api = self.pybel.api
-        self.user_datastore = self.pybel.user_datastore
-        self.user_datastore.create_user(
+
+        self.pybel.user_datastore.create_user(
             email=TEST_USER_EMAIL,
             password=TEST_USER_PASSWORD,
             confirmed_at=datetime.datetime.now(),
         )
-        self.user_datastore.commit()
+        self.pybel.user_datastore.commit()
 
         self.app = self.app_instance.test_client()
+
+        with self.app_instance.app_context():
+            self.manager.create_all()
 
     def tearDown(self):
         os.close(self.db_fd)
         os.unlink(self.db_file)
 
     def login(self, email, password):
-        return self.app.post(
-            '/login',
-            data=dict(
-                email=email,
-                password=password
-            ),
-            follow_redirects=True
-        )
-
-    def logout(self):
-        return self.app.get('/logout', follow_redirects=True)
-
-    def test_login(self):
-        """Test a user can be properly logged in then back out"""
-        self.assertFalse(current_user.authenticated)
-
-        self.login(TEST_USER_EMAIL, TEST_USER_PASSWORD)
-
-        self.assertTrue(current_user.authenticated)
-        self.assertEqual(TEST_USER_EMAIL, current_user.email)
-
-        self.logout()
-        self.assertFalse(current_user.authenticated)
-
-    def test_upload(self):
-        self.assertEqual(0, self.manager.count_networks())
-
-        self.login(TEST_USER_EMAIL, TEST_USER_PASSWORD)
-
-        f = open(test_bel_pickle_path, 'rb')
-
-        with self.app_instance.test_request_context():
-            upload_form = UploadForm(
-                file=f
+        with self.app_instance.app_context():
+            return self.app.post(
+                '/login',
+                data=dict(
+                    email=email,
+                    password=password
+                ),
+                follow_redirects=True
             )
 
-        response = self.app.post(
-            '/upload',
-            data=upload_form.data,
-            content_type='multipart/form-data',
-            follow_redirects=True,
-        )
+    def logout(self):
+        with self.app_instance.app_context():
+            return self.app.get('/logout', follow_redirects=True)
 
-        log.warning('Response: %s, data: %s', response, response.data)
+    @unittest.skip
+    def test_login(self):
+        """Test a user can be properly logged in then back out"""
+        with self.app_instance.app_context():
+            self.assertFalse(current_user.authenticated)
 
-        self.assertEqual(1, self.manager.count_networks())
+            self.login(TEST_USER_EMAIL, TEST_USER_PASSWORD)
+
+            self.assertTrue(current_user.authenticated)
+            self.assertEqual(TEST_USER_EMAIL, current_user.email)
+
+            self.logout()
+            self.assertFalse(current_user.authenticated)
+
+    def test_api_count_users(self):
+        with self.app_instance.app_context():
+            response = self.app.get('/api/user/count')
+            r = json.loads(response.data)
+            self.assertIn('count', r)
+            self.assertEqual(5, r['count'])
+
+    @unittest.skip
+    def test_upload(self):
+        with self.app_instance.app_context():
+            self.assertEqual(0, self.manager.count_networks())
+
+            self.login(TEST_USER_EMAIL, TEST_USER_PASSWORD)
+
+            f = open(test_bel_pickle_path, 'rb')
+
+            with self.app_instance.test_request_context():
+                upload_form = UploadForm(
+                    file=f
+                )
+
+            response = self.app.post(
+                '/upload',
+                data=upload_form.data,
+                content_type='multipart/form-data',
+                follow_redirects=True,
+            )
+
+            log.warning('Response: %s, data: %s', response, response.data)
+
+            self.assertEqual(1, self.manager.count_networks())
 
     @unittest.skip
     def test_pipeline_view(self):
