@@ -3,7 +3,11 @@ graft tests
 
 recursive-include docs/source *.py
 recursive-include docs/source *.rst
+
 recursive-include migrations/*
+recursive-include migrations *.mako
+recursive-include migrations *.py
+
 recursive-include docs Makefile
 global-exclude docs/*
 
