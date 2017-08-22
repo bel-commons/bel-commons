@@ -114,6 +114,8 @@
                     <li><a href="#provenance">Provenance</a></li>
                     <li><a href="#network-statistics">Network Statistics</a></li>
                     <li><a href="#content-statistics">Content Statistics</a></li>
+                    <li><a href="#namespaces">Namespaces</a></li>
+                    <li><a href="#annotations">Annotations</a></li>
                     <li><a href="#overlap">Overlaps</a></li>
 
                     {% if unused_namespaces is defined and unused_namespaces|length > 0 %}
@@ -232,6 +234,47 @@
             </div>
         </div>
 
+
+        <a id="namespaces"></a>
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Namespaces
+                    <a class="pull-right" href="#top">
+                        <span class="glyphicon glyphicon-arrow-up"></span>
+                    </a>
+                </h3>
+            </div>
+            <div class="panel-body">
+                <p>This section lists all of the namespaces that are defined in the original BEL script.</p>
+                <dl class="dl-horizontal">
+                    {% for key, value in graph.namespace_url.items()|sort %}
+                        <dt>{{ key }}</dt>
+                        <dd><a href="{{ value }}">{{ value }}</a></dd>
+                    {% endfor %}
+                </dl>
+            </div>
+        </div>
+
+        <a id="annotations"></a>
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Annotations
+                    <a class="pull-right" href="#top">
+                        <span class="glyphicon glyphicon-arrow-up"></span>
+                    </a>
+                </h3>
+            </div>
+            <div class="panel-body">
+                <p>This section lists all of the annotations that are defined in the original BEL script.</p>
+                <dl class="dl-horizontal">
+                    {% for key, value in graph.annotation_url.items()|sort %}
+                        <dt>{{ key }}</dt>
+                        <dd><a href="{{ value }}">{{ value }}</a></dd>
+                    {% endfor %}
+                </dl>
+            </div>
+        </div>
+
         <a id="content-statistics"></a>
         <div class="panel panel-default">
             <div class="panel-heading">
@@ -243,20 +286,26 @@
             </div>
             <div class="panel-body">
                 <div class="row">
-                    <div class="col-md-4">
-                        <div id="chart3"></div>
-                    </div>
+                    {% if chart_3_data %}
+                        <div class="col-md-4">
+                            <div id="chart3"></div>
+                        </div>
+                    {% endif %}
                     <div class="col-md-4">
                         <div id="chart1"></div>
                     </div>
                     <div class="col-md-4">
                         <div id="chart2"></div>
                     </div>
-                    <div class="col-md-4">
-                        <div id="chart4"></div>
-                    </div>
-                    <div class="col-md-4">
+                    {% if chart_4_data %}
+                        <div class="col-md-4">
+                            <div id="chart4"></div>
+                        </div>
+                    {% endif %}
+                    {% if chart_5_data %}
+                        <div class="col-md-4">
                         <div id="chart5"></div>
+                    {% endif %}
                     </div>
                     <div class="col-md-4">
                         <div id="chart6"></div>
@@ -264,9 +313,11 @@
                     <div class="col-md-4">
                         <div id="chart7"></div>
                     </div>
-                    <div class="col-md-4">
-                        <div id="chart9"></div>
-                    </div>
+                    {% if chart_9_data %}
+                        <div class="col-md-4">
+                            <div id="chart9"></div>
+                        </div>
+                    {% endif %}
                     <div class="col-md-4">
                         <div id="chart10"></div>
                     </div>
@@ -1132,89 +1183,95 @@
             }
         });
 
-        var chart3 = c3.generate({
-            padding: {
-                top: 15,
-                left: 100
-            },
-            size: {
-                height: 350
-            },
-            bindto: '#chart3',
-            data: {
-                x: 'x',
-                columns: {{ chart_3_data|safe}},
-                type: 'bar'
-            },
-            title: {
-                text: 'Warning Types'
-            },
-            axis: {
-                rotated: true,
-                x: {
-                    type: 'category'
+        {% if chart_3_data %}
+            var chart3 = c3.generate({
+                padding: {
+                    top: 15,
+                    left: 100
+                },
+                size: {
+                    height: 350
+                },
+                bindto: '#chart3',
+                data: {
+                    x: 'x',
+                    columns: {{ chart_3_data|safe}},
+                    type: 'bar'
+                },
+                title: {
+                    text: 'Warning Types'
+                },
+                axis: {
+                    rotated: true,
+                    x: {
+                        type: 'category'
+                    }
+                },
+                legend: {
+                    show: false
                 }
-            },
-            legend: {
-                show: false
-            }
-        });
+            });
+        {% endif %}
 
-        var chart4 = c3.generate({
-            padding: {
-                top: 15,
-                left: 100
-            },
-            size: {
-                height: 350
-            },
-            bindto: '#chart4',
-            data: {
-                x: 'x',
-                columns: {{ chart_4_data|safe}},
-                type: 'bar'
-            },
-            title: {
-                text: 'Node Transformations'
-            },
-            axis: {
-                rotated: true,
-                x: {
-                    type: 'category'
+        {% if chart_4_data %}
+            var chart4 = c3.generate({
+                padding: {
+                    top: 15,
+                    left: 100
+                },
+                size: {
+                    height: 350
+                },
+                bindto: '#chart4',
+                data: {
+                    x: 'x',
+                    columns: {{ chart_4_data|safe}},
+                    type: 'bar'
+                },
+                title: {
+                    text: 'Node Transformations'
+                },
+                axis: {
+                    rotated: true,
+                    x: {
+                        type: 'category'
+                    }
+                },
+                legend: {
+                    show: false
                 }
-            },
-            legend: {
-                show: false
-            }
-        });
+            });
+        {% endif %}
 
-        var chart5 = c3.generate({
-            padding: {
-                top: 15,
-                left: 100
-            },
-            size: {
-                height: 350
-            },
-            bindto: '#chart5',
-            data: {
-                x: 'x',
-                columns: {{ chart_5_data|safe}},
-                type: 'bar'
-            },
-            title: {
-                text: 'Node Modifications'
-            },
-            axis: {
-                rotated: true,
-                x: {
-                    type: 'category'
+        {% if chart_5_data %}
+            var chart5 = c3.generate({
+                padding: {
+                    top: 15,
+                    left: 100
+                },
+                size: {
+                    height: 350
+                },
+                bindto: '#chart5',
+                data: {
+                    x: 'x',
+                    columns: {{ chart_5_data|safe}},
+                    type: 'bar'
+                },
+                title: {
+                    text: 'Node Modifications'
+                },
+                axis: {
+                    rotated: true,
+                    x: {
+                        type: 'category'
+                    }
+                },
+                legend: {
+                    show: false
                 }
-            },
-            legend: {
-                show: false
-            }
-        });
+            });
+        {% endif %}
 
         var chart6 = c3.generate({
             padding: {
@@ -1272,36 +1329,37 @@
             }
         });
 
-        var chart9 = c3.generate({
-            padding: {
-                top: 15,
-                left: 100
-            },
-            size: {
-                height: 350
-            },
-            bindto: '#chart9',
-            data: {
-                x: 'x',
-                columns: {{ chart_9_data|safe}},
-                type: 'bar'
-            },
-            title: {
-                text: 'Pathologies'
-            },
-            axis: {
-                rotated: true,
-                x: {
-                    type: 'category'
+        {% if chart_9_data %}
+            var chart9 = c3.generate({
+                padding: {
+                    top: 15,
+                    left: 100
+                },
+                size: {
+                    height: 350
+                },
+                bindto: '#chart9',
+                data: {
+                    x: 'x',
+                    columns: {{ chart_9_data|safe}},
+                    type: 'bar'
+                },
+                title: {
+                    text: 'Pathologies'
+                },
+                axis: {
+                    rotated: true,
+                    x: {
+                        type: 'category'
+                    }
+                },
+                legend: {
+                    show: false
                 }
-            },
-            legend: {
-                show: false
-            }
-        });
+            });
+        {% endif %}
 
-
-        {% if chart_10_data|safe %}
+        {% if chart_10_data %}
 
             var chart10 = c3.generate({
                 padding: {

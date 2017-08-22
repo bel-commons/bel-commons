@@ -233,20 +233,30 @@ def render_network_summary(network_id, graph):
 
     naked_names = get_naked_names(graph)
 
+
+    function_count = count_functions(graph)
+    relation_count = count_relations(graph)
+    error_count = count_error_types(graph)
+    translocation_count = len(get_translocated(graph))
+    degradation_count = len(get_degradations(graph))
+    molecular_count = len(get_activities(graph))
+
+    has_modifications = all([translocation_count, degradation_count, molecular_count])
+
     return render_template(
         'summary.html',
-        chart_1_data=prepare_c3(count_functions(graph), 'Entity Type'),
-        chart_2_data=prepare_c3(count_relations(graph), 'Relationship Type'),
-        chart_3_data=prepare_c3(count_error_types(graph), 'Error Type'),
+        chart_1_data=prepare_c3(function_count, 'Entity Type'),
+        chart_2_data=prepare_c3(relation_count, 'Relationship Type'),
+        chart_3_data=prepare_c3(error_count, 'Error Type') if error_count else None,
         chart_4_data=prepare_c3({
-            'Translocations': len(get_translocated(graph)),
-            'Degradations': len(get_degradations(graph)),
-            'Molecular Activities': len(get_activities(graph))
-        }, 'Modifier Type'),
+            'Translocations': translocation_count,
+            'Degradations': degradation_count,
+            'Molecular Activities': molecular_count}
+        , 'Modifier Type') if has_modifications else None,
         chart_5_data=prepare_c3(count_variants(graph), 'Node Variants'),
         chart_6_data=prepare_c3(count_namespaces(graph), 'Namespaces'),
         chart_7_data=prepare_c3(hub_data, 'Top Hubs'),
-        chart_9_data=prepare_c3(disease_data, 'Pathologies'),
+        chart_9_data=prepare_c3(disease_data, 'Pathologies') if disease_data else None,
         chart_10_data=prepare_c3_time_series(citation_years, 'Number of articles') if citation_years else None,
         error_groups=count_dict_values(group_errors(graph)).most_common(20),
         info_list=info_list(graph),
