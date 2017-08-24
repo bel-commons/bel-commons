@@ -199,8 +199,8 @@
             </div>
             <div class="panel-body">
                 <dl class="dl-horizontal">
-                    <dt>Upload</dt>
                     {% if network.report %}
+                        <dt>Upload</dt>
                         <dd>{{ network.report.user.email }} at {{ network.report.created }}</dd>
                     {% endif %}
                     <dt>Authors</dt>
