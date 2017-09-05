@@ -298,7 +298,7 @@ function doAjaxCallWithCallback(url, callback) {
 }
 
 function networkSizeChecking(data, tree) {
-    if (data.nodes.length > 1000) {// Network bigger than 1000 nodes wont be render
+    if (data.nodes.length > 2500) {// Network bigger than 2500 nodes wont be render
         renderEmptyFrame();
 
         alert("The network you are trying to render contains: " + data.nodes.length + " nodes and " +
