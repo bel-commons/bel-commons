@@ -3,13 +3,15 @@
 import datetime
 import json
 
+import codecs
 from flask_security import RoleMixin, UserMixin
 from sqlalchemy import Column, Integer, ForeignKey, DateTime, Boolean, Text, Binary, Table, String, Index
 from sqlalchemy.orm import relationship, backref
 
 import pybel_tools.query
+from pybel import from_lines
 from pybel.manager import Base
-from pybel.manager.models import NETWORK_TABLE_NAME, Network
+from pybel.manager.models import NETWORK_TABLE_NAME, Network, EDGE_TABLE_NAME
 from pybel.struct import union
 
 EXPERIMENT_TABLE_NAME = 'pybel_experiment'
@@ -60,9 +62,11 @@ class Report(Base):
     """Stores information about compilation and uploading events"""
     __tablename__ = REPORT_TABLE_NAME
 
+    id = Column(Integer, primary_key=True)
+
     network_id = Column(
-        Integer, ForeignKey('{}.id'.format(NETWORK_TABLE_NAME)),
-        primary_key=True,
+        Integer,
+        ForeignKey('{}.id'.format(NETWORK_TABLE_NAME)),
         doc='The network that was uploaded'
     )
     network = relationship('Network', backref=backref('report', uselist=False))
@@ -72,13 +76,44 @@ class Report(Base):
 
     created = Column(DateTime, default=datetime.datetime.utcnow, doc='The date and time of upload')
     public = Column(Boolean, nullable=False, default=False, doc='Should the network be viewable to the public?')
-    precompiled = Column(Boolean, doc='Was this document uploaded as a BEL script or a precompiled gpickle?')
+
     number_nodes = Column(Integer)
     number_edges = Column(Integer)
     number_warnings = Column(Integer)
 
+    source_name = Column(Text, doc='The name of the source file')
+    source = Column(Binary, doc='The source BEL Script')
+    encoding = Column(Text)
+
+    allow_nested = Column(Boolean, default=False)
+    citation_clearing = Column(Boolean, default=False)
+
+    task = Column(String(255), nullable=False, doc='The task id from celery')
+    message = Column(Text, doc='Error message')
+    completed = Column(Boolean, default=False)
+
     def __repr__(self):
-        return '<Report on {}>'.format(self.network)
+        if self.network:
+            return '<Report on {}>'.format(self.network)
+        else:
+            return '<Failed Report (#{})>'.format(self.id)
+
+    def get_lines(self):
+        """Decodes the lines stored in this """
+        lines = codecs.iterdecode(self.source.stream, self.encoding)
+        return list(lines)
+
+    def parse_graph(self, manager):
+        """Parses the graph from the latent BEL Script
+
+        :param pybel.manager.cache.CacheManager manager: A cache manager
+        """
+        return from_lines(
+            self.get_lines(),
+            manager=manager,
+            allow_nested=self.allow_nested,
+            citation_clearing=self.citation_clearing,
+        )
 
     def __str__(self):
         return repr(self)
@@ -416,26 +451,57 @@ class EdgeVote(Base):
 
     id = Column(Integer, primary_key=True)
 
-    edge_id = Column(Integer, nullable=False, index=True, doc='The hash of the edge for this comment')
+    edge_id = Column(Integer, ForeignKey('{}.id'.format(EDGE_TABLE_NAME)))
+    edge = relationship('Edge', backref=backref('votes', lazy='dynamic'))
+
     user_id = Column(Integer, ForeignKey('{}.id'.format(USER_TABLE_NAME)), nullable=False,
                      doc='The user who made this vote')
     user = relationship('User', backref=backref('votes', lazy='dynamic'))
+
     agreed = Column(Boolean, nullable=False)
+    changed = Column(DateTime, default=datetime.datetime.utcnow)
+
+    def to_json(self):
+        return {
+            'id': self.id,
+            'edge': {
+                'id': self.edge.id
+            },
+            'user': {
+                'id': self.user.id
+            },
+
+            'vote': self.agreed
+        }
 
 
 Index('edgeUserIndex', EdgeVote.edge_id, EdgeVote.user_id)
 
 
-class EdgeComments(Base):
+class EdgeComment(Base):
     """Describes the comments on an edge"""
     __tablename__ = COMMENT_TABLE_NAME
 
     id = Column(Integer, primary_key=True)
 
-    edge_id = Column(Integer, nullable=False, index=True, doc='The hash of the edge for this comment')
-    comment = Column(Text, nullable=False)
-    created = Column(DateTime, default=datetime.datetime.utcnow)
+    edge_id = Column(Integer, ForeignKey('{}.id'.format(EDGE_TABLE_NAME)))
+    edge = relationship('Edge', backref=backref('votes', lazy='dynamic'))
 
     user_id = Column(Integer, ForeignKey('{}.id'.format(USER_TABLE_NAME)), nullable=False,
                      doc='The user who made this comment')
     user = relationship('User', backref=backref('comments', lazy='dynamic'))
+
+    comment = Column(Text, nullable=False)
+    created = Column(DateTime, default=datetime.datetime.utcnow)
+
+    def to_json(self):
+        return {
+            'id': self.id,
+            'edge': {
+                'id': self.edge.id
+            },
+            'user': {
+                'id': self.user.id
+            },
+            'comment': self.comment
+        }

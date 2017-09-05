@@ -771,14 +771,14 @@ def safe_get_query(query_id):
     return query
 
 
-def get_vote(edge_id, user_id):
+def get_vote(edge, user_id):
     """Gets a vote for the given edge and user
 
     :param int edge_id:
     :param int user_id:
     :rtype: EdgeVote
     """
-    return manager.session.query(EdgeVote).filter(EdgeVote.edge_id == edge_id,
+    return manager.session.query(EdgeVote).filter(EdgeVote.edge == edge,
                                                   EdgeVote.user_id == user_id).one_or_none()
 
 

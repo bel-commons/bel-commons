@@ -7,8 +7,6 @@ Reference for testing Flask
 - Flask Cookbook: http://flask.pocoo.org/docs/0.12/tutorial/testing/
 """
 
-from flask import Response
-
 import datetime
 import json
 import logging

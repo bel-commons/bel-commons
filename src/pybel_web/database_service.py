@@ -71,7 +71,8 @@ from .models import (
     User,
     Experiment,
     Project,
-    EdgeComments,
+    Edge,
+    EdgeComment,
     EdgeVote,
 )
 from .send_utils import serve_network
@@ -1072,11 +1073,14 @@ def get_edge_entry(edge_id):
         'data': data,
         'comments': [
             {
-                'user': {'id': ec.user_id, 'email': ec.user.email},
+                'user': {
+                    'id': ec.user_id,
+                    'email': ec.user.email
+                },
                 'comment': ec.comment,
                 'created': ec.created,
             }
-            for ec in manager.session.query(EdgeComments).filter(EdgeComments.edge_id == edge_id)
+            for ec in manager.session.query(EdgeComment).filter(EdgeComment.edge_id == edge_id)
         ]
     }
 
@@ -1113,12 +1117,12 @@ def get_edge_by_id(edge_id):
     return jsonify(get_edge_entry(edge_id))
 
 
-def ensure_vote(edge_id, user_id, agreed):
-    vote = get_vote(edge_id, user_id)
+def ensure_vote(edge, user_id, agreed):
+    vote = get_vote(edge, user_id)
 
     if vote is None:
         vote = EdgeVote(
-            edge_id=edge_id,
+            edge=edge,
             user_id=user_id,
             agreed=agreed
         )
@@ -1140,13 +1144,13 @@ def store_up_vote(edge_id):
     tags:
         - edge
     """
-    ensure_vote(edge_id, current_user.id, True)
+    edge = manager.session.query(Edge).get(edge_id)
 
-    return jsonify({
-        'status': 200,
-        'edge_id': edge_id,
-        'vote': 1,
-    })
+    if edge is None:
+        abort(403, 'Edge {} not found'.format(edge_id))
+
+    vote = ensure_vote(edge, current_user.id, True)
+    return jsonify(vote.to_json())
 
 
 @api_blueprint.route('/api/edge/<int:edge_id>/vote/down')
@@ -1158,13 +1162,13 @@ def store_down_vote(edge_id):
     tags:
         - edge
     """
-    ensure_vote(edge_id, current_user.id, False)
+    edge = manager.session.query(Edge).get(edge_id)
 
-    return jsonify({
-        'status': 200,
-        'edge_id': edge_id,
-        'vote': -1
-    })
+    if edge is None:
+        abort(403, 'Edge {} not found'.format(edge_id))
+
+    vote = ensure_vote(edge, current_user.id, False)
+    return jsonify(vote.to_json())
 
 
 @api_blueprint.route('/api/edge/<int:edge_id>/comment', methods=('GET', 'POST'))
@@ -1176,19 +1180,24 @@ def store_comment(edge_id):
     tags:
         - edge
     """
-    if 'comment' not in request.args:
+    edge = manager.session.query(Edge).get(edge_id)
+
+    if edge is None:
         abort(403, 'Edge {} not found'.format(edge_id))
 
-    comment = EdgeComments(
+    if 'comment' not in request.args:
+        abort(403, 'Comment not found')
+
+    comment = EdgeComment(
         user=current_user,
-        edge_id=edge_id,
+        edge=edge,
         comment=request.args['comment']
     )
 
     manager.session.add(comment)
     manager.session.commit()
 
-    return jsonify({'status': 200})
+    return jsonify(comment.to_json)
 
 
 ####################################
@@ -1603,6 +1612,39 @@ def add_annotation_filter_to_query(query_id):
 def get_number_users():
     """Return the number of users"""
     return jsonify(count=manager.session.query(func.count(User.id)).scalar())
+
+
+@api_blueprint.route('/api/user')
+@roles_required('admin')
+def get_all_users():
+    """Returns all users
+
+    ---
+    tags:
+        - user
+    """
+    return jsonify([
+        {
+            'id': user.id,
+            'email': user.email
+        }
+        for user in manager.session.query(User).all()
+    ])
+
+
+@api_blueprint.route('/api/user/current')
+@login_required
+def get_current_user():
+    """Returns the current user
+
+    ---
+    tags:
+        - user
+    """
+    return jsonify({
+        'id': current_user.id,
+        'email': current_user.email
+    })
 
 
 @api_blueprint.route('/api/user/<user>/add_role/<role>')

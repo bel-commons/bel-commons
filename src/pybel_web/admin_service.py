@@ -39,7 +39,7 @@ from .models import (
     Assembly,
     Project,
     EdgeVote,
-    EdgeComments
+    EdgeComment
 )
 from .utils import list_public_networks
 
@@ -72,7 +72,7 @@ def build_admin_service(app):
     admin.add_view(ModelView(Query, manager.session))
     admin.add_view(ModelView(Assembly, manager.session))
     admin.add_view(ModelView(EdgeVote, manager.session))
-    admin.add_view(ModelView(EdgeComments, manager.session))
+    admin.add_view(ModelView(EdgeComment, manager.session))
 
     class NetworkAjaxModelLoader(QueryAjaxModelLoader):
         def __init__(self):

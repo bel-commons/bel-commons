@@ -8,17 +8,17 @@ Run the celery worker with:
 While also laughing at how ridiculously redundant this nomenclature is.
 """
 
-import hashlib
 import logging
-import os
 import pickle
 
+import hashlib
+import os
 import requests.exceptions
 from celery.utils.log import get_task_logger
 from flask_mail import Message
 from sqlalchemy.exc import IntegrityError, OperationalError
 
-from pybel import from_lines, from_url, to_bytes
+from pybel import from_url, to_bytes
 from pybel.constants import METADATA_DESCRIPTION, METADATA_CONTACT, METADATA_LICENSES
 from pybel.manager import build_manager
 from pybel.manager.models import Network
@@ -30,7 +30,7 @@ from pybel_tools.utils import enable_cool_mode
 from .application import create_application
 from .celery_utils import create_celery
 from .constants import CHARLIE_EMAIL, DANIEL_EMAIL, integrity_message, log_worker_path
-from .models import Report, User, Experiment
+from .models import Report, Experiment
 from .utils import calculate_scores
 
 log = get_task_logger(__name__)
@@ -56,27 +56,6 @@ def parse_folder(connection, folder, **kwargs):
         enrich_genes=True,
         enrich_go=False,
         **kwargs
-    )
-
-
-def do_mail(current_user_email, subject, body):
-    if 'mail' not in app.extensions:
-        return
-
-    with app.app_context():
-        mail.send(Message(
-            subject=subject,
-            recipients=[current_user_email],
-            body=body,
-            sender=("PyBEL Web", 'pybel@scai.fraunhofer.de'),
-        ))
-
-
-def do_okay_mail(current_user_email, graph):
-    do_mail(
-        current_user_email,
-        subject='Parsing complete',
-        body='{} is done parsing. Check the network list page.'.format(graph)
     )
 
 
@@ -143,61 +122,47 @@ def parse_by_url(connection, url):
 
 
 @celery.task(name='pybelparser')
-def async_parser(lines, connection, current_user_id, current_user_email, public, allow_nested=False,
-                 citation_clearing=False, store_parts=True):
+def async_parser(connection, report_id):
     """Asynchronously parses a BEL script and sends email feedback"""
     log.info('Starting parse task')
     manager = build_manager(connection)
 
+    report = manager.session.query(Report).get(report_id)
+
+    def make_mail(subject, message):
+        if 'mail' not in app.extensions:
+            return
+
+        with app.app_context():
+            mail.send_message(
+                subject=subject,
+                recipients=[report.user.email],
+                body=message,
+                sender=("PyBEL Web", 'pybel@scai.fraunhofer.de'),
+            )
+
     try:
-        graph = from_lines(
-            lines,
-            manager=manager,
-            allow_nested=allow_nested,
-            citation_clearing=citation_clearing
-        )
-        add_canonical_names(graph)
-        fix_pubmed_citations(graph)
+        graph = report.parse_graph(manager=manager)
 
     except requests.exceptions.ConnectionError:
         message = 'Connection to resource could not be established.'
         log.exception(message)
-
-        with app.app_context():
-            mail.send(Message(
-                subject='Parsing Failed',
-                recipients=[current_user_email],
-                body=message,
-                sender=("PyBEL Web", 'pybel@scai.fraunhofer.de'),
-            ))
-
+        make_mail('Parsing Failed', message)
+        report.message = message
         return message
 
     except InconsistentDefinitionError as e:
         message = 'Parsing failed because {} was redefined on line {}.'.format(e.definition, e.line_number)
         log.exception(message)
-        with app.app_context():
-            mail.send(Message(
-                subject='Parsing Failed',
-                recipients=[current_user_email],
-                body=message,
-                sender=("PyBEL Web", 'pybel@scai.fraunhofer.de'),
-            ))
-
+        make_mail('Parsing Failed', message)
+        report.message = message
         return message
 
     except Exception as e:
         message = 'Parsing failed from a general error: {}'.format(e)
         log.exception(message)
-
-        with app.app_context():
-            mail.send(Message(
-                subject='Parsing Failed',
-                recipients=[current_user_email],
-                body=message,
-                sender=("PyBEL Web", 'pybel@scai.fraunhofer.de'),
-            ))
-
+        make_mail('Parsing Failed', message)
+        report.message = message
         return message
 
     problem = {
@@ -208,15 +173,8 @@ def async_parser(lines, connection, current_user_id, current_user_email, public,
 
     if problem:
         message = 'Your document was rejected because it has "default" metadata: {}'.format(problem)
-
-        with app.app_context():
-            mail.send(Message(
-                subject='Document Rejected',
-                recipients=[current_user_email],
-                body=message,
-                sender=("PyBEL Web", 'pybel@scai.fraunhofer.de'),
-            ))
-
+        make_mail('Document Rejected', message)
+        report.message = message
         return message
 
     network = manager.session.query(Network).filter(Network.name == graph.name,
@@ -225,102 +183,80 @@ def async_parser(lines, connection, current_user_id, current_user_email, public,
     if network is not None:
         message = integrity_message.format(graph.name, graph.version)
 
-        if network.report.user_id == current_user_id:  # This user is being a fool
-            log.warning('%s %s', current_user_email, message)
+        if network.report.user == report.user:  # This user is being a fool
+            log.warning('%s %s', report.user.email, message)
             manager.session.rollback()
-
-            with app.app_context():
-                mail.send(Message(
-                    subject='Upload Failed',
-                    recipients=[current_user_email],
-                    body=message,
-                    sender=("PyBEL Web", 'pybel@scai.fraunhofer.de'),
-                ))
-
+            make_mail('Upload Failed', message)
+            report.message = message
             return message
 
         if hashlib.sha1(network.blob).hexdigest() != hashlib.sha1(to_bytes(network)):
-            with app.app_context():
-                mail.send(Message(
-                    subject='Upload Failed',
-                    recipients=[current_user_email],
-                    body=message,
-                    sender=("PyBEL Web", 'pybel@scai.fraunhofer.de'),
-                ))
+            make_mail('Upload Failed', message)
+            report.message = message
 
+            with app.app_context():
                 mail.send(Message(
                     subject='Possible attempted Espionage',
                     recipients=[CHARLIE_EMAIL, DANIEL_EMAIL],
                     body='The following user ({} {}) may have attempted espionage of network: {}'.format(
-                        current_user_id,
-                        current_user_email,
+                        report.user.id,
+                        report.user.email,
                         network
                     ),
                     sender=("PyBEL Web", 'pybel@scai.fraunhofer.de'),
                 ))
+
             return message
 
         # Grant rights to this user
-        user = manager.session.query(User).get(current_user_id)
-        network.users.append(user)
+        network.users.append(report.user)
         manager.session.commit()
 
-        return 'Granted rights for {} to {}'.format(network, user)
+        message = 'Granted rights for {} to {}'.format(network, report.user)
+        make_mail('Granted Rights', message)
+        report.message = message
+
+        return message
 
     try:
-        network = manager.insert_graph(graph, store_parts=store_parts)
+        add_canonical_names(graph)
+        fix_pubmed_citations(graph, manager=manager)
+    except:
+        log.exception('problem fixing citations')
+
+    try:
+        network = manager.insert_graph(graph, store_parts=app.config.get('PYBEL_USE_EDGE_STORE', True))
 
     except IntegrityError:
         message = integrity_message.format(graph.name, graph.version)
-        log.warning('%s %s', current_user_email, message)
+        log.warning('%s %s', report.user.email, message)
         manager.session.rollback()
-
-        with app.app_context():
-            mail.send(Message(
-                subject='Upload Failed',
-                recipients=[current_user_email],
-                body=message,
-                sender=("PyBEL Web", 'pybel@scai.fraunhofer.de'),
-            ))
-
+        make_mail('Upload Failed', message)
+        report.message = message
         return message
 
     except OperationalError:
         manager.session.rollback()
-
         message = 'Database is locked. Unable to upload.'
         log.exception(message)
-
+        make_mail('Upload Failed', message)
+        report.message = message
         return message
 
     except Exception as e:
         manager.session.rollback()
-
         message = "Error storing in database: {}".format(e)
         log.exception(message)
-
-        with app.app_context():
-            mail.send(Message(
-                subject='Upload Failed',
-                recipients=[current_user_email],
-                body=message,
-                sender=("PyBEL Web", 'pybel@scai.fraunhofer.de'),
-            ))
-
+        make_mail('Upload Failed', message)
+        report.message = message
         return message
 
     log.info('done storing [%d]', network.id)
 
     try:
-        report = Report(
-            network=network,
-            user_id=current_user_id,
-            number_nodes=graph.number_of_nodes(),
-            number_edges=graph.number_of_edges(),
-            number_warnings=len(graph.warnings),
-            public=public,
-        )
-        manager.session.add(report)
+        report.number_nodes = graph.number_of_nodes(),
+        report.number_edges = graph.number_of_edges(),
+        report.number_warnings = len(graph.warnings),
         manager.session.commit()
 
     except IntegrityError:
@@ -328,15 +264,20 @@ def async_parser(lines, connection, current_user_id, current_user_email, public,
 
         message = 'Problem with reporting service.'
         log.exception(message)
-
+        make_mail('Upload Failed', message)
         return message
 
     except OperationalError:
         manager.session.rollback()
 
-        log.exception('Problem with reporting service')
+        message = 'Problem with reporting service'
+        log.exception(message)
+        make_mail('Upload Failed', message)
+        return message
 
-    do_okay_mail(current_user_email, graph)
+    make_mail('Upload Successful', '{} is done parsing. Check the network list page.'.format(graph))
+
+    report.completed = True
 
     return network.id
 
@@ -372,15 +313,19 @@ def run_cmpa(connection, experiment_id):
 
     manager.session.commit()
 
-    do_mail(
-        experiment.user.email,
-        subject='CMPA Analysis complete',
-        body='Experiment {} on query {} with {} has completed'.format(
-            experiment_id,
-            experiment.query_id,
-            experiment.source_name
-        )
+    message = 'Experiment {} on query {} with {} has completed'.format(
+        experiment_id,
+        experiment.query_id,
+        experiment.source_name
     )
+
+    with app.app_context():
+        mail.send(Message(
+            subject='CMPA Analysis complete',
+            recipients=[experiment.user.email],
+            body=message,
+            sender=("PyBEL Web", 'pybel@scai.fraunhofer.de'),
+        ))
 
     return experiment_id
 

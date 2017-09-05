@@ -2,7 +2,6 @@
 
 from __future__ import unicode_literals
 
-import codecs
 import logging
 
 from flask import render_template, current_app, Blueprint, flash
@@ -12,6 +11,8 @@ from pybel.constants import PYBEL_CONNECTION
 from .celery_utils import create_celery
 from .constants import reporting_log
 from .forms import ParserForm, ParseUrlForm
+from .models import Report
+from .utils import manager
 
 log = logging.getLogger(__name__)
 
@@ -29,16 +30,21 @@ def view_parser():
     if not form.validate_on_submit():
         return render_template('parser.html', form=form, current_user=current_user)
 
-    lines = codecs.iterdecode(form.file.data.stream, form.encoding.data)
-    lines = list(lines)
+    report = Report(
+        user=current_user,
+        source_name=form.file.data.filename,
+        source=form.file.data,
+        encoding=form.encoding.data,
+        public=form.public.data
+    )
+
+    manager.session.add(report)
+    manager.commit()
 
     celery = create_celery(current_app)
     task = celery.send_task('pybelparser', args=(
-        lines,
         current_app.config.get(PYBEL_CONNECTION),
-        current_user.id,
-        current_user.email,
-        form.public.data,
+        report.id
     ))
 
     reporting_log.info('Parse task from %s: %s', current_user, task.id)
