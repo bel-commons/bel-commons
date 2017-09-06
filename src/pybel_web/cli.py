@@ -35,7 +35,7 @@ from pybel_tools.utils import get_version as pybel_tools_get_version
 from .admin_service import build_admin_service
 from .analysis_service import analysis_blueprint
 from .application import create_application
-from .belief_service import belief_blueprint
+from .external_services import belief_blueprint
 from .constants import log_runner_path, CHARLIE_EMAIL
 from .curation_service import curation_blueprint
 from .database_service import api_blueprint

@@ -22,7 +22,6 @@ from flask import (
     request,
     abort,
 )
-from flask_cors import cross_origin
 from flask_security import roles_required, login_required, current_user
 from six import StringIO
 from sqlalchemy import func
@@ -886,22 +885,6 @@ def get_query_summary(query_id):
     """
     network = get_network_from_request(query_id)
     return jsonify(info_json(network))
-
-
-@api_blueprint.route('/api/get_alzheimers_subgraphs/')
-@cross_origin()
-def get_neurommsigs():
-    """Returns AD NeuroMMSigs"""
-
-    subgraph_annotations = request.args.getlist('subgraphs[]')
-
-    alzheimers_network = api.get_network_by_name("Alzheimer's Disease Knowledge Assembly")
-
-    network = get_subgraph_by_annotations(alzheimers_network, {'Subgraph': subgraph_annotations}, True)
-
-    network = api.relabel_nodes_to_identifiers(network)
-
-    return serve_network(network)
 
 
 ####################################
