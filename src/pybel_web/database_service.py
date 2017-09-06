@@ -6,8 +6,6 @@ import csv
 import json
 import logging
 import pickle
-from functools import lru_cache
-from operator import itemgetter
 
 import flask
 import git
@@ -23,6 +21,8 @@ from flask import (
     abort,
 )
 from flask_security import roles_required, login_required, current_user
+from functools import lru_cache
+from operator import itemgetter
 from six import StringIO
 from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
@@ -33,7 +33,12 @@ from pybel.constants import (
     METADATA_CONTACT,
     METADATA_NAME,
 )
-from pybel.manager import Namespace, Annotation, Network
+from pybel.manager.models import (
+    Namespace,
+    Annotation,
+    Network,
+    Edge,
+)
 from pybel_tools import pipeline
 from pybel_tools.analysis.cmpa import RESULT_LABELS
 from pybel_tools.definition_utils import write_namespace, write_annotation
@@ -70,7 +75,6 @@ from .models import (
     User,
     Experiment,
     Project,
-    Edge,
     EdgeComment,
     EdgeVote,
 )
