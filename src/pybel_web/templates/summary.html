@@ -207,8 +207,13 @@
                     <dd>{{ graph.document['authors'] }}</dd>
                     <dt>Contact</dt>
                     <dd>{{ graph.document['contact'] }}</dd>
-                    <dt>Description</dt>
-                    <dd>{{ graph.description }}</dd>
+
+                    {% if graph.description %}
+                        <dt>Description</dt>
+
+                        <dd>{{ graph.description }}</dd>
+                    {% endif %}
+
                     <dt>License</dt>
                     <dd>{{ graph.document['licenses'] }}</dd>
                     <dt>Copyright</dt>

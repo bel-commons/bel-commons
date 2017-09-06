@@ -172,7 +172,11 @@
 
                         </h4>
                         <div class="list-group-item-text">
-                            <p>{{ network.description }}</p>
+
+                            {% if network.description %}
+                                <p>{{ network.description }}</p>
+                            {% endif %}
+
                             <ul class="list-inline">
                                 {% if current_user.is_authenticated and current_user.admin %}
                                     <li>
