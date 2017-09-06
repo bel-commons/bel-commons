@@ -462,6 +462,10 @@ class EdgeVote(Base):
     changed = Column(DateTime, default=datetime.datetime.utcnow)
 
     def to_json(self):
+        """Converts this vote to JSON
+
+        :rtype: dict
+        """
         return {
             'id': self.id,
             'edge': {
@@ -470,7 +474,6 @@ class EdgeVote(Base):
             'user': {
                 'id': self.user.id
             },
-
             'vote': self.agreed
         }
 
@@ -495,6 +498,10 @@ class EdgeComment(Base):
     created = Column(DateTime, default=datetime.datetime.utcnow)
 
     def to_json(self):
+        """Converts this comment to JSON
+
+        :rtype: dict
+        """
         return {
             'id': self.id,
             'edge': {
