@@ -165,6 +165,18 @@ def async_parser(connection, report_id):
         report.message = message
         return message
 
+    if not graph.name:
+        message = 'Graph does not have a name'
+        make_mail('Parsing Failed', message)
+        report.message = message
+        return message
+
+    if not graph.version:
+        message = 'Graph does not have a version'
+        make_mail('Parsing Failed', message)
+        report.message = message
+        return message
+
     problem = {
         k: v
         for k, v in graph.document.items()
