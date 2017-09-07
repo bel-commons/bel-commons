@@ -371,7 +371,13 @@ def build_main_service(app):
     @login_required
     def view_current_user_activity():
         """Returns the current user's history."""
-        return render_template('user_activity.html', user=current_user)
+        pending_reports = [
+            report
+            for report in current_user.reports
+            if report.incomplete
+        ]
+
+        return render_template('user_activity.html', user=current_user, pending_reports=pending_reports)
 
     @app.route('/user/<int:user_id>')
     @roles_required('admin')
@@ -382,7 +388,7 @@ def build_main_service(app):
         pending_reports = [
             report
             for report in user.reports
-            if report.completed is None
+            if report.incomplete
         ]
 
         return render_template('user_activity.html', user=user, pending_reports=pending_reports)

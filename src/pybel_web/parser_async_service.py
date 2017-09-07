@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 
 import logging
 
-from flask import render_template, current_app, Blueprint, flash
+from flask import render_template, current_app, Blueprint, flash, redirect, url_for
 from flask_security import current_user, login_required
 
 from pybel.constants import PYBEL_CONNECTION
@@ -50,9 +50,9 @@ def view_parser():
     ))
 
     reporting_log.info('Parse task from %s: %s', current_user, task.id)
-    flash('Queued parsing task {}.'.format(task))
+    flash('Queued parsing task {} for {}.'.format(report.id, report.source_name))
 
-    return render_template('parser_status.html', task=task)
+    return redirect(url_for('view_current_user_activity'))
 
 
 @parser_async_blueprint.route('/parse_url', methods=('GET', 'POST'))
@@ -70,7 +70,12 @@ def view_url_parser():
         )
 
     celery = create_celery(current_app)
-    task = celery.send_task('parse-url', args=[current_app.config.get(PYBEL_CONNECTION), form.url.data])
-    flash('Queued parsing task {}.'.format(task))
+    task = celery.send_task('parse-url', args=[
+        current_app.config.get(PYBEL_CONNECTION),
+        form.url.data
+    ])
 
-    return render_template('parser_status.html', task=task)
+    reporting_log.info('Parse URL task from %s: %s', current_user, task.id)
+    flash('Queued parsing task {} for {}.'.format(task.id, form.url.data))
+
+    return redirect(url_for('view_current_user_activity'))

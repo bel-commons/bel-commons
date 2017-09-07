@@ -93,7 +93,7 @@ class Report(Base):
 
     def __repr__(self):
         if self.completed is None:
-            return '<Incomplete Report {}'.format(self.id)
+            return '[{}] Incomplete: {}'.format(self.id, self.source_name)
 
         if self.completed is not None and not self.completed:
             return '<Failed Report (#{})>'.format(self.id)
@@ -120,6 +120,10 @@ class Report(Base):
             allow_nested=self.allow_nested,
             citation_clearing=self.citation_clearing,
         )
+
+    @property
+    def incomplete(self):
+        return self.completed is None and not self.message
 
     def __str__(self):
         return repr(self)
@@ -350,6 +354,24 @@ class Assembly(Base):
     def __repr__(self):
         return '[{}]'.format(', '.join(str(network.id) for network in self.networks))
 
+    def to_json(self):
+        result = {
+            'user': {
+                'id': self.user.id,
+                'email': self.user.email,
+            },
+
+            'networks': [
+                network.to_json()
+                for network in self.networks
+            ]
+        }
+
+        if self.name:
+            result['name'] = self.name
+
+        return result
+
 
 class Query(Base):
     """Describes a :class:`pybel_tools.query.Query`"""
@@ -478,7 +500,8 @@ class EdgeVote(Base):
                 'id': self.edge.id
             },
             'user': {
-                'id': self.user.id
+                'id': self.user.id,
+                'email': self.user.email,
             },
             'vote': self.agreed
         }
@@ -514,7 +537,8 @@ class EdgeComment(Base):
                 'id': self.edge.id
             },
             'user': {
-                'id': self.user.id
+                'id': self.user.id,
+                'email': self.user.email,
             },
             'comment': self.comment
         }

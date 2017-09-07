@@ -20,9 +20,9 @@
                 <div class="panel-heading">
                     <h3 class="panel-title">My Pending Jobs</h3>
                 </div>
-                <ul>
+                <ul class="list-group">
                     {% for report in pending_reports %}
-                        <li>{{ report }}</li>
+                        <li class="list-group-item">{{ report }}</li>
                     {% endfor %}
                 </ul>
             </div>
