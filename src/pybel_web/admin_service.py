@@ -27,7 +27,8 @@ from .admin_utils import (
     CitationView,
     EdgeView,
     EvidenceView,
-    ExperimentView
+    ExperimentView,
+    ReportView,
 )
 from .application_utils import get_api, get_manager, get_scai_role
 from .models import (
@@ -67,7 +68,7 @@ def build_admin_service(app):
     admin.add_view(CitationView(Citation, manager.session))
     admin.add_view(EvidenceView(Evidence, manager.session))
     admin.add_view(ModelView(Author, manager.session))
-    admin.add_view(ModelView(Report, manager.session))
+    admin.add_view(ReportView(Report, manager.session))
     admin.add_view(ExperimentView(Experiment, manager.session))
     admin.add_view(ModelView(Query, manager.session))
     admin.add_view(ModelView(Assembly, manager.session))
