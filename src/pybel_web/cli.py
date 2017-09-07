@@ -209,7 +209,7 @@ def drop(manager, yes):
                 print(s, file=f)
         click.echo('Done')
         click.echo('Dropping database')
-        manager.drop_database()
+        manager.drop_all()
         click.echo('Done')
 
 

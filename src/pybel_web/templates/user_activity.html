@@ -15,6 +15,18 @@
 
         {{ util.flashed_messages(dismissible=True, container=False) }}
 
+        {% if pending_reports|length > 0 %}
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">My Pending Jobs</h3>
+                </div>
+                <ul>
+                    {% for report in pending_reports %}
+                        <li>{{ report }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
 
         <div class="panel panel-default">
             <div class="panel-heading">

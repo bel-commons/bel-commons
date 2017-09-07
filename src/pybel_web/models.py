@@ -88,25 +88,31 @@ class Report(Base):
     allow_nested = Column(Boolean, default=False)
     citation_clearing = Column(Boolean, default=False)
 
-    task = Column(String(255), nullable=False, doc='The task id from celery')
     message = Column(Text, doc='Error message')
-    completed = Column(Boolean, default=False)
+    completed = Column(Boolean)
 
     def __repr__(self):
-        if self.network:
-            return '<Report on {}>'.format(self.network)
-        else:
+        if self.completed is None:
+            return '<Incomplete Report {}'.format(self.id)
+
+        if self.completed is not None and not self.completed:
             return '<Failed Report (#{})>'.format(self.id)
 
+        if self.network:
+            return '<Report on {}>'.format(self.network)
+
     def get_lines(self):
-        """Decodes the lines stored in this """
-        lines = codecs.iterdecode(self.source.stream, self.encoding)
-        return list(lines)
+        """Decodes the lines stored in this
+
+        :rtype: list[str]
+        """
+        return codecs.decode(self.source, self.encoding).split('\n')
 
     def parse_graph(self, manager):
         """Parses the graph from the latent BEL Script
 
         :param pybel.manager.cache.CacheManager manager: A cache manager
+        :rtype: pybel.BELGraph
         """
         return from_lines(
             self.get_lines(),

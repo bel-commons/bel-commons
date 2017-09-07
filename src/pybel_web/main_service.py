@@ -37,7 +37,7 @@ from pybel.manager.models import (
 from pybel.utils import get_version as get_pybel_version
 from pybel_tools.constants import BMS_BASE, GENE_FAMILIES
 from pybel_tools.ioutils import upload_recursive, get_paths_recursive
-from pybel_tools.mutation.metadata import fix_pubmed_citations
+from pybel_tools.mutation.metadata import enrich_pubmed_citations
 from pybel_tools.pipeline import no_arguments_map
 from pybel_tools.utils import get_version as get_pybel_tools_version
 from . import models
@@ -156,7 +156,7 @@ def build_dictionary_service_admin(app):
     @roles_required('admin')
     def run_enrich_authors():
         """Enriches information in network. Be patient"""
-        fix_pubmed_citations(api.universe)
+        enrich_pubmed_citations(api.universe)
         return next_or_jsonify('enriched authors')
 
     @app.route('/admin/list/bms/pickles')
@@ -188,7 +188,7 @@ def build_dictionary_service_admin(app):
     def nuke():
         """Destroys the database and recreates it"""
         log.info('nuking database')
-        manager.drop_database()
+        manager.drop_all()
         manager.create_all()
         log.info('restarting dictionary service')
         api.clear()
@@ -377,7 +377,14 @@ def build_main_service(app):
     def view_user_activity(user_id):
         """Returns the given user's history"""
         user = manager.session.query(User).get(user_id)
-        return render_template('user_activity.html', user=user)
+
+        pending_reports = [
+            report
+            for report in user.reports
+            if report.completed is None
+        ]
+
+        return render_template('user_activity.html', user=user, pending_reports=pending_reports)
 
     @app.route('/reporting', methods=['GET'])
     def view_reports():

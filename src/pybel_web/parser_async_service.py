@@ -33,13 +33,15 @@ def view_parser():
     report = Report(
         user=current_user,
         source_name=form.file.data.filename,
-        source=form.file.data,
+        source=form.file.data.stream.read(),
         encoding=form.encoding.data,
-        public=form.public.data
+        public=form.public.data,
+        allow_nested=form.allow_nested.data,
+        citation_clearing=form.citation_clearing.data,
     )
 
     manager.session.add(report)
-    manager.commit()
+    manager.session.commit()
 
     celery = create_celery(current_app)
     task = celery.send_task('pybelparser', args=(
