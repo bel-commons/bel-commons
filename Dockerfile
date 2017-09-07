@@ -13,9 +13,13 @@ WORKDIR /app
 
 RUN pip install -r requirements.txt
 RUN pip install .
+RUN pip install gunicorn
 
-# Expose ports
-# EXPOSE 80
+RUN apt-get install -y rabbitmq-server
+CMD service rabbitmq-server start
 
-ENTRYPOINT ["python"]
-CMD ["-m", "pybel_tools", "web", "--host", "0.0.0.0"]
+EXPOSE 8000
+
+CMD celery worker -A pybel_web.celery_worker.celery --detach
+
+CMD gunicorn -b "0.0.0.0:8000" pybel_web.run:app
