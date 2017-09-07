@@ -27,3 +27,4 @@ matplotlib
 gitpython
 six
 alembic
+wtforms

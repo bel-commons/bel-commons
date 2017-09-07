@@ -123,31 +123,6 @@ class WebTest(unittest.TestCase):
             self.assertEqual(5, r['count'])
 
     @unittest.skip
-    def test_upload(self):
-        with self.app_instance.app_context():
-            self.assertEqual(0, self.manager.count_networks())
-
-            self.login(TEST_USER_EMAIL, TEST_USER_PASSWORD)
-
-            f = open(test_bel_pickle_path, 'rb')
-
-            with self.app_instance.test_request_context():
-                upload_form = UploadForm(
-                    file=f
-                )
-
-            response = self.app.post(
-                '/upload',
-                data=upload_form.data,
-                content_type='multipart/form-data',
-                follow_redirects=True,
-            )
-
-            log.warning('Response: %s, data: %s', response, response.data)
-
-            self.assertEqual(1, self.manager.count_networks())
-
-    @unittest.skip
     def test_pipeline_view(self):
         pipeline_query = {
             'network_ids[]': ['1', '2'],

@@ -19,11 +19,11 @@ from __future__ import print_function
 import datetime
 import json
 import logging
-import os
 import sys
 import time
 
 import click
+import os
 from flask_security import SQLAlchemyUserDatastore
 
 from pybel.constants import get_cache_connection, PYBEL_CONNECTION, PYBEL_DATA_DIR
@@ -35,15 +35,14 @@ from pybel_tools.utils import get_version as pybel_tools_get_version
 from .admin_service import build_admin_service
 from .analysis_service import analysis_blueprint
 from .application import create_application
-from .external_services import belief_blueprint
 from .constants import log_runner_path, CHARLIE_EMAIL
 from .curation_service import curation_blueprint
 from .database_service import api_blueprint
+from .external_services import belief_blueprint
 from .main_service import build_main_service
 from .models import Role, User, Report, Project, Experiment
 from .parser_async_service import parser_async_blueprint
 from .parser_endpoint import build_parser_service
-from .upload_service import upload_blueprint
 from .utils import iterate_user_strings
 
 log = logging.getLogger('pybel_web')
@@ -130,7 +129,6 @@ def run(host, port, default_config, debug, flask_debug, config):
     build_admin_service(app)
     app.register_blueprint(curation_blueprint)
     app.register_blueprint(parser_async_blueprint)
-    app.register_blueprint(upload_blueprint)
     app.register_blueprint(api_blueprint)
     app.register_blueprint(analysis_blueprint)
     app.register_blueprint(belief_blueprint)

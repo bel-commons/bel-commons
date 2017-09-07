@@ -253,20 +253,14 @@ def async_parser(connection, report_id):
 
     log.info('done storing [%d]', network.id)
 
-    try:
-        report.number_nodes = graph.number_of_nodes(),
-        report.number_edges = graph.number_of_edges(),
-        report.number_warnings = len(graph.warnings),
-
-    except (IntegrityError, OperationalError):
-        manager.session.rollback()
-        message = 'Problem with reporting service.'
-        return finish_parsing('Upload Failed', message)
-
-    make_mail('Upload Successful', '{} is done parsing. Check the network list page.'.format(graph))
-
+    report.network = network
+    report.number_nodes = graph.number_of_nodes()
+    report.number_edges = graph.number_of_edges()
+    report.number_warnings = len(graph.warnings)
     report.completed = True
     manager.session.commit()
+
+    make_mail('Upload Successful', '{} is done parsing. Check the network list page.'.format(graph))
 
     return network.id
 

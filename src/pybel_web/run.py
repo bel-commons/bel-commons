@@ -9,6 +9,7 @@ How to Run PyBEL Web
 """
 
 import logging
+
 import os
 
 from .admin_service import build_admin_service
@@ -20,7 +21,6 @@ from .database_service import api_blueprint
 from .main_service import build_main_service
 from .parser_async_service import parser_async_blueprint
 from .parser_endpoint import build_parser_service
-from .upload_service import upload_blueprint
 
 datefmt = '%H:%M:%S'
 fmt = "%(asctime)s - %(levelname)s - %(name)s - %(message)s"
@@ -53,7 +53,6 @@ build_main_service(app)
 build_admin_service(app)
 app.register_blueprint(curation_blueprint)
 app.register_blueprint(parser_async_blueprint)
-app.register_blueprint(upload_blueprint)
 app.register_blueprint(api_blueprint)
 app.register_blueprint(analysis_blueprint)
 

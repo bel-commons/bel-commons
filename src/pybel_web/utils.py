@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 
-import base64
 import datetime
 import itertools as itt
 import logging
 import pickle
 import time
-from collections import defaultdict
 
+import base64
 import pandas
+from collections import defaultdict
 from flask import (
     current_app,
     render_template,
@@ -233,7 +233,6 @@ def render_network_summary(network_id, graph):
 
     naked_names = get_naked_names(graph)
 
-
     function_count = count_functions(graph)
     relation_count = count_relations(graph)
     error_count = count_error_types(graph)
@@ -251,8 +250,8 @@ def render_network_summary(network_id, graph):
         chart_4_data=prepare_c3({
             'Translocations': translocation_count,
             'Degradations': degradation_count,
-            'Molecular Activities': molecular_count}
-        , 'Modifier Type') if has_modifications else None,
+            'Molecular Activities': molecular_count
+        }, 'Modifier Type') if has_modifications else None,
         chart_5_data=prepare_c3(count_variants(graph), 'Node Variants'),
         chart_6_data=prepare_c3(count_namespaces(graph), 'Namespaces'),
         chart_7_data=prepare_c3(hub_data, 'Top Hubs'),
@@ -356,44 +355,6 @@ def log_graph(graph, user, preparsed=False, failed=False):
         graph.number_of_edges(),
         len(graph.warnings)
     )
-
-
-def add_network_reporting(manager_, network, user, number_nodes, number_edges, number_warnings, preparsed=False,
-                          public=True):
-    """
-
-    :param manager_:
-    :param network:
-    :param user:
-    :param number_nodes:
-    :param number_edges:
-    :param number_warnings:
-    :param preparsed:
-    :param public:
-    :return:
-    """
-    reporting_log.info(
-        '%s %s %s v%s with %d nodes, %d edges, and %d warnings',
-        user,
-        'uploaded' if preparsed else 'compiled',
-        network.name,
-        network.version,
-        number_nodes,
-        number_edges,
-        number_warnings
-    )
-
-    report = Report(
-        network=network,
-        user=user,
-        precompiled=preparsed,
-        number_nodes=number_nodes,
-        number_edges=number_edges,
-        number_warnings=number_warnings,
-        public=public,
-    )
-    manager_.session.add(report)
-    manager_.session.commit()
 
 
 def get_recent_reports(manager_, weeks=2):
