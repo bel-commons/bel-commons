@@ -141,6 +141,23 @@ def run(host, port, default_config, debug, flask_debug, config):
     app.run(debug=flask_debug, host=host, port=port)
 
 
+@main.command()
+def worker():
+    """Runs the celery worker"""
+    from .celery_worker import celery as app
+    from celery.bin import worker
+
+    worker = worker.worker(app=app)
+
+    options = {
+        'broker': 'amqp://guest:guest@localhost:5672//',
+        'loglevel': 'INFO',
+        'traceback': True,
+    }
+
+    worker.run(**options)
+
+
 @main.group()
 @click.option('-c', '--connection', help='Cache connection. Defaults to {}'.format(get_cache_connection()))
 @click.option('--config', type=click.File('r'), help='Specify configuration JSON file')
