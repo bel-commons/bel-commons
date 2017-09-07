@@ -1453,7 +1453,6 @@ def add_pipeline_entry(query_id, name, *args, **kwargs):
 
     try:
         result = q.run(api)
-        log.info('result info: %s', info_str(result))
     except Exception as e:
         return jsonify(
             status=400,
@@ -1473,8 +1472,6 @@ def add_pipeline_entry(query_id, name, *args, **kwargs):
 
     if current_user.is_authenticated:
         qo.user = current_user
-
-    log.info('result info: %s', info_str(qo.run(api)))
 
     manager.session.add(qo)
     manager.session.commit()

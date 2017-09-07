@@ -235,10 +235,10 @@ class User(Base, UserMixin):
     __tablename__ = USER_TABLE_NAME
 
     id = Column(Integer, primary_key=True)
-    email = Column(String(255), unique=True)
+
+    email = Column(String(255), unique=True, doc="The user's email")
     password = Column(String(255))
-    first_name = Column(String(255))
-    last_name = Column(String(255))
+    name = Column(String(255), doc="The user's name")
     active = Column(Boolean)
     confirmed_at = Column(DateTime)
 
@@ -249,11 +249,6 @@ class User(Base, UserMixin):
     def admin(self):
         """Is this user an administrator?"""
         return self.has_role('admin')
-
-    @property
-    def name(self):
-        """Shows the full name of the user"""
-        return '{} {}'.format(self.first_name, self.last_name) if self.first_name else self.email
 
     def get_owned_networks(self):
         """Gets all networks this user owns
@@ -287,14 +282,14 @@ class User(Base, UserMixin):
         return repr(self)
 
     def __repr__(self):
-        return self.email
+        return self.name if self.name else self.email
 
     def to_json(self):
         """Outputs this User as a JSON dictionary
 
         :rtype: dict
         """
-        return {
+        result = {
             'id': self.id,
             'email': self.email,
             'roles': [
@@ -302,6 +297,11 @@ class User(Base, UserMixin):
                 for role in self.roles
             ],
         }
+
+        if self.name:
+            result['name'] = self.name
+
+        return result
 
 
 assembly_network = Table(

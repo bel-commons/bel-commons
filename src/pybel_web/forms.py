@@ -101,6 +101,5 @@ class DifferentialGeneExpressionForm(FlaskForm):
 
 class ExtendedRegisterForm(RegisterForm):
     """Extends the Flask-Security registration form"""
-    first_name = StringField('First Name', [DataRequired()])
-    last_name = StringField('Last Name', [DataRequired()])
+    name = StringField('Name', [DataRequired()])
     submit = SubmitField(get_form_field_label('register'))

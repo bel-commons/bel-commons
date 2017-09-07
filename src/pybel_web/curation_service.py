@@ -111,7 +111,7 @@ def get_boilerplate():
         document_name=form.name.data,
         contact=current_user.email,
         description=form.description.data,
-        authors=current_user.name,
+        authors=str(current_user),
         licenses=form.licenses.data,
         version='1.0.0',
         pmids=pmids,
