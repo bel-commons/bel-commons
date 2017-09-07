@@ -100,7 +100,7 @@ function displayNodeInfo(node) {
         nodeObject["Description"] = node.description
     }
     if (node.id) {
-        nodeObject["Identifier"] = '<a href="/api/nodes/' + node.id + '">' + node.id + "</a>";
+        nodeObject["Identifier"] = '<a href="/api/node/' + node.id + '">' + node.id + "</a>";
     }
 
     var row = 0;
@@ -140,10 +140,10 @@ function displayEdgeInfo(edge) {
         edgeObject["Annotations"] = JSON.stringify(edge.annotations);
     }
     if (edge.source.cname) {
-        edgeObject["Source"] = '<a href="/api/nodes/' + edge.source.id + '">' + edge.source.cname + "</a>";
+        edgeObject["Source"] = '<a href="/api/node/' + edge.source.id + '">' + edge.source.cname + "</a>";
     }
     if (edge.target.cname) {
-        edgeObject["Target"] = '<a href="/api/nodes/' + edge.target.id + '">' + edge.target.cname + "</a>";
+        edgeObject["Target"] = '<a href="/api/node/' + edge.target.id + '">' + edge.target.cname + "</a>";
     }
     if (edge.source.id && edge.target.id) {
         edgeObject["See Also"] = '<a target="_blank" href="/edges/' + edge.source.id + '/' + edge.target.id + '">All evidences</a>';
