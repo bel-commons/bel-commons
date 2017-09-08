@@ -410,6 +410,15 @@ class Query(Base):
 
         return self._query
 
+    def to_json(self):
+        """Serializes this object to JSON
+
+        :rtype: dict
+        """
+        result = {'id': self.id}
+        result.update(self.data.to_json())
+        return result
+
     def seeding_as_json(self):
         """Returns seeding json. It's also possible to get Query.data.seeding as well.
 

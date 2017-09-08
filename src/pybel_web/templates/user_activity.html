@@ -22,7 +22,7 @@
                 </div>
                 <ul class="list-group">
                     {% for report in pending_reports %}
-                        <li class="list-group-item">{{ report }}</li>
+                        <li class="list-group-item"><code>#{{ report.id }}</code> {{ report.source_name }}</li>
                     {% endfor %}
                 </ul>
             </div>

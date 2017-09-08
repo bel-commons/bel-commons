@@ -58,7 +58,7 @@ def get_neurommsigs():
 
     subgraph_annotations = request.args.getlist('subgraphs[]')
 
-    alzheimers_network = api.get_network_by_name("Alzheimer's Disease Knowledge Assembly")
+    alzheimers_network = manager.get_most_recent_network_by_name("Alzheimer's Disease Knowledge Assembly")
 
     network = get_subgraph_by_annotations(alzheimers_network, {'Subgraph': subgraph_annotations}, True)
 

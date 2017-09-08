@@ -12,11 +12,11 @@ Resources:
 
 import datetime
 import logging
-import os
 import socket
 import time
 from getpass import getuser
 
+import os
 from flasgger import Swagger
 from flask import (
     Flask,
@@ -133,7 +133,7 @@ class FlaskPyBEL:
             return expand_nodes_neighborhoods(
                 universe,
                 graph,
-                self.api.get_nodes_by_ids(node_ids)
+                self.api.get_nodes_by_hashes(node_ids)
             )
 
         @uni_in_place_mutator
@@ -147,7 +147,7 @@ class FlaskPyBEL:
             return expand_node_neighborhood(
                 universe,
                 graph,
-                self.api.get_node_by_id(node_id)
+                self.api.get_node_tuple_by_hash(node_id)
             )
 
         @in_place_mutator
@@ -157,7 +157,7 @@ class FlaskPyBEL:
             :param pybel.BELGraph graph:
             :param list[int] node_ids:
             """
-            nodes = self.api.get_nodes_by_ids(node_ids)
+            nodes = self.api.get_nodes_by_hashes(node_ids)
             graph.remove_nodes_from(nodes)
 
         @in_place_mutator
@@ -167,7 +167,7 @@ class FlaskPyBEL:
             :param pybel.BELGraph graph:
             :param int node_id:
             """
-            graph.remove_node(self.api.get_node_by_id(node_id))
+            graph.remove_node(self.api.get_node_tuple_by_hash(node_id))
 
 
 bootstrap = Bootstrap()
@@ -184,6 +184,14 @@ class IntListConverter(BaseConverter):
 
     def to_url(self, values):
         return ','.join(BaseConverter.to_url(self, value) for value in values)
+
+
+class ListConverter(BaseConverter):
+    def to_python(self, value):
+        return value.split(',')
+
+    def to_url(self, values):
+        return ','.join(BaseConverter.to_url(value) for value in values)
 
 
 def create_application(get_mail=False, config_location=None, **kwargs):
@@ -239,6 +247,7 @@ def create_application(get_mail=False, config_location=None, **kwargs):
 
     # Add converters
     app.url_map.converters['intlist'] = IntListConverter
+    app.url_map.converters['list'] = ListConverter
 
     # Initialize extensions
     bootstrap.init_app(app)

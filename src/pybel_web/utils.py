@@ -24,7 +24,7 @@ from sqlalchemy import func
 from werkzeug.local import LocalProxy
 
 import pybel
-from pybel.canonicalize import decanonicalize_node
+from pybel.canonicalize import node_to_bel
 from pybel.constants import RELATION, GENE
 from pybel.manager import Network
 from pybel.struct.filters import filter_edges
@@ -163,14 +163,14 @@ def render_network_summary(network_id, graph):
         if node in node_bel_cache:
             return node_bel_cache[node]
 
-        node_bel_cache[node] = decanonicalize_node(graph, node)
+        node_bel_cache[node] = node_to_bel(graph, node)
         return node_bel_cache[node]
 
     def get_pair_tuple(u, v):
-        return dcn(u), api.get_node_id(u), dcn(v), api.get_node_id(v)
+        return dcn(u), api.get_node_hash(u), dcn(v), api.get_node_hash(v)
 
     def get_triplet_tuple(a, b, c):
-        return dcn(a), api.get_node_id(a), dcn(b), api.get_node_id(b), dcn(c), api.get_node_id(c)
+        return dcn(a), api.get_node_hash(a), dcn(b), api.get_node_hash(b), dcn(c), api.get_node_hash(c)
 
     regulatory_pairs = [
         get_pair_tuple(u, v)
@@ -216,7 +216,7 @@ def render_network_summary(network_id, graph):
     })
 
     undefined_sfam = [
-        (dcn(node), api.get_node_id(node))
+        (dcn(node), api.get_node_hash(node))
         for node in iter_undefined_families(graph, ['SFAM', 'GFAM'])
     ]
 
@@ -225,7 +225,7 @@ def render_network_summary(network_id, graph):
     overlap_counter = api.get_node_overlap(network_id)
     allowed_network_ids = get_network_ids_with_permission_helper(current_user, api)
     overlaps = [
-        (api.manager.get_network_by_id(network_id), v)
+        (api.manager.get_graph_by_id(network_id), v)
         for network_id, v in overlap_counter.most_common()
         if network_id in allowed_network_ids
     ]
@@ -401,13 +401,12 @@ def iterate_user_strings(manager_, with_passwords):
     :param bool with_passwords:
     :rtype: iter[str]
     """
-    for u in manager_.session.query(User).all():
-        yield '{}\t{}\t{}\t{}{}'.format(
-            u.email,
-            u.first_name,
-            u.last_name,
-            ','.join(sorted(r.name for r in u.roles)),
-            '\t{}'.format(u.password) if with_passwords else ''
+    for user in manager_.session.query(User).all():
+        yield '{}\t{}\t{}{}'.format(
+            user.email,
+            '\t{}'.format(user.password) if with_passwords else '',
+            ','.join(sorted(r.name for r in user.roles)),
+            user.name,
         )
 
 
@@ -452,7 +451,7 @@ def convert_seed_value(key, form, value):
     elif key in {'pubmed', 'authors'}:
         return form.getlist(value)
     else:
-        return api.get_nodes_by_ids(form.getlist(value, type=int))
+        return api.get_nodes_by_hashes(form.getlist(value, type=int))
 
 
 def query_form_to_dict(form):
@@ -604,7 +603,7 @@ def list_public_networks(api_):
     """
     return [
         network
-        for network in api_.list_recent_networks()
+        for network in api_.manager.list_recent_networks()
         if network.report and network.report.public
     ]
 
@@ -638,7 +637,7 @@ def networks_with_permission_iter_helper(user, api_):
         yield from list_public_networks(api_)
 
     elif user.admin:
-        yield from api_.list_recent_networks()
+        yield from api_.manager.list_recent_networks()
 
     else:
         yield from list_public_networks(api_)
@@ -664,7 +663,7 @@ def get_networks_with_permission(api_):
         return list_public_networks(api_)
 
     if current_user.admin:
-        return api_.list_recent_networks()
+        return api_.manager.list_recent_networks()
 
     return list(unique_networks(networks_with_permission_iter_helper(current_user, api_)))
 
@@ -732,15 +731,14 @@ def safe_get_query(query_id):
     return query
 
 
-def get_vote(edge, user_id):
+def get_vote(edge, user):
     """Gets a vote for the given edge and user
 
-    :param int edge_id:
-    :param int user_id:
+    :param Edge edge:
+    :param User user:
     :rtype: EdgeVote
     """
-    return manager.session.query(EdgeVote).filter(EdgeVote.edge == edge,
-                                                  EdgeVote.user_id == user_id).one_or_none()
+    return manager.session.query(EdgeVote).filter(EdgeVote.edge == edge, EdgeVote.user == user).one_or_none()
 
 
 def next_or_jsonify(message, *args, status=200, category='message', **kwargs):

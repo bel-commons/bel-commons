@@ -6,6 +6,7 @@ import csv
 import json
 import logging
 import pickle
+import time
 
 import flask
 import git
@@ -37,7 +38,6 @@ from pybel.manager.models import (
     Namespace,
     Annotation,
     Network,
-    Edge,
 )
 from pybel_tools import pipeline
 from pybel_tools.analysis.cmpa import RESULT_LABELS
@@ -53,7 +53,6 @@ from pybel_tools.summary import (
     get_activities,
     count_namespaces,
     info_json,
-    info_str,
     info_list,
     get_authors,
     get_pubmed_identifiers,
@@ -152,8 +151,10 @@ def list_namespaces():
     tags:
         - namespace
     """
-    namespaces = api.query_namespaces()
-    return jsonify(namespaces)
+    return jsonify([
+        namespace.to_json(include_id=True)
+        for namespace in manager.list_namespaces()
+    ])
 
 
 @api_blueprint.route('/api/namespace/<keyword>', methods=['GET'])
@@ -243,9 +244,9 @@ def download_undefined_namespace(network_id, namespace):
     tags:
         - network
     """
-    network = api.get_network_by_id(network_id)
-    names = get_undefined_namespace_names(network, namespace)
-    return _build_namespace_helper(network, namespace, names)
+    graph = api.get_graph_by_id(network_id)
+    names = get_undefined_namespace_names(graph, namespace)
+    return _build_namespace_helper(graph, namespace, names)
 
 
 @api_blueprint.route('/api/network/<int:network_id>/builder/namespace/incorrect/<namespace>')
@@ -256,7 +257,7 @@ def download_missing_namespace(network_id, namespace):
     tags:
         - network
     """
-    graph = api.get_network_by_id(network_id)
+    graph = api.get_graph_by_id(network_id)
     names = get_incorrect_names_by_namespace(graph, namespace)
     return _build_namespace_helper(graph, namespace, names)
 
@@ -269,7 +270,7 @@ def download_naked_names(network_id):
     tags:
         - network
     """
-    graph = api.get_network_by_id(network_id)
+    graph = api.get_graph_by_id(network_id)
     names = get_naked_names(graph)
     return _build_namespace_helper(graph, 'NAKED', names)
 
@@ -282,7 +283,7 @@ def download_list_annotation(network_id, annotation):
     tags:
         - network
     """
-    graph = api.get_network_by_id(network_id)
+    graph = api.get_graph_by_id(network_id)
 
     if annotation not in graph.annotation_list:
         abort(400, 'Graph does not contain this list annotation')
@@ -317,8 +318,10 @@ def list_annotations():
     tags:
         - annotation
     """
-    annotations = api.query_annotations()
-    return jsonify(annotations)
+    return jsonify([
+        annotation.to_json(include_id=True)
+        for annotation in manager.list_annotations()
+    ])
 
 
 @api_blueprint.route('/api/annotation/<keyword>', methods=['GET'])
@@ -655,20 +658,21 @@ def export_network(network_id, serve_format):
     if network_id not in network_ids:
         abort(403, 'You do not have permission to download the selected network')
 
-    network = api.get_network_by_id(network_id)
+    graph = api.get_graph_by_id(network_id)
 
-    return serve_network(network, serve_format)
+    return serve_network(graph, serve_format)
 
 
 @api_blueprint.route('/api/network/<int:network_id>/summarize')
-def get_number_nodes(network_id):
+def get_graph_info_json(network_id):
     """Gets a summary of the given network
 
     ---
     tags:
         - network
     """
-    return jsonify(info_json(api.get_network_by_id(network_id)))
+    graph = api.get_graph_by_id(network_id)
+    return jsonify(info_json(graph))
 
 
 @api_blueprint.route('/api/network/<int:network_id>/name')
@@ -682,7 +686,7 @@ def get_network_name_by_id(network_id):
     if network_id == 0:
         return ''
 
-    network = api.get_network_by_id(network_id)
+    network = manager.get_network_by_id(network_id)
     return jsonify(network.name)
 
 
@@ -806,8 +810,8 @@ def get_paths(query_id, source_id, target_id):
 
     cutoff = request.args.get('cutoff', 7)
 
-    source = api.get_node_by_id(source_id)
-    target = api.get_node_by_id(target_id)
+    source = api.get_node_tuple_by_hash(source_id)
+    target = api.get_node_tuple_by_hash(target_id)
 
     log.info('Source: %s, target: %s', source, target)
 
@@ -832,7 +836,7 @@ def get_paths(query_id, source_id, target_id):
         log.debug('No paths between: {} and {}'.format(source, target))
         return 'No paths between the selected nodes'
 
-    return jsonify(api.get_node_ids(shortest_path))
+    return jsonify(api.get_node_hashes(shortest_path))
 
 
 @api_blueprint.route('/api/query/<int:query_id>/centrality/<int:node_number>', methods=['GET'])
@@ -851,7 +855,7 @@ def get_nodes_by_betweenness_centrality(query_id, node_number):
     bw_dict = nx.betweenness_centrality(network)
 
     return jsonify([
-        api.get_node_id(node)
+        api.get_node_hash(node)
         for node, score in sorted(bw_dict.items(), key=itemgetter(1), reverse=True)[:node_number]
     ])
 
@@ -1044,35 +1048,31 @@ def edges_by_annotation(annotation, value):
     return jsonify(edges)
 
 
-def get_edge_entry(edge_id):
+def get_edge_entry(edge_hash):
     """Gets edge information by edge identifier
 
-    :param int edge_id: The identifier of a given edge
+    :param int edge_hash: The identifier of a given edge
     :return: A dictionary representing the information about the given edge
     :rtype: dict
     """
-    source, target, data = api.get_edge_by_id(edge_id)
+    edge = manager.get_edge_by_hash(edge_hash)
 
-    data = {
-        'id': edge_id,
-        'source': api.get_node_id(source),
-        'target': api.get_node_id(target),
-        'data': data,
-        'comments': [
-            {
-                'user': {
-                    'id': ec.user_id,
-                    'email': ec.user.email
-                },
-                'comment': ec.comment,
-                'created': ec.created,
-            }
-            for ec in manager.session.query(EdgeComment).filter(EdgeComment.edge_id == edge_id)
-        ]
-    }
+    data = edge.to_json()
+
+    data['comments'] = [
+        {
+            'user': {
+                'id': ec.user_id,
+                'email': ec.user.email
+            },
+            'comment': ec.comment,
+            'created': ec.created,
+        }
+        for ec in manager.session.query(EdgeComment).filter(EdgeComment.edge == edge)
+    ]
 
     if current_user.is_authenticated:
-        vote = get_vote(edge_id, current_user.id)
+        vote = get_vote(edge, current_user)
         data['vote'] = 0 if vote is None else 1 if vote.agreed else -1
 
     return data
@@ -1093,7 +1093,7 @@ def get_all_edges():
     ])
 
 
-@api_blueprint.route('/api/edge/<int:edge_id>')
+@api_blueprint.route('/api/edge/<edge_id>')
 def get_edge_by_id(edge_id):
     """Gets an edge data dictionary by id
 
@@ -1104,13 +1104,13 @@ def get_edge_by_id(edge_id):
     return jsonify(get_edge_entry(edge_id))
 
 
-def ensure_vote(edge, user_id, agreed):
-    vote = get_vote(edge, user_id)
+def ensure_vote(edge, user, agreed):
+    vote = get_vote(edge, user)
 
     if vote is None:
         vote = EdgeVote(
             edge=edge,
-            user_id=user_id,
+            user=user,
             agreed=agreed
         )
         manager.session.add(vote)
@@ -1122,7 +1122,7 @@ def ensure_vote(edge, user_id, agreed):
     return vote
 
 
-@api_blueprint.route('/api/edge/<int:edge_id>/vote/up')
+@api_blueprint.route('/api/edge/<edge_id>/vote/up')
 @login_required
 def store_up_vote(edge_id):
     """Up votes an edge
@@ -1131,16 +1131,16 @@ def store_up_vote(edge_id):
     tags:
         - edge
     """
-    edge = manager.session.query(Edge).get(edge_id)
+    edge = manager.get_edge_by_hash(edge_id)
 
     if edge is None:
         abort(403, 'Edge {} not found'.format(edge_id))
 
-    vote = ensure_vote(edge, current_user.id, True)
+    vote = ensure_vote(edge, current_user, True)
     return jsonify(vote.to_json())
 
 
-@api_blueprint.route('/api/edge/<int:edge_id>/vote/down')
+@api_blueprint.route('/api/edge/<edge_id>/vote/down')
 @login_required
 def store_down_vote(edge_id):
     """Down votes an edge
@@ -1149,16 +1149,16 @@ def store_down_vote(edge_id):
     tags:
         - edge
     """
-    edge = manager.session.query(Edge).get(edge_id)
+    edge = manager.get_edge_by_hash(edge_id)
 
     if edge is None:
         abort(403, 'Edge {} not found'.format(edge_id))
 
-    vote = ensure_vote(edge, current_user.id, False)
+    vote = ensure_vote(edge, current_user, False)
     return jsonify(vote.to_json())
 
 
-@api_blueprint.route('/api/edge/<int:edge_id>/comment', methods=('GET', 'POST'))
+@api_blueprint.route('/api/edge/<edge_id>/comment', methods=('GET', 'POST'))
 @login_required
 def store_comment(edge_id):
     """Adds a comment to the edge
@@ -1167,7 +1167,7 @@ def store_comment(edge_id):
     tags:
         - edge
     """
-    edge = manager.session.query(Edge).get(edge_id)
+    edge = manager.get_edge_by_hash(edge_id)
 
     if edge is None:
         abort(403, 'Edge {} not found'.format(edge_id))
@@ -1257,7 +1257,7 @@ def get_all_nodes():
     ])
 
 
-@api_blueprint.route('/api/node/<int:node_id>')
+@api_blueprint.route('/api/node/<node_id>')
 def get_node_hash(node_id):
     """Gets the pybel node tuple
 
@@ -1267,8 +1267,8 @@ def get_node_hash(node_id):
     tags:
         - node
     """
-    node = api.get_node_by_id(node_id)
-    return jsonify(node)
+    node = manager.get_node_tuple_by_hash(node_id)
+    return jsonify(node.to_json())
 
 
 @api_blueprint.route('/api/node/suggestion/')
@@ -1382,8 +1382,8 @@ def query_to_network(query_id):
 
     network_ids = j['network_ids']
     j['networks'] = [
-        str(api.get_network_by_id(network_id))
-        for network_id in network_ids
+        str(graph)
+        for graph in api.get_graphs_by_ids(network_ids)
     ]
 
     return jsonify(j)
@@ -1482,7 +1482,7 @@ def add_pipeline_entry(query_id, name, *args, **kwargs):
     })
 
 
-@api_blueprint.route('/api/query/<int:query_id>/isolated_node/<int:node_id>', methods=['GET'])
+@api_blueprint.route('/api/query/<int:query_id>/isolated_node/<node_id>', methods=['GET'])
 def get_query_from_isolated_node(query_id, node_id):
     """Creates a query with a single node_id
 
@@ -1491,15 +1491,13 @@ def get_query_from_isolated_node(query_id, node_id):
         - query
     """
     parent_query = safe_get_query(query_id)
+    node = manager.get_node_tuple_by_hash(node_id)
 
-    child_query = Query.from_json({
-        'seeding': [{'type': 'induction', 'data': [api.get_node_by_id(node_id)]}],
-        'pipeline': [],
-        'network_ids': [
-            network.id
-            for network in parent_query.assembly.networks
-        ]
-    })
+    child_query = Query(network_ids=[
+        network.id
+        for network in parent_query.assembly.networks
+    ])
+    child_query.add_seed_induction([node])
 
     child_query_model = models.Query(
         assembly=parent_query.assembly,
@@ -1515,9 +1513,7 @@ def get_query_from_isolated_node(query_id, node_id):
     manager.session.add(child_query_model)
     manager.session.commit()
 
-    return jsonify({
-        'id': child_query_model.id
-    })
+    return jsonify(child_query_model.to_json())
 
 
 @api_blueprint.route('/api/query/<int:query_id>/add_applier/<name>', methods=['GET'])
@@ -1531,13 +1527,13 @@ def add_applier_to_query(query_id, name):
     return add_pipeline_entry(query_id, name)
 
 
-@api_blueprint.route('/api/query/<int:query_id>/add_node_list_applier/<name>/<intlist:node_ids>', methods=['GET'])
+@api_blueprint.route('/api/query/<int:query_id>/add_node_list_applier/<name>/<list:node_ids>', methods=['GET'])
 def add_node_list_applier_to_query(query_id, name, node_ids):
     """Builds a new query with a node list applier added to the end of the pipeline
 
     :param int query_id: A query's database identifier
     :param str name: The name of the function to apply at the end of the query
-    :param list[int] node_ids: The node identifiers to use as the argument to the function
+    :param list[str] node_ids: The node identifiers to use as the argument to the function
 
     ---
     tags:
@@ -1546,7 +1542,7 @@ def add_node_list_applier_to_query(query_id, name, node_ids):
     return add_pipeline_entry(query_id, name, node_ids)
 
 
-@api_blueprint.route('/api/query/<int:query_id>/add_node_applier/<name>/<int:node_id>', methods=['GET'])
+@api_blueprint.route('/api/query/<int:query_id>/add_node_applier/<name>/<node_id>', methods=['GET'])
 def add_node_applier_to_query(query_id, name, node_id):
     """Builds a new query with a node applier added to the end of the pipeline
 
@@ -1558,6 +1554,7 @@ def add_node_applier_to_query(query_id, name, node_id):
     tags:
         - query
     """
+
     return add_pipeline_entry(query_id, name, node_id)
 
 
@@ -1707,7 +1704,7 @@ def get_analysis(query_id, experiment_id):
 
     data = pickle.loads(experiment.result)
     results = [
-        {'node': api.get_node_id(node), 'data': data[node]}
+        {'node': api.get_node_hash(node), 'data': data[node]}
         for node in network.nodes_iter()
         if node in data
     ]
@@ -1734,7 +1731,7 @@ def get_analysis_median(query_id, experiment_id):
     data = pickle.loads(experiment.result)
     # position 3 is the 'median' score
     results = {
-        api.get_node_id(node): data[node][3]
+        api.get_node_hash(node): data[node][3]
         for node in network.nodes_iter()
         if node in data
     }
@@ -1948,11 +1945,15 @@ def summarize_project(project_id):
     csv_list = [
         ('Name', 'Version', 'Nodes', 'Edges', 'Citations', 'Authors', 'Density', 'Components', 'AvgDegree', 'Warnings')]
 
+    # TODO add all of these to the network's model or to the report
     for network in project.networks:
-        csv_list.append((network.name, network.version) + tuple(
+        csv_list_entry = network.name, network.version
+        csv_list_entry += tuple(
             v
-            for _, v in info_list(api.get_network_by_id(network.id))
-        ))
+            for _, v in info_list(api.get_graph_by_id(network.id))
+        )
+
+        csv_list.append(csv_list_entry)
 
     csv_list.append(('Total', '') + tuple(v for _, v in info_list(project.as_bel())))
 
@@ -2062,8 +2063,8 @@ def list_all_network_overview():
     node_elements = []
     edge_elements = []
 
-    for source_network_id in api.get_network_ids():
-        source_network = api.get_network_by_id(network_id=source_network_id)
+    for source_network in manager.get_networks():
+        source_network_id = source_network.id
         overlap = api.get_node_overlap(source_network_id)
 
         node_elements.append({

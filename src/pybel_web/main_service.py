@@ -28,8 +28,6 @@ import pybel_tools.query
 from pybel import from_bytes
 from pybel.constants import (
     PYBEL_CONNECTION,
-    EVIDENCE,
-    CITATION,
 )
 from pybel.manager.models import (
     Namespace,
@@ -300,8 +298,8 @@ def build_main_service(app):
     @app.route('/summary/<int:network_id>/induction-query/')
     def build_summary_link_query(network_id):
         nodes = [
-            api.get_node_by_id(node)
-            for node in request.args.getlist('nodes', type=int)
+            api.get_node_by_hash(node)
+            for node in request.args.getlist('nodes')
         ]
         q = pybel_tools.query.Query(network_id)
         q.add_seed_induction(nodes)
@@ -438,35 +436,30 @@ def build_main_service(app):
             data=data,
         )
 
-    @app.route('/edges/<int:source_id>/<int:target_id>')
+    @app.route('/edges/<source_id>/<target_id>')
     @login_required
     def view_relations(source_id, target_id):
         """View a list of all relations between two nodes"""
-        source = api.get_node_by_id(source_id)
-        target = api.get_node_by_id(target_id)
+        source = manager.get_node_by_hash(source_id)
+        target = manager.get_node_by_hash(target_id)
+        relations = list(manager.query_edges(source=source, target=target))
 
-        relations = api.get_edges(
-            source,
-            target,
-            both_ways=('undirected' in request.args),
-        )
+        if 'undirected' in request.args:
+            relations.extend(manager.query_edges(source=target, target=source))
 
-        d = defaultdict(list)
-
+        data = defaultdict(list)
         ev2cit = {}
-
         for relation in relations:
-            ev = relation.get(EVIDENCE)
-            d[ev].append(relation)
-
-            ev2cit[ev] = relation[CITATION]
+            ev = relation.evidence.text
+            data[ev].append(relation.to_json()['data'])
+            ev2cit[ev] = relation.evidence.citation.to_json()
 
         return render_template(
             'evidence_list.html',
-            data=d,
+            data=data,
             ev2cit=ev2cit,
-            source_bel=api.id_bel[source_id],
-            target_bel=api.id_bel[target_id],
+            source_bel=source.bel,
+            target_bel=target.bel,
         )
 
     @app.route('/overview')
