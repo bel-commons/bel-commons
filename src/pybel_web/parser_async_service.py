@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 
 import logging
 
+import hashlib
 from flask import render_template, current_app, Blueprint, flash, redirect, url_for
 from flask_security import current_user, login_required
 
@@ -30,10 +31,16 @@ def view_parser():
     if not form.validate_on_submit():
         return render_template('parser.html', form=form, current_user=current_user)
 
+    source_bytes = form.file.data.stream.read()
+    source_sha512 = hashlib.sha512(source_bytes).hexdigest()
+
+    # check if another one has the same hash + settings
+
     report = Report(
         user=current_user,
         source_name=form.file.data.filename,
-        source=form.file.data.stream.read(),
+        source=source_bytes,
+        source_hash=source_sha512,
         encoding=form.encoding.data,
         public=form.public.data,
         allow_nested=form.allow_nested.data,
