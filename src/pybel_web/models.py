@@ -327,6 +327,8 @@ class Assembly(Base):
     user_id = Column(Integer, ForeignKey('{}.id'.format(USER_TABLE_NAME)), doc='The creator of this assembly')
     user = relationship('User', backref='assemblies')
 
+    created = Column(DateTime, default=datetime.datetime.utcnow, doc='The date and time of upload')
+
     networks = relationship('Network', secondary=assembly_network, backref=backref('assemblies', lazy='dynamic'))
 
     def as_bel(self):
@@ -386,6 +388,8 @@ class Query(Base):
     assembly_id = Column(Integer, ForeignKey('{}.id'.format(ASSEMBLY_TABLE_NAME)),
                          doc='The network assembly used in this query')
     assembly = relationship('Assembly')
+
+    created = Column(DateTime, default=datetime.datetime.utcnow, doc='The date and time of upload')
 
     seeding = Column(Text, doc="The stringified JSON of the list representation of the seeding")
 
