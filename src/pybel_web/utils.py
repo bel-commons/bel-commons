@@ -242,6 +242,8 @@ def render_network_summary(network_id, graph):
 
     has_modifications = all([translocation_count, degradation_count, molecular_count])
 
+    error_groups = count_dict_values(group_errors(graph)).most_common(20)
+
     return render_template(
         'summary.html',
         chart_1_data=prepare_c3(function_count, 'Entity Type'),
@@ -257,7 +259,7 @@ def render_network_summary(network_id, graph):
         chart_7_data=prepare_c3(hub_data, 'Top Hubs'),
         chart_9_data=prepare_c3(disease_data, 'Pathologies') if disease_data else None,
         chart_10_data=prepare_c3_time_series(citation_years, 'Number of articles') if citation_years else None,
-        error_groups=count_dict_values(group_errors(graph)).most_common(20),
+        error_groups=error_groups,
         info_list=info_list(graph),
         regulatory_pairs=regulatory_pairs,
         contradictions=contradictory_pairs,
