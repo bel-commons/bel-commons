@@ -10,19 +10,16 @@ Reference for testing Flask
 import datetime
 import json
 import logging
-import os
-import tempfile
 import unittest
 
+import os
+import tempfile
 from flask_security import current_user
 
 from pybel.constants import PYBEL_CONNECTION
 from pybel_web.application import FlaskPyBEL, create_application
 from pybel_web.database_service import api_blueprint
-from pybel_web.forms import UploadForm
 from pybel_web.main_service import build_main_service
-from pybel_web.upload_service import upload_blueprint
-from tests.constants import test_bel_pickle_path
 
 log = logging.getLogger(__name__)
 log.setLevel(10)
@@ -63,7 +60,6 @@ class WebTest(unittest.TestCase):
 
         build_main_service(self.app_instance)
         self.app_instance.register_blueprint(api_blueprint)
-        self.app_instance.register_blueprint(upload_blueprint)
 
         self.pybel = FlaskPyBEL(self.app_instance)
 
