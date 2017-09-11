@@ -64,32 +64,33 @@ class Report(Base):
 
     id = Column(Integer, primary_key=True)
 
-    network_id = Column(
-        Integer,
-        ForeignKey('{}.id'.format(NETWORK_TABLE_NAME)),
-        doc='The network that was uploaded'
-    )
-    network = relationship('Network', backref=backref('report', uselist=False))
-
     user_id = Column(Integer, ForeignKey('{}.id'.format(USER_TABLE_NAME)), doc='The user who uploaded the network')
     user = relationship('User', backref=backref('reports', lazy='dynamic'))
 
     created = Column(DateTime, default=datetime.datetime.utcnow, doc='The date and time of upload')
     public = Column(Boolean, nullable=False, default=False, doc='Should the network be viewable to the public?')
 
-    number_nodes = Column(Integer)
-    number_edges = Column(Integer)
-    number_warnings = Column(Integer)
-
     source_name = Column(Text, doc='The name of the source file')
     source = Column(Binary, doc='The source BEL Script')
+    source_hash = Column(String(128), index=True, doc='SHA512 hash of source file')
     encoding = Column(Text)
 
     allow_nested = Column(Boolean, default=False)
     citation_clearing = Column(Boolean, default=False)
 
+    number_nodes = Column(Integer)
+    number_edges = Column(Integer)
+    number_warnings = Column(Integer)
+
     message = Column(Text, doc='Error message')
     completed = Column(Boolean)
+
+    network_id = Column(
+        Integer,
+        ForeignKey('{}.id'.format(NETWORK_TABLE_NAME)),
+        doc='The network that was uploaded'
+    )
+    network = relationship('Network', backref=backref('report', uselist=False))
 
     def __repr__(self):
         if self.completed is None:
