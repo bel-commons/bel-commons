@@ -94,7 +94,7 @@ _config_map = {
 
 
 @main.command()
-@click.option('--host', default='0.0.0.0', help='Flask host. Defaults to localhost')
+@click.option('--host', default='0.0.0.0', help='Flask host. Defaults to 0.0.0.0')
 @click.option('--port', type=int, help='Flask port. Defaults to 5000')
 @click.option('--default-config', type=click.Choice(['local', 'test', 'prod']),
               help='Use different default config object')
