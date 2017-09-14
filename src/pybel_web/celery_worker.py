@@ -261,7 +261,7 @@ def async_parser(connection, report_id):
         report.completed = True
         manager.session.commit()
 
-        log.info('report #1 complete [%d]', report.id, network.id)
+        log.info('report #%d complete [%d]', report.id, network.id)
         make_mail('Upload Successful', '{} is done parsing. Check the network list page.'.format(graph))
 
         return network.id
