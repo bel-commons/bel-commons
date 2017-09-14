@@ -25,7 +25,7 @@ from flask import (
     _app_ctx_stack,
 )
 from flask_bootstrap import Bootstrap, WebCDN
-from flask_mail import Mail, Message
+from flask_mail import Mail
 from flask_security import Security, SQLAlchemyUserDatastore
 from raven.contrib.flask import Sentry
 from werkzeug.routing import BaseConverter
@@ -264,20 +264,19 @@ def create_application(get_mail=False, config_location=None, **kwargs):
         mail.init_app(app)
 
         if app.config.get('PYBEL_WEB_STARTUP_NOTIFY'):
-            startup_message = Message(
-                subject="PyBEL Web - Startup",
-                body="PyBEL Web v{} was started on {} by {} at {}.\n\nDeployed to: {}".format(
-                    PYBEL_WEB_VERSION,
-                    socket.gethostname(),
-                    getuser(),
-                    time.asctime(),
-                    app.config.get('SERVER_NAME')
-                ),
-                sender=("PyBEL Web", 'pybel@scai.fraunhofer.de'),
-                recipients=[app.config.get('PYBEL_WEB_STARTUP_NOTIFY')]
-            )
             with app.app_context():
-                mail.send(startup_message)
+                mail.send_message(
+                    subject="PyBEL Web - Startup",
+                    body="PyBEL Web v{} was started on {} by {} at {}.\n\nDeployed to: {}".format(
+                        PYBEL_WEB_VERSION,
+                        socket.gethostname(),
+                        getuser(),
+                        time.asctime(),
+                        app.config.get('SERVER_NAME')
+                    ),
+                    sender=("PyBEL Web", 'pybel@scai.fraunhofer.de'),
+                    recipients=[app.config.get('PYBEL_WEB_STARTUP_NOTIFY')]
+                )
 
     pybel_extension.init_app(app)
     security.init_app(app, pybel_extension.user_datastore, register_form=ExtendedRegisterForm)
