@@ -253,16 +253,23 @@ def async_parser(connection, report_id):
 
     log.info('done storing [%d]', network.id)
 
-    report.network = network
-    report.number_nodes = graph.number_of_nodes()
-    report.number_edges = graph.number_of_edges()
-    report.number_warnings = len(graph.warnings)
-    report.completed = True
-    manager.session.commit()
+    try:
+        report.network = network
+        report.number_nodes = graph.number_of_nodes()
+        report.number_edges = graph.number_of_edges()
+        report.number_warnings = len(graph.warnings)
+        report.completed = True
+        manager.session.commit()
 
-    make_mail('Upload Successful', '{} is done parsing. Check the network list page.'.format(graph))
+        log.info('report #1 complete [%d]', report.id, network.id)
+        make_mail('Upload Successful', '{} is done parsing. Check the network list page.'.format(graph))
 
-    return network.id
+        return network.id
+
+    except Exception as e:
+        manager.session.rollback()
+        make_mail('Report unsuccessful', str(e))
+        return -1
 
 
 @celery.task(name='run-cmpa')
