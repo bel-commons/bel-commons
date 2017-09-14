@@ -21,7 +21,8 @@ from flasgger import Swagger
 from flask import (
     Flask,
     g,
-    render_template
+    render_template,
+    _app_ctx_stack,
 )
 from flask_bootstrap import Bootstrap, WebCDN
 from flask_mail import Mail, Message
@@ -64,7 +65,10 @@ class FlaskPyBEL:
         """
         :param flask.Flask app:
         """
-        self.manager = Manager.ensure(app.config.get(PYBEL_CONNECTION))
+        self.manager = Manager(
+            connection=app.config.get(PYBEL_CONNECTION),
+            scopefunc=_app_ctx_stack.__ident_func__
+        )
 
         self.sentry = Sentry(
             app,
