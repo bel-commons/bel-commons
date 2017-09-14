@@ -240,7 +240,18 @@ def render_network_summary(network_id, graph):
     degradation_count = len(get_degradations(graph))
     molecular_count = len(get_activities(graph))
 
-    has_modifications = all([translocation_count, degradation_count, molecular_count])
+    modification_count_labels = (
+        'Translocations',
+        'Degradations',
+        'Molecular Activities',
+    )
+    modification_counts = (translocation_count, degradation_count, molecular_count)
+
+    modifications_count = {
+        label: count
+        for label, count in zip(modification_count_labels, modification_counts)
+        if count
+    }
 
     error_groups = count_dict_values(group_errors(graph)).most_common(20)
 
@@ -249,11 +260,7 @@ def render_network_summary(network_id, graph):
         chart_1_data=prepare_c3(function_count, 'Entity Type'),
         chart_2_data=prepare_c3(relation_count, 'Relationship Type'),
         chart_3_data=prepare_c3(error_count, 'Error Type') if error_count else None,
-        chart_4_data=prepare_c3({
-            'Translocations': translocation_count,
-            'Degradations': degradation_count,
-            'Molecular Activities': molecular_count
-        }, 'Modifier Type') if has_modifications else None,
+        chart_4_data=prepare_c3(modifications_count if modifications_count else None),
         chart_5_data=prepare_c3(count_variants(graph), 'Node Variants'),
         chart_6_data=prepare_c3(count_namespaces(graph), 'Namespaces'),
         chart_7_data=prepare_c3(hub_data, 'Top Hubs'),
