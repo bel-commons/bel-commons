@@ -227,7 +227,7 @@ def render_network_summary(network_id, graph):
     overlaps = [
         (api.manager.get_network_by_id(network_id), v)
         for network_id, v in overlap_counter.most_common()
-        if network_id in allowed_network_ids
+        if network_id in allowed_network_ids and v > 0.0
     ]
     top_overlaps = overlaps[:10]
 
