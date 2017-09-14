@@ -1267,7 +1267,7 @@ def get_node_hash(node_id):
     tags:
         - node
     """
-    node = manager.get_node_tuple_by_hash(node_id)
+    node = api.get_node_tuple_by_hash(node_id)
     return jsonify(node.to_json())
 
 
@@ -1491,7 +1491,7 @@ def get_query_from_isolated_node(query_id, node_id):
         - query
     """
     parent_query = safe_get_query(query_id)
-    node = manager.get_node_tuple_by_hash(node_id)
+    node = api.get_node_tuple_by_hash(node_id)
 
     child_query = Query(network_ids=[
         network.id
