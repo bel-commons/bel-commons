@@ -225,7 +225,7 @@ def render_network_summary(network_id, graph):
     overlap_counter = api.get_node_overlap(network_id)
     allowed_network_ids = get_network_ids_with_permission_helper(current_user, api)
     overlaps = [
-        (api.manager.get_graph_by_id(network_id), v)
+        (api.manager.get_network_by_id(network_id), v)
         for network_id, v in overlap_counter.most_common()
         if network_id in allowed_network_ids
     ]
