@@ -19,8 +19,8 @@ scipy
 numpy
 celery
 obonet
-pybel-tools>=0.3.0
-pybel>=0.8.0
+pybel-tools>=0.3.1
+pybel>=0.8.1
 raven
 matplotlib_venn
 matplotlib

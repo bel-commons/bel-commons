@@ -38,7 +38,7 @@ def get_manager(app):
     """Gets the cache manger from a Flask app
 
     :param flask.Flask app: A Flask app
-    :rtype: pybel.manager.cache.CacheManager
+    :rtype: pybel.manager.cache.Manager
     """
     return get_pybel(app).manager
 

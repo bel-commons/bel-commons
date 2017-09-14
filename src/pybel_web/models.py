@@ -112,7 +112,7 @@ class Report(Base):
     def parse_graph(self, manager):
         """Parses the graph from the latent BEL Script
 
-        :param pybel.manager.cache.CacheManager manager: A cache manager
+        :param pybel.manager.cache.Manager manager: A cache manager
         :rtype: pybel.BELGraph
         """
         return from_lines(
@@ -442,7 +442,7 @@ class Query(Base):
         """A wrapper around the :meth:`pybel_tools.query.Query.run` function of the enclosed
         :class:`pybel_tools.pipeline.Query` object.
 
-        :type manager: pybel.cache.manager.CacheManager or pybel_tools.api.DatabaseService
+        :type manager: pybel.manager.Manager or pybel_tools.api.DatabaseService
         :return: The result of this query
         :rtype: pybel.BELGraph
         """
@@ -452,7 +452,7 @@ class Query(Base):
     def from_query(manager, query, user=None):
         """Builds a orm query from a pybel-tools query
 
-        :param pybel.manager.CacheManager manager:
+        :param pybel.manager.Manager manager:
         :param pybel_web.models.User user:
         :param pybel_tools.query.Query query:
         :rtype: Query
@@ -476,7 +476,7 @@ class Query(Base):
     def from_query_args(manager, network_ids, user=None, seed_list=None, pipeline=None):
         """Builds a orm query from the arguments for a pybel-tools query
 
-        :param pybel.manager.CacheManager manager:
+        :param pybel.manager.Manager manager:
         :param pybel_web.models.User user:
         :param int or list[int] network_ids:
         :param list[dict] seed_list:

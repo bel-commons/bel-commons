@@ -434,7 +434,7 @@ def load_edge_store_by_network_id(network_id):
         for url in graph.annotation_url.values():
             manager.ensure_annotation(url, objects=True)
 
-        manager.store_graph_parts(network, graph)
+        manager._store_graph_parts(network, graph)
         manager.session.commit()
 
     except Exception as e:

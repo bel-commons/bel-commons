@@ -85,7 +85,7 @@ LABEL = 'dgxa'
 def get_manager_proxy():
     """Gets a proxy for the manager in the current app
 
-    :rtype: pybel.manager.cache.CacheManager
+    :rtype: pybel.manager.Manager
     """
     return LocalProxy(lambda: get_manager(current_app))
 
@@ -287,7 +287,7 @@ def render_network_summary(network_id, graph):
 def run_experiment(manager_, file, filename, description, gene_column, data_column, permutations, network, sep=','):
     """
 
-    :param pybel.manager.CacheManager manager_: A cache manager
+    :param pybel.manager.Manager manager_: A cache manager
     :param file file:
     :param str filename:
     :param str description:
@@ -362,7 +362,7 @@ def log_graph(graph, user, preparsed=False, failed=False):
 def get_recent_reports(manager_, weeks=2):
     """Gets reports from the last two weeks
 
-    :param pybel.manager.CacheManager manager_: A cache manager
+    :param pybel.manager.Manager manager_: A cache manager
     :param int weeks: The number of weeks to look backwards (builds :class:`datetime.timedelta`)
     :return: An iterable of the string that should be reported
     :rtype: iter[str]
@@ -399,7 +399,7 @@ def get_recent_reports(manager_, weeks=2):
 def iterate_user_strings(manager_, with_passwords):
     """Iterates over strings to print describing users
 
-    :param pybel.manager.CacheManager manager_:
+    :param pybel.manager.Manager manager_:
     :param bool with_passwords:
     :rtype: iter[str]
     """

@@ -20,7 +20,7 @@ from sqlalchemy.exc import IntegrityError, OperationalError
 
 from pybel import from_url, to_bytes
 from pybel.constants import METADATA_DESCRIPTION, METADATA_CONTACT, METADATA_LICENSES
-from pybel.manager import build_manager
+from pybel.manager import Manager
 from pybel.manager.models import Network
 from pybel.parser.parse_exceptions import InconsistentDefinitionError
 from pybel_tools.constants import BMS_BASE
@@ -50,7 +50,7 @@ dumb_belief_stuff = {
 
 
 def parse_folder(connection, folder, **kwargs):
-    manager = build_manager(connection)
+    manager = Manager.ensure(connection)
     convert_directory(
         folder,
         connection=manager,
@@ -109,7 +109,7 @@ def parse_by_url(connection, url):
     """Parses a graph at the given URL resource"""
     # FIXME add proper exception handling and feedback
 
-    manager = build_manager(connection)
+    manager = Manager.ensure(connection)
 
     try:
         graph = from_url(url, manager=manager)
@@ -133,7 +133,7 @@ def async_parser(connection, report_id):
     :param int report_id: Report identifier
     """
     log.info('Starting parse task')
-    manager = build_manager(connection)
+    manager = Manager.ensure(connection)
 
     report = manager.session.query(Report).get(report_id)
 
@@ -273,7 +273,7 @@ def run_cmpa(connection, experiment_id):
     :param int experiment_id:
     """
     log.info('Running experiment %s', experiment_id)
-    manager = build_manager(connection)
+    manager = Manager.ensure(connection)
 
     experiment = manager.session.query(Experiment).get(experiment_id)
 

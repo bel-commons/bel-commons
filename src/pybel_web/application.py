@@ -31,7 +31,7 @@ from werkzeug.routing import BaseConverter
 
 from pybel.constants import PYBEL_CONNECTION
 from pybel.constants import config as pybel_config
-from pybel.manager import build_manager, Base
+from pybel.manager import Manager, Base
 from pybel_tools.api import DatabaseService
 from pybel_tools.mutation import expand_nodes_neighborhoods, expand_node_neighborhood
 from pybel_tools.pipeline import uni_in_place_mutator, in_place_mutator
@@ -64,7 +64,7 @@ class FlaskPyBEL:
         """
         :param flask.Flask app:
         """
-        self.manager = build_manager(app.config.get(PYBEL_CONNECTION))
+        self.manager = Manager.ensure(app.config.get(PYBEL_CONNECTION))
 
         self.sentry = Sentry(
             app,

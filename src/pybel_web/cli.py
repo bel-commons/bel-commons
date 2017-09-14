@@ -27,7 +27,7 @@ import os
 from flask_security import SQLAlchemyUserDatastore
 
 from pybel.constants import get_cache_connection, PYBEL_CONNECTION, PYBEL_DATA_DIR
-from pybel.manager.cache import build_manager
+from pybel.manager import Manager
 from pybel.manager.models import Base, Network
 from pybel.utils import get_version as pybel_version
 from pybel_tools.utils import enable_cool_mode
@@ -166,9 +166,9 @@ def manage(ctx, connection, config):
     """Manage database"""
     if config:
         file = json.load(config)
-        ctx.obj = build_manager(file.get(PYBEL_CONNECTION, get_cache_connection()))
+        ctx.obj = Manager.ensure(file.get(PYBEL_CONNECTION, get_cache_connection()))
     else:
-        ctx.obj = build_manager(connection)
+        ctx.obj = Manager.ensure(connection)
 
     Base.metadata.bind = ctx.obj.engine
     Base.query = ctx.obj.session.query_property()
