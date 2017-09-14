@@ -1267,7 +1267,7 @@ def get_node_hash(node_id):
     tags:
         - node
     """
-    node = api.get_node_tuple_by_hash(node_id)
+    node = manager.get_node_by_hash(node_id)
     return jsonify(node.to_json())
 
 
