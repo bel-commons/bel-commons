@@ -233,8 +233,8 @@ def drop(manager, yes):
 def sanitize_reports(manager):
     """Adds charlie as the owner of all non-reported graphs"""
     ds = SQLAlchemyUserDatastore(manager, User, Role)
-    u = ds.find_user(email=CHARLIE_EMAIL)
-    click.echo('Adding {} as owner of unreported uploads'.format(u))
+    user = ds.find_user(email=CHARLIE_EMAIL)
+    click.echo('Adding {} as owner of unreported uploads'.format(user))
 
     for network in manager.session.query(Network):
         if network.report is not None:
@@ -242,7 +242,7 @@ def sanitize_reports(manager):
 
         report = Report(
             network=network,
-            user=u
+            user=user
         )
 
         manager.session.add(report)
