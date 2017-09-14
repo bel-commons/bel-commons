@@ -5,12 +5,13 @@ import json
 
 import codecs
 from flask_security import RoleMixin, UserMixin
-from sqlalchemy import Column, Integer, ForeignKey, DateTime, Boolean, Text, Binary, Table, String, Index
+from sqlalchemy import Column, Integer, ForeignKey, DateTime, Boolean, Text, Table, String, Index, LargeBinary
 from sqlalchemy.orm import relationship, backref
 
 import pybel_tools.query
 from pybel import from_lines
 from pybel.manager import Base
+from pybel.manager.models import LONGBLOB
 from pybel.manager.models import NETWORK_TABLE_NAME, Network, EDGE_TABLE_NAME
 from pybel.struct import union
 
@@ -40,8 +41,8 @@ class Experiment(Base):
     description = Column(Text, nullable=True, doc='A description of the purpose of the analysis')
     permutations = Column(Integer, doc='Number of permutations performed')
     source_name = Column(Text, doc='The name of the source file')
-    source = Column(Binary, doc='The source document holding the data')
-    result = Column(Binary, doc='The result python dictionary')
+    source = Column(LargeBinary(LONGBLOB), doc='The source document holding the data')
+    result = Column(LargeBinary(LONGBLOB), doc='The result python dictionary')
 
     query_id = Column(Integer, ForeignKey('{}.id'.format(QUERY_TABLE_NAME)), nullable=False)
     query = relationship('Query', backref=backref("experiments"))
@@ -71,7 +72,7 @@ class Report(Base):
     public = Column(Boolean, nullable=False, default=False, doc='Should the network be viewable to the public?')
 
     source_name = Column(Text, doc='The name of the source file')
-    source = Column(Binary, doc='The source BEL Script')
+    source = Column(LargeBinary(LONGBLOB), doc='The source BEL Script')
     source_hash = Column(String(128), index=True, doc='SHA512 hash of source file')
     encoding = Column(Text)
 
