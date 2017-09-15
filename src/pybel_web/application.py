@@ -284,7 +284,7 @@ def create_application(get_mail=False, config_location=None, **kwargs):
     class WebBaseManager(BaseManager):
         def __init__(self, *args, **kwargs):
             self.session = db.session
-            self._engine = db.engine
+            self.engine = db.engine
 
 
     class WebManager(WebBaseManager, Manager):
