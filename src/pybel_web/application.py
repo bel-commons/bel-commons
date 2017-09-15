@@ -27,12 +27,13 @@ from flask import (
 from flask_bootstrap import Bootstrap, WebCDN
 from flask_mail import Mail
 from flask_security import Security, SQLAlchemyUserDatastore
+from flask_sqlalchemy import SQLAlchemy
 from raven.contrib.flask import Sentry
 from werkzeug.routing import BaseConverter
 
 from pybel.constants import PYBEL_CONNECTION
 from pybel.constants import config as pybel_config
-from pybel.manager import Manager, Base
+from pybel.manager import Manager, Base, BaseManager
 from pybel_tools.api import DatabaseService
 from pybel_tools.mutation import expand_nodes_neighborhoods, expand_node_neighborhood
 from pybel_tools.pipeline import uni_in_place_mutator, in_place_mutator
@@ -46,7 +47,7 @@ log = logging.getLogger(__name__)
 class FlaskPyBEL:
     """Encapsulates the data needed for the PyBEL Web Application"""
 
-    def __init__(self, app=None):
+    def __init__(self, app=None, manager=None):
         """
         :param flask.Flask app: A Flask app
         """
@@ -58,17 +59,15 @@ class FlaskPyBEL:
         self.admin_role = None
         self.scai_role = None
 
-        if app is not None:
-            self.init_app(app)
+        if app is not None and manager is not None:
+            self.init_app(app, manager)
 
-    def init_app(self, app):
+    def init_app(self, app, manager):
         """
         :param flask.Flask app:
+        :param manager: A thing that has an engine and a session object
         """
-        self.manager = Manager(
-            connection=app.config.get(PYBEL_CONNECTION),
-            scopefunc=_app_ctx_stack.__ident_func__
-        )
+        self.manager = manager
 
         self.sentry = Sentry(
             app,
@@ -249,11 +248,15 @@ def create_application(get_mail=False, config_location=None, **kwargs):
         'version': '0.1.0',
     })
 
+    app.config['SQLALCHEMY_DATABASE_URI'] = app.config.get(PYBEL_CONNECTION)
+    app.config.setdefault('SQLALCHEMY_TRACK_MODIFICATIONS', False)
+
     # Add converters
     app.url_map.converters['intlist'] = IntListConverter
     app.url_map.converters['list'] = ListConverter
 
     # Initialize extensions
+    db = SQLAlchemy(app=app)
     bootstrap.init_app(app)
 
     # TODO upgrade to jQuery 2?
@@ -278,7 +281,18 @@ def create_application(get_mail=False, config_location=None, **kwargs):
                     recipients=[app.config.get('PYBEL_WEB_STARTUP_NOTIFY')]
                 )
 
-    pybel_extension.init_app(app)
+    class WebBaseManager(BaseManager):
+        def __init__(self, *args, **kwargs):
+            self.session = db.session
+            self._engine = db.engine
+
+
+    class WebManager(WebBaseManager, Manager):
+        """Killin it with the MRO"""
+
+    manager = WebManager()
+
+    pybel_extension.init_app(app, manager)
     security.init_app(app, pybel_extension.user_datastore, register_form=ExtendedRegisterForm)
     swagger.init_app(app)
 
