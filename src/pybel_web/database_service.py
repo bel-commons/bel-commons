@@ -429,10 +429,10 @@ def load_edge_store_by_network_id(network_id):
 
     try:
         for url in graph.namespace_url.values():
-            manager.ensure_namespace(url, cache_objects=True)
+            manager.ensure_namespace(url, True)
 
         for url in graph.annotation_url.values():
-            manager.ensure_annotation(url, objects=True)
+            manager.ensure_annotation(url, True)
 
         manager._store_graph_parts(network, graph)
         manager.session.commit()
