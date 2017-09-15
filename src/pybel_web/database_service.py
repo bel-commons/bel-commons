@@ -2063,7 +2063,7 @@ def list_all_network_overview():
     node_elements = []
     edge_elements = []
 
-    for source_network in manager.get_networks():
+    for source_network in manager.list_networks():
         source_network_id = source_network.id
         overlap = api.get_node_overlap(source_network_id)
 
