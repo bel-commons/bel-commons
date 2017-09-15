@@ -567,8 +567,8 @@ def edges_by_network(network_id):
       200:
         description: The edges in the network
     """
-    offset_start = request.args.get('offset_start')
-    offset_end = request.args.get('offset_end')
+    offset_start = request.args.get('offset_start', type=int)
+    offset_end = request.args.get('offset_end', type=int)
 
     edges = api.query_edges(
         network_id=network_id,
