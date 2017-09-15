@@ -58,3 +58,5 @@ app.register_blueprint(analysis_blueprint)
 
 if app.config.get('PYBEL_WEB_PARSER_API'):
     build_parser_service(app)
+
+pbw_log.info('created app for WSGI')
