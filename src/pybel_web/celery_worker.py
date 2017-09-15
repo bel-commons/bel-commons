@@ -14,6 +14,7 @@ import pickle
 import hashlib
 import os
 import requests.exceptions
+from flask import     _app_ctx_stack
 from celery.utils.log import get_task_logger
 from flask_mail import Message
 from sqlalchemy.exc import IntegrityError, OperationalError
@@ -50,7 +51,15 @@ dumb_belief_stuff = {
 
 
 def parse_folder(connection, folder, **kwargs):
-    manager = Manager.ensure(connection)
+    """Parses everything in a folder
+
+    :param str connection:
+    :param str folder:
+    """
+    manager = Manager(
+        connection=connection,
+        scopefunc=_app_ctx_stack.__ident_func__
+    )
     convert_directory(
         folder,
         connection=manager,
@@ -109,7 +118,10 @@ def parse_by_url(connection, url):
     """Parses a graph at the given URL resource"""
     # FIXME add proper exception handling and feedback
 
-    manager = Manager.ensure(connection)
+    manager = Manager(
+        connection=connection,
+        scopefunc=_app_ctx_stack.__ident_func__
+    )
 
     try:
         graph = from_url(url, manager=manager)
@@ -121,6 +133,8 @@ def parse_by_url(connection, url):
     except:
         manager.session.rollback()
         return 'Error parsing'
+    finally:
+        manager.session.close()
 
     return network.id
 
@@ -133,7 +147,10 @@ def async_parser(connection, report_id):
     :param int report_id: Report identifier
     """
     log.info('Starting parse task')
-    manager = Manager.ensure(connection)
+    manager = Manager(
+        connection=connection,
+        scopefunc=_app_ctx_stack.__ident_func__
+    )
 
     report = manager.session.query(Report).get(report_id)
 
@@ -271,6 +288,9 @@ def async_parser(connection, report_id):
         make_mail('Report unsuccessful', str(e))
         return -1
 
+    finally:
+        manager.session.close()
+
 
 @celery.task(name='run-cmpa')
 def run_cmpa(connection, experiment_id):
@@ -280,7 +300,10 @@ def run_cmpa(connection, experiment_id):
     :param int experiment_id:
     """
     log.info('Running experiment %s', experiment_id)
-    manager = Manager.ensure(connection)
+    manager = Manager(
+        connection=connection,
+        scopefunc=_app_ctx_stack.__ident_func__
+    )
 
     experiment = manager.session.query(Experiment).get(experiment_id)
 
@@ -301,7 +324,13 @@ def run_cmpa(connection, experiment_id):
     experiment.result = pickle.dumps(scores)
     experiment.completed = True
 
-    manager.session.commit()
+    try:
+        manager.session.commit()
+    except:
+        manager.session.rollback()
+        return -1
+    finally:
+        manager.session.close()
 
     message = 'Experiment {} on query {} with {} has completed'.format(
         experiment_id,
