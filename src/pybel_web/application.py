@@ -130,9 +130,9 @@ class FlaskPyBEL:
         def expand_nodes_neighborhoods_by_ids(universe, graph, node_ids):
             """Expands around the neighborhoods of a list of nodes by idenitifer
 
-            :param pybel.BELGraph universe:
-            :param pybel.BELGraph graph:
-            :param list[int] node_ids:
+            :param pybel.BELGraph universe: A BEL graph
+            :param pybel.BELGraph graph: A BEL graph
+            :param list node_ids: A list of node hashes
             """
             return expand_nodes_neighborhoods(
                 universe,
@@ -142,11 +142,11 @@ class FlaskPyBEL:
 
         @uni_in_place_mutator
         def expand_node_neighborhood_by_id(universe, graph, node_id):
-            """Expands around the neighborhoods of a node by idenitifer
+            """Expands around the neighborhoods of a node by identifier
 
-            :param pybel.BELGraph universe:
-            :param pybel.BELGraph graph:
-            :param int node_id:
+            :param pybel.BELGraph universe: A BEL graph
+            :param pybel.BELGraph graph: A BEL graph
+            :param node_id: The node hash
             """
             return expand_node_neighborhood(
                 universe,
@@ -158,8 +158,8 @@ class FlaskPyBEL:
         def delete_nodes_by_ids(graph, node_ids):
             """Removes a list of nodes by identifier
 
-            :param pybel.BELGraph graph:
-            :param list[int] node_ids:
+            :param pybel.BELGraph graph: A BEL graph
+            :param list node_ids: A list of node hashes
             """
             nodes = self.api.get_nodes_by_hashes(node_ids)
             graph.remove_nodes_from(nodes)
@@ -168,8 +168,8 @@ class FlaskPyBEL:
         def delete_node_by_id(graph, node_id):
             """Removes a node by identifier
 
-            :param pybel.BELGraph graph:
-            :param int node_id:
+            :param pybel.BELGraph graph: A BEL graph
+            :param node_id: A node hash
             """
             graph.remove_node(self.api.get_node_tuple_by_hash(node_id))
 
