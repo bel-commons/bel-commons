@@ -19,12 +19,15 @@ from __future__ import print_function
 import datetime
 import json
 import logging
+import multiprocessing
 import sys
 import time
 
 import click
+import gunicorn.app.base
 import os
 from flask_security import SQLAlchemyUserDatastore
+from gunicorn.six import iteritems
 
 from pybel.constants import get_cache_connection, PYBEL_CONNECTION, PYBEL_DATA_DIR
 from pybel.manager import Manager
@@ -80,10 +83,24 @@ def set_debug_param(debug):
         set_debug(10)
 
 
-@click.group(help="PyBEL-Tools Command Line Interface on {}\n with PyBEL v{}".format(sys.executable, pybel_version()))
-@click.version_option()
-def main():
-    """PyBEL Tools Command Line Interface"""
+def number_of_workers():
+    return (multiprocessing.cpu_count() * 2) + 1
+
+
+class StandaloneApplication(gunicorn.app.base.BaseApplication):
+    def __init__(self, app, options=None):
+        self.options = options or {}
+        self.application = app
+        super(StandaloneApplication, self).__init__()
+
+    def load_config(self):
+        config = dict([(key, value) for key, value in iteritems(self.options)
+                       if key in self.cfg.settings and value is not None])
+        for key, value in iteritems(config):
+            self.cfg.set(key.lower(), value)
+
+    def load(self):
+        return self.application
 
 
 _config_map = {
@@ -93,15 +110,20 @@ _config_map = {
 }
 
 
+@click.group(help="PyBEL-Tools Command Line Interface on {}\n with PyBEL v{}".format(sys.executable, pybel_version()))
+@click.version_option()
+def main():
+    """PyBEL Tools Command Line Interface"""
+
+
 @main.command()
 @click.option('--host', default='0.0.0.0', help='Flask host. Defaults to 0.0.0.0')
-@click.option('--port', type=int, help='Flask port. Defaults to 5000')
+@click.option('--port', type=int, default=5000, help='Flask port. Defaults to 5000')
 @click.option('--default-config', type=click.Choice(['local', 'test', 'prod']),
               help='Use different default config object')
 @click.option('-v', '--debug', count=True, help="Turn on debugging. More v's, more debugging")
-@click.option('--flask-debug', is_flag=True, help="Turn on werkzeug debug mode")
 @click.option('--config', type=click.File('r'), help='Additional configuration in a JSON file')
-def run(host, port, default_config, debug, flask_debug, config):
+def run(host, port, default_config, debug, config):
     """Runs PyBEL Web"""
     set_debug_param(debug)
     if debug < 3:
@@ -138,7 +160,11 @@ def run(host, port, default_config, debug, flask_debug, config):
 
     log.info('Done building %s in %.2f seconds', app, time.time() - t)
 
-    app.run(debug=flask_debug, host=host, port=port)
+    gunicorn_app = StandaloneApplication(app, {
+        'bind': '%s:%s' % (host, port),
+        'workers': number_of_workers(),
+    })
+    gunicorn_app.run()
 
 
 @main.command()
@@ -221,7 +247,7 @@ def drop(manager, yes):
         click.echo('Dumped users to {}'.format(user_dump_path))
         with open(user_dump_path, 'w') as f:
             for s in iterate_user_strings(manager, True):
-                print(s, file=f)
+                click.echo(s, file=f)
         click.echo('Done')
         click.echo('Dropping database')
         manager.drop_all()
@@ -378,8 +404,9 @@ def ls(manager):
     for project in manager.session.query(Project).all():
         click.echo('{}\t{}'.format(project.name, ','.join(map(str, project.users))))
 
+
 @projects.command()
-@click.option('-o','--output', type=click.File('w'), default=sys.stdout)
+@click.option('-o', '--output', type=click.File('w'), default=sys.stdout)
 @click.pass_obj
 def export(manager, output):
     json.dump(
@@ -389,6 +416,7 @@ def export(manager, output):
         ],
         output
     )
+
 
 @manage.group()
 def experiments():

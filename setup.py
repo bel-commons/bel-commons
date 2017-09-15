@@ -49,6 +49,7 @@ INSTALL_REQUIRES = [
     'matplotlib',
     'gitpython',
     'six',
+    'gunicorn',
 ]
 EXTRAS_REQUIRE = {
     'speed': ['python-Levenshtein', ]  # Activates c-based speed improvements for fuzzywuzzy

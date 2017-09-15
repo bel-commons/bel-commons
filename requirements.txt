@@ -19,7 +19,7 @@ scipy
 numpy
 celery
 obonet
-pybel>=0.8.2
+pybel>=0.8.1
 pybel-tools>=0.3.1
 raven
 matplotlib_venn
@@ -28,3 +28,4 @@ gitpython
 six
 alembic
 wtforms
+gunicorn
