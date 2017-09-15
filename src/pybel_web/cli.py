@@ -378,6 +378,17 @@ def ls(manager):
     for project in manager.session.query(Project).all():
         click.echo('{}\t{}'.format(project.name, ','.join(map(str, project.users))))
 
+@projects.command()
+@click.option('-o','--output', type=click.File('w'), default=sys.stdout)
+@click.pass_obj
+def export(manager, output):
+    json.dump(
+        [
+            project.to_json()
+            for project in manager.session.query(Project).all()
+        ],
+        output
+    )
 
 @manage.group()
 def experiments():
