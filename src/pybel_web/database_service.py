@@ -406,7 +406,7 @@ def get_network_metadata(network_id):
     if network is None:
         abort(404)
 
-    return jsonify(**network.data)
+    return jsonify(**network.to_json(include_id=True))
 
 
 @api_blueprint.route('/api/network/<int:network_id>/store_edges')
@@ -642,7 +642,10 @@ def get_network_list():
     tags:
         - network
     """
-    return jsonify(manager.list_networks())
+    return jsonify([
+        network.to_json(include_id=True)
+        for network in manager.list_networks()
+    ])
 
 
 @api_blueprint.route('/api/network/<int:network_id>/export/<serve_format>', methods=['GET'])
