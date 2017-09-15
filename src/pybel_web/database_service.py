@@ -553,13 +553,15 @@ def edges_by_network(network_id):
         in: query
         required: false
         type: integer
-        description: Defaults to 0.
+        default: 0
+        description: The database offset start
 
       - name: offset_end
         in: query
         required: false
         type: integer
-        description: Defaults to 500
+        default: 500
+        description: The database offset end
 
     responses:
       200:
