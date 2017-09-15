@@ -2065,13 +2065,14 @@ def list_all_network_overview():
 
     for source_network in manager.list_networks():
         source_network_id = source_network.id
+        source_bel_graph = api.get_graph_by_id(source_network_id)
         overlap = api.get_node_overlap(source_network_id)
 
         node_elements.append({
             'data': {
                 'id': source_network_id,
                 'name': source_network.name,
-                'size': source_network.number_of_nodes()
+                'size': source_bel_graph.number_of_nodes()
             }
         })
 
