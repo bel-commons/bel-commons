@@ -216,24 +216,35 @@ class Project(Base):
     def __str__(self):
         return self.name
 
-    def to_json(self):
+    def to_json(self, include_id=True):
         """Outputs this project as a JSON dictionary
 
         :rtype: dict
         """
-        return {
-            'id': self.id,
+        result =  {
             'name': self.name,
             'description': self.description,
             'users': [
-                user.id
+                {
+                    'id': user.id,
+                    'email': user.email,
+                }
                 for user in self.users
             ],
             'networks': [
-                network.id
+                {
+                    'id': network.id,
+                    'name': network.name,
+                    'version': network.version,
+                }
                 for network in self.networks
             ]
         }
+
+        if include_id:
+            result['id'] = self.id
+
+        return result
 
 
 class User(Base, UserMixin):
@@ -290,19 +301,21 @@ class User(Base, UserMixin):
     def __repr__(self):
         return self.name if self.name else self.email
 
-    def to_json(self):
+    def to_json(self, include_id=True):
         """Outputs this User as a JSON dictionary
 
         :rtype: dict
         """
         result = {
-            'id': self.id,
             'email': self.email,
             'roles': [
                 role.name
                 for role in self.roles
             ],
         }
+
+        if include_id:
+            result['id'] = self.id
 
         if self.name:
             result['name'] = self.name
