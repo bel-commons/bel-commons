@@ -400,6 +400,15 @@ def get_network_metadata(network_id):
     ---
     tags:
         - network
+    parameters:
+      - name: network_id
+        in: path
+        description: The database network identifier
+        required: true
+        type: integer
+    responses:
+      200:
+        description: The metadata describing the network
     """
     network = manager.session.query(Network).get(network_id)
 
@@ -417,6 +426,15 @@ def load_edge_store_by_network_id(network_id):
     ---
     tags:
         - network
+    parameters:
+      - name: network_id
+        in: path
+        description: The database network identifier
+        required: true
+        type: integer
+    responses:
+      200:
+        description: Status of edge store insertion
     """
     network = manager.session.query(Network).get(network_id)
 
@@ -461,6 +479,15 @@ def namespaces_by_network(network_id):
     ---
     tags:
         - network
+    parameters:
+      - name: network_id
+        in: path
+        description: The database network identifier
+        required: true
+        type: integer
+    responses:
+      200:
+        description: The namespaces described in this network
     """
     network_namespaces = api.query_namespaces(network_id=network_id)
     return jsonify(network_namespaces)
@@ -473,6 +500,15 @@ def annotations_by_network(network_id):
     ---
     tags:
         - network
+    parameters:
+      - name: network_id
+        in: path
+        description: The database network identifier
+        required: true
+        type: integer
+    responses:
+      200:
+        description: The annotations referenced by the network
     """
     network_annotations = api.query_annotations(network_id=network_id)
     return jsonify(network_annotations)
@@ -485,6 +521,15 @@ def citations_by_network(network_id):
     ---
     tags:
         - network
+    parameters:
+      - name: network_id
+        in: path
+        description: The database network identifier
+        required: true
+        type: integer
+    responses:
+      200:
+        description: The citations referenced by the edges in the network
     """
     citations = api.query_citations(network_id=network_id)
     return jsonify(citations)
@@ -497,20 +542,37 @@ def edges_by_network(network_id):
     ---
     tags:
         - network
+    parameters:
+      - name: network_id
+        in: path
+        description: The database network identifier
+        required: true
+        type: integer
+
+      - name: offset_start
+        in: query
+        required: false
+        type: integer
+        description: Defaults to 0.
+
+      - name: offset_end
+        in: query
+        required: false
+        type: integer
+        description: Defaults to 500
+
+    responses:
+      200:
+        description: The edges in the network
     """
-    edges = api.query_edges(network_id=network_id)
-    return jsonify(edges)
+    offset_start = request.args.get('offset_start')
+    offset_end = request.args.get('offset_end')
 
-
-@api_blueprint.route('/api/network/<int:network_id>/edges/offset/<int:offset_start>/<int:offset_end>', methods=['GET'])
-def edges_by_network_offset(network_id, offset_start, offset_end):
-    """Gets all of the edges in a given network with a given offset
-
-    ---
-    tags:
-        - network
-    """
-    edges = api.query_edges(network_id=network_id, offset_start=offset_start, offset_end=offset_end)
+    edges = api.query_edges(
+        network_id=network_id,
+        offset_start=offset_start,
+        offset_end=offset_end,
+    )
     return jsonify(edges)
 
 
@@ -521,6 +583,15 @@ def nodes_by_network(network_id):
     ---
     tags:
         - network
+    parameters:
+      - name: network_id
+        in: path
+        description: The database network identifier
+        required: true
+        type: integer
+    responses:
+      200:
+        description: The nodes referenced by the edges in the network
     """
     nodes = api.query_nodes(network_id=network_id)
     return jsonify(nodes)
@@ -571,6 +642,16 @@ def drop_network(network_id):
     tags:
         - network
 
+    parameters:
+      - name: network_id
+        in: path
+        description: The database network identifier
+        required: true
+        type: integer
+
+    responses:
+      200:
+        description: The network was dropped
     """
     return drop_network_helper(network_id)
 
@@ -583,6 +664,10 @@ def drop_networks():
     ---
     tags:
         - network
+
+    responses:
+      200:
+        description: All networks were dropped
     """
     log.info('dropping all networks')
 
@@ -604,7 +689,6 @@ def claim_network(network_id):
     ---
     tags:
         - network
-
     """
     network = manager.session.query(Network).get(network_id)
 
@@ -673,6 +757,15 @@ def get_graph_info_json(network_id):
     ---
     tags:
         - network
+    parameters:
+      - name: network_id
+        in: path
+        description: The database network identifier
+        required: true
+        type: integer
+    responses:
+      200:
+        description: A summary of the network
     """
     graph = api.get_graph_by_id(network_id)
     return jsonify(info_json(graph))
