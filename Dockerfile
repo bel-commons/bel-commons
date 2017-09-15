@@ -6,7 +6,7 @@ RUN apt-get update -y
 RUN apt-get install -y tar git curl nano wget dialog net-tools build-essential
 
 # Install python and basic python tools
-RUN apt-get install -y python python-dev python-distribute python-pip
+RUN apt-get install -y python3 python3-dev python-distribute python3-pip
 
 COPY . /app
 WORKDIR /app
