@@ -3,34 +3,56 @@
 version: '3'
 
 services:
-  web:
+  server:
     build: .
-    command: gunicorn -b 0.0.0.0:5000 pybel_web.run:app
+    volumes:
+     - .:/app
+    environment:
+      PYBEL_WEB_CONFIG_OBJECT: "pybel_web.config.DockerConfig"
+      PYBEL_DATABASE_NAME: postgres
+      PYBEL_DATABASE_USER: postgres
+      PYBEL_DATABASE_PASS: postgres
+      PYBEL_DATABASE_SERVICE: postgres
+      PYBEL_DATABASE_PORT: 5432
+      SECRET_KEY: ${SECRET_KEY}
+      PYBEL_SECURITY_PASSWORD_SALT: ${PYBEL_SECURITY_PASSWORD_SALT}
+    command: gunicorn -w ${PYBEL_GUNICORN_NUMBER_WORKERS} -b 0.0.0.0:5000 pybel_web.run:app --log-level=DEBUG
     ports:
       - "5000:5000"
     depends_on:
      - db
      - redis
      - worker
-    volumes:
-     - .:/app
 
   worker:
     build: .
-    command: celery worker -A pybel_web.celery_worker.celery -l info
+    volumes:
+     - .:/app
+    environment:
+      PYBEL_WEB_CONFIG_OBJECT: "pybel_web.config.DockerConfig"
+      PYBEL_DATABASE_NAME: postgres
+      PYBEL_DATABASE_USER: postgres
+      PYBEL_DATABASE_PASS: postgres
+      PYBEL_DATABASE_SERVICE: postgres
+      PYBEL_DATABASE_PORT: 5432
+      SECRET_KEY: ${SECRET_KEY}
+      PYBEL_SECURITY_PASSWORD_SALT: ${PYBEL_SECURITY_PASSWORD_SALT}}
+    command: celery worker -A pybel_web.celery_worker.celery -l DEBUG
     depends_on:
      - db
      - redis
-    volumes:
-     - .:/app
 
   db:
-    image: postgres:latest
+    image: postgres:9.6.5-alpine
     volumes:
        - db_data:/var/lib/postgres
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=postgres
 
   redis:
-    image: redis:alpine
+    image: redis:4-alpine
     ports:
       - "6379:6379"
 
