@@ -31,6 +31,7 @@ INSTALL_REQUIRES = [
     'flask-security',
     'flask-admin',
     'flask-cors',
+    'flask-sqlalchemy',
     'werkzeug',
     'flasgger',
     'networkx',

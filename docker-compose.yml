@@ -24,16 +24,15 @@ services:
     volumes:
      - .:/app
 
-  data:
-    image: postgres:latest
-    volumes:
-      - /var/lib/postgresql
-    command: "true"
-
   db:
     image: postgres:latest
+    volumes:
+       - db_data:/var/lib/postgres
 
   redis:
-    image: "redis:alpine"
+    image: redis:alpine
     ports:
-      - '6379:6379'
+      - "6379:6379"
+
+volumes:
+    db_data:

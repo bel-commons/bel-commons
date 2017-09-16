@@ -13,10 +13,6 @@ networkx
 click
 pygments
 pandas
-fuzzywuzzy
-ipython
-scipy
-numpy
 celery
 obonet
 pybel>=0.8.1
