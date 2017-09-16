@@ -1,25 +1,14 @@
 FROM ubuntu:latest
+#FROM python:3.4-alpine
 MAINTAINER Charles Tapley Hoyt "cthoyt@gmail.com"
 RUN apt-get update -y
-
-# Install basic applications
+RUN apt-get install -y apt-utils
 RUN apt-get install -y tar git curl nano wget dialog net-tools build-essential
-
-# Install python and basic python tools
 RUN apt-get install -y python3 python3-dev python-distribute python3-pip
 
 COPY . /app
 WORKDIR /app
 
-RUN pip install -r requirements.txt
-RUN pip install .
-RUN pip install gunicorn
-
-RUN apt-get install -y rabbitmq-server
-CMD service rabbitmq-server start
-
-EXPOSE 8000
-
-CMD celery worker -A pybel_web.celery_worker.celery --detach
-
-CMD gunicorn -b "0.0.0.0:8000" pybel_web.run:app
+RUN pip3 install .
+RUN pip3 install -U "celery[redis]"
+RUN pip3 install gunicorn

@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+import os
+
 from .constants import CHARLIE_EMAIL
 
 
@@ -66,8 +68,34 @@ class TestConfig(ProductionConfig):
     """This configuration is for running in development on bart:5001"""
 
 
-class DockerConfig(ProductionConfig):
-    """This configuration is for running in a docker container"""
+class DockerConfig(Config):
+    """Follows format from guide at
+    https://realpython.com/blog/python/dockerizing-flask-with-compose-and-machine-from-localhost-to-the-cloud/
+    """
+    SECRET_KEY = os.environ.get('SECRET_KEY')
+    DEBUG = os.environ.get('DEBUG')
+    TESTING = False
+
+    CELERY_BROKER_URL = 'redis://localhost:6379/0'
+
+    MAIL_SERVER = None
+
+    DB_DATABASE = os.environ.get('PYBEL_DATABASE_NAME')
+    DB_USER = os.environ.get('PYBEL_DATABASE_USER')
+    DB_PASS = os.environ.get('PYBEL_DATABASE_PASS')
+    DB_HOST = os.environ.get('PYBEL_DATABASE_SERVICE')
+    DB_PORT = os.environ.get('PYBEL_DATABASE_PORT')
+
+    SECURITY_PASSWORD_HASH = 'pbkdf2_sha512'
+    SECURITY_PASSWORD_SALT = os.environ.get('PYBEL_SECURITY_PASSWORD_SALT')
+
+    PYBEL_CONNECTION = 'postgresql://{user}:{password}@{service}:{port}/{database}'.format(
+        user=DB_USER,
+        password=DB_PASS,
+        service=DB_HOST,
+        port=DB_PORT,
+        database=DB_DATABASE
+    )
 
 
 class LocalConfig(Config):

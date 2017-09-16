@@ -1,0 +1,39 @@
+# Follow guide at https://realpython.com/blog/python/dockerizing-flask-with-compose-and-machine-from-localhost-to-the-cloud/
+
+version: '3'
+
+services:
+  web:
+    build: .
+    command: gunicorn -b 0.0.0.0:5000 pybel_web.run:app
+    ports:
+      - "5000:5000"
+    depends_on:
+     - db
+     - redis
+     - worker
+    volumes:
+     - .:/app
+
+  worker:
+    build: .
+    command: celery worker -A pybel_web.celery_worker.celery -l info
+    depends_on:
+     - db
+     - redis
+    volumes:
+     - .:/app
+
+  data:
+    image: postgres:latest
+    volumes:
+      - /var/lib/postgresql
+    command: "true"
+
+  db:
+    image: postgres:latest
+
+  redis:
+    image: "redis:alpine"
+    ports:
+      - '6379:6379'
