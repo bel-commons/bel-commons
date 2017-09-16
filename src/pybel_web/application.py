@@ -80,7 +80,7 @@ class FlaskPyBEL:
         self.api = DatabaseService(manager=self.manager)
         self.user_datastore = SQLAlchemyUserDatastore(self.manager, User, Role)
 
-        self.manager.create_all()
+        Base.metadata.create_all(self.engine, checkfirst=True)
 
         self.admin_role = pybel_extension.user_datastore.find_or_create_role(
             name='admin',
