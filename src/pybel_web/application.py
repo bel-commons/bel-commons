@@ -167,9 +167,51 @@ class FlaskPyBEL:
             node = self.api.get_node_tuple_by_hash(node_id)
             graph.remove_node(node)
 
+    def prepare_service(self):
+        if self.app is None or self.manager is None:
+            raise ValueError('not initialized')
+
+        for email in (CHARLIE_EMAIL, DANIEL_EMAIL, ALEX_EMAIL):
+            admin_user = self.user_datastore.find_user(email=email)
+
+            if admin_user is None:
+                admin_user = self.user_datastore.create_user(
+                    email=email,
+                    password='pybeladmin',
+                    confirmed_at=datetime.datetime.now(),
+                )
+
+            self.user_datastore.add_role_to_user(admin_user, self.admin_role)
+            self.user_datastore.add_role_to_user(admin_user, self.scai_role)
+            self.manager.session.add(admin_user)
+
+        test_scai_user = self.user_datastore.find_user(email='test@scai.fraunhofer.de')
+
+        if test_scai_user is None:
+            test_scai_user = self.user_datastore.create_user(
+                email='test@scai.fraunhofer.de',
+                password='pybeltest',
+                confirmed_at=datetime.datetime.now(),
+            )
+            self.user_datastore.add_role_to_user(test_scai_user, self.scai_role)
+            self.manager.session.add(test_scai_user)
+
+        self.manager.session.commit()
+
+    @staticmethod
+    def get_state(app):
+        """
+        :param flask.Flask app: A Flask app
+        :rtype: FlaskPyBEL
+        """
+        if 'pybel' not in app.extensions:
+            raise ValueError('FlaskPyBEL has not been instantiated')
+
+        return app.extensions['pybel']
+
 
 bootstrap = Bootstrap()
-pybel_extension = FlaskPyBEL()
+pbx = FlaskPyBEL()
 mail = Mail()
 security = Security()
 swagger = Swagger()
@@ -288,39 +330,10 @@ def create_application(get_mail=False, config_location=None, **kwargs):
 
     manager = WebManager()
 
-    pybel_extension.init_app(app, manager)
-    security.init_app(app, pybel_extension.user_datastore, register_form=ExtendedRegisterForm)
+    pbx.init_app(app, manager)
+    security.init_app(app, pbx.user_datastore, register_form=ExtendedRegisterForm)
     swagger.init_app(app)
-
-    @app.before_first_request
-    def prepare_service():
-        """A filter for preparing the web service when it is started"""
-        for email in (CHARLIE_EMAIL, DANIEL_EMAIL, ALEX_EMAIL):
-            admin_user = pybel_extension.user_datastore.find_user(email=email)
-
-            if admin_user is None:
-                admin_user = pybel_extension.user_datastore.create_user(
-                    email=email,
-                    password='pybeladmin',
-                    confirmed_at=datetime.datetime.now(),
-                )
-
-            pybel_extension.user_datastore.add_role_to_user(admin_user, pybel_extension.admin_role)
-            pybel_extension.user_datastore.add_role_to_user(admin_user, pybel_extension.scai_role)
-            pybel_extension.manager.session.add(admin_user)
-
-        test_scai_user = pybel_extension.user_datastore.find_user(email='test@scai.fraunhofer.de')
-
-        if test_scai_user is None:
-            test_scai_user = pybel_extension.user_datastore.create_user(
-                email='test@scai.fraunhofer.de',
-                password='pybeltest',
-                confirmed_at=datetime.datetime.now(),
-            )
-            pybel_extension.user_datastore.add_role_to_user(test_scai_user, pybel_extension.scai_role)
-            pybel_extension.manager.session.add(test_scai_user)
-
-        pybel_extension.manager.session.commit()
+    pbx.prepare_service()
 
     if not get_mail:
         return app
