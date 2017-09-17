@@ -14,8 +14,8 @@ import pickle
 import hashlib
 import os
 import requests.exceptions
-from flask import     _app_ctx_stack
 from celery.utils.log import get_task_logger
+from flask import _app_ctx_stack
 from flask_mail import Message
 from sqlalchemy.exc import IntegrityError, OperationalError
 
@@ -42,6 +42,7 @@ log.addHandler(fh)
 
 app = create_application()
 celery = create_celery(app)
+# db = flask_sqlalchemy.get_state(app)
 
 dumb_belief_stuff = {
     METADATA_DESCRIPTION: {'Document description'},
@@ -279,7 +280,8 @@ def async_parser(connection, report_id):
         manager.session.commit()
 
         log.info('report #%d complete [%d]', report.id, network.id)
-        make_mail('Successfully uploaded {}'.format(graph), '{} is done parsing. Check the network list page.'.format(graph))
+        make_mail('Successfully uploaded {}'.format(graph),
+                  '{} is done parsing. Check the network list page.'.format(graph))
 
         return network.id
 

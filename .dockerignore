@@ -1,0 +1,6 @@
+.tox
+.cache
+docs
+tests
+Dockerfile
+docker-compose.yml

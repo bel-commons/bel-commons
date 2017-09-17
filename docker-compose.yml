@@ -9,19 +9,20 @@ services:
      - .:/app
     environment:
       PYBEL_WEB_CONFIG_OBJECT: "pybel_web.config.DockerConfig"
-      PYBEL_DATABASE_NAME: postgres
-      PYBEL_DATABASE_USER: postgres
-      PYBEL_DATABASE_PASS: postgres
-      PYBEL_DATABASE_SERVICE: postgres
-      PYBEL_DATABASE_PORT: 5432
+      PYBEL_DATABASE_USER: root
+      PYBEL_DATABASE_PASSWORD: root
+      PYBEL_DATABASE_HOST: mysql
+      PYBEL_DATABASE_DATABASE: pybel
       SECRET_KEY: ${SECRET_KEY}
       PYBEL_SECURITY_PASSWORD_SALT: ${PYBEL_SECURITY_PASSWORD_SALT}
-    command: gunicorn -w ${PYBEL_GUNICORN_NUMBER_WORKERS} -b 0.0.0.0:5000 pybel_web.run:app --log-level=DEBUG
+      CELERY_BROKER_URL: amqp://queue
+    #restart: always
+    command: gunicorn -w ${PYBEL_GUNICORN_NUMBER_WORKERS} -b 0.0.0.0:5000 pybel_web.run:app --log-level=INFO
     ports:
       - "5000:5000"
     depends_on:
-     - db
-     - redis
+     - mysql
+     - queue
      - worker
 
   worker:
@@ -30,31 +31,33 @@ services:
      - .:/app
     environment:
       PYBEL_WEB_CONFIG_OBJECT: "pybel_web.config.DockerConfig"
-      PYBEL_DATABASE_NAME: postgres
-      PYBEL_DATABASE_USER: postgres
-      PYBEL_DATABASE_PASS: postgres
-      PYBEL_DATABASE_SERVICE: postgres
-      PYBEL_DATABASE_PORT: 5432
+      PYBEL_DATABASE_USER: root
+      PYBEL_DATABASE_PASSWORD: root
+      PYBEL_DATABASE_HOST: mysql
+      PYBEL_DATABASE_DATABASE: pybel
       SECRET_KEY: ${SECRET_KEY}
       PYBEL_SECURITY_PASSWORD_SALT: ${PYBEL_SECURITY_PASSWORD_SALT}}
-    command: celery worker -A pybel_web.celery_worker.celery -l DEBUG
+      CELERY_BROKER_URL: amqp://queue
+    #restart: always
+    command: celery worker -A pybel_web.celery_worker.celery -l INFO
     depends_on:
-     - db
-     - redis
+     - mysql
+     - queue
 
-  db:
-    image: postgres:9.6.5-alpine
+  mysql:
+    image: mysql:5.7
     volumes:
-       - db_data:/var/lib/postgres
+       - db_data:/var/lib/mysql
     environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=postgres
-
-  redis:
-    image: redis:4-alpine
+      MYSQL_USER: pybel_butler
+      MYSQL_PASSWORD: pybel_butler
+      MYSQL_DATABASE: pybel
+      MYSQL_ROOT_PASSWORD: root
     ports:
-      - "6379:6379"
+        - 3306:3306
+
+  queue:
+    image: rabbitmq:3.6.12-alpine
 
 volumes:
     db_data:

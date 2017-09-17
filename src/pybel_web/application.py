@@ -22,7 +22,6 @@ from flask import (
     Flask,
     g,
     render_template,
-    _app_ctx_stack,
 )
 from flask_bootstrap import Bootstrap, WebCDN
 from flask_mail import Mail
@@ -33,13 +32,13 @@ from werkzeug.routing import BaseConverter
 
 from pybel.constants import PYBEL_CONNECTION
 from pybel.constants import config as pybel_config
-from pybel.manager import Manager, Base, BaseManager
+from pybel.manager import Manager, BaseManager
 from pybel_tools.api import DatabaseService
 from pybel_tools.mutation import expand_nodes_neighborhoods, expand_node_neighborhood
 from pybel_tools.pipeline import uni_in_place_mutator, in_place_mutator
 from .constants import CHARLIE_EMAIL, DANIEL_EMAIL, ALEX_EMAIL, PYBEL_WEB_VERSION
 from .forms import ExtendedRegisterForm
-from .models import Role, User
+from .models import Base, Role, User
 
 log = logging.getLogger(__name__)
 
@@ -76,11 +75,12 @@ class FlaskPyBEL:
 
         Base.metadata.bind = self.manager.engine
         Base.query = self.manager.session.query_property()
+        Base.metadata.create_all(self.manager.engine, checkfirst=True)
 
         self.api = DatabaseService(manager=self.manager)
         self.user_datastore = SQLAlchemyUserDatastore(self.manager, User, Role)
 
-        Base.metadata.create_all(self.engine, checkfirst=True)
+
 
         self.admin_role = pybel_extension.user_datastore.find_or_create_role(
             name='admin',
@@ -210,6 +210,7 @@ def create_application(get_mail=False, config_location=None, **kwargs):
     :rtype: flask.Flask
     """
     app = Flask(__name__)
+    app.config.update(pybel_config)
 
     if config_location is not None:
         log.info('Getting configuration from user supplied argument: %s', config_location)
@@ -234,7 +235,6 @@ def create_application(get_mail=False, config_location=None, **kwargs):
             log.info('importing config from %s', env_conf_path)
             app.config.from_json(env_conf_path)
 
-    app.config.update(pybel_config)
     app.config.update(kwargs)
     app.config.setdefault('SWAGGER', {
         'title': 'PyBEL Web API',
@@ -250,6 +250,8 @@ def create_application(get_mail=False, config_location=None, **kwargs):
 
     app.config['SQLALCHEMY_DATABASE_URI'] = app.config.get(PYBEL_CONNECTION)
     app.config.setdefault('SQLALCHEMY_TRACK_MODIFICATIONS', False)
+
+    log.info('database: %s', app.config.get('PYBEL_CONNECTION'))
 
     # Add converters
     app.url_map.converters['intlist'] = IntListConverter
@@ -285,7 +287,6 @@ def create_application(get_mail=False, config_location=None, **kwargs):
         def __init__(self, *args, **kwargs):
             self.session = db.session
             self.engine = db.engine
-
 
     class WebManager(WebBaseManager, Manager):
         """Killin it with the MRO"""
