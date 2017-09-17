@@ -4,7 +4,7 @@
 
 How to Run PyBEL Web
 
-``gunicorn w 4 -b 0.0.0.0:5000 pybel_web.run:app``
+``gunicorn -w 4 -b 0.0.0.0:5000 pybel_web.run:app``
 
 """
 
@@ -59,4 +59,4 @@ app.register_blueprint(analysis_blueprint)
 if app.config.get('PYBEL_WEB_PARSER_API'):
     build_parser_service(app)
 
-pbw_log.info('created app for WSGI')
+pbw_log.info('done creating app')

@@ -43,7 +43,7 @@ from . import models
 from .application_utils import get_api, get_manager
 from .celery_utils import create_celery
 from .constants import *
-from .models import User, Report, Query, Project
+from .models import Base, User, Report, Query, Project
 from .utils import (
     render_network_summary,
     calculate_overlap_dict,
@@ -187,8 +187,8 @@ def build_dictionary_service_admin(app):
     def nuke():
         """Destroys the database and recreates it"""
         log.info('nuking database')
-        manager.drop_all()
-        manager.create_all()
+        Base.metadata.drop_all(manager.engine, checkfirst=True)
+        Base.metadata.drop_all(manager.engine, checkfirst=True)
         log.info('restarting dictionary service')
         api.clear()
         log.info('   the dust settles')
