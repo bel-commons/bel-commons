@@ -97,12 +97,13 @@ class DockerConfig(Config):
 
 class LocalConfig(Config):
     """Local configuration that doesn't use celery for asnyc stuff, and just does it synchronously"""
+    PYBEL_DS_PRELOAD = True
 
+
+class UnitTestConfig(Config):
     #: See: https://stackoverflow.com/questions/12078667/how-do-you-unit-test-a-celery-task
     CELERY_ALWAYS_EAGER = True
     CELERY_BROKER_URL = 'memory'
     BROKER_BACKEND = 'memory'
     CELERY_RESULT_BACKEND = 'cache+memory://'
     CELERY_EAGER_PROPAGATES_EXCEPTIONS = True
-
-    PYBEL_DS_PRELOAD = True
