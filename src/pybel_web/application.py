@@ -66,6 +66,7 @@ class FlaskPyBEL:
         :param flask.Flask app: A Flask app
         :param manager: A thing that has an engine and a session object
         """
+        self.app = app
         self.manager = manager
 
         self.sentry = Sentry(
