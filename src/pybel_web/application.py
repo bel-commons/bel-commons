@@ -80,18 +80,16 @@ class FlaskPyBEL:
         self.api = DatabaseService(manager=self.manager)
         self.user_datastore = SQLAlchemyUserDatastore(self.manager, User, Role)
 
-
-
-        self.admin_role = pybel_extension.user_datastore.find_or_create_role(
+        self.admin_role = self.user_datastore.find_or_create_role(
             name='admin',
             description='Admin of PyBEL Web'
         )
-        self.scai_role = pybel_extension.user_datastore.find_or_create_role(
+        self.scai_role = self.user_datastore.find_or_create_role(
             name='scai',
             description='Users from SCAI'
         )
 
-        pybel_extension.user_datastore.commit()
+        self.user_datastore.commit()
 
         if app.config.get('PYBEL_DS_PRELOAD', False):
             log.info('preloading networks')
