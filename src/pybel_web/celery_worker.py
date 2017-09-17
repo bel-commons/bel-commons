@@ -252,6 +252,7 @@ def async_parser(connection, report_id):
     try:
         log.info('inserting graph')
         network = manager.insert_graph(graph, store_parts=app.config.get('PYBEL_USE_EDGE_STORE', True))
+        manager.session.add(network)
 
     except IntegrityError:
         manager.session.rollback()
