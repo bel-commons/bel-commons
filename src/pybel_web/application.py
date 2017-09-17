@@ -15,7 +15,6 @@ import logging
 import socket
 import time
 from getpass import getuser
-from pybel.constants import get_cache_connection
 
 import os
 from flasgger import Swagger
@@ -33,6 +32,7 @@ from werkzeug.routing import BaseConverter
 
 from pybel.constants import PYBEL_CONNECTION
 from pybel.constants import config as pybel_config
+from pybel.constants import get_cache_connection
 from pybel.manager import Manager, BaseManager
 from pybel_tools.api import DatabaseService
 from pybel_tools.mutation import expand_nodes_neighborhoods, expand_node_neighborhood
@@ -241,7 +241,7 @@ def create_application(get_mail=False, config_location=None, **kwargs):
     })
 
     if not app.config.get(PYBEL_CONNECTION):
-        app.config[PYBEL_CONNECTION] =  get_cache_connection()
+        app.config[PYBEL_CONNECTION] = get_cache_connection()
 
     app.config['SQLALCHEMY_DATABASE_URI'] = app.config[PYBEL_CONNECTION]
     app.config.setdefault('SQLALCHEMY_TRACK_MODIFICATIONS', False)
