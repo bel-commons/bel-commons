@@ -15,6 +15,7 @@ import logging
 import socket
 import time
 from getpass import getuser
+from pybel.constants import get_cache_connection
 
 import os
 from flasgger import Swagger
@@ -247,10 +248,13 @@ def create_application(get_mail=False, config_location=None, **kwargs):
         'version': '0.1.0',
     })
 
-    app.config['SQLALCHEMY_DATABASE_URI'] = app.config.get(PYBEL_CONNECTION)
+    if not app.config.get(PYBEL_CONNECTION):
+        app.config[PYBEL_CONNECTION] =  get_cache_connection()
+
+    app.config['SQLALCHEMY_DATABASE_URI'] = app.config[PYBEL_CONNECTION]
     app.config.setdefault('SQLALCHEMY_TRACK_MODIFICATIONS', False)
 
-    log.info('database: %s', app.config.get('PYBEL_CONNECTION'))
+    log.info('database: %s', app.config.get(PYBEL_CONNECTION))
 
     # Add converters
     app.url_map.converters['intlist'] = IntListConverter
