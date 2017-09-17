@@ -1690,7 +1690,11 @@ def add_annotation_filter_to_query(query_id):
 @api_blueprint.route('/api/user/count')
 def get_number_users():
     """Return the number of users"""
-    return jsonify(count=manager.session.query(func.count(User.id)).scalar())
+    count = manager.session.query(func.count(User.id)).scalar()
+    return jsonify({
+        'time': str(time.asctime()),
+        'count': count
+    })
 
 
 @api_blueprint.route('/api/user')
