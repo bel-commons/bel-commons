@@ -742,7 +742,7 @@ def export_network(network_id, serve_format):
     tags:
         - network
     """
-    network_ids = get_network_ids_with_permission_helper(current_user, api)
+    network_ids = get_network_ids_with_permission_helper(current_user, manager)
 
     if network_id not in network_ids:
         abort(403, 'You do not have permission to download the selected network')

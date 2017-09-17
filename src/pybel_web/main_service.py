@@ -214,7 +214,7 @@ def build_main_service(app):
     @app.route('/networks', methods=['GET', 'POST'])
     def view_networks():
         """Renders a page for the user to choose a network"""
-        networks = get_networks_with_permission(api)
+        networks = get_networks_with_permission(manager)
 
         return render_template(
             'network_list.html',
@@ -225,7 +225,7 @@ def build_main_service(app):
     @app.route('/query/build', methods=['GET', 'POST'])
     def view_query_builder():
         """Renders the query builder page"""
-        networks = get_networks_with_permission(api)
+        networks = get_networks_with_permission(manager)
 
         return render_template(
             'query_builder.html',
@@ -272,7 +272,7 @@ def build_main_service(app):
     @app.route('/explore/network/<int:network_id>', methods=['GET'])
     def view_explore_network(network_id):
         """Renders a page for the user to explore a network"""
-        if network_id not in get_network_ids_with_permission_helper(current_user, api):
+        if network_id not in get_network_ids_with_permission_helper(current_user, manager):
             abort(403, 'Insufficient rights for network {}'.format(network_id))
 
         query = Query.from_query_args(manager, network_id, current_user)
@@ -283,7 +283,7 @@ def build_main_service(app):
     @app.route('/summary/<int:network_id>')
     def view_summary(network_id):
         """Renders a page with the parsing errors for a given BEL script"""
-        if network_id not in get_network_ids_with_permission_helper(current_user, api):
+        if network_id not in get_network_ids_with_permission_helper(current_user, manager):
             abort(403, 'Insufficient rights for network {}'.format(network_id))
 
         try:

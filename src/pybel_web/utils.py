@@ -208,7 +208,7 @@ def render_network_summary(network_id, graph):
     unused_annotations = get_unused_annotations(graph)
     unused_list_annotation_values = get_unused_list_annotation_values(graph)
 
-    versions = api.manager.get_networks_by_name(graph.name)
+    versions = manager.get_networks_by_name(graph.name)
 
     causal_pathologies = sorted({
         get_pair_tuple(u, v) + (d[RELATION],)
@@ -223,9 +223,9 @@ def render_network_summary(network_id, graph):
     citation_years = create_timeline(count_citation_years(graph))
 
     overlap_counter = api.get_node_overlap(network_id)
-    allowed_network_ids = get_network_ids_with_permission_helper(current_user, api)
+    allowed_network_ids = get_network_ids_with_permission_helper(current_user, manager)
     overlaps = [
-        (api.manager.get_network_by_id(network_id), v)
+        (manager.get_network_by_id(network_id), v)
         for network_id, v in overlap_counter.most_common()
         if network_id in allowed_network_ids and v > 0.0
     ]
@@ -604,17 +604,17 @@ def calculate_overlap_dict(g1, g2, set_labels=('Query 1', 'Query 2')):
     }
 
 
-def list_public_networks(api_):
+def iter_public_networks(manager_):
     """Lists the graphs that have been made public
 
-    :param DatabaseService api_:
+    :param pybel.manager.Manager manager_:
     :rtype: list[Network]
     """
-    return [
+    return (
         network
-        for network in api_.manager.list_recent_networks()
+        for network in manager_.list_recent_networks()
         if network.report and network.report.public
-    ]
+    )
 
 
 def unique_networks(networks):
@@ -635,21 +635,21 @@ def unique_networks(networks):
             yield network
 
 
-def networks_with_permission_iter_helper(user, api_):
+def networks_with_permission_iter_helper(user, manager_):
     """Gets an iterator over all the networks from all the sources
 
     :param models.User user:
-    :param pybel_tools.api.DatabaseService api_:
+    :param pybel.manager.Manager manager_:
     :rtype: iter[Network]
     """
     if not user.is_authenticated:
-        yield from list_public_networks(api_)
+        yield from iter_public_networks(manager_)
 
     elif user.admin:
-        yield from api_.manager.list_recent_networks()
+        yield from manager_.list_recent_networks()
 
     else:
-        yield from list_public_networks(api_)
+        yield from iter_public_networks(manager_)
         yield from user.get_owned_networks()
         yield from user.get_shared_networks()
         yield from user.get_project_networks()
@@ -661,33 +661,33 @@ def networks_with_permission_iter_helper(user, api_):
                 yield from user.get_shared_networks()
 
 
-def get_networks_with_permission(api_):
+def get_networks_with_permission(manager_):
     """Gets all networks tagged as public or uploaded by the current user
 
-    :param DatabaseService api_: The database service
+    :param DatabaseService manager_: The database service
     :return: A list of all networks tagged as public or uploaded by the current user
     :rtype: list[Network]
     """
     if not current_user.is_authenticated:
-        return list_public_networks(api_)
+        return list(iter_public_networks(manager_))
 
     if current_user.admin:
-        return api_.manager.list_recent_networks()
+        return manager_.list_recent_networks()
 
-    return list(unique_networks(networks_with_permission_iter_helper(current_user, api_)))
+    return list(unique_networks(networks_with_permission_iter_helper(current_user, manager_)))
 
 
-def get_network_ids_with_permission_helper(user, api_):
+def get_network_ids_with_permission_helper(user, manager_):
     """Gets the set of networks ids tagged as public or uploaded by the current user
 
     :param models.User user:
-    :param DatabaseService api_: The database service
+    :param pybel.manager.Manager manager_: The database service
     :return: A list of all networks tagged as public or uploaded by the current user
     :rtype: set[int]
     """
     return {
         network.id
-        for network in networks_with_permission_iter_helper(user, api_)
+        for network in networks_with_permission_iter_helper(user, manager_)
     }
 
 
@@ -701,7 +701,7 @@ def user_has_query_rights(user, query):
     if user.is_authenticated and user.admin:
         return True
 
-    permissive_network_ids = get_network_ids_with_permission_helper(user, api)
+    permissive_network_ids = get_network_ids_with_permission_helper(user, manager)
 
     return all(
         network.id in permissive_network_ids

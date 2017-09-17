@@ -42,7 +42,7 @@ from .models import (
     EdgeVote,
     EdgeComment
 )
-from .utils import list_public_networks
+from .utils import iter_public_networks
 
 log = logging.getLogger(__name__)
 
@@ -92,7 +92,7 @@ def build_admin_service(app):
                 network_chain = chain(
                     current_user.get_owned_networks(),
                     current_user.get_shared_networks(),
-                    list_public_networks(api),
+                    iter_public_networks(api),
                 )
 
                 allowed_network_ids = {
