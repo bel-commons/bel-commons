@@ -46,7 +46,7 @@ def get_manager(app):
 def get_pybel(app):
     """
     :param flask.Flask app: A Flask app
-    :rtype: web.application._FlaskPybelState
+    :rtype: pybel_web.application.FlaskPyBEL
     """
     if 'pybel' not in app.extensions:
         raise ValueError

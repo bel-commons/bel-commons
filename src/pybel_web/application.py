@@ -63,7 +63,7 @@ class FlaskPyBEL:
 
     def init_app(self, app, manager):
         """
-        :param flask.Flask app:
+        :param flask.Flask app: A Flask app
         :param manager: A thing that has an engine and a session object
         """
         self.manager = manager

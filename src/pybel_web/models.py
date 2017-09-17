@@ -113,7 +113,7 @@ class Report(Base):
     def parse_graph(self, manager):
         """Parses the graph from the latent BEL Script
 
-        :param pybel.manager.cache.Manager manager: A cache manager
+        :param pybel.manager.Manager manager: A cache manager
         :rtype: pybel.BELGraph
         """
         return from_lines(
