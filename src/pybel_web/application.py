@@ -133,11 +133,8 @@ class FlaskPyBEL:
             :param pybel.BELGraph graph: A BEL graph
             :param list node_ids: A list of node hashes
             """
-            return expand_nodes_neighborhoods(
-                universe,
-                graph,
-                self.api.get_nodes_by_hashes(node_ids)
-            )
+            nodes = self.api.get_nodes_by_hashes(node_ids)
+            return expand_nodes_neighborhoods(universe, graph, nodes)
 
         @uni_in_place_mutator
         def expand_node_neighborhood_by_id(universe, graph, node_id):
@@ -147,11 +144,8 @@ class FlaskPyBEL:
             :param pybel.BELGraph graph: A BEL graph
             :param node_id: The node hash
             """
-            return expand_node_neighborhood(
-                universe,
-                graph,
-                self.api.get_node_tuple_by_hash(node_id)
-            )
+            node = self.api.get_node_tuple_by_hash(node_id)
+            return expand_node_neighborhood(universe, graph, node)
 
         @in_place_mutator
         def delete_nodes_by_ids(graph, node_ids):
@@ -170,7 +164,8 @@ class FlaskPyBEL:
             :param pybel.BELGraph graph: A BEL graph
             :param node_id: A node hash
             """
-            graph.remove_node(self.api.get_node_tuple_by_hash(node_id))
+            node = self.api.get_node_tuple_by_hash(node_id)
+            graph.remove_node(node)
 
 
 bootstrap = Bootstrap()
