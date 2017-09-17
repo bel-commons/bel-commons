@@ -131,13 +131,12 @@ def parse_by_url(connection, url):
 
     try:
         network = manager.insert_graph(graph)
+        return network.id
     except:
         manager.session.rollback()
         return 'Error parsing'
     finally:
         manager.session.close()
-
-    return network.id
 
 
 @celery.task(name='pybelparser')
