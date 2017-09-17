@@ -55,6 +55,7 @@ services:
       MYSQL_ROOT_PASSWORD: root
     ports:
         - 3306:3306
+    command: mysqld --character-set-server=utf8 --collation-server=utf8_unicode_ci --init-connect='SET NAMES UTF8;' --innodb-flush-log-at-trx-commit=0
 
   queue:
     image: rabbitmq:3.6.12-alpine
