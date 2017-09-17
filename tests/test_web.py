@@ -61,7 +61,7 @@ class WebTest(unittest.TestCase):
         build_main_service(self.app_instance)
         self.app_instance.register_blueprint(api_blueprint)
 
-        self.pybel = FlaskPyBEL(self.app_instance)
+        self.pybel = FlaskPyBEL.get_state(self.app_instance)
 
         self.manager = self.pybel.manager
         self.api = self.pybel.api
