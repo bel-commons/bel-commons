@@ -4,7 +4,7 @@ def get_scai_role(app):
     :param flask.Flask app:
     :rtype: Role
     """
-    return get_pybel(app).scai_role
+    return get_state(app).scai_role
 
 
 def get_sentry(app):
@@ -13,7 +13,7 @@ def get_sentry(app):
     :param flask.Flask app: A Flask app
     :rtype: raven.Sentry
     """
-    return get_pybel(app).sentry
+    return get_state(app).sentry
 
 
 def get_user_datastore(app):
@@ -22,7 +22,7 @@ def get_user_datastore(app):
     :param flask.Flask app: A Flask app
     :rtype: flask_security.DatabaseService
     """
-    return get_pybel(app).user_datastore
+    return get_state(app).user_datastore
 
 
 def get_api(app):
@@ -31,19 +31,19 @@ def get_api(app):
     :param flask.Flask app: A Flask app
     :rtype: DatabaseService
     """
-    return get_pybel(app).api
+    return get_state(app).api
 
 
 def get_manager(app):
     """Gets the cache manger from a Flask app
 
     :param flask.Flask app: A Flask app
-    :rtype: pybel.manager.cache.Manager
+    :rtype: pybel.manager.Manager
     """
-    return get_pybel(app).manager
+    return get_state(app).manager
 
 
-def get_pybel(app):
+def get_state(app):
     """
     :param flask.Flask app: A Flask app
     :rtype: pybel_web.application.FlaskPyBEL
