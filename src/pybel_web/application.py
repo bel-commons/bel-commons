@@ -176,20 +176,17 @@ swagger = Swagger()
 jquery2_cdn = WebCDN('//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/')
 
 
-class IntListConverter(BaseConverter):
-    def to_python(self, value):
-        return [int(entry) for entry in value.split(',')]
-
-    def to_url(self, values):
-        return ','.join(BaseConverter.to_url(self, value) for value in values)
-
-
 class ListConverter(BaseConverter):
     def to_python(self, value):
         return value.split(',')
 
     def to_url(self, values):
-        return ','.join(BaseConverter.to_url(value) for value in values)
+        return ','.join(BaseConverter.to_url(self, value) for value in values)
+
+
+class IntListConverter(ListConverter):
+    def to_python(self, value):
+        return [int(entry) for entry in ListConverter.to_python(self, value)]
 
 
 def create_application(get_mail=False, config_location=None, **kwargs):
