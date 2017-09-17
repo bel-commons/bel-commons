@@ -260,7 +260,7 @@ def render_network_summary(network_id, graph):
         chart_1_data=prepare_c3(function_count, 'Entity Type'),
         chart_2_data=prepare_c3(relation_count, 'Relationship Type'),
         chart_3_data=prepare_c3(error_count, 'Error Type') if error_count else None,
-        chart_4_data=prepare_c3(modifications_count if modifications_count else None),
+        chart_4_data=prepare_c3(modifications_count) if modifications_count else None,
         chart_5_data=prepare_c3(count_variants(graph), 'Node Variants'),
         chart_6_data=prepare_c3(count_namespaces(graph), 'Namespaces'),
         chart_7_data=prepare_c3(hub_data, 'Top Hubs'),
