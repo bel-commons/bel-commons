@@ -10,7 +10,7 @@ class ModelView(ModelViewBase):
 
     def is_accessible(self):
         """Checks the current user is an admin"""
-        return current_user.is_authenticated and current_user.admin
+        return current_user.is_authenticated and current_user.is_admin
 
     def inaccessible_callback(self, name, **kwargs):
         """redirect to login page if user doesn't have access"""
