@@ -90,7 +90,7 @@ from .utils import (
     safe_get_query,
     get_vote,
     next_or_jsonify,
-    assert_user_owns_network,
+    user_owns_network_or_403,
 )
 
 log = logging.getLogger(__name__)
@@ -605,8 +605,8 @@ def drop_network_helper(network_id):
     if network is None:
         abort(404)
 
-    if not current_user.admin:
-        assert_user_owns_network(network, current_user)
+    if not current_user.is_admin:
+        user_owns_network_or_403(network, current_user)
 
     try:
         manager.session.delete(network)
@@ -1936,7 +1936,7 @@ def grant_network_to_project(network_id, project_id):
     if network is None:
         abort(404)
 
-    assert_user_owns_network(network, current_user)
+    user_owns_network_or_403(network, current_user)
 
     project = manager.session.query(Project).get(project_id)
     project.networks.append(network)
@@ -1965,7 +1965,7 @@ def grant_network_to_user(network_id, user_id):
     if network is None:
         abort(404)
 
-    assert_user_owns_network(network, current_user)
+    user_owns_network_or_403(network, current_user)
 
     user = manager.session.query(User).get(user_id)
     user.networks.append(network)

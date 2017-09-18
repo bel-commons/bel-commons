@@ -774,7 +774,7 @@ def next_or_jsonify(message, *args, status=200, category='message', **kwargs):
     )
 
 
-def assert_user_owns_network(network, user):
+def user_owns_network_or_403(network, user):
     """Check that the user is the owner of the the network. Sends a Flask abort 403 signal if not.
 
     :param Network network: A network
