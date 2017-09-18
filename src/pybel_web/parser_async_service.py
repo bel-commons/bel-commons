@@ -49,6 +49,7 @@ def view_parser():
 
     manager.session.add(report)
     manager.session.commit()
+    manager.session.close()
 
     celery = create_celery(current_app)
     task = celery.send_task('pybelparser', args=(

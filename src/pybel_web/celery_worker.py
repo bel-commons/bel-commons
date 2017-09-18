@@ -32,7 +32,7 @@ from .application import create_application
 from .celery_utils import create_celery
 from .constants import CHARLIE_EMAIL, DANIEL_EMAIL, integrity_message, log_worker_path
 from .models import Report, Experiment
-from .utils import calculate_scores
+from .utils import calculate_scores, manager
 
 log = get_task_logger(__name__)
 
@@ -52,16 +52,13 @@ dumb_belief_stuff = {
 
 pbw_sender = ("PyBEL Web", 'pybel@scai.fraunhofer.de')
 
-def parse_folder(connection, folder, **kwargs):
+
+def parse_folder(folder, **kwargs):
     """Parses everything in a folder
 
     :param str connection:
     :param str folder:
     """
-    manager = Manager(
-        connection=connection,
-        scopefunc=_app_ctx_stack.__ident_func__
-    )
     convert_directory(
         folder,
         connection=manager,
@@ -75,56 +72,50 @@ def parse_folder(connection, folder, **kwargs):
 
 
 @celery.task(name='parse-aetionomy')
-def parse_aetionomy(connection):
+def parse_aetionomy():
     """Converts the AETIONOMY folder in the BMS"""
     folder = os.path.join(os.environ[BMS_BASE], 'aetionomy')
-    parse_folder(connection, folder)
+    parse_folder(folder)
 
 
 @celery.task(name='parse-selventa')
-def parse_selventa(connection):
+def parse_selventa():
     """Converts the Selventa folder in the BMS"""
     folder = os.path.join(os.environ[BMS_BASE], 'selventa')
-    parse_folder(connection, folder, citation_clearing=False)
+    parse_folder(folder, citation_clearing=False, allow_nested=True)
 
 
 @celery.task(name='parse-bel4imocede')
-def parse_bel4imocede(connection):
+def parse_bel4imocede():
     """Converts the BEL4IMOCEDE folder in the BMS"""
     folder = os.path.join(os.environ[BMS_BASE], 'BEL4IMOCEDE')
-    parse_folder(connection, folder)
+    parse_folder(folder)
 
 
 @celery.task(name='parse-ptsd')
-def parse_ptsd(connection):
+def parse_ptsd():
     """Converts the CVBIO PTSD folder in the BMS"""
     folder = os.path.join(os.environ[BMS_BASE], 'cvbio', 'PTSD')
-    parse_folder(connection, folder)
+    parse_folder(folder)
 
 
 @celery.task(name='parse-tbi')
-def parse_tbi(connection):
+def parse_tbi():
     """Converts the CVBIO TBI folder in the BMS"""
     folder = os.path.join(os.environ[BMS_BASE], 'cvbio', 'TBI')
-    parse_folder(connection, folder)
+    parse_folder(folder)
 
 
 @celery.task(name='parse-bms')
-def parse_bms(connection):
+def parse_bms():
     """Converts the entire BMS"""
-    parse_folder(connection, os.environ[BMS_BASE])
+    parse_folder(os.environ[BMS_BASE])
 
 
 @celery.task(name='parse-url')
-def parse_by_url(connection, url):
+def parse_by_url(url):
     """Parses a graph at the given URL resource"""
     # FIXME add proper exception handling and feedback
-
-    manager = Manager(
-        connection=connection,
-        scopefunc=_app_ctx_stack.__ident_func__
-    )
-
     try:
         graph = from_url(url, manager=manager)
     except:
@@ -141,17 +132,12 @@ def parse_by_url(connection, url):
 
 
 @celery.task(name='pybelparser')
-def async_parser(connection, report_id):
+def async_parser(report_id):
     """Asynchronously parses a BEL script and sends email feedback
 
-    :param str connection: RFC connection string
     :param int report_id: Report identifier
     """
     log.info('Starting parse task')
-    manager = Manager(
-        connection=connection,
-        scopefunc=_app_ctx_stack.__ident_func__
-    )
 
     report = manager.session.query(Report).get(report_id)
 
