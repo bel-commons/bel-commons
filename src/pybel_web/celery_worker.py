@@ -16,7 +16,6 @@ import os
 import requests.exceptions
 from celery.utils.log import get_task_logger
 from flask import _app_ctx_stack
-from flask_mail import Message
 from sqlalchemy.exc import IntegrityError, OperationalError
 
 from pybel import from_url, to_bytes
@@ -42,7 +41,6 @@ log.addHandler(fh)
 
 app = create_application()
 celery = create_celery(app)
-# db = flask_sqlalchemy.get_state(app)
 
 dumb_belief_stuff = {
     METADATA_DESCRIPTION: {'Document description'},
@@ -56,7 +54,6 @@ pbw_sender = ("PyBEL Web", 'pybel@scai.fraunhofer.de')
 def parse_folder(folder, **kwargs):
     """Parses everything in a folder
 
-    :param str connection:
     :param str folder:
     """
     convert_directory(
@@ -119,14 +116,14 @@ def parse_by_url(url):
     try:
         graph = from_url(url, manager=manager)
     except:
-        return 'Parsing failed'
+        return 'Parsing failed for {}. '.format(url)
 
     try:
         network = manager.insert_graph(graph)
         return network.id
     except:
         manager.session.rollback()
-        return 'Error parsing'
+        return 'Inserting failed for {}'.format(url)
     finally:
         manager.session.close()
 
@@ -206,7 +203,7 @@ def async_parser(report_id):
 
         if hashlib.sha1(network.blob).hexdigest() != hashlib.sha1(to_bytes(network)).hexdigest():
             with app.app_context():
-                app.extensions['mail'].send(Message(
+                app.extensions['mail'].send_message(
                     subject='Possible attempted Espionage',
                     recipients=[CHARLIE_EMAIL, DANIEL_EMAIL],
                     body='The following user ({} {}) may have attempted espionage of network: {}'.format(
@@ -215,7 +212,7 @@ def async_parser(report_id):
                         network
                     ),
                     sender=pbw_sender,
-                ))
+                )
 
             return finish_parsing('Upload Failed', message)
 
@@ -282,17 +279,12 @@ def async_parser(report_id):
 
 
 @celery.task(name='run-cmpa')
-def run_cmpa(connection, experiment_id):
+def run_cmpa(experiment_id):
     """Runs the CMPA analysis
 
-    :param str connection:
     :param int experiment_id:
     """
     log.info('Running experiment %s', experiment_id)
-    manager = Manager(
-        connection=connection,
-        scopefunc=_app_ctx_stack.__ident_func__
-    )
 
     experiment = manager.session.query(Experiment).get(experiment_id)
 

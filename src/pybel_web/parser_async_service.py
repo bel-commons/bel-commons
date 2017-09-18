@@ -53,8 +53,7 @@ def view_parser():
     report_id, report_name = report.id, report.source_name
     manager.session.close()
 
-    celery = create_celery(current_app)
-    task = celery.send_task('pybelparser', args=[report_id])
+    task = current_app.celery.send_task('pybelparser', args=[report_id])
 
     reporting_log.info('Parse task from %s: %s', current_user, task.id)
     flash('Queued parsing task {} for {}.'.format(report_id, report_name))

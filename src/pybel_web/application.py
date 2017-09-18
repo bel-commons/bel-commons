@@ -30,6 +30,7 @@ from pybel.constants import config as pybel_config
 from pybel.constants import get_cache_connection
 from pybel.manager import Manager, BaseManager
 from .application_utils import FlaskPyBEL
+from .celery_utils import create_celery
 from .constants import PYBEL_WEB_VERSION
 from .forms import ExtendedRegisterForm
 
@@ -128,6 +129,7 @@ def create_application(get_mail=False, config_location=None, **kwargs):
     # Initialize extensions
     db = SQLAlchemy(app=app)
     bootstrap.init_app(app)
+    create_celery(app)
 
     # TODO upgrade to jQuery 2?
     # See: https://pythonhosted.org/Flask-Bootstrap/faq.html#why-are-you-shipping-jquery-1-instead-of-jquery-2

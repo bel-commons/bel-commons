@@ -68,64 +68,56 @@ def build_ensure_service(app):
     def ensure_simple():
         """Parses and stores the PyBEL Test BEL Script"""
         url = 'https://raw.githubusercontent.com/pybel/pybel/develop/tests/bel/test_bel.bel'
-        celery = create_celery(current_app)
-        task = celery.send_task('parse-url', args=[url])
+        task = current_app.celery.send_task('parse-url', args=[url])
         return next_or_jsonify('Queued task to parse PyBEL Test 1: {}'.format(task))
 
     @app.route('/admin/ensure/gfam')
     @roles_required('admin')
     def ensure_gfam():
         """Parses and stores the HGNC Gene Family Definitions"""
-        celery = create_celery(current_app)
-        task = celery.send_task('parse-url', args=[GENE_FAMILIES])
+        task = current_app.celery.send_task('parse-url', args=[GENE_FAMILIES])
         return next_or_jsonify('Queued task to parse HGNC Gene Families: {}'.format(task))
 
     @app.route('/admin/ensure/aetionomy')
     @roles_required('admin')
     def ensure_aetionomy():
         """Parses and stores the AETIONOMY resources from the Biological Model Store repository"""
-        celery = create_celery(current_app)
-        task = celery.send_task('parse-aetionomy')
+        task = current_app.celery.send_task('parse-aetionomy')
         return next_or_jsonify('Queued task to parse the AETIONOMY folder: {}'.format(task))
 
     @app.route('/admin/ensure/selventa')
     @roles_required('admin')
     def ensure_selventa():
         """Parses and stores the Selventa resources from the Biological Model Store repository"""
-        celery = create_celery(current_app)
-        task = celery.send_task('parse-selventa')
+        task = current_app.celery.send_task('parse-selventa')
         return next_or_jsonify('Queued task to parse the Selventa folder: {}'.format(task))
 
     @app.route('/admin/ensure/ptsd')
     @roles_required('admin')
     def ensure_ptsd():
         """Parses and stores the PTSD resources from the Biological Model Store repository"""
-        celery = create_celery(current_app)
-        task = celery.send_task('parse-ptsd')
+        task = current_app.celery.send_task('parse-ptsd')
         return next_or_jsonify('Queued task to parse the PTSD folder: {}'.format(task))
 
     @app.route('/admin/ensure/tbi')
     @roles_required('admin')
     def ensure_tbi():
         """Parses and stores the TBI resources from the Biological Model Store repository"""
-        celery = create_celery(current_app)
-        task = celery.send_task('parse-tbi')
+        task = current_app.celery.send_task('parse-tbi')
         return next_or_jsonify('Queued task to parse the TBI folder: {}'.format(task))
 
     @app.route('/admin/ensure/bel4imocede')
     @roles_required('admin')
     def ensure_bel4imocede():
         """Parses and stores the BEL4IMOCEDE resources from the Biological Model Store repository"""
-        celery = create_celery(current_app)
-        task = celery.send_task('parse-bel4imocede')
+        task = current_app.celery.send_task('parse-bel4imocede')
         return next_or_jsonify('Queued task to parse the BEL4IMOCEDE folder: {}'.format(task))
 
     @app.route('/admin/ensure/bms')
     @roles_required('admin')
     def ensure_bms():
         """Parses and stores the entire Biological Model Store repository"""
-        celery = create_celery(current_app)
-        task = celery.send_task('parse-bms')
+        task = current_app.celery.send_task('parse-bms')
         return next_or_jsonify('Queued task to parse the BMS: {}'.format(task))
 
 
