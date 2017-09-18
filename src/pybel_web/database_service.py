@@ -609,9 +609,6 @@ def drop_network_helper(network_id):
         assert_user_owns_network(network, current_user)
 
     try:
-        if network.report:
-            manager.session.delete(network.report)
-
         manager.session.delete(network)
         manager.session.commit()
 
