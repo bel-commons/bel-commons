@@ -231,6 +231,34 @@ class IntListConverter(ListConverter):
         return [int(entry) for entry in ListConverter.to_python(self, value)]
 
 
+def get_config_location(config_location=None):
+    if config_location is not None:
+        log.info('Getting configuration from user supplied argument: %s', config_location)
+        return config_location
+
+    if 'PYBEL_WEB_CONFIG_OBJECT' in os.environ:
+        log.info('Getting configuration from environment PYBEL_WEB_CONFIG_OBJECT=%s',
+                 os.environ['PYBEL_WEB_CONFIG_OBJECT'])
+        return os.environ['PYBEL_WEB_CONFIG_OBJECT']
+
+    config_location = 'pybel_web.config.Config'
+    log.info('Getting configuration from default %s', config_location)
+    return config_location
+
+
+swagger_config = {
+    'title': 'PyBEL Web API',
+    'description': 'This exposes the functions of PyBEL as a RESTful API',
+    'contact': {
+        'responsibleOrganization': 'Fraunhofer SCAI',
+        'responsibleDeveloper': 'Charles Tapley Hoyt',
+        'email': 'charles.hoyt@scai.fraunhofer.de',
+        'url': 'https://www.scai.fraunhofer.de/de/geschaeftsfelder/bioinformatik.html',
+    },
+    'version': '0.1.0',
+}
+
+
 def create_application(get_mail=False, config_location=None, **kwargs):
     """Builds a Flask app for the PyBEL web service
     
@@ -245,19 +273,7 @@ def create_application(get_mail=False, config_location=None, **kwargs):
     """
     app = Flask(__name__)
     app.config.update(pybel_config)
-
-    if config_location is not None:
-        log.info('Getting configuration from user supplied argument: %s', config_location)
-
-    elif 'PYBEL_WEB_CONFIG_OBJECT' in os.environ:
-        config_location = os.environ['PYBEL_WEB_CONFIG_OBJECT']
-        log.info('Getting configuration from environment PYBEL_WEB_CONFIG_OBJECT=%s', config_location)
-
-    else:
-        config_location = 'pybel_web.config.Config'
-        log.info('Getting configuration from default %s', config_location)
-
-    app.config.from_object(config_location)
+    app.config.from_object(get_config_location(config_location))
 
     if 'PYBEL_WEB_CONFIG_JSON' in os.environ:
         env_conf_path = os.path.expanduser(os.environ['PYBEL_WEB_CONFIG_JSON'])
@@ -270,17 +286,7 @@ def create_application(get_mail=False, config_location=None, **kwargs):
             app.config.from_json(env_conf_path)
 
     app.config.update(kwargs)
-    app.config.setdefault('SWAGGER', {
-        'title': 'PyBEL Web API',
-        'description': 'This exposes the functions of PyBEL as a RESTful API',
-        'contact': {
-            'responsibleOrganization': 'Fraunhofer SCAI',
-            'responsibleDeveloper': 'Charles Tapley Hoyt',
-            'email': 'charles.hoyt@scai.fraunhofer.de',
-            'url': 'https://www.scai.fraunhofer.de/de/geschaeftsfelder/bioinformatik.html',
-        },
-        'version': '0.1.0',
-    })
+    app.config.setdefault('SWAGGER', swagger_config)
 
     if not app.config.get(PYBEL_CONNECTION):
         app.config[PYBEL_CONNECTION] = get_cache_connection()
