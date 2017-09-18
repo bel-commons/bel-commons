@@ -15,12 +15,10 @@ import hashlib
 import os
 import requests.exceptions
 from celery.utils.log import get_task_logger
-from flask import _app_ctx_stack
 from sqlalchemy.exc import IntegrityError, OperationalError
 
 from pybel import from_url, to_bytes
 from pybel.constants import METADATA_DESCRIPTION, METADATA_CONTACT, METADATA_LICENSES
-from pybel.manager import Manager
 from pybel.manager.models import Network
 from pybel.parser.parse_exceptions import InconsistentDefinitionError
 from pybel_tools.constants import BMS_BASE
