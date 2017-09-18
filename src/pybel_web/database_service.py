@@ -797,7 +797,7 @@ def update_network_status(network_id, status):
     if network.report is None:
         abort(400)
 
-    if not current_user.admin or current_user.id != network.report.user_id:
+    if not current_user.is_admin or current_user.id != network.report.user_id:
         abort(403, 'You do not have permission to modify that network')
 
     network.report.public = status
@@ -1416,7 +1416,7 @@ def drop_query_by_id(query_id):
     if query is None:
         abort(400, 'Invalid Query ID')
 
-    if not (current_user.admin or query.user_id == current_user.id):
+    if not (current_user.is_admin or query.user_id == current_user.id):
         abort(403, 'Unauthorized user')
 
     manager.session.delete(query)
@@ -1449,7 +1449,7 @@ def drop_user_queries(user_id):
     tags:
         - query
     """
-    if not (current_user.admin or user_id == current_user.id):
+    if not (current_user.is_admin or user_id == current_user.id):
         abort(403, 'Unauthorized user')
 
     manager.session.query(models.Query).filter(models.Query.user == current_user).delete()
@@ -1862,7 +1862,7 @@ def drop_experiment_by_id(experiment_id):
     if experiment is None:
         abort(404)
 
-    if not current_user.admin and (current_user != experiment.user):
+    if not current_user.is_admin and (current_user != experiment.user):
         abort(403, 'You do not have rights to drop this experiment')
 
     manager.session.delete(experiment)
@@ -1901,7 +1901,7 @@ def download_analysis(experiment_id):
     if experiment is None:
         abort(404)
 
-    if not current_user.admin and (current_user != experiment.user):
+    if not current_user.is_admin and (current_user != experiment.user):
         abort(403, 'You do not have rights to this experiment')
 
     si = StringIO()
@@ -1992,7 +1992,7 @@ def get_project_metadata(project_id):
     if project is None:
         abort(404)
 
-    if not current_user.admin and not project.has_user(current_user):
+    if not current_user.is_admin and not project.has_user(current_user):
         abort(403, 'User does not have permission to access this Project')
 
     return jsonify(**project.to_json())
@@ -2014,7 +2014,7 @@ def drop_project_by_id(project_id):
     if project is None:
         abort(404)
 
-    if not current_user.admin and not project.has_user(current_user):
+    if not current_user.is_admin and not project.has_user(current_user):
         abort(403, 'User does not have permission to access this Project')
 
     manager.session.delete(project)
@@ -2039,7 +2039,7 @@ def summarize_project(project_id):
     if project is None:
         abort(404)
 
-    if not current_user.admin and not project.has_user(current_user):
+    if not current_user.is_admin and not project.has_user(current_user):
         abort(403, 'User does not have permission to access this Project')
 
     si = StringIO()
@@ -2080,7 +2080,7 @@ def export_project_network(project_id, serve_format):
     if project is None:
         abort(404)
 
-    if not current_user.admin and not project.has_user(current_user):
+    if not current_user.is_admin and not project.has_user(current_user):
         abort(403, 'User does not have permission to access this Project')
 
     network = project.as_bel()

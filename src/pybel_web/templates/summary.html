@@ -65,7 +65,7 @@
                         <span class="glyphicon glyphicon-download" aria-hidden="true"></span> CX JSON</a>
                 {% endif %}
 
-                {% if current_user.admin %}
+                {% if current_user.is_admin %}
                     <a class="btn btn-danger" role="button"
                        href="{{ url_for('dbs.drop_network', network_id=network_id, next=url_for('home')) }}">
                         <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>

@@ -49,7 +49,7 @@
                             </p>
 
                             <ul class="list-inline">
-                                {% if current_user.is_authenticated and current_user.admin %}
+                                {% if current_user.is_authenticated and current_user.is_admin %}
                                     <li>
                                         <a target="_blank" class="btn btn-info"
                                            href="{{ url_for('dbs.get_project_metadata', project_id=project.id) }}">
@@ -336,7 +336,7 @@
                                    href="{{ url_for('analysis.view_query_analysis_uploader', query_id=query.id) }}">
                                     <span class="glyphicon glyphicon-flash"></span>
                                 </a>
-                                {% if current_user.admin %}
+                                {% if current_user.is_admin %}
                                     <a class="btn btn-warning btn-xs"
                                        href="{{ url_for('dbs.drop_query_by_id', query_id=query.id, next=url_for('view_current_user_activity')) }}">
                                         <span class="glyphicon glyphicon-remove"></span>

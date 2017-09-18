@@ -645,7 +645,7 @@ def networks_with_permission_iter_helper(user, manager_):
     if not user.is_authenticated:
         yield from iter_public_networks(manager_)
 
-    elif user.admin:
+    elif user.is_admin:
         yield from manager_.list_recent_networks()
 
     else:
@@ -654,7 +654,7 @@ def networks_with_permission_iter_helper(user, manager_):
         yield from user.get_shared_networks()
         yield from user.get_project_networks()
 
-        if user.has_role('scai'):
+        if user.is_scai:
             for user in scai_role.users:
                 yield from user.get_owned_networks()
                 yield from user.get_project_networks()
@@ -671,7 +671,7 @@ def get_networks_with_permission(manager_):
     if not current_user.is_authenticated:
         return list(iter_public_networks(manager_))
 
-    if current_user.admin:
+    if current_user.is_admin:
         return manager_.list_recent_networks()
 
     return list(unique_networks(networks_with_permission_iter_helper(current_user, manager_)))
@@ -698,7 +698,7 @@ def user_has_query_rights(user, query):
     :param models.Query query: A query object
     :rtype: bool
     """
-    if user.is_authenticated and user.admin:
+    if user.is_authenticated and user.is_admin:
         return True
 
     permissive_network_ids = get_network_ids_with_permission_helper(user, manager)
@@ -715,7 +715,7 @@ def current_user_has_query_rights(query_id):
     :param int query_id: The database identifier for a query
     :rtype: bool
     """
-    if current_user.is_authenticated and current_user.admin:
+    if current_user.is_authenticated and current_user.is_admin:
         return True
 
     query = manager.session.query(Query).get(query_id)

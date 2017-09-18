@@ -263,9 +263,18 @@ class User(Base, UserMixin):
     networks = relationship('Network', secondary=users_networks, backref=backref('users', lazy='dynamic'))
 
     @property
-    def admin(self):
+    def is_admin(self):
         """Is this user an administrator?"""
         return self.has_role('admin')
+
+    @property
+    def is_scai(self):
+        """Is this user from SCAI?"""
+        return (
+            self.has_role('scai') or
+            self.email.endswith('@scai.fraunhofer.de') or
+            self.email.endswith('@scai-extern.fraunhofer.de')
+        )
 
     def get_owned_networks(self):
         """Gets all networks this user owns
