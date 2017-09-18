@@ -50,6 +50,7 @@ dumb_belief_stuff = {
     METADATA_LICENSES: {'Document license'}
 }
 
+pbw_sender = ("PyBEL Web", 'pybel@scai.fraunhofer.de')
 
 def parse_folder(connection, folder, **kwargs):
     """Parses everything in a folder
@@ -163,7 +164,7 @@ def async_parser(connection, report_id):
                 subject=subject,
                 recipients=[report.user.email],
                 body=message,
-                sender=("PyBEL Web", 'pybel@scai.fraunhofer.de'),
+                sender=pbw_sender,
             )
 
     def finish_parsing(subject, message, log_exception=True):
@@ -227,7 +228,7 @@ def async_parser(connection, report_id):
                         report.user.email,
                         network
                     ),
-                    sender=("PyBEL Web", 'pybel@scai.fraunhofer.de'),
+                    sender=pbw_sender,
                 ))
 
             return finish_parsing('Upload Failed', message)
@@ -346,7 +347,7 @@ def run_cmpa(connection, experiment_id):
                 subject='CMPA Analysis complete',
                 recipients=[experiment.user.email],
                 body=message,
-                sender=("PyBEL Web", 'pybel@scai.fraunhofer.de'),
+                sender=pbw_sender,
             )
 
     return experiment_id
