@@ -20,12 +20,12 @@ log = logging.getLogger(__name__)
 parser_async_blueprint = Blueprint('parser', __name__)
 
 
-@parser_async_blueprint.route('/parser', methods=['GET', 'POST'])
+@parser_async_blueprint.route('/parse/upload', methods=['GET', 'POST'])
 @login_required
 def view_parser():
     """Renders the form for asynchronous parsing"""
     form = ParserForm(
-        public=(not current_user.has_role('scai')),
+        public=(not current_user.is_scai),
     )
 
     if not form.validate_on_submit():
@@ -49,21 +49,20 @@ def view_parser():
 
     manager.session.add(report)
     manager.session.commit()
+
+    report_id, report_name = report.id, report.source_name
     manager.session.close()
 
     celery = create_celery(current_app)
-    task = celery.send_task('pybelparser', args=(
-        current_app.config.get(PYBEL_CONNECTION),
-        report.id
-    ))
+    task = celery.send_task('pybelparser', args=[report_id])
 
     reporting_log.info('Parse task from %s: %s', current_user, task.id)
-    flash('Queued parsing task {} for {}.'.format(report.id, report.source_name))
+    flash('Queued parsing task {} for {}.'.format(report_id, report_name))
 
     return redirect(url_for('view_current_user_activity'))
 
 
-@parser_async_blueprint.route('/parse_url', methods=('GET', 'POST'))
+@parser_async_blueprint.route('/parse/url', methods=('GET', 'POST'))
 def view_url_parser():
     """Renders a form for parsing by URL"""
     form = ParseUrlForm()
