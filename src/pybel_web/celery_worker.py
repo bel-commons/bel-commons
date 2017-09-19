@@ -37,6 +37,10 @@ fh = logging.FileHandler(log_worker_path)
 fh.setLevel(logging.DEBUG)
 log.addHandler(fh)
 
+logging.basicConfig(level=logging.DEBUG)
+enable_cool_mode()  # turn off warnings for compilation
+log.setLevel(logging.DEBUG)
+
 app = create_application()
 celery = create_celery(app)
 
@@ -327,9 +331,3 @@ def run_cmpa(experiment_id):
             )
 
     return experiment_id
-
-
-if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG)
-    enable_cool_mode()  # turn off warnings for compilation
-    log.setLevel(logging.DEBUG)
