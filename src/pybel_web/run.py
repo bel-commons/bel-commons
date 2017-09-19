@@ -18,6 +18,7 @@ from .application import create_application
 from .constants import log_runner_path
 from .curation_service import curation_blueprint
 from .database_service import api_blueprint
+from .external_services import external_blueprint
 from .main_service import build_main_service
 from .parser_async_service import parser_async_blueprint
 from .parser_endpoint import build_parser_service
@@ -55,6 +56,7 @@ app.register_blueprint(curation_blueprint)
 app.register_blueprint(parser_async_blueprint)
 app.register_blueprint(api_blueprint)
 app.register_blueprint(analysis_blueprint)
+app.register_blueprint(external_blueprint)
 
 if app.config.get('PYBEL_WEB_PARSER_API'):
     build_parser_service(app)

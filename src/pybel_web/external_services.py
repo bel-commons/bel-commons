@@ -2,6 +2,8 @@
 
 """This module contains integrations developed for external services"""
 
+import logging
+
 from flask import (
     Blueprint,
     request,
@@ -20,11 +22,13 @@ from pybel_tools.selection import (
 from .send_utils import serve_network
 from .utils import manager, api
 
+log = logging.getLogger(__name__)
+
 belief_blueprint = Blueprint('belief', __name__)
-neurommsig_blueprint = Blueprint('neurommsig', __name__)
+external_blueprint = Blueprint('external', __name__)
 
 
-@belief_blueprint.route('/belief/merge', methods=["POST"])
+@belief_blueprint.route('/api/external/belief/merge', methods=["POST"])
 def semantic_merge():
     """Performs a semantic merge on BEL documents
 
@@ -57,7 +61,7 @@ def semantic_merge():
     return serve_network(super_graph, serve_format='bel')
 
 
-@neurommsig_blueprint.route('/api/get_alzheimers_subgraphs/')
+@external_blueprint.route('/api/external/neurommsig/get_alzheimers_subgraphs/')
 @cross_origin()
 def get_neurommsigs():
     """Returns AD NeuroMMSigs"""
@@ -95,42 +99,20 @@ def build_annotation_search_filter(annotations, values):
         return False
 
 
-@neurommsig_blueprint.route('/api/mozg/network/serve')
+@external_blueprint.route('/api/external/mozg/network/<int:network_id>')
 @cross_origin()
-def get_mozg_query():
+def get_mozg_query(network_id):
     """Gets a network matching the induction over nodes and edges that match the given annotations and values
 
-    ----
-    tags:
-        - external
-        - mozg
-    parameters:
-      - name: network
-        in: query
-        description: The database network identifier(s)
-        required: true
-        type: integer
-      - name: annotation
-        in: query
-        description: The annotations to search
-        required: true
-        type: string
-      - name: value
-        in: query
-        description: The values to search in the given annotations
-        required: true
-        type: string
-    responses:
-      200:
-        description: The network JSON
+    ---
     """
-    network_ids = request.args.getlist('network[]', type=int)
-
-    graph = api.get_graphs_by_ids(network_ids)
-
+    log.debug('Network id: %s', network_id)
     annotations = request.args.getlist('annotation[]')
+    log.debug('Annotations: %s', annotations)
     values = request.args.getlist('value[]')
+    log.debug('Values: %s', values)
 
+    graph = api.get_graph_by_id(network_id)
     nodes = search_node_names(graph, values)
     neighborhoods = get_subgraph_by_neighborhood(graph, nodes)
 

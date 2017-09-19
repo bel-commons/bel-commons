@@ -40,7 +40,7 @@ from .application import create_application
 from .constants import log_runner_path, CHARLIE_EMAIL
 from .curation_service import curation_blueprint
 from .database_service import api_blueprint
-from .external_services import belief_blueprint
+from .external_services import belief_blueprint, external_blueprint
 from .main_service import build_main_service
 from .models import Role, User, Report, Project, Experiment
 from .parser_async_service import parser_async_blueprint
@@ -152,6 +152,7 @@ def run(host, port, default_config, debug, config):
     app.register_blueprint(api_blueprint)
     app.register_blueprint(analysis_blueprint)
     app.register_blueprint(belief_blueprint)
+    app.register_blueprint(external_blueprint)
 
     if app.config.get('PYBEL_WEB_PARSER_API'):
         build_parser_service(app)
