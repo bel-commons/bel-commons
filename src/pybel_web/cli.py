@@ -168,10 +168,10 @@ def run(host, port, default_config, debug, config):
 @main.command()
 def worker():
     """Runs the celery worker"""
-    from .celery_worker import celery as app
+    from .celery_worker import app
     from celery.bin import worker
 
-    worker = worker.worker(app=app)
+    worker = worker.worker(app=app.celery)
 
     options = {
         'broker': 'amqp://guest:guest@localhost:5672//',
