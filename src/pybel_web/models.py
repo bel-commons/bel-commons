@@ -123,15 +123,15 @@ class Report(Base):
 
     def __repr__(self):
         if self.incomplete:
-            return '<Report: incomplete #{} {}>'.format(self.id, self.source_name)
+            return '<Report {}: incomplete {}>'.format(self.id, self.source_name)
 
         if self.failed:
-            return '<Report: failed #{})>'.format(self.id)
+            return '<Report {}: failed)>'.format(self.id)
 
         if self.network:
-            return '<Report: completed {}>'.format(self.network)
+            return '<Report {}: completed {}>'.format(self.id, self.network)
 
-        return '<Report {}>'.format(self.id)
+        return '<Report {}: cancelled>'.format(self.id)
 
 
 roles_users = Table(
