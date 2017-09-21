@@ -48,7 +48,13 @@ def view_parser():
     )
 
     manager.session.add(report)
-    manager.session.commit()
+
+    try:
+        manager.session.commit()
+    except:
+        manager.session.rollback()
+        flash('Unable to upload BEL document')
+        return redirect(url_for('.view_parser'))
 
     report_id, report_name = report.id, report.source_name
     manager.session.close()
