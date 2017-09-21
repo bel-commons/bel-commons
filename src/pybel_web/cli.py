@@ -217,26 +217,23 @@ def setup(manager):
 def load(manager, file):
     """Dump stuff for loading later (in lieu of having proper migrations)"""
     ds = SQLAlchemyUserDatastore(manager, User, Role)
+
     for line in file:
-        email, first, last, roles, password = line.strip().split('\t')
+        email, password, roles, name = line.strip().split('\t')
         u = ds.find_user(email=email)
 
         if not u:
             u = ds.create_user(
                 email=email,
-                first_name=first,
-                last_name=last,
                 password=password,
+                name=name,
                 confirmed_at=datetime.datetime.now()
             )
             click.echo('added {}'.format(u))
             ds.commit()
-        for role_name in roles.strip().split(','):
-            r = ds.find_role(role_name)
-            if not r:
-                r = ds.create_role(name=role_name)
-                ds.commit()
-            if not u.has_role(r):
+
+            for role_name in roles.strip().split(','):
+                r = ds.find_or_create_role(name=role_name)
                 ds.add_role_to_user(u, r)
 
     ds.commit()
@@ -244,18 +241,18 @@ def load(manager, file):
 
 @manage.command()
 @click.option('-y', '--yes', is_flag=True)
+@click.option('-u', '--user-dump', type=click.File('w'), default=user_dump_path, help='Place to dump user data')
 @click.pass_obj
-def drop(manager, yes):
+def drop(manager, yes, user_dump):
     """Drops database"""
     if yes or click.confirm('Drop database at {}?'.format(manager.connection)):
-        click.echo('Dumped users to {}'.format(user_dump_path))
-        with open(user_dump_path, 'w') as f:
-            for s in iterate_user_strings(manager, True):
-                click.echo(s, file=f)
-        click.echo('Done')
+        click.echo('Dumping users to {}'.format(user_dump_path))
+        for s in iterate_user_strings(manager):
+            click.echo(s, file=user_dump)
+        click.echo('Done dumping users')
         click.echo('Dropping database')
         manager.drop_all()
-        click.echo('Done')
+        click.echo('Done dropping database')
 
 
 @manage.command()
@@ -288,11 +285,10 @@ def user():
 
 
 @user.command()
-@click.option('-p', '--with-passwords', is_flag=True)
 @click.pass_obj
-def ls(manager, with_passwords):
+def ls(manager):
     """Lists all users"""
-    for s in iterate_user_strings(manager, with_passwords):
+    for s in iterate_user_strings(manager):
         click.echo(s)
 
 

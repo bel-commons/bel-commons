@@ -75,7 +75,7 @@ from pybel_tools.summary import (
 from pybel_tools.utils import prepare_c3, prepare_c3_time_series, count_dict_values
 from .application_utils import get_api, get_manager, get_scai_role, get_user_datastore
 from .constants import reporting_log, AND
-from .models import User, Report, Experiment, Query, EdgeVote
+from .models import User, Report, Experiment, Query, EdgeVote, Role
 
 log = logging.getLogger(__name__)
 
@@ -403,19 +403,18 @@ def get_recent_reports(manager_, weeks=2):
         yield ''
 
 
-def iterate_user_strings(manager_, with_passwords):
+def iterate_user_strings(manager_):
     """Iterates over strings to print describing users
 
     :param pybel.manager.Manager manager_:
-    :param bool with_passwords:
     :rtype: iter[str]
     """
     for user in manager_.session.query(User).all():
-        yield '{}\t{}\t{}{}'.format(
-            user.email,
-            '\t{}'.format(user.password) if with_passwords else '',
-            ','.join(sorted(r.name for r in user.roles)),
-            user.name,
+        yield '{email}\t{password}\t{roles}\t{name}'.format(
+            email=user.email,
+            password=user.password,
+            roles=','.join(sorted(r.name for r in user.roles)),
+            name=(user.name if user.name else '')
         )
 
 
