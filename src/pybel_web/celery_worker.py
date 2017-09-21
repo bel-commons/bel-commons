@@ -136,9 +136,12 @@ def async_parser(report_id):
 
     :param int report_id: Report identifier
     """
-    log.info('Starting parse task')
+    log.info('Starting parse task for report: %s', report_id)
 
     report = manager.session.query(Report).get(report_id)
+
+    if report is None:
+        raise ValueError('Report not found')
 
     def make_mail(subject, message):
         if 'mail' not in app.extensions:
