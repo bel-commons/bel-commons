@@ -15,8 +15,8 @@ pygments
 pandas
 celery
 obonet
-pybel>=0.8.1
-pybel-tools>=0.3.1
+pybel==0.9.0
+pybel-tools==0.4.0
 raven
 matplotlib_venn
 matplotlib
