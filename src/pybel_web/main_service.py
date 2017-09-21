@@ -10,7 +10,6 @@ from collections import defaultdict
 from flask import (
     current_app,
     request,
-    jsonify,
     url_for,
     redirect,
     send_file,
@@ -32,7 +31,6 @@ from pybel.manager.models import (
 )
 from pybel.utils import get_version as get_pybel_version
 from pybel_tools.constants import GENE_FAMILIES
-from pybel_tools.ioutils import upload_recursive, get_paths_recursive
 from pybel_tools.mutation.metadata import enrich_pubmed_citations
 from pybel_tools.pipeline import no_arguments_map
 from pybel_tools.utils import get_version as get_pybel_tools_version
@@ -241,6 +239,7 @@ def build_main_service(app):
         return render_template('about.html')
 
     @app.route("/sitemap")
+    @roles_required('admin')
     def view_site_map():
         """Displays a page with the site map"""
         api_links = []
@@ -310,6 +309,7 @@ def build_main_service(app):
         return render_template('reporting.html', reports=reports)
 
     @app.route('/logging', methods=['GET'])
+    @roles_required('admin')
     def view_logging():
         """Shows the logging"""
         return send_file(log_runner_path)
@@ -344,12 +344,10 @@ def build_main_service(app):
         query_2_result = query_2.run(api)
 
         data = calculate_overlap_dict(
-            query_1_result,
-            query_2_result,
-            set_labels=(
-                'Query {}'.format(query_1_id),
-                'Query {}'.format(query_2_id)
-            )
+            g1=query_1_result,
+            g1_label='Query {}'.format(query_1_id),
+            g2=query_2_result,
+            g2_label='Query {}'.format(query_2_id),
         )
 
         return render_template(

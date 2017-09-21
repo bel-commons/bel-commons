@@ -551,7 +551,7 @@ def get_query_descendants(query_id):
     return [query] + get_query_descendants(query.parent_id)
 
 
-def calculate_overlap_dict(g1, g2):
+def calculate_overlap_dict(g1, g2, g1_label=None, g2_label=None):
     """Creates a dictionary of images depicting the graphs' overlaps in multiple categories
 
     :param pybel.BELGraph g1: A BEL graph
@@ -559,8 +559,6 @@ def calculate_overlap_dict(g1, g2):
     :return: A dictionary containing important information for displaying base64 images
     :rtype: dict
     """
-    g1_label = g1.name if g1.name else 'Query 1'
-    g2_label = g2.name if g2.name else 'Query 2'
     set_labels = (g1_label, g2_label)
 
     import matplotlib
