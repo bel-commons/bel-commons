@@ -11,7 +11,6 @@ from flask import (
 from flask_cors import cross_origin
 
 from pybel import from_url
-from pybel.constants import ANNOTATIONS
 from pybel.struct import union
 from pybel_tools.selection import (
     get_subgraph_by_annotations,
@@ -19,6 +18,7 @@ from pybel_tools.selection import (
     search_node_names,
     get_subgraph_by_neighborhood
 )
+from .graph_utils import build_annotation_search_filter
 from .send_utils import serve_network
 from .utils import manager, api
 
@@ -75,28 +75,6 @@ def get_neurommsigs():
     network = api.relabel_nodes_to_identifiers(network)
 
     return serve_network(network)
-
-
-def build_annotation_search_filter(annotations, values):
-    """Builds an annotation search filter for Mozg
-
-    :param list[str] annotations: A list of the annotations to search
-    :param list[str] values: A list of values to match against any annotations
-    :return:
-    """
-
-    def annotation_dict_filter(graph, u, v, k, d):
-        """Returns if any of the annotations and values match up"""
-        if ANNOTATIONS not in d:
-            return False
-
-        for annotation in annotations:
-            if annotation not in d[ANNOTATIONS]:
-                continue
-            if any(value in d[ANNOTATIONS][annotation] for value in values):
-                return True
-
-        return False
 
 
 @external_blueprint.route('/api/external/mozg/network/<int:network_id>')
