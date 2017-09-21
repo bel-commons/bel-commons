@@ -419,7 +419,7 @@ def iterate_user_strings(manager_, with_passwords):
         )
 
 
-def sanitize_pipeline(function_name):
+def to_snake_case(function_name):
     """Converts method.__name__ from capital and spaced to lower and underscore separated
 
     :param str function_name:
@@ -486,7 +486,7 @@ def query_form_to_dict(form):
     ]
 
     query_dict["pipeline"] = [
-        {'function': sanitize_pipeline(function_name)}
+        {'function': to_snake_case(function_name)}
         for function_name in form.getlist("pipeline[]")
         if function_name
     ]
