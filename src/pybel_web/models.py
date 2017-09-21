@@ -93,16 +93,6 @@ class Report(Base):
     )
     network = relationship('Network', backref=backref('report', uselist=False))
 
-    def __repr__(self):
-        if self.completed is None:
-            return '[{}] Incomplete: {}'.format(self.id, self.source_name)
-
-        if self.completed is not None and not self.completed:
-            return '<Failed Report (#{})>'.format(self.id)
-
-        if self.network:
-            return '<Report on {}>'.format(self.network)
-
     def get_lines(self):
         """Decodes the lines stored in this
 
@@ -127,8 +117,21 @@ class Report(Base):
     def incomplete(self):
         return self.completed is None and not self.message
 
-    def __str__(self):
-        return repr(self)
+    @property
+    def failed(self):
+        return self.completed is not None and not self.completed
+
+    def __repr__(self):
+        if self.incomplete:
+            return '<Report: incomplete #{} {}>'.format(self.id, self.source_name)
+
+        if self.failed:
+            return '<Report: failed #{})>'.format(self.id)
+
+        if self.network:
+            return '<Report: completed {}>'.format(self.network)
+
+        return '<Report {}>'.format(self.id)
 
 
 roles_users = Table(
@@ -221,7 +224,7 @@ class Project(Base):
 
         :rtype: dict
         """
-        result =  {
+        result = {
             'name': self.name,
             'description': self.description,
             'users': [
@@ -306,10 +309,7 @@ class User(Base, UserMixin):
         )
 
     def __str__(self):
-        return repr(self)
-
-    def __repr__(self):
-        return self.name if self.name else self.email
+        return self.email
 
     def to_json(self, include_id=True):
         """Outputs this User as a JSON dictionary
@@ -379,9 +379,16 @@ class Assembly(Base):
         )
 
     def __repr__(self):
-        return '[{}]'.format(', '.join(str(network.id) for network in self.networks))
+        return '<Assembly {} with [{}]>'.format(
+            self.id,
+            ', '.join(str(network.id) for network in self.networks)
+        )
 
     def to_json(self):
+        """
+
+        :rtype: dict
+        """
         result = {
             'user': {
                 'id': self.user.id,
