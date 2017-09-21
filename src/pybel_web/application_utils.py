@@ -55,7 +55,11 @@ class FlaskPyBEL:
 
         Base.metadata.bind = self.manager.engine
         Base.query = self.manager.session.query_property()
-        Base.metadata.create_all(self.manager.engine, checkfirst=True)
+
+        try:
+            Base.metadata.create_all()
+        except:
+            log.exception('Failed to create all')
 
         self.api = DatabaseService(manager=self.manager)
         self.user_datastore = SQLAlchemyUserDatastore(self.manager, User, Role)
