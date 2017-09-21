@@ -26,22 +26,18 @@ from flask_security import (
 
 import pybel_tools.query
 from pybel import from_bytes
-from pybel.constants import (
-    PYBEL_CONNECTION,
-)
 from pybel.manager.models import (
     Namespace,
     Annotation,
 )
 from pybel.utils import get_version as get_pybel_version
-from pybel_tools.constants import BMS_BASE, GENE_FAMILIES
+from pybel_tools.constants import GENE_FAMILIES
 from pybel_tools.ioutils import upload_recursive, get_paths_recursive
 from pybel_tools.mutation.metadata import enrich_pubmed_citations
 from pybel_tools.pipeline import no_arguments_map
 from pybel_tools.utils import get_version as get_pybel_tools_version
 from . import models
 from .application_utils import get_api, get_manager
-from .celery_utils import create_celery
 from .constants import *
 from .models import Base, User, Report, Query, Project
 from .utils import (
@@ -57,76 +53,10 @@ from .utils import (
 log = logging.getLogger(__name__)
 
 
-def build_ensure_service(app):
-    """Group all ensure services
-
-    :param flask.Flask app: A Flask app
-    """
-
-    @app.route('/admin/ensure/simple')
-    @roles_required('admin')
-    def ensure_simple():
-        """Parses and stores the PyBEL Test BEL Script"""
-        url = 'https://raw.githubusercontent.com/pybel/pybel/develop/tests/bel/test_bel.bel'
-        task = current_app.celery.send_task('parse-url', args=[url])
-        return next_or_jsonify('Queued task to parse PyBEL Test 1: {}'.format(task))
-
-    @app.route('/admin/ensure/gfam')
-    @roles_required('admin')
-    def ensure_gfam():
-        """Parses and stores the HGNC Gene Family Definitions"""
-        task = current_app.celery.send_task('parse-url', args=[GENE_FAMILIES])
-        return next_or_jsonify('Queued task to parse HGNC Gene Families: {}'.format(task))
-
-    @app.route('/admin/ensure/aetionomy')
-    @roles_required('admin')
-    def ensure_aetionomy():
-        """Parses and stores the AETIONOMY resources from the Biological Model Store repository"""
-        task = current_app.celery.send_task('parse-aetionomy')
-        return next_or_jsonify('Queued task to parse the AETIONOMY folder: {}'.format(task))
-
-    @app.route('/admin/ensure/selventa')
-    @roles_required('admin')
-    def ensure_selventa():
-        """Parses and stores the Selventa resources from the Biological Model Store repository"""
-        task = current_app.celery.send_task('parse-selventa')
-        return next_or_jsonify('Queued task to parse the Selventa folder: {}'.format(task))
-
-    @app.route('/admin/ensure/ptsd')
-    @roles_required('admin')
-    def ensure_ptsd():
-        """Parses and stores the PTSD resources from the Biological Model Store repository"""
-        task = current_app.celery.send_task('parse-ptsd')
-        return next_or_jsonify('Queued task to parse the PTSD folder: {}'.format(task))
-
-    @app.route('/admin/ensure/tbi')
-    @roles_required('admin')
-    def ensure_tbi():
-        """Parses and stores the TBI resources from the Biological Model Store repository"""
-        task = current_app.celery.send_task('parse-tbi')
-        return next_or_jsonify('Queued task to parse the TBI folder: {}'.format(task))
-
-    @app.route('/admin/ensure/bel4imocede')
-    @roles_required('admin')
-    def ensure_bel4imocede():
-        """Parses and stores the BEL4IMOCEDE resources from the Biological Model Store repository"""
-        task = current_app.celery.send_task('parse-bel4imocede')
-        return next_or_jsonify('Queued task to parse the BEL4IMOCEDE folder: {}'.format(task))
-
-    @app.route('/admin/ensure/bms')
-    @roles_required('admin')
-    def ensure_bms():
-        """Parses and stores the entire Biological Model Store repository"""
-        task = current_app.celery.send_task('parse-bms')
-        return next_or_jsonify('Queued task to parse the BMS: {}'.format(task))
-
-
 def build_dictionary_service_admin(app):
     """Dictionary Service Admin Functions"""
     manager = get_manager(app)
     api = get_api(app)
-
-    build_ensure_service(app)
 
     @app.route('/admin/reload')
     @roles_required('admin')
@@ -150,31 +80,7 @@ def build_dictionary_service_admin(app):
         enrich_pubmed_citations(api.universe)
         return next_or_jsonify('enriched authors')
 
-    @app.route('/admin/list/bms/pickles')
-    @roles_required('admin')
-    def list_bms_pickles():
-        """Lists the pre-parsed gpickles in the Biological Model Store repository"""
-        return jsonify(list(get_paths_recursive(os.environ[BMS_BASE], extension='.gpickle')))
-
-    @app.route('/admin/upload/aetionomy')
-    @roles_required('admin')
-    def upload_aetionomy():
-        """Uploads the gpickles in the AETIONOMY section of the Biological Model Store repository"""
-        t = time.time()
-        upload_recursive(os.path.join(os.environ[BMS_BASE], 'aetionomy'), connection=manager)
-        flash('Uploaded the AETIONOMY folder in {:.2f} seconds'.format(time.time() - t))
-        return redirect(url_for('home'))
-
-    @app.route('/admin/upload/bms')
-    @roles_required('admin')
-    def upload_bms():
-        """Synchronously uploads the gpickles in the Biological Model Store repository"""
-        t = time.time()
-        upload_recursive(os.path.join(os.environ[BMS_BASE]), connection=manager)
-        flash('Uploaded the BMS folder in {:.2f} seconds'.format(time.time() - t))
-        return redirect(url_for('home'))
-
-    @app.route('/api/database/nuke/')
+    @app.route('/admin/nuke/')
     @roles_required('admin')
     def nuke():
         """Destroys the database and recreates it"""
@@ -184,8 +90,22 @@ def build_dictionary_service_admin(app):
         log.info('restarting dictionary service')
         api.clear()
         log.info('   the dust settles')
-        flash('Nuked the database')
-        return redirect(url_for('home'))
+        return next_or_jsonify('nuked the database')
+
+    @app.route('/admin/ensure/simple')
+    @roles_required('admin')
+    def ensure_simple():
+        """Parses and stores the PyBEL Test BEL Script"""
+        url = 'https://raw.githubusercontent.com/pybel/pybel/develop/tests/bel/test_bel.bel'
+        task = current_app.celery.send_task('parse-url', args=[url])
+        return next_or_jsonify('Queued task to parse PyBEL Test 1: {}'.format(task))
+
+    @app.route('/admin/ensure/gfam')
+    @roles_required('admin')
+    def ensure_gfam():
+        """Parses and stores the HGNC Gene Family Definitions"""
+        task = current_app.celery.send_task('parse-url', args=[GENE_FAMILIES])
+        return next_or_jsonify('Queued task to parse HGNC Gene Families: {}'.format(task))
 
 
 def build_main_service(app):
@@ -416,10 +336,21 @@ def build_main_service(app):
     @app.route('/query/compare/<int:query_1_id>/<int:query_2_id>')
     def view_query_comparison(query_1_id, query_2_id):
         """View the comparison between the result of two queries"""
-        q1 = manager.session.query(Query).get(query_1_id).run(api)
-        q2 = manager.session.query(Query).get(query_2_id).run(api)
 
-        data = calculate_overlap_dict(q1, q2, set_labels=(query_1_id, query_2_id))
+        query_1 = safe_get_query(query_1_id)
+        query_2 = safe_get_query(query_2_id)
+
+        query_1_result = query_1.run(api)
+        query_2_result = query_2.run(api)
+
+        data = calculate_overlap_dict(
+            query_1_result,
+            query_2_result,
+            set_labels=(
+                'Query {}'.format(query_1_id),
+                'Query {}'.format(query_2_id)
+            )
+        )
 
         return render_template(
             'query_comparison.html',

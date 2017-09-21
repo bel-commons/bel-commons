@@ -50,10 +50,12 @@
                     <a class="btn btn-info" href="{{ url_for('view_users') }}" role="button">
                         View Users
                     </a>
-                    <a class="btn btn-warning" href="{{ url_for('dbs.git_pull_bms', next=url_for('home')) }}"
-                       role="button">
-                        Pull BMS
-                    </a>
+                    {% if HAS_BMS %}
+                        <a class="btn btn-warning" href="{{ url_for('bms.git_pull', next=url_for('home')) }}"
+                           role="button">
+                            Pull BMS
+                        </a>
+                    {% endif %}
                     <a class="btn btn-warning" href="{{ url_for('dbs.drop_queries', next=url_for('home')) }}"
                        role="button">
                         Drop All Queries

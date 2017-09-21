@@ -91,8 +91,7 @@ def get_manager_proxy():
 
 
 def get_api_proxy():
-    """
-    Gets a proxy for the api from the current app
+    """Gets a proxy for the api from the current app
 
     :rtype: pybel_tools.api.DatabaseService
     """
@@ -107,11 +106,18 @@ def get_userdatastore_proxy():
     return LocalProxy(lambda: get_user_datastore(current_app))
 
 
+def get_scai_role_proxy():
+    """Gets a proxy for the scai role instance
+
+    :rtype: Role
+    """
+    return LocalProxy(lambda: get_scai_role(current_app))
+
+
 manager = get_manager_proxy()
 api = get_api_proxy()
 user_datastore = get_userdatastore_proxy()
-
-scai_role = LocalProxy(lambda: get_scai_role(current_app))
+scai_role = get_scai_role_proxy()
 
 
 def create_timeline(year_counter):
@@ -166,11 +172,31 @@ def render_network_summary(network_id, graph):
         node_bel_cache[node] = node_to_bel(graph, node)
         return node_bel_cache[node]
 
-    def get_pair_tuple(u, v):
-        return dcn(u), api.get_node_hash(u), dcn(v), api.get_node_hash(v)
+    def get_pair_tuple(source_tuple, target_tuple):
+        """
 
-    def get_triplet_tuple(a, b, c):
-        return dcn(a), api.get_node_hash(a), dcn(b), api.get_node_hash(b), dcn(c), api.get_node_hash(c)
+        :param source_tuple:
+        :param target_tuple:
+        :return:
+        """
+        return dcn(source_tuple), api.get_node_hash(source_tuple), dcn(target_tuple), api.get_node_hash(target_tuple)
+
+    def get_triplet_tuple(a_tuple, b_tuple, c_tuple):
+        """
+
+        :param a_tuple:
+        :param b_tuple:
+        :param c_tuple:
+        :return:
+        """
+        return (
+            dcn(a_tuple),
+            api.get_node_hash(a_tuple),
+            dcn(b_tuple),
+            api.get_node_hash(b_tuple),
+            dcn(c_tuple),
+            api.get_node_hash(c_tuple)
+        )
 
     regulatory_pairs = [
         get_pair_tuple(u, v)
@@ -500,7 +526,7 @@ def get_query_ancestor_id(query_id):
     """Gets the oldest ancestor of the given query
 
     :param int query_id: The original query database identifier
-    :rtype: models.Query
+    :rtype: Query
     """
     query = manager.session.query(Query).get(query_id)
 
@@ -515,7 +541,7 @@ def get_query_descendants(query_id):
     in the list, with its parent next, its grandparent third, and so-on.
 
     :param int query_id: The original query database identifier
-    :rtype: list[models.Query]
+    :rtype: list[Query]
     """
     query = manager.session.query(Query).get(query_id)
 
@@ -525,15 +551,18 @@ def get_query_descendants(query_id):
     return [query] + get_query_descendants(query.parent_id)
 
 
-def calculate_overlap_dict(g1, g2, set_labels=('Query 1', 'Query 2')):
-    """
+def calculate_overlap_dict(g1, g2):
+    """Creates a dictionary of images depicting the graphs' overlaps in multiple categories
 
-    :param pybel.BELGraph g1:
-    :param pybel.BELGraph g2:
-    :param set_labels: A tuple of length two with the labels for the graphs
+    :param pybel.BELGraph g1: A BEL graph
+    :param pybel.BELGraph g2: A BEL graph
     :return: A dictionary containing important information for displaying base64 images
     :rtype: dict
     """
+    g1_label = g1.name if g1.name else 'Query 1'
+    g2_label = g2.name if g2.name else 'Query 2'
+    set_labels = (g1_label, g2_label)
+
     import matplotlib
     # See: http://matplotlib.org/faq/usage_faq.html#what-is-a-backend
     matplotlib.use('AGG')
@@ -546,8 +575,10 @@ def calculate_overlap_dict(g1, g2, set_labels=('Query 1', 'Query 2')):
     plt.close()
 
     nodes_overlap_file = BytesIO()
+    g1_nodes = set(g1)
+    g2_nodes = set(g2)
     venn2(
-        [set(g1.nodes_iter()), set(g2.nodes_iter())],
+        [g1_nodes, g2_nodes],
         set_labels=set_labels
     )
     plt.savefig(nodes_overlap_file, format='png')
@@ -586,8 +617,10 @@ def calculate_overlap_dict(g1, g2, set_labels=('Query 1', 'Query 2')):
     plt.close()
 
     annotations_overlap_file = BytesIO()
+    g1_annotations = get_annotations(g1)
+    g2_annotations = get_annotations(g2)
     venn2(
-        [get_annotations(g1), get_annotations(g2)],
+        [g1_annotations, g2_annotations],
         set_labels=set_labels
 
     )
@@ -669,6 +702,7 @@ def networks_with_permission_iter_helper(user, manager_):
         if user.is_scai:
             yield from get_role_networks(scai_role)
 
+
 def get_networks_with_permission(manager_):
     """Gets all networks tagged as public or uploaded by the current user
 
@@ -688,7 +722,7 @@ def get_networks_with_permission(manager_):
 def get_network_ids_with_permission_helper(user, manager_):
     """Gets the set of networks ids tagged as public or uploaded by the current user
 
-    :param models.User user:
+    :param User user:
     :param pybel.manager.Manager manager_: The database service
     :return: A list of all networks tagged as public or uploaded by the current user
     :rtype: set[int]
@@ -734,8 +768,8 @@ def current_user_has_query_rights(query_id):
 def safe_get_query(query_id):
     """Gets a query or raises an abort
 
-    :param int query_id:
-    :rtype: pybel_web.models.Query
+    :param int query_id: The database identifier for a query
+    :rtype: Query
     """
     query = manager.session.query(Query).get(query_id)
 
@@ -788,11 +822,12 @@ def user_owns_network_or_403(network, user):
     :param Network network: A network
     :param User user: A user
     """
-    if not network.report or user != network.report.user:
+    if not user.is_authenticated or not network.report or user != network.report.user:
         abort(403, 'You do not own this network')
 
 
 def calculate_scores(graph, data, runs):
+    """Calculates CMPA scores"""
     remove_nodes_by_namespace(graph, {'MGI', 'RGD'})
     collapse_by_central_dogma_to_genes(graph)
     rewire_variants_to_genes(graph)

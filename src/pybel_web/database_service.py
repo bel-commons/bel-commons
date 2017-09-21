@@ -9,7 +9,6 @@ import pickle
 import time
 
 import flask
-import git
 import networkx as nx
 from flask import (
     Blueprint,
@@ -164,6 +163,12 @@ def list_names(keyword):
     ---
     tags:
         - namespace
+    parameters:
+      - name: keyword
+        in: path
+        description: The namespace keyword
+        required: true
+        type: integer
     """
     names = api.query_namespaces(name_list=True, keyword=keyword)
     return jsonify(names)
@@ -177,6 +182,12 @@ def drop_namespace_by_id(namespace_id):
     ---
     tags:
         - namespace
+    parameters:
+      - name: namespace_id
+        in: path
+        description: The database namespace identifier
+        required: true
+        type: integer
     """
     namespace = manager.session.query(Namespace).get(namespace_id)
 
@@ -243,6 +254,15 @@ def download_undefined_namespace(network_id, namespace):
     ---
     tags:
         - network
+    parameters:
+      - name: network_id
+        in: path
+        description: The database network identifier
+        required: true
+        type: integer
+
+      - name: namespace
+        in: path
     """
     graph = api.get_graph_by_id(network_id)
     names = get_undefined_namespace_names(graph, namespace)
@@ -256,6 +276,16 @@ def download_missing_namespace(network_id, namespace):
     ---
     tags:
         - network
+        - namespace
+    parameters:
+      - name: network_id
+        in: path
+        description: The database network identifier
+        required: true
+        type: integer
+
+      - name: namespace
+        in: path
     """
     graph = api.get_graph_by_id(network_id)
     names = get_incorrect_names_by_namespace(graph, namespace)
@@ -282,6 +312,15 @@ def download_list_annotation(network_id, annotation):
     ---
     tags:
         - network
+    parameters:
+      - name: network_id
+        in: path
+        description: The database network identifier
+        required: true
+        type: integer
+
+      - name: annotation
+        in: path
     """
     graph = api.get_graph_by_id(network_id)
 
@@ -416,60 +455,6 @@ def get_network_metadata(network_id):
         abort(404)
 
     return jsonify(**network.to_json(include_id=True))
-
-
-@api_blueprint.route('/api/network/<int:network_id>/store_edges')
-@roles_required('admin')
-def load_edge_store_by_network_id(network_id):
-    """Edge stores a network
-
-    ---
-    tags:
-        - network
-    parameters:
-      - name: network_id
-        in: path
-        description: The database network identifier
-        required: true
-        type: integer
-    responses:
-      200:
-        description: Status of edge store insertion
-    """
-    network = manager.session.query(Network).get(network_id)
-
-    if network is None:
-        abort(404)
-
-    graph = network.as_bel()
-
-    t = time.time()
-
-    try:
-        for url in graph.namespace_url.values():
-            manager.ensure_namespace(url, True)
-
-        for url in graph.annotation_url.values():
-            manager.ensure_annotation(url, True)
-
-        manager._store_graph_parts(network, graph)
-        manager.session.commit()
-
-    except Exception as e:
-        manager.session.rollback()
-
-        if 'next' in request.args:
-            flash('Storing edges failed: {}'.format(e))
-            return redirect(request.args['next'])
-
-        return jsonify({
-            'status': 400,
-            'exception': str(e),
-        })
-
-    t = time.time() - t
-
-    return next_or_jsonify('Edge stored {} in {:.2f} seconds'.format(network, t), time=t)
 
 
 @api_blueprint.route('/api/network/<int:network_id>/namespaces', methods=['GET'])
@@ -777,6 +762,12 @@ def get_network_name_by_id(network_id):
     ---
     tags:
         - network
+    parameters:
+      - name: network_id
+        in: path
+        description: The database network identifier
+        required: true
+        type: integer
     """
     if network_id == 0:
         return ''
@@ -815,6 +806,12 @@ def make_network_public(network_id):
     ---
     tags:
         - network
+    parameters:
+      - name: network_id
+        in: path
+        description: The database network identifier
+        required: true
+        type: integer
     """
     return update_network_status(network_id, True)
 
@@ -827,6 +824,12 @@ def make_network_private(network_id):
     ---
     tags:
         - network
+    parameters:
+      - name: network_id
+        in: path
+        description: The database network identifier
+        required: true
+        type: integer
     """
     return update_network_status(network_id, False)
 
@@ -842,6 +845,12 @@ def get_tree_api(query_id):
     ---
     tags:
         - query
+    parameters:
+      - name: query_id
+        in: path
+        description: The database query identifier
+        required: true
+        type: integer
     """
     network = get_network_from_request(query_id)
     return jsonify(api.get_tree_annotations(network))
@@ -854,6 +863,12 @@ def check_query_rights(query_id):
     ---
     tags:
         - query
+    parameters:
+      - name: query_id
+        in: path
+        description: The database query identifier
+        required: true
+        type: integer
     """
     return jsonify({
         'status': 200,
@@ -869,6 +884,29 @@ def download_network(query_id, serve_format):
     ---
     tags:
         - query
+    parameters:
+      - name: query_id
+        in: path
+        description: The database query identifier
+        required: true
+        type: integer
+
+      - name: serve_format
+        in: path
+        description: The format of the network to return
+        required: false
+        schema:
+            type: string
+            enum:
+              - json
+              - cx
+              - jgif
+              - bytes
+              - bel
+              - graphml
+              - sif
+              - csv
+              - gsea
     """
     network = get_network_from_request(query_id)
     return serve_network(network, serve_format=serve_format)
@@ -881,6 +919,12 @@ def get_network(query_id):
     ---
     tags:
         - query
+    parameters:
+      - name: query_id
+        in: path
+        description: The database query identifier
+        required: true
+        type: integer
     """
     network = get_network_from_request(query_id)
     network = api.relabel_nodes_to_identifiers(network)
@@ -894,6 +938,30 @@ def get_paths(query_id, source_id, target_id):
     ---
     tags:
         - query
+    parameters:
+      - name: query_id
+        in: path
+        description: The database query identifier
+        required: true
+        type: integer
+
+      - name: source_id
+        in: path
+        description: The identifier of the source node
+        required: true
+        type: integer
+
+      - name: target_id
+        in: path
+        description: The identifier of the target node
+        required: true
+        type: integer
+
+      - name: cutoff
+
+      - name: undirected
+
+      - name: paths_method
     """
     network = get_network_from_request(query_id)
 
@@ -941,6 +1009,7 @@ def get_nodes_by_betweenness_centrality(query_id, node_number):
     ---
     tags:
         - query
+
     """
     network = get_network_from_request(query_id)
 
@@ -2127,16 +2196,6 @@ def view_config():
 def get_blacklist():
     """Return list of blacklist constants"""
     return jsonify(sorted(BLACK_LIST))
-
-
-@api_blueprint.route('/api/meta/git-update')
-def git_pull_bms():
-    """Updates the Biological Model Store git repository"""
-    git_dir = os.environ['BMS_BASE']
-    g = git.cmd.Git(git_dir)
-    res = g.pull()
-
-    return next_or_jsonify(res)
 
 
 @api_blueprint.route('/api/text/report')
