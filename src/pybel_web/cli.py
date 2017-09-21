@@ -121,7 +121,8 @@ def main():
               help='Use different default config object')
 @click.option('-v', '--debug', count=True, help="Turn on debugging. More v's, more debugging")
 @click.option('--config', type=click.File('r'), help='Additional configuration in a JSON file')
-def run(host, port, default_config, debug, config):
+@click.option('--with-gunicorn', is_flag=True)
+def run(host, port, default_config, debug, config, with_gunicorn):
     """Runs PyBEL Web"""
     set_debug_param(debug)
     if debug < 3:
@@ -159,11 +160,15 @@ def run(host, port, default_config, debug, config):
 
     log.info('Done building %s in %.2f seconds', app, time.time() - t)
 
-    gunicorn_app = StandaloneApplication(app, {
-        'bind': '%s:%s' % (host, port),
-        'workers': number_of_workers(),
-    })
-    gunicorn_app.run()
+    if with_gunicorn:
+        gunicorn_app = StandaloneApplication(app, {
+            'bind': '%s:%s' % (host, port),
+            'workers': number_of_workers(),
+        })
+        gunicorn_app.run()
+
+    else:
+        app.run(host=host, port=port)
 
 
 @main.command()
