@@ -635,6 +635,19 @@ def unique_networks(networks):
             yield network
 
 
+def get_role_networks(role):
+    """Iterates over all networks belonging to users with a given role
+
+    :type role: str or pybel_web.models.Role
+    :rtype: iter[Network]
+    """
+    if not isinstance(role, Role):
+        role = current_app.pybel.user_datastore.find_or_create_role(name=role)
+
+    for user in role.users:
+        yield from user.get_owned_networks()
+
+
 def networks_with_permission_iter_helper(user, manager_):
     """Gets an iterator over all the networks from all the sources
 
@@ -655,11 +668,7 @@ def networks_with_permission_iter_helper(user, manager_):
         yield from user.get_project_networks()
 
         if user.is_scai:
-            for user in scai_role.users:
-                yield from user.get_owned_networks()
-                yield from user.get_project_networks()
-                yield from user.get_shared_networks()
-
+            yield from get_role_networks(scai_role)
 
 def get_networks_with_permission(manager_):
     """Gets all networks tagged as public or uploaded by the current user
