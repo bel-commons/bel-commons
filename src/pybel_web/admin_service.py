@@ -88,7 +88,7 @@ def build_admin_service(app):
             filters = (field.ilike(u'%%%s%%' % term) for field in self._cached_fields)
             query = query.filter(or_(*filters))
 
-            if not current_user.admin:
+            if not current_user.is_admin:
                 network_chain = chain(
                     current_user.get_owned_networks(),
                     current_user.get_shared_networks(),
@@ -127,7 +127,7 @@ def build_admin_service(app):
             """Only show projects that the user is part of"""
             parent_query = super(ProjectView, self).get_query()
 
-            if current_user.admin:
+            if current_user.is_admin:
                 return parent_query
 
             current_projects = {
