@@ -3,7 +3,7 @@
 version: '3'
 
 services:
-  server:
+  web:
     build: .
     volumes:
      - .:/app
@@ -16,8 +16,9 @@ services:
       SECRET_KEY: ${SECRET_KEY}
       PYBEL_SECURITY_PASSWORD_SALT: ${PYBEL_SECURITY_PASSWORD_SALT}
       CELERY_BROKER_URL: amqp://queue
-    #restart: always
-    command: gunicorn -w ${PYBEL_GUNICORN_NUMBER_WORKERS} -b 0.0.0.0:5000 pybel_web.run:app --log-level=INFO
+    restart: always
+    command: gunicorn -b 0.0.0.0:5000 pybel_web.run:app --log-level=INFO
+    # add more workers later -w ${PYBEL_GUNICORN_NUMBER_WORKERS}
     ports:
       - "5000:5000"
     depends_on:
@@ -38,7 +39,7 @@ services:
       SECRET_KEY: ${SECRET_KEY}
       PYBEL_SECURITY_PASSWORD_SALT: ${PYBEL_SECURITY_PASSWORD_SALT}}
       CELERY_BROKER_URL: amqp://queue
-    #restart: always
+    restart: always
     command: celery worker -A pybel_web.celery_worker.celery -l INFO
     depends_on:
      - mysql
@@ -55,7 +56,7 @@ services:
       MYSQL_ROOT_PASSWORD: root
     ports:
         - 3306:3306
-    command: mysqld --character-set-server=utf8 --collation-server=utf8_unicode_ci --init-connect='SET NAMES UTF8;' --innodb-flush-log-at-trx-commit=0
+    command: mysqld --character-set-server=utf8 --collation-server=utf8_unicode_ci --init-connect='SET NAMES UTF8;' --innodb-flush-log-at-trx-commit=0 --max-allowed-packet=256M
 
   queue:
     image: rabbitmq:3.6.12-alpine
