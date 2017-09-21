@@ -284,6 +284,7 @@ class User(Base, UserMixin):
         return (
             report.network
             for report in self.reports
+            if report.network
         )
 
     def get_shared_networks(self):
