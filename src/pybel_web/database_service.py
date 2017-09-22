@@ -588,7 +588,7 @@ def drop_network_helper(network_id):
     network = manager.session.query(Network).get(network_id)
 
     if network is None:
-        abort(404)
+        abort(404, 'Network {} does not exist'.format(network_id))
 
     if not current_user.is_admin:
         user_owns_network_or_403(network, current_user)
@@ -1131,7 +1131,10 @@ def get_author_suggestion():
     autocompletion_set = api.get_authors_containing_keyword(request.args['search'])
 
     return jsonify([
-        {"text": pubmed_identifier, "id": index}
+        {
+            "id": index,
+            "text": pubmed_identifier,
+        }
         for index, pubmed_identifier in enumerate(autocompletion_set)
     ])
 
