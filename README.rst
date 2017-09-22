@@ -50,11 +50,23 @@ Phoenix the Database
 1. ``pybel_web manage drop`` will nuke the database and output a user list
 2. ``pybel_web manage load`` will automatically add the most recently exported user list
 
+
+Create the database with mysql code:
+
+.. code-block:: sql
+
+    CREATE DATABASE mydb
+    DEFAULT CHARACTER SET utf8
+    DEFAULT COLLATE utf8_general_ci;
+
 Setting up with Docker
 ----------------------
 A simple Dockerfile is included at the root-level of the respository. This Dockerfile is inspired by the tutorials
 `here <http://containertutorials.com/docker-compose/flask-simple-app.html>`_ and
 `here <https://www.digitalocean.com/community/tutorials/docker-explained-how-to-containerize-python-web-applications>`_.
+
+- The virtual machine needs at least 2GB memory for the worker container
+- The database needs a packet size big enough to accommodate large BEL files (>10 mb)
 
 Links
 ~~~~~

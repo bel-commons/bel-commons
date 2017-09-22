@@ -27,7 +27,8 @@ from .admin_utils import (
     CitationView,
     EdgeView,
     EvidenceView,
-    ExperimentView
+    ExperimentView,
+    ReportView,
 )
 from .application_utils import get_api, get_manager, get_scai_role
 from .models import (
@@ -39,9 +40,9 @@ from .models import (
     Assembly,
     Project,
     EdgeVote,
-    EdgeComments
+    EdgeComment
 )
-from .utils import list_public_networks
+from .utils import iter_public_networks
 
 log = logging.getLogger(__name__)
 
@@ -67,12 +68,12 @@ def build_admin_service(app):
     admin.add_view(CitationView(Citation, manager.session))
     admin.add_view(EvidenceView(Evidence, manager.session))
     admin.add_view(ModelView(Author, manager.session))
-    admin.add_view(ModelView(Report, manager.session))
+    admin.add_view(ReportView(Report, manager.session))
     admin.add_view(ExperimentView(Experiment, manager.session))
     admin.add_view(ModelView(Query, manager.session))
     admin.add_view(ModelView(Assembly, manager.session))
     admin.add_view(ModelView(EdgeVote, manager.session))
-    admin.add_view(ModelView(EdgeComments, manager.session))
+    admin.add_view(ModelView(EdgeComment, manager.session))
 
     class NetworkAjaxModelLoader(QueryAjaxModelLoader):
         def __init__(self):
@@ -87,11 +88,11 @@ def build_admin_service(app):
             filters = (field.ilike(u'%%%s%%' % term) for field in self._cached_fields)
             query = query.filter(or_(*filters))
 
-            if not current_user.admin:
+            if not current_user.is_admin:
                 network_chain = chain(
                     current_user.get_owned_networks(),
                     current_user.get_shared_networks(),
-                    list_public_networks(api),
+                    iter_public_networks(api),
                 )
 
                 allowed_network_ids = {
@@ -126,7 +127,7 @@ def build_admin_service(app):
             """Only show projects that the user is part of"""
             parent_query = super(ProjectView, self).get_query()
 
-            if current_user.admin:
+            if current_user.is_admin:
                 return parent_query
 
             current_projects = {

@@ -1,0 +1,65 @@
+# Follow guide at https://realpython.com/blog/python/dockerizing-flask-with-compose-and-machine-from-localhost-to-the-cloud/
+
+version: '3'
+
+services:
+  web:
+    build: .
+    volumes:
+     - .:/app
+    environment:
+      PYBEL_WEB_CONFIG_OBJECT: "pybel_web.config.DockerConfig"
+      PYBEL_DATABASE_USER: root
+      PYBEL_DATABASE_PASSWORD: root
+      PYBEL_DATABASE_HOST: mysql
+      PYBEL_DATABASE_DATABASE: pybel
+      SECRET_KEY: ${SECRET_KEY}
+      PYBEL_SECURITY_PASSWORD_SALT: ${PYBEL_SECURITY_PASSWORD_SALT}
+      CELERY_BROKER_URL: amqp://queue
+    restart: always
+    command: gunicorn -b 0.0.0.0:5000 pybel_web.run:app --log-level=INFO
+    # add more workers later -w ${PYBEL_GUNICORN_NUMBER_WORKERS}
+    ports:
+      - "5000:5000"
+    depends_on:
+     - mysql
+     - queue
+     - worker
+
+  worker:
+    build: .
+    volumes:
+     - .:/app
+    environment:
+      PYBEL_WEB_CONFIG_OBJECT: "pybel_web.config.DockerConfig"
+      PYBEL_DATABASE_USER: root
+      PYBEL_DATABASE_PASSWORD: root
+      PYBEL_DATABASE_HOST: mysql
+      PYBEL_DATABASE_DATABASE: pybel
+      SECRET_KEY: ${SECRET_KEY}
+      PYBEL_SECURITY_PASSWORD_SALT: ${PYBEL_SECURITY_PASSWORD_SALT}}
+      CELERY_BROKER_URL: amqp://queue
+    restart: always
+    command: celery worker -A pybel_web.celery_worker.celery -l INFO
+    depends_on:
+     - mysql
+     - queue
+
+  mysql:
+    image: mysql:5.7
+    volumes:
+       - db_data:/var/lib/mysql
+    environment:
+      MYSQL_USER: pybel_butler
+      MYSQL_PASSWORD: pybel_butler
+      MYSQL_DATABASE: pybel
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+        - 3306:3306
+    command: mysqld --character-set-server=utf8 --collation-server=utf8_unicode_ci --init-connect='SET NAMES UTF8;' --innodb-flush-log-at-trx-commit=0 --max-allowed-packet=256M
+
+  queue:
+    image: rabbitmq:3.6.12-alpine
+
+volumes:
+    db_data:

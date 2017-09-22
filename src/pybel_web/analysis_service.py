@@ -128,7 +128,7 @@ def view_query_analysis_uploader(query_id):
 @login_required
 def view_network_analysis_uploader(network_id):
     """Views the results of analysis on a given graph"""
-    if network_id not in get_network_ids_with_permission_helper(current_user, api):
+    if network_id not in get_network_ids_with_permission_helper(current_user, manager):
         abort(403, 'Insufficient rights for network {}'.format(network_id))
 
     query = Query.from_query_args(manager, network_id, current_user)

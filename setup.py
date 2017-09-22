@@ -18,7 +18,6 @@ CLASSIFIERS = [
     'License :: OSI Approved :: Apache Software License',
     'Operating System :: OS Independent',
     'Programming Language :: Python',
-    'Programming Language :: Python :: 2.7',
     'Programming Language :: Python :: 3.6',
     'Topic :: Scientific/Engineering :: Bio-Informatics'
 ]
@@ -31,16 +30,13 @@ INSTALL_REQUIRES = [
     'flask-security',
     'flask-admin',
     'flask-cors',
+    'flask-sqlalchemy',
     'werkzeug',
     'flasgger',
     'networkx',
     'pybel',
     'click',
     'pandas',
-    'fuzzywuzzy',
-    'ipython',
-    'scipy',
-    'numpy',
     'celery',
     'obonet',
     'pybel-tools',
@@ -49,10 +45,9 @@ INSTALL_REQUIRES = [
     'matplotlib',
     'gitpython',
     'six',
+    'gunicorn',
 ]
-EXTRAS_REQUIRE = {
-    'speed': ['python-Levenshtein', ]  # Activates c-based speed improvements for fuzzywuzzy
-}
+EXTRAS_REQUIRE = {}
 TESTS_REQUIRE = []
 ENTRY_POINTS = {
     'console_scripts': [

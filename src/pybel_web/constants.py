@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
-import os
-import time
+
 from logging import getLogger
 
+import os
+
 from pybel.constants import PYBEL_LOG_DIR
+from pybel_tools.constants import BMS_BASE
 
 PYBEL_WEB_VERSION = '0.1.1'
 
@@ -47,9 +49,11 @@ BLACK_LIST = {
     AND,
 }
 
-log_runner_path = os.path.join(PYBEL_LOG_DIR, time.strftime('pybel_web_runner.txt'))
-log_worker_path = os.path.join(PYBEL_LOG_DIR, time.strftime('pybel_web_worker.txt'))
+log_runner_path = os.path.join(PYBEL_LOG_DIR, 'pybel_web_runner.txt')
+log_worker_path = os.path.join(PYBEL_LOG_DIR, 'pybel_web_worker.txt')
 
 CHARLIE_EMAIL = 'charles.hoyt@scai.fraunhofer.de'
 DANIEL_EMAIL = 'daniel.domingo.fernandez@scai.fraunhofer.de'
 ALEX_EMAIL = 'aliaksandr.masny@scai.fraunhofer.de'
+
+BMS_IS_AVAILABLE = BMS_BASE in os.environ

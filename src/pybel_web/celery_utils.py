@@ -8,6 +8,9 @@ def create_celery(application):
     :return: A Celery instance
     :rtype: celery.Celery
     """
+    if hasattr(application, 'celery'):
+        return application.celery
+
     celery = Celery(
         application.import_name,
         broker=application.config['CELERY_BROKER_URL']
@@ -24,4 +27,7 @@ def create_celery(application):
                 return super(ContextTask, self).__call__(*args, **kwargs)
 
     celery.Task = ContextTask
+
+    application.celery = celery
+
     return celery

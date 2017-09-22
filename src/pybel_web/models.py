@@ -3,13 +3,16 @@
 import datetime
 import json
 
+import codecs
 from flask_security import RoleMixin, UserMixin
-from sqlalchemy import Column, Integer, ForeignKey, DateTime, Boolean, Text, Binary, Table, String, Index
+from sqlalchemy import Column, Integer, ForeignKey, DateTime, Boolean, Text, Table, String, Index, LargeBinary
 from sqlalchemy.orm import relationship, backref
 
 import pybel_tools.query
+from pybel import from_lines
 from pybel.manager import Base
-from pybel.manager.models import NETWORK_TABLE_NAME, Network
+from pybel.manager.models import LONGBLOB
+from pybel.manager.models import NETWORK_TABLE_NAME, Network, EDGE_TABLE_NAME
 from pybel.struct import union
 
 EXPERIMENT_TABLE_NAME = 'pybel_experiment'
@@ -38,8 +41,8 @@ class Experiment(Base):
     description = Column(Text, nullable=True, doc='A description of the purpose of the analysis')
     permutations = Column(Integer, doc='Number of permutations performed')
     source_name = Column(Text, doc='The name of the source file')
-    source = Column(Binary, doc='The source document holding the data')
-    result = Column(Binary, doc='The result python dictionary')
+    source = Column(LargeBinary(LONGBLOB), doc='The source document holding the data')
+    result = Column(LargeBinary(LONGBLOB), doc='The result python dictionary')
 
     query_id = Column(Integer, ForeignKey('{}.id'.format(QUERY_TABLE_NAME)), nullable=False)
     query = relationship('Query', backref=backref("experiments"))
@@ -60,28 +63,75 @@ class Report(Base):
     """Stores information about compilation and uploading events"""
     __tablename__ = REPORT_TABLE_NAME
 
-    network_id = Column(
-        Integer, ForeignKey('{}.id'.format(NETWORK_TABLE_NAME)),
-        primary_key=True,
-        doc='The network that was uploaded'
-    )
-    network = relationship('Network', backref=backref('report', uselist=False))
+    id = Column(Integer, primary_key=True)
 
     user_id = Column(Integer, ForeignKey('{}.id'.format(USER_TABLE_NAME)), doc='The user who uploaded the network')
     user = relationship('User', backref=backref('reports', lazy='dynamic'))
 
     created = Column(DateTime, default=datetime.datetime.utcnow, doc='The date and time of upload')
     public = Column(Boolean, nullable=False, default=False, doc='Should the network be viewable to the public?')
-    precompiled = Column(Boolean, doc='Was this document uploaded as a BEL script or a precompiled gpickle?')
+
+    source_name = Column(Text, doc='The name of the source file')
+    source = Column(LargeBinary(LONGBLOB), doc='The source BEL Script')
+    source_hash = Column(String(128), index=True, doc='SHA512 hash of source file')
+    encoding = Column(Text)
+
+    allow_nested = Column(Boolean, default=False)
+    citation_clearing = Column(Boolean, default=False)
+
     number_nodes = Column(Integer)
     number_edges = Column(Integer)
     number_warnings = Column(Integer)
 
-    def __repr__(self):
-        return '<Report on {}>'.format(self.network)
+    message = Column(Text, doc='Error message')
+    completed = Column(Boolean)
 
-    def __str__(self):
-        return repr(self)
+    network_id = Column(
+        Integer,
+        ForeignKey('{}.id'.format(NETWORK_TABLE_NAME)),
+        doc='The network that was uploaded'
+    )
+    network = relationship('Network', backref=backref('report', uselist=False))
+
+    def get_lines(self):
+        """Decodes the lines stored in this
+
+        :rtype: list[str]
+        """
+        return codecs.decode(self.source, self.encoding).split('\n')
+
+    def parse_graph(self, manager):
+        """Parses the graph from the latent BEL Script
+
+        :param pybel.manager.Manager manager: A cache manager
+        :rtype: pybel.BELGraph
+        """
+        return from_lines(
+            self.get_lines(),
+            manager=manager,
+            allow_nested=self.allow_nested,
+            citation_clearing=self.citation_clearing,
+        )
+
+    @property
+    def incomplete(self):
+        return self.completed is None and not self.message
+
+    @property
+    def failed(self):
+        return self.completed is not None and not self.completed
+
+    def __repr__(self):
+        if self.incomplete:
+            return '<Report {}: incomplete {}>'.format(self.id, self.source_name)
+
+        if self.failed:
+            return '<Report {}: failed)>'.format(self.id)
+
+        if self.network:
+            return '<Report {}: completed {}>'.format(self.id, self.network)
+
+        return '<Report {}: cancelled>'.format(self.id)
 
 
 roles_users = Table(
@@ -169,24 +219,35 @@ class Project(Base):
     def __str__(self):
         return self.name
 
-    def to_json(self):
+    def to_json(self, include_id=True):
         """Outputs this project as a JSON dictionary
 
         :rtype: dict
         """
-        return {
-            'id': self.id,
+        result = {
             'name': self.name,
             'description': self.description,
             'users': [
-                user.id
+                {
+                    'id': user.id,
+                    'email': user.email,
+                }
                 for user in self.users
             ],
             'networks': [
-                network.id
+                {
+                    'id': network.id,
+                    'name': network.name,
+                    'version': network.version,
+                }
                 for network in self.networks
             ]
         }
+
+        if include_id:
+            result['id'] = self.id
+
+        return result
 
 
 class User(Base, UserMixin):
@@ -194,10 +255,10 @@ class User(Base, UserMixin):
     __tablename__ = USER_TABLE_NAME
 
     id = Column(Integer, primary_key=True)
-    email = Column(String(255), unique=True)
+
+    email = Column(String(255), unique=True, doc="The user's email")
     password = Column(String(255))
-    first_name = Column(String(255))
-    last_name = Column(String(255))
+    name = Column(String(255), doc="The user's name")
     active = Column(Boolean)
     confirmed_at = Column(DateTime)
 
@@ -205,14 +266,18 @@ class User(Base, UserMixin):
     networks = relationship('Network', secondary=users_networks, backref=backref('users', lazy='dynamic'))
 
     @property
-    def admin(self):
+    def is_admin(self):
         """Is this user an administrator?"""
         return self.has_role('admin')
 
     @property
-    def name(self):
-        """Shows the full name of the user"""
-        return '{} {}'.format(self.first_name, self.last_name) if self.first_name else self.email
+    def is_scai(self):
+        """Is this user from SCAI?"""
+        return (
+            self.has_role('scai') or
+            self.email.endswith('@scai.fraunhofer.de') or
+            self.email.endswith('@scai-extern.fraunhofer.de')
+        )
 
     def get_owned_networks(self):
         """Gets all networks this user owns
@@ -222,6 +287,7 @@ class User(Base, UserMixin):
         return (
             report.network
             for report in self.reports
+            if report.network
         )
 
     def get_shared_networks(self):
@@ -243,24 +309,28 @@ class User(Base, UserMixin):
         )
 
     def __str__(self):
-        return repr(self)
-
-    def __repr__(self):
         return self.email
 
-    def to_json(self):
+    def to_json(self, include_id=True):
         """Outputs this User as a JSON dictionary
 
         :rtype: dict
         """
-        return {
-            'id': self.id,
+        result = {
             'email': self.email,
             'roles': [
                 role.name
                 for role in self.roles
             ],
         }
+
+        if include_id:
+            result['id'] = self.id
+
+        if self.name:
+            result['name'] = self.name
+
+        return result
 
 
 assembly_network = Table(
@@ -280,6 +350,8 @@ class Assembly(Base):
 
     user_id = Column(Integer, ForeignKey('{}.id'.format(USER_TABLE_NAME)), doc='The creator of this assembly')
     user = relationship('User', backref='assemblies')
+
+    created = Column(DateTime, default=datetime.datetime.utcnow, doc='The date and time of upload')
 
     networks = relationship('Network', secondary=assembly_network, backref=backref('assemblies', lazy='dynamic'))
 
@@ -307,7 +379,32 @@ class Assembly(Base):
         )
 
     def __repr__(self):
-        return '<Assembly {}>'.format(', '.join(str(network.id) for network in self.networks))
+        return '<Assembly {} with [{}]>'.format(
+            self.id,
+            ', '.join(str(network.id) for network in self.networks)
+        )
+
+    def to_json(self):
+        """
+
+        :rtype: dict
+        """
+        result = {
+            'user': {
+                'id': self.user.id,
+                'email': self.user.email,
+            },
+
+            'networks': [
+                network.to_json()
+                for network in self.networks
+            ]
+        }
+
+        if self.name:
+            result['name'] = self.name
+
+        return result
 
 
 class Query(Base):
@@ -322,6 +419,8 @@ class Query(Base):
     assembly_id = Column(Integer, ForeignKey('{}.id'.format(ASSEMBLY_TABLE_NAME)),
                          doc='The network assembly used in this query')
     assembly = relationship('Assembly')
+
+    created = Column(DateTime, default=datetime.datetime.utcnow, doc='The date and time of upload')
 
     seeding = Column(Text, doc="The stringified JSON of the list representation of the seeding")
 
@@ -347,6 +446,15 @@ class Query(Base):
 
         return self._query
 
+    def to_json(self):
+        """Serializes this object to JSON
+
+        :rtype: dict
+        """
+        result = {'id': self.id}
+        result.update(self.data.to_json())
+        return result
+
     def seeding_as_json(self):
         """Returns seeding json. It's also possible to get Query.data.seeding as well.
 
@@ -365,7 +473,7 @@ class Query(Base):
         """A wrapper around the :meth:`pybel_tools.query.Query.run` function of the enclosed
         :class:`pybel_tools.pipeline.Query` object.
 
-        :type manager: pybel.cache.manager.CacheManager or pybel_tools.api.DatabaseService
+        :type manager: pybel.manager.Manager or pybel_tools.api.DatabaseService
         :return: The result of this query
         :rtype: pybel.BELGraph
         """
@@ -375,7 +483,7 @@ class Query(Base):
     def from_query(manager, query, user=None):
         """Builds a orm query from a pybel-tools query
 
-        :param pybel.manager.CacheManager manager:
+        :param pybel.manager.Manager manager:
         :param pybel_web.models.User user:
         :param pybel_tools.query.Query query:
         :rtype: Query
@@ -399,7 +507,7 @@ class Query(Base):
     def from_query_args(manager, network_ids, user=None, seed_list=None, pipeline=None):
         """Builds a orm query from the arguments for a pybel-tools query
 
-        :param pybel.manager.CacheManager manager:
+        :param pybel.manager.Manager manager:
         :param pybel_web.models.User user:
         :param int or list[int] network_ids:
         :param list[dict] seed_list:
@@ -416,26 +524,66 @@ class EdgeVote(Base):
 
     id = Column(Integer, primary_key=True)
 
-    edge_id = Column(Integer, nullable=False, index=True, doc='The hash of the edge for this comment')
+    edge_id = Column(Integer, ForeignKey('{}.id'.format(EDGE_TABLE_NAME)))
+    edge = relationship('Edge', backref=backref('votes', lazy='dynamic'))
+
     user_id = Column(Integer, ForeignKey('{}.id'.format(USER_TABLE_NAME)), nullable=False,
                      doc='The user who made this vote')
     user = relationship('User', backref=backref('votes', lazy='dynamic'))
+
     agreed = Column(Boolean, nullable=False)
+    changed = Column(DateTime, default=datetime.datetime.utcnow)
+
+    def to_json(self):
+        """Converts this vote to JSON
+
+        :rtype: dict
+        """
+        return {
+            'id': self.id,
+            'edge': {
+                'id': self.edge.id
+            },
+            'user': {
+                'id': self.user.id,
+                'email': self.user.email,
+            },
+            'vote': self.agreed
+        }
 
 
 Index('edgeUserIndex', EdgeVote.edge_id, EdgeVote.user_id)
 
 
-class EdgeComments(Base):
+class EdgeComment(Base):
     """Describes the comments on an edge"""
     __tablename__ = COMMENT_TABLE_NAME
 
     id = Column(Integer, primary_key=True)
 
-    edge_id = Column(Integer, nullable=False, index=True, doc='The hash of the edge for this comment')
-    comment = Column(Text, nullable=False)
-    created = Column(DateTime, default=datetime.datetime.utcnow)
+    edge_id = Column(Integer, ForeignKey('{}.id'.format(EDGE_TABLE_NAME)))
+    edge = relationship('Edge', backref=backref('comments', lazy='dynamic'))
 
     user_id = Column(Integer, ForeignKey('{}.id'.format(USER_TABLE_NAME)), nullable=False,
                      doc='The user who made this comment')
     user = relationship('User', backref=backref('comments', lazy='dynamic'))
+
+    comment = Column(Text, nullable=False)
+    created = Column(DateTime, default=datetime.datetime.utcnow)
+
+    def to_json(self):
+        """Converts this comment to JSON
+
+        :rtype: dict
+        """
+        return {
+            'id': self.id,
+            'edge': {
+                'id': self.edge.id
+            },
+            'user': {
+                'id': self.user.id,
+                'email': self.user.email,
+            },
+            'comment': self.comment
+        }

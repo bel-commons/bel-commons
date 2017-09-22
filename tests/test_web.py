@@ -7,24 +7,19 @@ Reference for testing Flask
 - Flask Cookbook: http://flask.pocoo.org/docs/0.12/tutorial/testing/
 """
 
-from flask import Response
-
 import datetime
 import json
 import logging
-import os
-import tempfile
 import unittest
 
+import os
+import tempfile
 from flask_security import current_user
 
 from pybel.constants import PYBEL_CONNECTION
 from pybel_web.application import FlaskPyBEL, create_application
 from pybel_web.database_service import api_blueprint
-from pybel_web.forms import UploadForm
 from pybel_web.main_service import build_main_service
-from pybel_web.upload_service import upload_blueprint
-from tests.constants import test_bel_pickle_path
 
 log = logging.getLogger(__name__)
 log.setLevel(10)
@@ -65,9 +60,8 @@ class WebTest(unittest.TestCase):
 
         build_main_service(self.app_instance)
         self.app_instance.register_blueprint(api_blueprint)
-        self.app_instance.register_blueprint(upload_blueprint)
 
-        self.pybel = FlaskPyBEL(self.app_instance)
+        self.pybel = FlaskPyBEL.get_state(self.app_instance)
 
         self.manager = self.pybel.manager
         self.api = self.pybel.api
@@ -123,31 +117,6 @@ class WebTest(unittest.TestCase):
             r = json.loads(response.data)
             self.assertIn('count', r)
             self.assertEqual(5, r['count'])
-
-    @unittest.skip
-    def test_upload(self):
-        with self.app_instance.app_context():
-            self.assertEqual(0, self.manager.count_networks())
-
-            self.login(TEST_USER_EMAIL, TEST_USER_PASSWORD)
-
-            f = open(test_bel_pickle_path, 'rb')
-
-            with self.app_instance.test_request_context():
-                upload_form = UploadForm(
-                    file=f
-                )
-
-            response = self.app.post(
-                '/upload',
-                data=upload_form.data,
-                content_type='multipart/form-data',
-                follow_redirects=True,
-            )
-
-            log.warning('Response: %s, data: %s', response, response.data)
-
-            self.assertEqual(1, self.manager.count_networks())
 
     @unittest.skip
     def test_pipeline_view(self):

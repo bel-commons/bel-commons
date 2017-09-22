@@ -26,16 +26,6 @@ from pybel_tools.selection.induce_subgraph import (
 )
 
 
-class UploadForm(FlaskForm):
-    """Builds an upload form with wtf-forms"""
-    file = FileField('A PyBEL gpickle', validators=[
-        DataRequired(message="You must provide a PyBEL gpickle file"),
-        FileAllowed(['gpickle'], 'Only files with the *.gpickle extension are allowed')
-    ])
-    public = BooleanField('Make my knowledge assembly be made publicly available', default=True)
-    submit = SubmitField('Upload')
-
-
 class ParseUrlForm(FlaskForm):
     """Builds an upload form with wtf-forms"""
     url = StringField('A BEL Document URL', validators=[
@@ -111,6 +101,5 @@ class DifferentialGeneExpressionForm(FlaskForm):
 
 class ExtendedRegisterForm(RegisterForm):
     """Extends the Flask-Security registration form"""
-    first_name = StringField('First Name', [DataRequired()])
-    last_name = StringField('Last Name', [DataRequired()])
+    name = StringField('Name', [DataRequired()])
     submit = SubmitField(get_form_field_label('register'))

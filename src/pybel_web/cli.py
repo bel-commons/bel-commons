@@ -19,15 +19,17 @@ from __future__ import print_function
 import datetime
 import json
 import logging
-import os
+import multiprocessing
 import sys
 import time
 
 import click
+import gunicorn.app.base
+import os
 from flask_security import SQLAlchemyUserDatastore
 
 from pybel.constants import get_cache_connection, PYBEL_CONNECTION, PYBEL_DATA_DIR
-from pybel.manager.cache import build_manager
+from pybel.manager import Manager
 from pybel.manager.models import Base, Network
 from pybel.utils import get_version as pybel_version
 from pybel_tools.utils import enable_cool_mode
@@ -35,16 +37,17 @@ from pybel_tools.utils import get_version as pybel_tools_get_version
 from .admin_service import build_admin_service
 from .analysis_service import analysis_blueprint
 from .application import create_application
-from .belief_service import belief_blueprint
+from .bms_service import bms_blueprint
 from .constants import log_runner_path, CHARLIE_EMAIL
 from .curation_service import curation_blueprint
 from .database_service import api_blueprint
+from .external_services import belief_blueprint, external_blueprint
 from .main_service import build_main_service
 from .models import Role, User, Report, Project, Experiment
 from .parser_async_service import parser_async_blueprint
 from .parser_endpoint import build_parser_service
-from .upload_service import upload_blueprint
 from .utils import iterate_user_strings
+from .constants import BMS_IS_AVAILABLE
 
 log = logging.getLogger('pybel_web')
 
@@ -81,10 +84,23 @@ def set_debug_param(debug):
         set_debug(10)
 
 
-@click.group(help="PyBEL-Tools Command Line Interface on {}\n with PyBEL v{}".format(sys.executable, pybel_version()))
-@click.version_option()
-def main():
-    """PyBEL Tools Command Line Interface"""
+def number_of_workers():
+    return (multiprocessing.cpu_count() * 2) + 1
+
+
+class StandaloneApplication(gunicorn.app.base.BaseApplication):
+    def __init__(self, app, options=None):
+        self.options = options or {}
+        self.application = app
+        super(StandaloneApplication, self).__init__()
+
+    def load_config(self):
+        for key, value in self.options.items():
+            if key in self.cfg.settings and value is not None:
+                self.cfg.set(key.lower(), value)
+
+    def load(self):
+        return self.application
 
 
 _config_map = {
@@ -94,15 +110,21 @@ _config_map = {
 }
 
 
+@click.group(help="PyBEL-Tools Command Line Interface on {}\n with PyBEL v{}".format(sys.executable, pybel_version()))
+@click.version_option()
+def main():
+    """PyBEL Tools Command Line Interface"""
+
+
 @main.command()
-@click.option('--host', default='0.0.0.0', help='Flask host. Defaults to localhost')
-@click.option('--port', type=int, help='Flask port. Defaults to 5000')
+@click.option('--host', default='0.0.0.0', help='Flask host. Defaults to 0.0.0.0')
+@click.option('--port', type=int, default=5000, help='Flask port. Defaults to 5000')
 @click.option('--default-config', type=click.Choice(['local', 'test', 'prod']),
               help='Use different default config object')
 @click.option('-v', '--debug', count=True, help="Turn on debugging. More v's, more debugging")
-@click.option('--flask-debug', is_flag=True, help="Turn on werkzeug debug mode")
 @click.option('--config', type=click.File('r'), help='Additional configuration in a JSON file')
-def run(host, port, default_config, debug, flask_debug, config):
+@click.option('--with-gunicorn', is_flag=True)
+def run(host, port, default_config, debug, config, with_gunicorn):
     """Runs PyBEL Web"""
     set_debug_param(debug)
     if debug < 3:
@@ -130,17 +152,45 @@ def run(host, port, default_config, debug, flask_debug, config):
     build_admin_service(app)
     app.register_blueprint(curation_blueprint)
     app.register_blueprint(parser_async_blueprint)
-    app.register_blueprint(upload_blueprint)
     app.register_blueprint(api_blueprint)
     app.register_blueprint(analysis_blueprint)
     app.register_blueprint(belief_blueprint)
+    app.register_blueprint(external_blueprint)
+
+    if BMS_IS_AVAILABLE:
+        app.register_blueprint(bms_blueprint)
 
     if app.config.get('PYBEL_WEB_PARSER_API'):
         build_parser_service(app)
 
     log.info('Done building %s in %.2f seconds', app, time.time() - t)
 
-    app.run(debug=flask_debug, host=host, port=port)
+    if with_gunicorn:
+        gunicorn_app = StandaloneApplication(app, {
+            'bind': '%s:%s' % (host, port),
+            'workers': number_of_workers(),
+        })
+        gunicorn_app.run()
+
+    else:
+        app.run(host=host, port=port)
+
+
+@main.command()
+def worker():
+    """Runs the celery worker"""
+    from .celery_worker import app
+    from celery.bin import worker
+
+    worker = worker.worker(app=app.celery)
+
+    options = {
+        'broker': 'amqp://guest:guest@localhost:5672//',
+        'loglevel': 'INFO',
+        'traceback': True,
+    }
+
+    worker.run(**options)
 
 
 @main.group()
@@ -151,9 +201,9 @@ def manage(ctx, connection, config):
     """Manage database"""
     if config:
         file = json.load(config)
-        ctx.obj = build_manager(file.get(PYBEL_CONNECTION, get_cache_connection()))
+        ctx.obj = Manager.ensure(file.get(PYBEL_CONNECTION, get_cache_connection()))
     else:
-        ctx.obj = build_manager(connection)
+        ctx.obj = Manager.ensure(connection)
 
     Base.metadata.bind = ctx.obj.engine
     Base.query = ctx.obj.session.query_property()
@@ -172,26 +222,23 @@ def setup(manager):
 def load(manager, file):
     """Dump stuff for loading later (in lieu of having proper migrations)"""
     ds = SQLAlchemyUserDatastore(manager, User, Role)
+
     for line in file:
-        email, first, last, roles, password = line.strip().split('\t')
+        email, password, roles, name = line.strip().split('\t')
         u = ds.find_user(email=email)
 
         if not u:
             u = ds.create_user(
                 email=email,
-                first_name=first,
-                last_name=last,
                 password=password,
+                name=name,
                 confirmed_at=datetime.datetime.now()
             )
             click.echo('added {}'.format(u))
             ds.commit()
-        for role_name in roles.strip().split(','):
-            r = ds.find_role(role_name)
-            if not r:
-                r = ds.create_role(name=role_name)
-                ds.commit()
-            if not u.has_role(r):
+
+            for role_name in roles.strip().split(','):
+                r = ds.find_or_create_role(name=role_name)
                 ds.add_role_to_user(u, r)
 
     ds.commit()
@@ -199,18 +246,18 @@ def load(manager, file):
 
 @manage.command()
 @click.option('-y', '--yes', is_flag=True)
+@click.option('-u', '--user-dump', type=click.File('w'), default=user_dump_path, help='Place to dump user data')
 @click.pass_obj
-def drop(manager, yes):
+def drop(manager, yes, user_dump):
     """Drops database"""
     if yes or click.confirm('Drop database at {}?'.format(manager.connection)):
-        click.echo('Dumped users to {}'.format(user_dump_path))
-        with open(user_dump_path, 'w') as f:
-            for s in iterate_user_strings(manager, True):
-                print(s, file=f)
-        click.echo('Done')
+        click.echo('Dumping users to {}'.format(user_dump_path))
+        for s in iterate_user_strings(manager):
+            click.echo(s, file=user_dump)
+        click.echo('Done dumping users')
         click.echo('Dropping database')
-        manager.drop_database()
-        click.echo('Done')
+        manager.drop_all()
+        click.echo('Done dropping database')
 
 
 @manage.command()
@@ -218,8 +265,8 @@ def drop(manager, yes):
 def sanitize_reports(manager):
     """Adds charlie as the owner of all non-reported graphs"""
     ds = SQLAlchemyUserDatastore(manager, User, Role)
-    u = ds.find_user(email=CHARLIE_EMAIL)
-    click.echo('Adding {} as owner of unreported uploads'.format(u))
+    user = ds.find_user(email=CHARLIE_EMAIL)
+    click.echo('Adding {} as owner of unreported uploads'.format(user))
 
     for network in manager.session.query(Network):
         if network.report is not None:
@@ -227,7 +274,7 @@ def sanitize_reports(manager):
 
         report = Report(
             network=network,
-            user=u
+            user=user
         )
 
         manager.session.add(report)
@@ -243,11 +290,10 @@ def user():
 
 
 @user.command()
-@click.option('-p', '--with-passwords', is_flag=True)
 @click.pass_obj
-def ls(manager, with_passwords):
+def ls(manager):
     """Lists all users"""
-    for s in iterate_user_strings(manager, with_passwords):
+    for s in iterate_user_strings(manager):
         click.echo(s)
 
 
@@ -362,6 +408,19 @@ def ls(manager):
     """Lists projects"""
     for project in manager.session.query(Project).all():
         click.echo('{}\t{}'.format(project.name, ','.join(map(str, project.users))))
+
+
+@projects.command()
+@click.option('-o', '--output', type=click.File('w'), default=sys.stdout)
+@click.pass_obj
+def export(manager, output):
+    json.dump(
+        [
+            project.to_json()
+            for project in manager.session.query(Project).all()
+        ],
+        output
+    )
 
 
 @manage.group()

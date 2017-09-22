@@ -59,7 +59,7 @@
                             </ul>
                         </td>
                         <td>
-                            {% if user.has_role('scai') %}
+                            {% if user.is_scai %}
                                 <a class="btn btn-danger btn-xs" role="button"
                                    href="{{ url_for('dbs.remove_user_role', user=user.email, role='scai') }}">Remove
                                     SCAI</a>
@@ -68,7 +68,7 @@
                                    href="{{ url_for('dbs.add_user_role', user=user.email, role='scai') }}">Add
                                     SCAI</a>
                             {% endif %}
-                            {% if user.has_role('admin') %}
+                            {% if user.is_admin %}
                                 <a class="btn btn-danger btn-xs" role="button"
                                    href="{{ url_for('dbs.remove_user_role', user=user.email, role='admin') }}">Remove
                                     Admin</a>

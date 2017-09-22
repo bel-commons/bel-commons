@@ -1,0 +1,11 @@
+.tox
+.cache
+docs
+docs/*
+tests
+tests/*
+Dockerfile
+docker-compose.yml
+.DS_store
+.idea
+.idea/*

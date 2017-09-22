@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 
-import base64
 import datetime
 import itertools as itt
 import logging
 import pickle
 import time
-from collections import defaultdict
 
+import base64
 import pandas
+from collections import defaultdict
 from flask import (
     current_app,
     render_template,
@@ -24,7 +24,7 @@ from sqlalchemy import func
 from werkzeug.local import LocalProxy
 
 import pybel
-from pybel.canonicalize import decanonicalize_node
+from pybel.canonicalize import node_to_bel
 from pybel.constants import RELATION, GENE
 from pybel.manager import Network
 from pybel.struct.filters import filter_edges
@@ -75,7 +75,7 @@ from pybel_tools.summary import (
 from pybel_tools.utils import prepare_c3, prepare_c3_time_series, count_dict_values
 from .application_utils import get_api, get_manager, get_scai_role, get_user_datastore
 from .constants import reporting_log, AND
-from .models import User, Report, Experiment, Query, EdgeVote
+from .models import User, Report, Experiment, Query, EdgeVote, Role
 
 log = logging.getLogger(__name__)
 
@@ -85,14 +85,13 @@ LABEL = 'dgxa'
 def get_manager_proxy():
     """Gets a proxy for the manager in the current app
 
-    :rtype: pybel.manager.cache.CacheManager
+    :rtype: pybel.manager.Manager
     """
     return LocalProxy(lambda: get_manager(current_app))
 
 
 def get_api_proxy():
-    """
-    Gets a proxy for the api from the current app
+    """Gets a proxy for the api from the current app
 
     :rtype: pybel_tools.api.DatabaseService
     """
@@ -107,11 +106,18 @@ def get_userdatastore_proxy():
     return LocalProxy(lambda: get_user_datastore(current_app))
 
 
+def get_scai_role_proxy():
+    """Gets a proxy for the scai role instance
+
+    :rtype: Role
+    """
+    return LocalProxy(lambda: get_scai_role(current_app))
+
+
 manager = get_manager_proxy()
 api = get_api_proxy()
 user_datastore = get_userdatastore_proxy()
-
-scai_role = LocalProxy(lambda: get_scai_role(current_app))
+scai_role = get_scai_role_proxy()
 
 
 def create_timeline(year_counter):
@@ -163,14 +169,34 @@ def render_network_summary(network_id, graph):
         if node in node_bel_cache:
             return node_bel_cache[node]
 
-        node_bel_cache[node] = decanonicalize_node(graph, node)
+        node_bel_cache[node] = node_to_bel(graph, node)
         return node_bel_cache[node]
 
-    def get_pair_tuple(u, v):
-        return dcn(u), api.get_node_id(u), dcn(v), api.get_node_id(v)
+    def get_pair_tuple(source_tuple, target_tuple):
+        """
 
-    def get_triplet_tuple(a, b, c):
-        return dcn(a), api.get_node_id(a), dcn(b), api.get_node_id(b), dcn(c), api.get_node_id(c)
+        :param source_tuple:
+        :param target_tuple:
+        :return:
+        """
+        return dcn(source_tuple), api.get_node_hash(source_tuple), dcn(target_tuple), api.get_node_hash(target_tuple)
+
+    def get_triplet_tuple(a_tuple, b_tuple, c_tuple):
+        """
+
+        :param a_tuple:
+        :param b_tuple:
+        :param c_tuple:
+        :return:
+        """
+        return (
+            dcn(a_tuple),
+            api.get_node_hash(a_tuple),
+            dcn(b_tuple),
+            api.get_node_hash(b_tuple),
+            dcn(c_tuple),
+            api.get_node_hash(c_tuple)
+        )
 
     regulatory_pairs = [
         get_pair_tuple(u, v)
@@ -208,7 +234,7 @@ def render_network_summary(network_id, graph):
     unused_annotations = get_unused_annotations(graph)
     unused_list_annotation_values = get_unused_list_annotation_values(graph)
 
-    versions = api.manager.get_networks_by_name(graph.name)
+    versions = manager.get_networks_by_name(graph.name)
 
     causal_pathologies = sorted({
         get_pair_tuple(u, v) + (d[RELATION],)
@@ -216,23 +242,22 @@ def render_network_summary(network_id, graph):
     })
 
     undefined_sfam = [
-        (dcn(node), api.get_node_id(node))
+        (dcn(node), api.get_node_hash(node))
         for node in iter_undefined_families(graph, ['SFAM', 'GFAM'])
     ]
 
     citation_years = create_timeline(count_citation_years(graph))
 
     overlap_counter = api.get_node_overlap(network_id)
-    allowed_network_ids = get_network_ids_with_permission_helper(current_user, api)
+    allowed_network_ids = get_network_ids_with_permission_helper(current_user, manager)
     overlaps = [
-        (api.manager.get_network_by_id(network_id), v)
+        (manager.get_network_by_id(network_id), v)
         for network_id, v in overlap_counter.most_common()
-        if network_id in allowed_network_ids
+        if network_id in allowed_network_ids and v > 0.0
     ]
     top_overlaps = overlaps[:10]
 
     naked_names = get_naked_names(graph)
-
 
     function_count = count_functions(graph)
     relation_count = count_relations(graph)
@@ -241,24 +266,33 @@ def render_network_summary(network_id, graph):
     degradation_count = len(get_degradations(graph))
     molecular_count = len(get_activities(graph))
 
-    has_modifications = all([translocation_count, degradation_count, molecular_count])
+    modification_count_labels = (
+        'Translocations',
+        'Degradations',
+        'Molecular Activities',
+    )
+    modification_counts = (translocation_count, degradation_count, molecular_count)
+
+    modifications_count = {
+        label: count
+        for label, count in zip(modification_count_labels, modification_counts)
+        if count
+    }
+
+    error_groups = count_dict_values(group_errors(graph)).most_common(20)
 
     return render_template(
         'summary.html',
         chart_1_data=prepare_c3(function_count, 'Entity Type'),
         chart_2_data=prepare_c3(relation_count, 'Relationship Type'),
         chart_3_data=prepare_c3(error_count, 'Error Type') if error_count else None,
-        chart_4_data=prepare_c3({
-            'Translocations': translocation_count,
-            'Degradations': degradation_count,
-            'Molecular Activities': molecular_count}
-        , 'Modifier Type') if has_modifications else None,
+        chart_4_data=prepare_c3(modifications_count) if modifications_count else None,
         chart_5_data=prepare_c3(count_variants(graph), 'Node Variants'),
         chart_6_data=prepare_c3(count_namespaces(graph), 'Namespaces'),
         chart_7_data=prepare_c3(hub_data, 'Top Hubs'),
         chart_9_data=prepare_c3(disease_data, 'Pathologies') if disease_data else None,
         chart_10_data=prepare_c3_time_series(citation_years, 'Number of articles') if citation_years else None,
-        error_groups=count_dict_values(group_errors(graph)).most_common(20),
+        error_groups=error_groups,
         info_list=info_list(graph),
         regulatory_pairs=regulatory_pairs,
         contradictions=contradictory_pairs,
@@ -286,7 +320,7 @@ def render_network_summary(network_id, graph):
 def run_experiment(manager_, file, filename, description, gene_column, data_column, permutations, network, sep=','):
     """
 
-    :param pybel.manager.CacheManager manager_: A cache manager
+    :param pybel.manager.Manager manager_: A cache manager
     :param file file:
     :param str filename:
     :param str description:
@@ -358,48 +392,10 @@ def log_graph(graph, user, preparsed=False, failed=False):
     )
 
 
-def add_network_reporting(manager_, network, user, number_nodes, number_edges, number_warnings, preparsed=False,
-                          public=True):
-    """
-
-    :param manager_:
-    :param network:
-    :param user:
-    :param number_nodes:
-    :param number_edges:
-    :param number_warnings:
-    :param preparsed:
-    :param public:
-    :return:
-    """
-    reporting_log.info(
-        '%s %s %s v%s with %d nodes, %d edges, and %d warnings',
-        user,
-        'uploaded' if preparsed else 'compiled',
-        network.name,
-        network.version,
-        number_nodes,
-        number_edges,
-        number_warnings
-    )
-
-    report = Report(
-        network=network,
-        user=user,
-        precompiled=preparsed,
-        number_nodes=number_nodes,
-        number_edges=number_edges,
-        number_warnings=number_warnings,
-        public=public,
-    )
-    manager_.session.add(report)
-    manager_.session.commit()
-
-
 def get_recent_reports(manager_, weeks=2):
     """Gets reports from the last two weeks
 
-    :param pybel.manager.CacheManager manager_: A cache manager
+    :param pybel.manager.Manager manager_: A cache manager
     :param int weeks: The number of weeks to look backwards (builds :class:`datetime.timedelta`)
     :return: An iterable of the string that should be reported
     :rtype: iter[str]
@@ -433,24 +429,22 @@ def get_recent_reports(manager_, weeks=2):
         yield ''
 
 
-def iterate_user_strings(manager_, with_passwords):
+def iterate_user_strings(manager_):
     """Iterates over strings to print describing users
 
-    :param pybel.manager.CacheManager manager_:
-    :param bool with_passwords:
+    :param pybel.manager.Manager manager_:
     :rtype: iter[str]
     """
-    for u in manager_.session.query(User).all():
-        yield '{}\t{}\t{}\t{}{}'.format(
-            u.email,
-            u.first_name,
-            u.last_name,
-            ','.join(sorted(r.name for r in u.roles)),
-            '\t{}'.format(u.password) if with_passwords else ''
+    for user in manager_.session.query(User).all():
+        yield '{email}\t{password}\t{roles}\t{name}'.format(
+            email=user.email,
+            password=user.password,
+            roles=','.join(sorted(r.name for r in user.roles)),
+            name=(user.name if user.name else '')
         )
 
 
-def sanitize_pipeline(function_name):
+def to_snake_case(function_name):
     """Converts method.__name__ from capital and spaced to lower and underscore separated
 
     :param str function_name:
@@ -491,7 +485,7 @@ def convert_seed_value(key, form, value):
     elif key in {'pubmed', 'authors'}:
         return form.getlist(value)
     else:
-        return api.get_nodes_by_ids(form.getlist(value, type=int))
+        return api.get_nodes_by_hashes(form.getlist(value, type=int))
 
 
 def query_form_to_dict(form):
@@ -517,7 +511,7 @@ def query_form_to_dict(form):
     ]
 
     query_dict["pipeline"] = [
-        {'function': sanitize_pipeline(function_name)}
+        {'function': to_snake_case(function_name)}
         for function_name in form.getlist("pipeline[]")
         if function_name
     ]
@@ -532,7 +526,7 @@ def get_query_ancestor_id(query_id):
     """Gets the oldest ancestor of the given query
 
     :param int query_id: The original query database identifier
-    :rtype: models.Query
+    :rtype: Query
     """
     query = manager.session.query(Query).get(query_id)
 
@@ -547,7 +541,7 @@ def get_query_descendants(query_id):
     in the list, with its parent next, its grandparent third, and so-on.
 
     :param int query_id: The original query database identifier
-    :rtype: list[models.Query]
+    :rtype: list[Query]
     """
     query = manager.session.query(Query).get(query_id)
 
@@ -557,15 +551,16 @@ def get_query_descendants(query_id):
     return [query] + get_query_descendants(query.parent_id)
 
 
-def calculate_overlap_dict(g1, g2, set_labels=('Query 1', 'Query 2')):
-    """
+def calculate_overlap_dict(g1, g2, g1_label=None, g2_label=None):
+    """Creates a dictionary of images depicting the graphs' overlaps in multiple categories
 
-    :param pybel.BELGraph g1:
-    :param pybel.BELGraph g2:
-    :param set_labels: A tuple of length two with the labels for the graphs
+    :param pybel.BELGraph g1: A BEL graph
+    :param pybel.BELGraph g2: A BEL graph
     :return: A dictionary containing important information for displaying base64 images
     :rtype: dict
     """
+    set_labels = (g1_label, g2_label)
+
     import matplotlib
     # See: http://matplotlib.org/faq/usage_faq.html#what-is-a-backend
     matplotlib.use('AGG')
@@ -578,8 +573,10 @@ def calculate_overlap_dict(g1, g2, set_labels=('Query 1', 'Query 2')):
     plt.close()
 
     nodes_overlap_file = BytesIO()
+    g1_nodes = set(g1)
+    g2_nodes = set(g2)
     venn2(
-        [set(g1.nodes_iter()), set(g2.nodes_iter())],
+        [g1_nodes, g2_nodes],
         set_labels=set_labels
     )
     plt.savefig(nodes_overlap_file, format='png')
@@ -618,8 +615,10 @@ def calculate_overlap_dict(g1, g2, set_labels=('Query 1', 'Query 2')):
     plt.close()
 
     annotations_overlap_file = BytesIO()
+    g1_annotations = get_annotations(g1)
+    g2_annotations = get_annotations(g2)
     venn2(
-        [get_annotations(g1), get_annotations(g2)],
+        [g1_annotations, g2_annotations],
         set_labels=set_labels
 
     )
@@ -635,17 +634,17 @@ def calculate_overlap_dict(g1, g2, set_labels=('Query 1', 'Query 2')):
     }
 
 
-def list_public_networks(api_):
+def iter_public_networks(manager_):
     """Lists the graphs that have been made public
 
-    :param DatabaseService api_:
+    :param pybel.manager.Manager manager_:
     :rtype: list[Network]
     """
-    return [
+    return (
         network
-        for network in api_.list_recent_networks()
+        for network in manager_.list_recent_networks()
         if network.report and network.report.public
-    ]
+    )
 
 
 def unique_networks(networks):
@@ -666,59 +665,69 @@ def unique_networks(networks):
             yield network
 
 
-def networks_with_permission_iter_helper(user, api_):
+def get_role_networks(role):
+    """Iterates over all networks belonging to users with a given role
+
+    :type role: str or pybel_web.models.Role
+    :rtype: iter[Network]
+    """
+    if not isinstance(role, Role):
+        role = current_app.pybel.user_datastore.find_or_create_role(name=role)
+
+    for user in role.users:
+        yield from user.get_owned_networks()
+
+
+def networks_with_permission_iter_helper(user, manager_):
     """Gets an iterator over all the networks from all the sources
 
     :param models.User user:
-    :param pybel_tools.api.DatabaseService api_:
+    :param pybel.manager.Manager manager_:
     :rtype: iter[Network]
     """
     if not user.is_authenticated:
-        yield from list_public_networks(api_)
+        yield from iter_public_networks(manager_)
 
-    elif user.admin:
-        yield from api_.list_recent_networks()
+    elif user.is_admin:
+        yield from manager_.list_recent_networks()
 
     else:
-        yield from list_public_networks(api_)
+        yield from iter_public_networks(manager_)
         yield from user.get_owned_networks()
         yield from user.get_shared_networks()
         yield from user.get_project_networks()
 
-        if user.has_role('scai'):
-            for user in scai_role.users:
-                yield from user.get_owned_networks()
-                yield from user.get_project_networks()
-                yield from user.get_shared_networks()
+        if user.is_scai:
+            yield from get_role_networks(scai_role)
 
 
-def get_networks_with_permission(api_):
+def get_networks_with_permission(manager_):
     """Gets all networks tagged as public or uploaded by the current user
 
-    :param DatabaseService api_: The database service
+    :param DatabaseService manager_: The database service
     :return: A list of all networks tagged as public or uploaded by the current user
     :rtype: list[Network]
     """
     if not current_user.is_authenticated:
-        return list_public_networks(api_)
+        return list(iter_public_networks(manager_))
 
-    if current_user.admin:
-        return api_.list_recent_networks()
+    if current_user.is_admin:
+        return manager_.list_recent_networks()
 
-    return list(unique_networks(networks_with_permission_iter_helper(current_user, api_)))
+    return list(unique_networks(networks_with_permission_iter_helper(current_user, manager_)))
 
 
-def get_network_ids_with_permission_helper(user, api_):
+def get_network_ids_with_permission_helper(user, manager_):
     """Gets the set of networks ids tagged as public or uploaded by the current user
 
-    :param models.User user:
-    :param DatabaseService api_: The database service
+    :param User user:
+    :param pybel.manager.Manager manager_: The database service
     :return: A list of all networks tagged as public or uploaded by the current user
     :rtype: set[int]
     """
     return {
         network.id
-        for network in networks_with_permission_iter_helper(user, api_)
+        for network in networks_with_permission_iter_helper(user, manager_)
     }
 
 
@@ -729,10 +738,10 @@ def user_has_query_rights(user, query):
     :param models.Query query: A query object
     :rtype: bool
     """
-    if user.is_authenticated and user.admin:
+    if user.is_authenticated and user.is_admin:
         return True
 
-    permissive_network_ids = get_network_ids_with_permission_helper(user, api)
+    permissive_network_ids = get_network_ids_with_permission_helper(user, manager)
 
     return all(
         network.id in permissive_network_ids
@@ -746,7 +755,7 @@ def current_user_has_query_rights(query_id):
     :param int query_id: The database identifier for a query
     :rtype: bool
     """
-    if current_user.is_authenticated and current_user.admin:
+    if current_user.is_authenticated and current_user.is_admin:
         return True
 
     query = manager.session.query(Query).get(query_id)
@@ -757,8 +766,8 @@ def current_user_has_query_rights(query_id):
 def safe_get_query(query_id):
     """Gets a query or raises an abort
 
-    :param int query_id:
-    :rtype: pybel_web.models.Query
+    :param int query_id: The database identifier for a query
+    :rtype: Query
     """
     query = manager.session.query(Query).get(query_id)
 
@@ -771,15 +780,14 @@ def safe_get_query(query_id):
     return query
 
 
-def get_vote(edge_id, user_id):
+def get_vote(edge, user):
     """Gets a vote for the given edge and user
 
-    :param int edge_id:
-    :param int user_id:
+    :param Edge edge:
+    :param User user:
     :rtype: EdgeVote
     """
-    return manager.session.query(EdgeVote).filter(EdgeVote.edge_id == edge_id,
-                                                  EdgeVote.user_id == user_id).one_or_none()
+    return manager.session.query(EdgeVote).filter(EdgeVote.edge == edge, EdgeVote.user == user).one_or_none()
 
 
 def next_or_jsonify(message, *args, status=200, category='message', **kwargs):
@@ -806,17 +814,18 @@ def next_or_jsonify(message, *args, status=200, category='message', **kwargs):
     )
 
 
-def assert_user_owns_network(network, user):
+def user_owns_network_or_403(network, user):
     """Check that the user is the owner of the the network. Sends a Flask abort 403 signal if not.
 
     :param Network network: A network
     :param User user: A user
     """
-    if not network.report or user != network.report.user:
+    if not user.is_authenticated or not network.report or user != network.report.user:
         abort(403, 'You do not own this network')
 
 
 def calculate_scores(graph, data, runs):
+    """Calculates CMPA scores"""
     remove_nodes_by_namespace(graph, {'MGI', 'RGD'})
     collapse_by_central_dogma_to_genes(graph)
     rewire_variants_to_genes(graph)

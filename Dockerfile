@@ -1,21 +1,14 @@
-FROM ubuntu:latest
+FROM python:3.6.2
 MAINTAINER Charles Tapley Hoyt "cthoyt@gmail.com"
-RUN apt-get update -y
 
-# Install basic applications
-RUN apt-get install -y tar git curl nano wget dialog net-tools build-essential
+RUN pip3 install pymysql
+RUN pip3 install git+https://github.com/pybel/pybel.git@develop
+RUN pip3 install git+https://github.com/pybel/pybel-tools.git@develop
 
-# Install python and basic python tools
-RUN apt-get install -y python python-dev python-distribute python-pip
+ADD requirements.txt /
+RUN pip3 install -r requirements.txt
 
 COPY . /app
 WORKDIR /app
 
-RUN pip install -r requirements.txt
-RUN pip install .
-
-# Expose ports
-# EXPOSE 80
-
-ENTRYPOINT ["python"]
-CMD ["-m", "pybel_tools", "web", "--host", "0.0.0.0"]
+RUN pip3 install .

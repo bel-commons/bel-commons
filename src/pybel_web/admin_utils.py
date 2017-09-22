@@ -10,7 +10,7 @@ class ModelView(ModelViewBase):
 
     def is_accessible(self):
         """Checks the current user is an admin"""
-        return current_user.is_authenticated and current_user.admin
+        return current_user.is_authenticated and current_user.is_admin
 
     def inaccessible_callback(self, name, **kwargs):
         """redirect to login page if user doesn't have access"""
@@ -20,6 +20,11 @@ class ModelView(ModelViewBase):
 class NetworkView(ModelView):
     """Special view for PyBEL Networks"""
     column_exclude_list = ['blob', 'sha512', 'authors', 'description', 'copyright', 'disclaimer', 'licenses']
+
+
+class ReportView(ModelView):
+    """Special view for reports"""
+    column_exclude_list = ['source']
 
 
 class NodeView(ModelView):
