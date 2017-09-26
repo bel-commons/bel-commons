@@ -45,6 +45,7 @@ def view_parser():
         public=form.public.data,
         allow_nested=form.allow_nested.data,
         citation_clearing=form.citation_clearing.data,
+        infer_origin=form.infer_origin.data,
     )
 
     manager.session.add(report)

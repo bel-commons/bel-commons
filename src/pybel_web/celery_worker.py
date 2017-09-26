@@ -23,7 +23,7 @@ from pybel.manager.models import Network
 from pybel.parser.parse_exceptions import InconsistentDefinitionError
 from pybel_tools.constants import BMS_BASE
 from pybel_tools.ioutils import convert_directory
-from pybel_tools.mutation import add_canonical_names, enrich_pubmed_citations
+from pybel_tools.mutation import add_canonical_names, enrich_pubmed_citations, infer_central_dogma
 from pybel_tools.utils import enable_cool_mode
 from .application import create_application
 from .celery_utils import create_celery
@@ -231,6 +231,10 @@ def async_parser(report_id):
     try:
         log.info('enriching graph')
         add_canonical_names(graph)
+
+        if report.infer_origin:
+            infer_central_dogma(graph)
+
         enrich_pubmed_citations(graph, manager=manager)
     except (IntegrityError, OperationalError):
         manager.session.rollback()

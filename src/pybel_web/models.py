@@ -78,6 +78,7 @@ class Report(Base):
 
     allow_nested = Column(Boolean, default=False)
     citation_clearing = Column(Boolean, default=False)
+    infer_origin = Column(Boolean, default=False)
 
     number_nodes = Column(Integer)
     number_edges = Column(Integer)
