@@ -25,6 +25,11 @@
         });
         $(".panel-body").find(".row").find(".col-sm-6").find(".thumbnail").height(maxHeight);
     </script>
+    <script>
+        $(function () {
+            $('[data-toggle="tooltip"]').tooltip()
+        })
+    </script>
 {% endblock %}
 
 {% block content %}
@@ -147,11 +152,17 @@
                                 </p>
                                 <p>
                                     <a href="{{ url_for('curation.get_boilerplate') }}" class="btn btn-primary"
-                                       role="button">Generate</a>
+                                       role="button" data-toggle="tooltip" data-placement="top"
+                                       title="Generate a template BEL script given an optional list of PubMed identifiers or Entrez Gene identifiers">
+                                        Generate</a>
                                     <a href="{{ url_for('curation.merge_namespaces') }}" class="btn btn-primary"
-                                       role="button">Merge</a>
+                                       role="button" data-toggle="tooltip" data-placement="top"
+                                       title="Merge multiple BEL Namespace (BELNS) files">
+                                        Merge</a>
                                     <a href="{{ url_for('curation.validate_namespace') }}" class="btn btn-primary"
-                                       role="button">Validate</a>
+                                       role="button" data-toggle="tooltip" data-placement="top"
+                                       title="Validate a manually curated BEL Namespace with the EBI Ontology Lookup Service">
+                                        Validate</a>
                                 </p>
                             </div>
                         </div>

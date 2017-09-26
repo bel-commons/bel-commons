@@ -6,6 +6,15 @@
 
 {% block title %}My Activity{% endblock %}
 
+{% block scripts %}
+    {{ super() }}
+
+    <script>
+        $(function () {
+            $('[data-toggle="tooltip"]').tooltip()
+        })
+    </script>
+{% endblock %}
 
 {% block content %}
     <div class="container">
@@ -61,21 +70,25 @@
                                     {# Make sure that there's networks or don't show download buttons #}
                                     <li>
                                         <a href="{{ url_for('dbs.summarize_project', project_id=project.id) }}"
-                                           title="Summarize" class="btn btn-default">
+                                           class="btn btn-default" data-toggle="tooltip" data-placement="top"
+                                           title="Export an Excel sheet with a summary of all networks in this project as well as a summary of the merged network">
                                             <span class="glyphicon glyphicon-signal" aria-hidden="true"></span>
                                             Summarize
                                         </a>
                                     </li>
                                     <li>
                                         <a href="{{ url_for('view_explore_project', project_id=project.id) }}"
-                                           class="btn btn-default">
+                                           class="btn btn-default" data-toggle="tooltip"
+                                           data-placement="top" title="Merge all networks and explore">
                                             <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
                                             Explore
                                         </a>
                                     </li>
                                     <li>
                                         <a href="{{ url_for('dbs.export_project_network', project_id=project.id, serve_format='bel') }}"
-                                           title="Summarize" class="btn btn-default">
+                                           title="Summarize" class="btn btn-default" data-toggle="tooltip"
+                                           data-placement="top"
+                                           title="Merge all networks into a single BEL document and download as a single BEL script">
                                             <span class="glyphicon glyphicon-download" aria-hidden="true"></span>
                                             Download BEL
                                         </a>
