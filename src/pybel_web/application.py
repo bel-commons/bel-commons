@@ -155,7 +155,7 @@ def create_application(get_mail=False, config_location=None, **kwargs):
                     sender=app.config.get('MAIL_DEFAULT_SENDER', ("PyBEL Web", 'pybel@scai.fraunhofer.de')),
                     recipients=[notify]
                 )
-            log.info('notified %s', )
+            log.info('notified %s', notify)
 
     class WebBaseManager(BaseManager):
         def __init__(self, *args, **kwargs):
