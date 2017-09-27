@@ -55,9 +55,7 @@ Create the database with mysql code:
 
 .. code-block:: sql
 
-    CREATE DATABASE mydb
-    DEFAULT CHARACTER SET utf8
-    DEFAULT COLLATE utf8_general_ci;
+    CREATE DATABASE pybel DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_general_ci;
 
 Setting up with Docker
 ----------------------
