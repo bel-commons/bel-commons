@@ -82,25 +82,26 @@ class Report(Base):
     created = Column(DateTime, default=datetime.datetime.utcnow, doc='The date and time of upload')
     public = Column(Boolean, nullable=False, default=False, doc='Should the network be viewable to the public?')
 
-    source_name = Column(Text, doc='The name of the source file')
-    source = Column(LargeBinary(LONGBLOB), doc='The source BEL Script')
-    source_hash = Column(String(128), index=True, doc='SHA512 hash of source file')
-    encoding = Column(Text)
+    source_name = Column(Text, nullable=True, doc='The name of the source file')
+    source = Column(LargeBinary(LONGBLOB), nullable=True, doc='The source BEL Script')
+    source_hash = Column(String(128), nullable=True, index=True, doc='SHA512 hash of source file')
+    encoding = Column(Text, nullable=True)
 
     allow_nested = Column(Boolean, default=False)
     citation_clearing = Column(Boolean, default=False)
     infer_origin = Column(Boolean, default=False)
 
-    number_nodes = Column(Integer)
-    number_edges = Column(Integer)
-    number_warnings = Column(Integer)
+    number_nodes = Column(Integer, nullable=True)
+    number_edges = Column(Integer, nullable=True)
+    number_warnings = Column(Integer, nullable=True)
 
-    message = Column(Text, doc='Error message')
-    completed = Column(Boolean)
+    message = Column(Text, nullable=True, doc='Error message')
+    completed = Column(Boolean, nullable=True)
 
     network_id = Column(
         Integer,
         ForeignKey('{}.id'.format(NETWORK_TABLE_NAME)),
+        nullable=True,
         doc='The network that was uploaded'
     )
     network = relationship('Network', backref=backref('report', uselist=False))
