@@ -2154,9 +2154,16 @@ def pillage():
 
         counter += 1
 
+        graph = network.as_bel()
+
         report = Report(
             network=network,
-            user=current_user
+            user=current_user,
+            completed=True,
+            number_nodes=graph.number_of_nodes(),
+            number_edges=graph.number_of_edges(),
+            number_warnings=len(graph.warnings),
+            public=False
         )
 
         manager.session.add(report)
