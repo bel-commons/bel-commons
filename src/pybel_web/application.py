@@ -137,8 +137,11 @@ def create_application(get_mail=False, config_location=None, **kwargs):
 
     if app.config.get('MAIL_SERVER'):
         mail.init_app(app)
+        log.info('connected to mail server: %s', mail)
 
-        if app.config.get('PYBEL_WEB_STARTUP_NOTIFY'):
+        notify = app.config.get('PYBEL_WEB_STARTUP_NOTIFY')
+
+        if notify:
             with app.app_context():
                 mail.send_message(
                     subject="PyBEL Web - Startup",
@@ -149,9 +152,10 @@ def create_application(get_mail=False, config_location=None, **kwargs):
                         time.asctime(),
                         app.config.get('SERVER_NAME')
                     ),
-                    sender=("PyBEL Web", 'pybel@scai.fraunhofer.de'),
-                    recipients=[app.config.get('PYBEL_WEB_STARTUP_NOTIFY')]
+                    sender=app.config.get('MAIL_DEFAULT_SENDER', ("PyBEL Web", 'pybel@scai.fraunhofer.de')),
+                    recipients=[notify]
                 )
+            log.info('notified %s', )
 
     class WebBaseManager(BaseManager):
         def __init__(self, *args, **kwargs):
