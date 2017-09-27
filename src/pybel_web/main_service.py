@@ -208,7 +208,7 @@ def build_main_service(app):
     @app.route('/summary/<int:network_id>/induction-query/')
     def build_summary_link_query(network_id):
         nodes = [
-            api.get_node_by_hash(node)
+            api.get_node_tuple_by_hash(node)
             for node in request.args.getlist('nodes')
         ]
         q = pybel_tools.query.Query(network_id)
