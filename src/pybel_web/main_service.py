@@ -207,11 +207,12 @@ def build_main_service(app):
 
     @app.route('/summary/<int:network_id>/induction-query/')
     def build_summary_link_query(network_id):
+        """Induces over the nodes in a network"""
         nodes = [
             api.get_node_tuple_by_hash(node)
             for node in request.args.getlist('nodes')
         ]
-        q = pybel_tools.query.Query(network_id)
+        q = pybel_tools.query.Query([network_id])
         q.add_seed_induction(nodes)
         qo = Query.from_query(manager, q, current_user)
         manager.session.add(qo)
