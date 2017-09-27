@@ -34,10 +34,10 @@ from pybel.manager.models import Base, Network
 from pybel.utils import get_version as pybel_version
 from pybel_tools.utils import enable_cool_mode
 from pybel_tools.utils import get_version as pybel_tools_get_version
-from .admin_service import build_admin_service
 from .analysis_service import analysis_blueprint
 from .application import create_application
 from .bms_service import bms_blueprint
+from .constants import BMS_IS_AVAILABLE
 from .constants import log_runner_path, CHARLIE_EMAIL
 from .curation_service import curation_blueprint
 from .database_service import api_blueprint
@@ -47,7 +47,6 @@ from .models import Role, User, Report, Project, Experiment
 from .parser_async_service import parser_async_blueprint
 from .parser_endpoint import build_parser_service
 from .utils import iterate_user_strings
-from .constants import BMS_IS_AVAILABLE
 
 log = logging.getLogger('pybel_web')
 
@@ -149,7 +148,6 @@ def run(host, port, default_config, debug, config, with_gunicorn):
     )
 
     build_main_service(app)
-    build_admin_service(app)
     app.register_blueprint(curation_blueprint)
     app.register_blueprint(parser_async_blueprint)
     app.register_blueprint(api_blueprint)

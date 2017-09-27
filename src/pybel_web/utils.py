@@ -73,9 +73,15 @@ from pybel_tools.summary import (
     count_citation_years,
 )
 from pybel_tools.utils import prepare_c3, prepare_c3_time_series, count_dict_values
-from .application_utils import get_api, get_manager, get_scai_role, get_user_datastore
+from .application_utils import get_api, get_manager, get_user_datastore
 from .constants import reporting_log, AND
-from .models import User, Report, Experiment, Query, EdgeVote, Role
+from .models import (
+    User,
+    Report,
+    Experiment,
+    Query,
+    EdgeVote
+)
 
 log = logging.getLogger(__name__)
 
@@ -106,18 +112,9 @@ def get_userdatastore_proxy():
     return LocalProxy(lambda: get_user_datastore(current_app))
 
 
-def get_scai_role_proxy():
-    """Gets a proxy for the scai role instance
-
-    :rtype: Role
-    """
-    return LocalProxy(lambda: get_scai_role(current_app))
-
-
 manager = get_manager_proxy()
 api = get_api_proxy()
 user_datastore = get_userdatastore_proxy()
-scai_role = get_scai_role_proxy()
 
 
 def create_timeline(year_counter):
@@ -665,19 +662,6 @@ def unique_networks(networks):
             yield network
 
 
-def get_role_networks(role):
-    """Iterates over all networks belonging to users with a given role
-
-    :type role: str or pybel_web.models.Role
-    :rtype: iter[Network]
-    """
-    if not isinstance(role, Role):
-        role = current_app.pybel.user_datastore.find_or_create_role(name=role)
-
-    for user in role.users:
-        yield from user.get_owned_networks()
-
-
 def networks_with_permission_iter_helper(user, manager_):
     """Gets an iterator over all the networks from all the sources
 
@@ -698,7 +682,9 @@ def networks_with_permission_iter_helper(user, manager_):
         yield from user.get_project_networks()
 
         if user.is_scai:
-            yield from get_role_networks(scai_role)
+            role = user_datastore.find_or_create_role(name='scai')
+            for user in role.users:
+                yield from user.get_owned_networks()
 
 
 def get_networks_with_permission(manager_):

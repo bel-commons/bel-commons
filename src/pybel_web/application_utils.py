@@ -2,21 +2,69 @@
 
 import datetime
 import logging
+from itertools import chain
 
-from flask import (
-    g,
-    render_template,
-)
-from flask_security import SQLAlchemyUserDatastore
+from flask import g, render_template, redirect, request
+from flask_admin import Admin
+from flask_admin.contrib.sqla.ajax import QueryAjaxModelLoader
+from flask_admin.model.ajax import DEFAULT_PAGE_SIZE
+from flask_security import SQLAlchemyUserDatastore, url_for_security, current_user
 from raven.contrib.flask import Sentry
+from sqlalchemy import or_
 
+from pybel.manager.models import (
+    Edge,
+    Node,
+    Citation,
+    Evidence,
+    Author,
+    Network,
+    Namespace,
+    Annotation
+)
 from pybel_tools.api import DatabaseService
 from pybel_tools.mutation import expand_nodes_neighborhoods, expand_node_neighborhood
 from pybel_tools.pipeline import uni_in_place_mutator, in_place_mutator
+from .admin_utils import (
+    ModelViewBase,
+    ModelView,
+    UserView,
+    NetworkView,
+    NodeView,
+    CitationView,
+    EdgeView,
+    EvidenceView,
+    ExperimentView,
+    ReportView,
+)
 from .constants import CHARLIE_EMAIL, DANIEL_EMAIL, ALEX_EMAIL
-from .models import Base, Role, User
+from .models import (
+    Base,
+    Role,
+    User,
+    Report,
+    Experiment,
+    Query,
+    Assembly,
+    Project,
+    EdgeVote,
+    EdgeComment
+)
 
 log = logging.getLogger(__name__)
+
+
+def iter_public_networks(manager_):
+    """Lists the graphs that have been made public
+
+    :param pybel.manager.Manager manager_:
+    :rtype: list[Network]
+    """
+    return (
+        network
+        for network in manager_.list_recent_networks()
+        if network.report and network.report.public
+    )
 
 
 class FlaskPyBEL:
@@ -34,8 +82,6 @@ class FlaskPyBEL:
         self.manager = None
         self.user_datastore = None
         self.api = None
-        self.admin_role = None
-        self.scai_role = None
 
         if app is not None and manager is not None:
             self.init_app(app, manager)
@@ -64,13 +110,13 @@ class FlaskPyBEL:
         self.api = DatabaseService(manager=self.manager)
         self.user_datastore = SQLAlchemyUserDatastore(self.manager, User, Role)
 
-        self.admin_role = self.user_datastore.find_or_create_role(
+        self.user_datastore.find_or_create_role(
             name='admin',
             description='Admin of PyBEL Web'
         )
-        self.scai_role = self.user_datastore.find_or_create_role(
+        self.user_datastore.find_or_create_role(
             name='scai',
-            description='Users from SCAI'
+            description='Users from Fraunhofer SCAI'
         )
 
         self.user_datastore.commit()
@@ -148,11 +194,12 @@ class FlaskPyBEL:
             node = self.api.get_node_tuple_by_hash(node_id)
             graph.remove_node(node)
 
-    def prepare_service(self):
+        self._prepare_service()
+        self._build_admin_service()
+
+    def _prepare_service(self):
         if self.app is None or self.manager is None:
             raise ValueError('not initialized')
-
-        scai_role = self.user_datastore.find_or_create_role(name='scai')
 
         for email in (CHARLIE_EMAIL, DANIEL_EMAIL, ALEX_EMAIL):
             admin_user = self.user_datastore.find_user(email=email)
@@ -164,8 +211,8 @@ class FlaskPyBEL:
                     confirmed_at=datetime.datetime.now(),
                 )
 
-            self.user_datastore.add_role_to_user(admin_user, self.admin_role)
-            self.user_datastore.add_role_to_user(admin_user, scai_role)
+            self.user_datastore.add_role_to_user(admin_user, 'admin')
+            self.user_datastore.add_role_to_user(admin_user, 'scai')
             self.manager.session.add(admin_user)
 
         test_scai_user = self.user_datastore.find_user(email='test@scai.fraunhofer.de')
@@ -176,10 +223,110 @@ class FlaskPyBEL:
                 password='pybeltest',
                 confirmed_at=datetime.datetime.now(),
             )
-            self.user_datastore.add_role_to_user(test_scai_user, scai_role)
+            self.user_datastore.add_role_to_user(test_scai_user, 'scai')
             self.manager.session.add(test_scai_user)
 
         self.manager.session.commit()
+
+    def _build_admin_service(self):
+        """Adds Flask-Admin database front-end"""
+        admin = Admin(self.app, template_mode='bootstrap3')
+        manager = self.manager
+        user_datastore = self.user_datastore
+
+        admin.add_view(UserView(User, manager.session))
+        admin.add_view(ModelView(Role, manager.session))
+        admin.add_view(ModelView(Namespace, manager.session))
+        admin.add_view(ModelView(Annotation, manager.session))
+        admin.add_view(NetworkView(Network, manager.session))
+        admin.add_view(NodeView(Node, manager.session))
+        admin.add_view(EdgeView(Edge, manager.session))
+        admin.add_view(CitationView(Citation, manager.session))
+        admin.add_view(EvidenceView(Evidence, manager.session))
+        admin.add_view(ModelView(Author, manager.session))
+        admin.add_view(ReportView(Report, manager.session))
+        admin.add_view(ExperimentView(Experiment, manager.session))
+        admin.add_view(ModelView(Query, manager.session))
+        admin.add_view(ModelView(Assembly, manager.session))
+        admin.add_view(ModelView(EdgeVote, manager.session))
+        admin.add_view(ModelView(EdgeComment, manager.session))
+
+        class NetworkAjaxModelLoader(QueryAjaxModelLoader):
+            """Custom Network AJAX loader for Flask Admin"""
+
+            def __init__(self):
+                super(NetworkAjaxModelLoader, self).__init__('networks', manager.session, Network,
+                                                             fields=[Network.name])
+
+            def get_list(self, term, offset=0, limit=DEFAULT_PAGE_SIZE):
+                """Overrides get_list to be lazy and tricky about only getting current user's networks"""
+                query = self.session.query(self.model)
+
+                filters = (field.ilike(u'%%%s%%' % term) for field in self._cached_fields)
+                query = query.filter(or_(*filters))
+
+                if not current_user.is_admin:
+                    network_chain = chain(
+                        current_user.get_owned_networks(),
+                        current_user.get_shared_networks(),
+                        iter_public_networks(manager),
+                    )
+
+                    allowed_network_ids = {
+                        network.id
+                        for network in network_chain
+                    }
+
+                    if current_user.is_scai:
+                        scai_role = user_datastore.get_or_create_role(name='scai')
+
+                        for user in scai_role.users:
+                            for network in user.get_owned_networks():
+                                allowed_network_ids.add(network.id)
+
+                    if not allowed_network_ids:  # If the current user doesn't have any networks, then return nothing
+                        return []
+
+                    query = query.filter(Network.id.in_(allowed_network_ids))
+
+                return query.offset(offset).limit(limit).all()
+
+        class ProjectView(ModelViewBase):
+            """Special view to allow users of given projects to manage them"""
+
+            def is_accessible(self):
+                """Checks the current user is logged in"""
+                return current_user.is_authenticated
+
+            def inaccessible_callback(self, name, **kwargs):
+                """redirect to login page if user doesn't have access"""
+                return redirect(url_for_security('login', next=request.url))
+
+            def get_query(self):
+                """Only show projects that the user is part of"""
+                parent_query = super(ProjectView, self).get_query()
+
+                if current_user.is_admin:
+                    return parent_query
+
+                current_projects = {
+                    project.id
+                    for project in current_user.projects
+                }
+
+                return parent_query.filter(Project.id.in_(current_projects))
+
+            def on_model_change(self, form, model, is_created):
+                """Hacky - automatically add user when they create a project"""
+                model.users.append(current_user)
+
+            form_ajax_refs = {
+                'networks': NetworkAjaxModelLoader()
+            }
+
+        admin.add_view(ProjectView(Project, manager.session))
+
+        return admin
 
     @classmethod
     def get_state(cls, app):
@@ -191,15 +338,6 @@ class FlaskPyBEL:
             raise ValueError('FlaskPyBEL has not been instantiated')
 
         return app.extensions[cls.APP_NAME]
-
-
-def get_scai_role(app):
-    """Gets the SCAI role from the Flask app
-
-    :param flask.Flask app:
-    :rtype: Role
-    """
-    return FlaskPyBEL.get_state(app).scai_role
 
 
 def get_sentry(app):

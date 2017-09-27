@@ -170,7 +170,6 @@ def create_application(get_mail=False, config_location=None, **kwargs):
     pbx.init_app(app, manager)
     security.init_app(app, pbx.user_datastore, register_form=ExtendedRegisterForm)
     swagger.init_app(app)
-    pbx.prepare_service()
 
     if not get_mail:
         return app

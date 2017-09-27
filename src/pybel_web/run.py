@@ -12,7 +12,6 @@ import logging
 
 import os
 
-from .admin_service import build_admin_service
 from .analysis_service import analysis_blueprint
 from .application import create_application
 from .bms_service import bms_blueprint
