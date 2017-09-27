@@ -74,7 +74,6 @@ from .models import (
     Experiment,
     Project,
     EdgeComment,
-    EdgeVote,
 )
 from .send_utils import serve_network
 from .utils import (
@@ -87,7 +86,7 @@ from .utils import (
     user_has_query_rights,
     current_user_has_query_rights,
     safe_get_query,
-    get_vote,
+    get_or_create_vote,
     next_or_jsonify,
     user_owns_network_or_403,
 )
@@ -1239,7 +1238,7 @@ def get_edge_entry(edge_hash):
     ]
 
     if current_user.is_authenticated:
-        vote = get_vote(edge, current_user)
+        vote = get_or_create_vote(edge, current_user)
         data['vote'] = 0 if vote is None else 1 if vote.agreed else -1
 
     return data
@@ -1271,24 +1270,6 @@ def get_edge_by_id(edge_id):
     return jsonify(get_edge_entry(edge_id))
 
 
-def ensure_vote(edge, user, agreed):
-    vote = get_vote(edge, user)
-
-    if vote is None:
-        vote = EdgeVote(
-            edge=edge,
-            user=user,
-            agreed=agreed
-        )
-        manager.session.add(vote)
-    else:
-        vote.agreed = agreed
-
-    manager.session.commit()
-
-    return vote
-
-
 @api_blueprint.route('/api/edge/<edge_id>/vote/up')
 @login_required
 def store_up_vote(edge_id):
@@ -1303,7 +1284,7 @@ def store_up_vote(edge_id):
     if edge is None:
         abort(403, 'Edge {} not found'.format(edge_id))
 
-    vote = ensure_vote(edge, current_user, True)
+    vote = get_or_create_vote(edge, current_user, True)
     return jsonify(vote.to_json())
 
 
@@ -1321,7 +1302,7 @@ def store_down_vote(edge_id):
     if edge is None:
         abort(403, 'Edge {} not found'.format(edge_id))
 
-    vote = ensure_vote(edge, current_user, False)
+    vote = get_or_create_vote(edge, current_user, False)
     return jsonify(vote.to_json())
 
 

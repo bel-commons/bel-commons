@@ -766,14 +766,33 @@ def safe_get_query(query_id):
     return query
 
 
-def get_vote(edge, user):
+def get_or_create_vote(edge, user, agreed=None):
     """Gets a vote for the given edge and user
 
     :param Edge edge:
     :param User user:
+    :param bool agreed:
     :rtype: EdgeVote
     """
-    return manager.session.query(EdgeVote).filter(EdgeVote.edge == edge, EdgeVote.user == user).one_or_none()
+    try:
+        vote = manager.session.query(EdgeVote).filter(EdgeVote.edge == edge, EdgeVote.user == user).one_or_none()
+    except:
+        manager.session.rollback()
+        abort(500, 'Problem with voting system')
+
+    if vote is None:
+        vote = EdgeVote(
+            edge=edge,
+            user=user,
+            agreed=agreed
+        )
+        manager.session.add(vote)
+        manager.session.commit()
+    elif agreed is not None:
+        vote.agreed = agreed
+        manager.session.commit()
+
+    return vote
 
 
 def next_or_jsonify(message, *args, status=200, category='message', **kwargs):
