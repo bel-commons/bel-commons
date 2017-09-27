@@ -769,16 +769,12 @@ def safe_get_query(query_id):
 def get_or_create_vote(edge, user, agreed=None):
     """Gets a vote for the given edge and user
 
-    :param Edge edge:
-    :param User user:
-    :param bool agreed:
+    :param Edge edge: The edge that is being evaluated
+    :param User user: The user making the vote
+    :param bool agreed: Optional value of agreement to put into vote
     :rtype: EdgeVote
     """
-    try:
-        vote = manager.session.query(EdgeVote).filter(EdgeVote.edge == edge, EdgeVote.user == user).one_or_none()
-    except:
-        manager.session.rollback()
-        abort(500, 'Problem with voting system')
+    vote = manager.session.query(EdgeVote).filter(EdgeVote.edge == edge, EdgeVote.user == user).one_or_none()
 
     if vote is None:
         vote = EdgeVote(
