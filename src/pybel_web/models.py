@@ -5,14 +5,25 @@ import json
 
 import codecs
 from flask_security import RoleMixin, UserMixin
-from sqlalchemy import Column, Integer, ForeignKey, DateTime, Boolean, Text, Table, String, Index, LargeBinary
+from sqlalchemy import (
+    Column,
+    Integer,
+    ForeignKey,
+    DateTime,
+    Boolean,
+    Text,
+    Table,
+    String,
+    Index,
+    LargeBinary,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import relationship, backref
 
 import pybel_tools.query
 from pybel import from_lines
 from pybel.manager import Base
-from pybel.manager.models import LONGBLOB
-from pybel.manager.models import NETWORK_TABLE_NAME, Network, EDGE_TABLE_NAME
+from pybel.manager.models import LONGBLOB, NETWORK_TABLE_NAME, Network, EDGE_TABLE_NAME
 from pybel.struct import union
 
 EXPERIMENT_TABLE_NAME = 'pybel_experiment'
@@ -525,7 +536,7 @@ class EdgeVote(Base):
 
     id = Column(Integer, primary_key=True)
 
-    edge_id = Column(Integer, ForeignKey('{}.id'.format(EDGE_TABLE_NAME)))
+    edge_id = Column(Integer, ForeignKey('{}.id'.format(EDGE_TABLE_NAME)), nullable=False)
     edge = relationship('Edge', backref=backref('votes', lazy='dynamic'))
 
     user_id = Column(Integer, ForeignKey('{}.id'.format(USER_TABLE_NAME)), nullable=False,
@@ -534,6 +545,10 @@ class EdgeVote(Base):
 
     agreed = Column(Boolean, nullable=False)
     changed = Column(DateTime, default=datetime.datetime.utcnow)
+
+    __table_args__ = (
+        UniqueConstraint(edge_id, user_id),
+    )
 
     def to_json(self):
         """Converts this vote to JSON
