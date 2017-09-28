@@ -784,8 +784,11 @@ def get_or_create_vote(edge, user, agreed=None):
         )
         manager.session.add(vote)
         manager.session.commit()
+
+    # If there was already a vote, and it's being changed
     elif agreed is not None:
         vote.agreed = agreed
+        vote.changed = datetime.datetime.utcnow()
         manager.session.commit()
 
     return vote

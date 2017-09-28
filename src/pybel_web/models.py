@@ -544,7 +544,7 @@ class EdgeVote(Base):
                      doc='The user who made this vote')
     user = relationship('User', backref=backref('votes', lazy='dynamic'))
 
-    agreed = Column(Boolean, nullable=False)
+    agreed = Column(Boolean, nullable=True)
     changed = Column(DateTime, default=datetime.datetime.utcnow)
 
     __table_args__ = (
