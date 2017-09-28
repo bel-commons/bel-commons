@@ -326,7 +326,11 @@ def download_list_annotation(network_id, annotation):
     if annotation not in graph.annotation_list:
         abort(400, 'Graph does not contain this list annotation')
 
-    values = graph.annotation_list[annotation]
+    # Convert to dict with no labels
+    values = {
+        value: ''
+        for value in graph.annotation_list[annotation]
+    }
 
     si = StringIO()
 
