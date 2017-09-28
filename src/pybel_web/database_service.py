@@ -337,6 +337,8 @@ def download_list_annotation(network_id, annotation):
     write_annotation(
         keyword=annotation,
         values=values,
+        author_name=graph.document.get(METADATA_AUTHORS),
+        author_contact=graph.document.get(METADATA_CONTACT),
         citation_name=graph.document.get(METADATA_NAME),
         description='This annotation was serialize by PyBEL Web',
         file=si,
