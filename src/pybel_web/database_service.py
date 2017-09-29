@@ -2216,13 +2216,6 @@ def get_recent_report():
     return output
 
 
-@api_blueprint.route('/api/reporting/list')
-@roles_required('admin')
-def list_reporting():
-    """Sends the reporting log as a text file"""
-    return flask.send_file(os.path.join(PYBEL_LOG_DIR, 'reporting.txt'))
-
-
 @api_blueprint.route('/api/network/overlap')
 @roles_required('admin')
 def list_all_network_overview():
