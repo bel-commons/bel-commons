@@ -114,7 +114,6 @@ def build_main_service(app):
     build_dictionary_service_admin(app)
 
     manager = get_manager(app)
-    api = get_api(app)
 
     @app.route('/', methods=['GET', 'POST'])
     def home():
@@ -209,9 +208,10 @@ def build_main_service(app):
     def build_summary_link_query(network_id):
         """Induces over the nodes in a network"""
         nodes = [
-            api.get_node_tuple_by_hash(node)
-            for node in request.args.getlist('nodes')
+            manager.get_node_tuple_by_hash(node_hash)
+            for node_hash in request.args.getlist('nodes')
         ]
+
         q = pybel_tools.query.Query([network_id])
         q.add_seed_induction(nodes)
         qo = Query.from_query(manager, q, current_user)
