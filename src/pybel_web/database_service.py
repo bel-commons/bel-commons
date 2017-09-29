@@ -1856,6 +1856,15 @@ def delete_user(user_id):
 # Analysis
 ####################################
 
+def get_experiment_or_404(experiment_id):
+    experiment = manager.session.query(Experiment).get(experiment_id)
+
+    if experiment is None:
+        abort(404, 'Experiment {} does not exist'.format(experiment_id))
+
+    return experiment
+
+
 @api_blueprint.route('/api/query/<int:query_id>/analysis/<int:experiment_id>/')
 def get_analysis(query_id, experiment_id):
     """Returns data from analysis
@@ -1865,17 +1874,16 @@ def get_analysis(query_id, experiment_id):
         - experiment
         - query
     """
-    # TODO user rights management
-    network = get_graph_from_request(query_id)
-
-    experiment = manager.session.query(Experiment).get(experiment_id)
-    if experiment is None:
-        abort(404)
+    graph = get_graph_from_request(query_id)
+    experiment = get_experiment_or_404(experiment_id)
 
     data = pickle.loads(experiment.result)
     results = [
-        {'node': api.get_node_hash(node), 'data': data[node]}
-        for node in network.nodes_iter()
+        {
+            'node': api.get_node_hash(node),
+            'data': data[node]
+        }
+        for node in graph
         if node in data
     ]
 
@@ -1890,13 +1898,8 @@ def get_analysis_median(query_id, experiment_id):
     tags:
         - experiment
     """
-    # TODO user rights management
     network = get_graph_from_request(query_id)
-
-    experiment = manager.session.query(Experiment).get(experiment_id)
-
-    if experiment is None:
-        abort(404, 'Experiment {} does not exist'.format(experiment_id))
+    experiment = get_experiment_or_404(experiment_id)
 
     data = pickle.loads(experiment.result)
     # position 3 is the 'median' score
@@ -1925,10 +1928,7 @@ def drop_experiment_by_id(experiment_id):
         type: integer
         format: int32
     """
-    experiment = manager.session.query(Experiment).get(experiment_id)
-
-    if experiment is None:
-        abort(404)
+    experiment = get_experiment_or_404(experiment_id)
 
     if not current_user.is_admin and (current_user != experiment.user):
         abort(403, 'You do not have rights to drop this experiment')
@@ -1964,10 +1964,7 @@ def download_analysis(experiment_id):
       200:
         description: A CSV document with the results in it
     """
-    experiment = manager.session.query(Experiment).get(experiment_id)
-
-    if experiment is None:
-        abort(404)
+    experiment = get_experiment_or_404(experiment_id)
 
     if not current_user.is_admin and (current_user != experiment.user):
         abort(403, 'You do not have rights to this experiment')
