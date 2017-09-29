@@ -696,6 +696,7 @@
                     <thead>
                     <tr>
                         <th></th>
+                        <th></th>
                         <th>Node A</th>
                         <th>Node B</th>
                     </tr>
@@ -706,6 +707,9 @@
                             <td>
                                 <a href="{{ url_for('build_summary_link_query', network_id=network_id, nodes=[source_id, target_id]) }}">
                                     <span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span>
+                                </a>
+                                <a href="{{ url_for('view_relations', source_id=source_id, target_id=target_id, undirected='yes') }}">
+                                    <span class="glyphicon glyphicon-th-list" aria-hidden="true"></span>
                                 </a>
                             </td>
                             <td>{{ source }}</td>
@@ -739,6 +743,7 @@
                     <thead>
                     <tr>
                         <th></th>
+                        <th></th>
                         <th>Source</th>
                         <th>Relations</th>
                         <th>Target</th>
@@ -750,6 +755,9 @@
                             <td>
                                 <a href="{{ url_for('build_summary_link_query', network_id=network_id, nodes=[source_id, target_id]) }}">
                                     <span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span>
+                                </a>
+                                <a href="{{ url_for('view_relations', source_id=source_id, target_id=target_id) }}">
+                                    <span class="glyphicon glyphicon-th-list" aria-hidden="true"></span>
                                 </a>
                             </td>
                             <td>{{ source }}</td>
@@ -793,22 +801,26 @@
                     <thead>
                     <tr>
                         <th></th>
+                        <th></th>
                         <th>Type</th>
                         <th>Node A</th>
                         <th>Node B</th>
                     </tr>
                     </thead>
                     <tbody>
-                    {% for a, aid, b, bid, label in unstable_pairs %}
+                    {% for source, source_id, target, target_id, label in unstable_pairs %}
                         <tr>
                             <td>
-                                <a href="{{ url_for('build_summary_link_query', network_id=network_id, nodes=[aid, bid]) }}">
+                                <a href="{{ url_for('build_summary_link_query', network_id=network_id, nodes=[source_id, target_id]) }}">
                                     <span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span>
+                                </a>
+                                <a href="{{ url_for('view_relations', source_id=source_id, target_id=target_id, undirected='yes') }}">
+                                    <span class="glyphicon glyphicon-th-list" aria-hidden="true"></span>
                                 </a>
                             </td>
                             <td>{{ label }}</td>
-                            <td>{{ a }}</td>
-                            <td>{{ b }}</td>
+                            <td>{{ source }}</td>
+                            <td>{{ target }}</td>
                         </tr>
                     {% endfor %}
                     </tbody>
