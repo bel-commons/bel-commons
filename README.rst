@@ -57,6 +57,12 @@ Create the database with mysql code:
 
     CREATE DATABASE pybel DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_general_ci;
 
+Do it from bash with extreme prejudice:
+
+.. code-block:: sh
+
+    mysql -u root -e "d -e "drop database if exists pybel;CREATE DATABASE pybel DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_general_ci;"
+
 Setting up with Docker
 ----------------------
 A simple Dockerfile is included at the root-level of the respository. This Dockerfile is inspired by the tutorials
