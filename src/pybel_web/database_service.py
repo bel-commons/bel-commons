@@ -1350,7 +1350,7 @@ def store_comment(edge_id):
     manager.session.add(comment)
     manager.session.commit()
 
-    return jsonify(comment.to_json)
+    return jsonify(comment.to_json())
 
 
 ####################################
