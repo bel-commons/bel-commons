@@ -60,6 +60,7 @@ from pybel_tools.summary import (
     get_naked_names,
     count_citation_years,
     count_variants,
+    get_tree_annotations,
 )
 from . import models
 from .constants import *
@@ -97,7 +98,7 @@ api_blueprint = Blueprint('dbs', __name__)
 
 
 @lru_cache(maxsize=32)
-def get_network_from_request(query_id):
+def get_graph_from_request(query_id):
     """Process the GET request returning the filtered network
 
     :param int query_id: Query id
@@ -843,6 +844,17 @@ def make_network_private(network_id):
 # NETWORK QUERIES
 ####################################
 
+@lru_cache(maxsize=32)
+def get_tree_from_query(query_id):
+    """Gets the tree json for a givennetwork
+
+    :param int query_id:
+    :rtype: dict
+    """
+    graph = get_graph_from_request(query_id)
+    return get_tree_annotations(graph)
+
+
 @api_blueprint.route('/api/query/<int:query_id>/tree/')
 def get_tree_api(query_id):
     """Builds the annotation tree data structure for a given graph
@@ -857,8 +869,8 @@ def get_tree_api(query_id):
         required: true
         type: integer
     """
-    network = get_network_from_request(query_id)
-    return jsonify(api.get_tree_annotations(network))
+    rv = get_tree_from_query(query_id)
+    return jsonify(rv)
 
 
 @api_blueprint.route('/api/query/<int:query_id>/rights/')
@@ -913,8 +925,8 @@ def download_network(query_id, serve_format):
               - csv
               - gsea
     """
-    network = get_network_from_request(query_id)
-    return serve_network(network, serve_format=serve_format)
+    graph = get_graph_from_request(query_id)
+    return serve_network(graph, serve_format=serve_format)
 
 
 @api_blueprint.route('/api/query/<int:query_id>/relabel', methods=['GET'])
@@ -931,9 +943,9 @@ def get_network(query_id):
         required: true
         type: integer
     """
-    network = get_network_from_request(query_id)
-    network = api.relabel_nodes_to_identifiers(network)
-    return serve_network(network)
+    graph = get_graph_from_request(query_id)
+    relabeled_graph = api.relabel_nodes_to_identifiers(graph)
+    return serve_network(relabeled_graph)
 
 
 @api_blueprint.route('/api/query/<int:query_id>/paths/<int:source_id>/<int:target_id>/')
@@ -968,7 +980,7 @@ def get_paths(query_id, source_id, target_id):
 
       - name: paths_method
     """
-    network = get_network_from_request(query_id)
+    network = get_graph_from_request(query_id)
 
     method = request.args.get(PATHS_METHOD)
 
@@ -1016,7 +1028,7 @@ def get_nodes_by_betweenness_centrality(query_id, node_number):
         - query
 
     """
-    network = get_network_from_request(query_id)
+    network = get_graph_from_request(query_id)
 
     if node_number > nx.number_of_nodes(network):
         return 'The number introduced is bigger than the nodes in the network'
@@ -1037,7 +1049,7 @@ def get_all_pmids(query_id):
     tags:
         - query
     """
-    network = get_network_from_request(query_id)
+    network = get_graph_from_request(query_id)
     return jsonify(sorted(get_pubmed_identifiers(network)))
 
 
@@ -1060,7 +1072,7 @@ def get_query_summary(query_id):
     tags:
         - query
     """
-    network = get_network_from_request(query_id)
+    network = get_graph_from_request(query_id)
     return jsonify(info_json(network))
 
 
@@ -1121,7 +1133,7 @@ def get_all_authors(query_id):
     tags:
         - query
     """
-    network = get_network_from_request(query_id)
+    network = get_graph_from_request(query_id)
     return jsonify(sorted(get_authors(network)))
 
 
@@ -1854,7 +1866,7 @@ def get_analysis(query_id, experiment_id):
         - query
     """
     # TODO user rights management
-    network = get_network_from_request(query_id)
+    network = get_graph_from_request(query_id)
 
     experiment = manager.session.query(Experiment).get(experiment_id)
     if experiment is None:
@@ -1879,7 +1891,7 @@ def get_analysis_median(query_id, experiment_id):
         - experiment
     """
     # TODO user rights management
-    network = get_network_from_request(query_id)
+    network = get_graph_from_request(query_id)
 
     experiment = manager.session.query(Experiment).get(experiment_id)
 
