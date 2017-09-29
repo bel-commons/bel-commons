@@ -138,8 +138,6 @@ class FlaskPyBEL:
 
             Run a rollback and send some information to Sentry.
             """
-            self.manager.session.rollback()  # Lets just assume everything went to shit
-
             return render_template(
                 '500.html',
                 event_id=g.sentry_event_id,
