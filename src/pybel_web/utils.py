@@ -292,7 +292,7 @@ def render_network_summary(network_id, graph):
         error_groups=error_groups,
         info_list=info_list(graph),
         regulatory_pairs=regulatory_pairs,
-        contradictions=contradictory_pairs,
+        contradictory_pairs=contradictory_pairs,
         unstable_pairs=unstable_pairs,
         contradictory_triplets=contradictory_triplets,
         unstable_triplets=unstable_triplets,

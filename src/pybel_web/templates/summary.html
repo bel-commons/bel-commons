@@ -162,7 +162,7 @@
                         <li><a href="#regulatory-pairs">Regulatory Pairs</a></li>
                     {% endif %}
 
-                    {% if contradictions is defined and contradictions|length > 0 %}
+                    {% if contradictory_pairs is defined and contradictory_pairs|length > 0 %}
                         <li><a href="#contradictory-pairs">Contradictory Pairs</a></li>
                     {% endif %}
 
@@ -723,12 +723,12 @@
             </div>
         {% endif %}
 
-        {% if contradictions is defined and contradictions|length > 0 %}
+        {% if contradictory_pairs is defined and contradictory_pairs|length > 0 %}
             <a id="contradictory-pairs"></a>
             <div class="panel panel-default">
                 <div class="panel-heading">
                     <h3 class="panel-title">Contradictory Statements
-                        <span class="badge">{{ contradictions|length }}</span>
+                        <span class="badge">{{ contradictory_pairs|length }}</span>
                         <a class="pull-right" href="#top">
                             <span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span>
                         </a>
@@ -751,7 +751,7 @@
                     </tr>
                     </thead>
                     <tbody>
-                    {% for source, source_id, target, target_id, relations in contradictions %}
+                    {% for source, source_id, target, target_id, relations in contradictory_pairs %}
                         <tr>
                             <td>
                                 <a href="{{ url_for('build_summary_link_query', network_id=network_id, nodes=[source_id, target_id]) }}"
