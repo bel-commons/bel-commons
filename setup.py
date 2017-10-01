@@ -46,6 +46,7 @@ INSTALL_REQUIRES = [
     'gitpython',
     'six',
     'gunicorn',
+    'ols_client==0.0.7',
 ]
 EXTRAS_REQUIRE = {}
 TESTS_REQUIRE = []

@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% import "bootstrap/wtf.html" as wtf %}
+{% import "bootstrap/fixes.html" as fixes %}
+{% import "bootstrap/utils.html" as util %}
+
+{% block title %}OLS Suggestions{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div class="page-header">
+            <h1>OLS Suggestions</h1>
+        </div>
+
+        {{ util.flashed_messages(dismissible=True, container=False) }}
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Suggestions</h3>
+            </div>
+            <div class="panel-body">
+                <p>
+                    The Ontology Lookup Service gave the following suggestions for terms in {{ namespace_name }} after
+                    {{ timer }} seconds. Note that these terms may appear in multiple ontologies with similar names.
+                    Links are provided to the OLS to curate further.
+                </p>
+            </div>
+            <div class="list-group">
+                {% for name, results in data.items() %}
+                    <div class="list-group-item">
+                        <h4 class="list-group-item-heading">{{ name }}</h4>
+                        <div class="list-group-item-text">
+                            {% if results['response']['numFound'] == 0 %}
+                                <p>No suggestions found</p>
+                            {% else %}
+                                <ul>
+                                    {% for docs in results['response']['docs'] %}
+                                        <li>
+                                            <a href="http://www.ebi.ac.uk/ols/search?q={{ docs['autosuggest'] }}">
+                                                {{ docs['autosuggest'] }}
+                                            </a>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            {% endif %}
+
+                            {#                            {% for result in results %}#}
+                            {#                                {% if result['is_defining_ontology'] %}#}
+                            {#                                    <dl class="list-inline dl-horizontal">#}
+                            {#                                        <dt>Ontology</dt>#}
+                            {#                                        <dd>{{ result['ontology_name'] }}</dd>#}
+                            {#                                        <dt>Label</dt>#}
+                            {#                                        <dd>{{ result['label'] }}</dd>#}
+                            {#                                        <dt>Identifier</dt>#}
+                            {#                                        <dd><a href="{{ result['iri'] }}">{{ result['obo_id'] }}</a></dd>#}
+                            {#                                    </dl>#}
+                            {#                                {% endif %}#}
+                            {#                            {% endfor %}#}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Missing Suggestions</h3>
+            </div>
+            <div class="panel-body">
+                <p>The following terms returned no suggestions</p>
+
+                <ul class="row">
+                    {% for name in missing_suggestion|sort %}
+                        <li class="col-lg-4 col-md-6">
+                            <a href="http://www.ebi.ac.uk/ols/search?q={{ name }}">{{ name }}</a>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    {% include "footer.html" %}
+{% endblock %}

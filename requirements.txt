@@ -17,6 +17,7 @@ celery
 obonet
 pybel>=0.9.0
 pybel-tools>=0.4.0
+ols_client==0.0.7
 raven
 matplotlib_venn
 matplotlib

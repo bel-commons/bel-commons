@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 
-import codecs
 import logging
-import re
 import time
 
+import codecs
+import re
 from flask import Blueprint, render_template, request, make_response
 from flask_security import login_required, current_user
 from flask_wtf import FlaskForm
@@ -13,13 +13,15 @@ from six import StringIO
 from wtforms import fields
 from wtforms.validators import DataRequired
 
+from ols_client import OlsClient
 from pybel.constants import NAMESPACE_DOMAIN_TYPES
 from pybel.utils import parse_bel_resource
 from pybel_tools.definition_utils import write_namespace
 from pybel_tools.document_utils import write_boilerplate
-from pybel_tools.recuration.suggestions import get_ols_search, get_ols_suggestion
 
 log = logging.getLogger(__name__)
+
+curation_blueprint = Blueprint('curation', __name__)
 
 
 class BoilerplateForm(FlaskForm):
@@ -62,35 +64,13 @@ class MergeNamespaceForm(FlaskForm):
     submit = fields.SubmitField('Merge')
 
 
-class ValidateNamespaceForm(FlaskForm):
+class ValidateResourceForm(FlaskForm):
     """Builds a form for validating a namespace"""
-    file = FileField('BEL Namespace File', validators=[
+    file = FileField('BEL Namespace or Annotation', validators=[
         DataRequired(),
-        FileAllowed(['belns'], 'Only files with the *.belns extension are allowed')
+        FileAllowed(['belns', 'belanno'], 'Only files with the *.belns or *.belanno extension are allowed')
     ])
-    search_type = fields.RadioField(
-        'Search Type',
-        choices=[
-            ('search', 'Search'),
-            ('suggest', 'Suggest')
-        ],
-        default='search'
-    )
     submit = fields.SubmitField('Validate')
-
-
-def get_resource_from_request_file(file):
-    """Iterates over a file stream and gets a BEL resource
-
-    Use like:
-
-    >>> get_resource_from_request_file(form.file.data.stream)
-
-    """
-    return parse_bel_resource(codecs.iterdecode(file, 'utf-8'))
-
-
-curation_blueprint = Blueprint('curation', __name__)
 
 
 @curation_blueprint.route('/curation/bel/template', methods=['GET', 'POST'])
@@ -172,30 +152,43 @@ def merge_namespaces():
 
 
 @curation_blueprint.route('/curation/namespace/validate', methods=['GET', 'POST'])
-def validate_namespace():
-    """Provides suggestions for namespace curation"""
-    form = ValidateNamespaceForm()
+def validate_resource():
+    """Provides suggestions for namespace and annotation curation"""
+    form = ValidateResourceForm()
 
     if not form.validate_on_submit():
         return render_template(
             'generic_form.html',
             form=form,
             page_header="Validate Namespace",
-            page_title='Validate Namespace'
+            page_title='Validate Namespace',
+            paragraphs=[
+                """This service wraps the EBI OLS's suggestion service in order to generate a table for mapping
+                custom BEL namespaces to standard ontologies."""
+            ]
         )
 
     resource = parse_bel_resource(codecs.iterdecode(form.file.data.stream, 'utf-8'))
 
-    search_fn = get_ols_search if form.search_type.data == 'search' else get_ols_suggestion
+    ols = OlsClient()
+
     t = time.time()
+
     results = {}
+    missing_suggestion = set()
+
     for name in sorted(resource['Values']):
-        response = search_fn(name)
-        results[name] = response['response']['docs']
+        response = ols.suggest(name.strip().strip('"').strip("'"))
+
+        if response['response']['numFound'] == 0:
+            missing_suggestion.add(name)
+        else:
+            results[name] = response
 
     return render_template(
-        'namespace_validation.html',
+        'ols_suggestion.html',
         data=results,
+        missing_suggestion=missing_suggestion,
         timer=round(time.time() - t),
         namespace_name=resource['Namespace']['NameString']
     )
