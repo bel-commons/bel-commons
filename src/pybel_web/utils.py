@@ -27,7 +27,9 @@ import pybel
 from pybel.canonicalize import node_to_bel
 from pybel.constants import RELATION, GENE
 from pybel.manager import Network
+from pybel.parser.canonicalize import node_to_tuple
 from pybel.struct.filters import filter_edges
+from pybel.utils import hash_node
 from pybel_tools.analysis.cmpa import calculate_average_scores_on_subgraphs as calculate_average_cmpa_on_subgraphs
 from pybel_tools.analysis.stability import (
     get_contradiction_summary,
@@ -54,11 +56,7 @@ from pybel_tools.summary import (
     count_functions,
     count_relations,
     count_error_types,
-    get_translocated,
-    get_degradations,
-    get_activities,
     count_namespaces,
-    group_errors,
     get_naked_names,
     get_pubmed_identifiers,
     get_annotations,
@@ -70,9 +68,11 @@ from pybel_tools.summary import (
     info_list,
     count_variants,
     get_unused_namespaces,
-    count_citation_years,
+    get_modifications_count,
+    get_citation_years,
+    get_most_common_errors,
 )
-from pybel_tools.utils import prepare_c3, prepare_c3_time_series, count_dict_values
+from pybel_tools.utils import prepare_c3, prepare_c3_time_series
 from .application_utils import get_api, get_manager, get_user_datastore
 from .constants import reporting_log, AND
 from .models import (
@@ -117,27 +117,6 @@ api = get_api_proxy()
 user_datastore = get_userdatastore_proxy()
 
 
-def create_timeline(year_counter):
-    """Completes the Counter timeline
-    
-    :param Counter year_counter: counter dict for each year
-    :return: complete timeline
-    :rtype: list[tuple]
-    """
-    if not year_counter:
-        return []
-
-    until_year = datetime.datetime.now().year
-    from_year = min(year_counter)
-
-    timeline = [
-        (year, year_counter.get(year, 0))
-        for year in range(from_year, until_year)
-    ]
-
-    return timeline
-
-
 def sanitize_list_of_str(l):
     """Strips all strings in a list and filters to the non-empty ones
     
@@ -147,15 +126,29 @@ def sanitize_list_of_str(l):
     return [e for e in (e.strip() for e in l) if e]
 
 
+def get_top_overlaps(network_id, number=10):
+    overlap_counter = api.get_node_overlap(network_id)
+    allowed_network_ids = get_network_ids_with_permission_helper(current_user, manager)
+    overlaps = [
+        (manager.get_network_by_id(network_id), v)
+        for network_id, v in overlap_counter.most_common()
+        if network_id in allowed_network_ids and v > 0.0
+    ]
+    return overlaps[:number]
+
+
+def canonical_hash(graph, node):
+    data = graph.node[node]
+    canonical_node_tuple = node_to_tuple(data)
+    return hash_node(canonical_node_tuple)
+
+
 def render_network_summary(network_id, graph):
     """Renders the graph summary page
     
     :param int network_id: 
     :param pybel.BELGraph graph: 
     """
-    hub_data = api.get_top_degree(network_id)
-    disease_data = api.get_top_pathologies(network_id)
-
     node_bel_cache = {}
 
     def dcn(node):
@@ -176,7 +169,12 @@ def render_network_summary(network_id, graph):
         :param target_tuple:
         :return:
         """
-        return dcn(source_tuple), api.get_node_hash(source_tuple), dcn(target_tuple), api.get_node_hash(target_tuple)
+        return (
+            dcn(source_tuple),
+            canonical_hash(graph, source_tuple),
+            dcn(target_tuple),
+            canonical_hash(graph, target_tuple)
+        )
 
     def get_triplet_tuple(a_tuple, b_tuple, c_tuple):
         """
@@ -188,11 +186,11 @@ def render_network_summary(network_id, graph):
         """
         return (
             dcn(a_tuple),
-            api.get_node_hash(a_tuple),
+            canonical_hash(graph, a_tuple),
             dcn(b_tuple),
-            api.get_node_hash(b_tuple),
+            canonical_hash(graph, b_tuple),
             dcn(c_tuple),
-            api.get_node_hash(c_tuple)
+            canonical_hash(graph, c_tuple)
         )
 
     regulatory_pairs = [
@@ -223,63 +221,49 @@ def render_network_summary(network_id, graph):
         (get_triplet_tuple(a, b, c) + ('Dampened',) for a, b, c in get_dampened_triplets(graph)),
     ))
 
-    undefined_namespaces = get_undefined_namespaces(graph)
-    undefined_annotations = get_undefined_annotations(graph)
-    namespaces_with_incorrect_names = get_namespaces_with_incorrect_names(graph)
-
-    unused_namespaces = get_unused_namespaces(graph)
-    unused_annotations = get_unused_annotations(graph)
-    unused_list_annotation_values = get_unused_list_annotation_values(graph)
-
-    versions = manager.get_networks_by_name(graph.name)
-
     causal_pathologies = sorted({
         get_pair_tuple(u, v) + (d[RELATION],)
         for u, v, _, d in filter_edges(graph, edge_has_pathology_causal)
     })
 
-    undefined_sfam = [
-        (dcn(node), api.get_node_hash(node))
+    undefined_families = [
+        (dcn(node), canonical_hash(graph, node))
         for node in iter_undefined_families(graph, ['SFAM', 'GFAM'])
     ]
 
-    citation_years = create_timeline(count_citation_years(graph))
-
-    overlap_counter = api.get_node_overlap(network_id)
-    allowed_network_ids = get_network_ids_with_permission_helper(current_user, manager)
-    overlaps = [
-        (manager.get_network_by_id(network_id), v)
-        for network_id, v in overlap_counter.most_common()
-        if network_id in allowed_network_ids and v > 0.0
-    ]
-    top_overlaps = overlaps[:10]
-
+    undefined_namespaces = get_undefined_namespaces(graph)
+    undefined_annotations = get_undefined_annotations(graph)
+    namespaces_with_incorrect_names = get_namespaces_with_incorrect_names(graph)
+    unused_namespaces = get_unused_namespaces(graph)
+    unused_annotations = get_unused_annotations(graph)
+    unused_list_annotation_values = get_unused_list_annotation_values(graph)
+    citation_years = get_citation_years(graph)
     naked_names = get_naked_names(graph)
-
     function_count = count_functions(graph)
     relation_count = count_relations(graph)
     error_count = count_error_types(graph)
-    translocation_count = len(get_translocated(graph))
-    degradation_count = len(get_degradations(graph))
-    molecular_count = len(get_activities(graph))
+    modifications_count = get_modifications_count(graph)
+    error_groups = get_most_common_errors(graph)
 
-    modification_count_labels = (
-        'Translocations',
-        'Degradations',
-        'Molecular Activities',
-    )
-    modification_counts = (translocation_count, degradation_count, molecular_count)
-
-    modifications_count = {
-        label: count
-        for label, count in zip(modification_count_labels, modification_counts)
-        if count
-    }
-
-    error_groups = count_dict_values(group_errors(graph)).most_common(20)
+    hub_data = api.get_top_degree(network_id)
+    disease_data = api.get_top_pathologies(network_id)
 
     return render_template(
         'summary.html',
+        current_user=current_user,
+        info_list=info_list(graph),
+        network=manager.session.query(Network).get(network_id),
+        graph=graph,
+        network_id=network_id,
+        network_versions=manager.get_networks_by_name(graph.name),
+        overlaps=get_top_overlaps(network_id),
+
+        undefined_namespaces=sorted(undefined_namespaces),
+        unused_namespaces=sorted(unused_namespaces),
+        undefined_annotations=sorted(undefined_annotations),
+        unused_annotations=sorted(unused_annotations),
+        unused_list_annotation_values=sorted(unused_list_annotation_values.items()),
+
         chart_1_data=prepare_c3(function_count, 'Entity Type'),
         chart_2_data=prepare_c3(relation_count, 'Relationship Type'),
         chart_3_data=prepare_c3(error_count, 'Error Type') if error_count else None,
@@ -290,26 +274,14 @@ def render_network_summary(network_id, graph):
         chart_9_data=prepare_c3(disease_data, 'Pathologies') if disease_data else None,
         chart_10_data=prepare_c3_time_series(citation_years, 'Number of articles') if citation_years else None,
         error_groups=error_groups,
-        info_list=info_list(graph),
         regulatory_pairs=regulatory_pairs,
         contradictory_pairs=contradictory_pairs,
         unstable_pairs=unstable_pairs,
         contradictory_triplets=contradictory_triplets,
         unstable_triplets=unstable_triplets,
-        graph=graph,
-        network=manager.session.query(Network).get(network_id),
-        network_id=network_id,
-        undefined_namespaces=sorted(undefined_namespaces),
-        unused_namespaces=sorted(unused_namespaces),
-        undefined_annotations=sorted(undefined_annotations),
-        unused_annotations=sorted(unused_annotations),
-        unused_list_annotation_values=sorted(unused_list_annotation_values.items()),
-        current_user=current_user,
         namespaces_with_incorrect_names=namespaces_with_incorrect_names,
-        network_versions=versions,
         causal_pathologies=causal_pathologies,
-        undefined_families=undefined_sfam,
-        overlaps=top_overlaps,
+        undefined_families=undefined_families,
         naked_names=naked_names,
     )
 
