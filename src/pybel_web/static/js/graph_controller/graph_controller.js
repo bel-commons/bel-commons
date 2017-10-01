@@ -100,7 +100,7 @@ function displayNodeInfo(node) {
         nodeObject["Description"] = node.description
     }
     if (node.id) {
-        nodeObject["Identifier"] = '<a href="/api/node/' + node.id + '">' + node.id + "</a>";
+        nodeObject["Identifier"] = '<a href="/node/' + node.id + '">' + node.id + "</a>";
     }
 
     var row = 0;
@@ -140,13 +140,13 @@ function displayEdgeInfo(edge) {
         edgeObject["Annotations"] = JSON.stringify(edge.annotations);
     }
     if (edge.source.cname) {
-        edgeObject["Source"] = '<a href="/api/node/' + edge.source.id + '">' + edge.source.cname + "</a>";
+        edgeObject["Source"] = '<a href="/node/' + edge.source.id + '">' + edge.source.cname + "</a>";
     }
     if (edge.target.cname) {
-        edgeObject["Target"] = '<a href="/api/node/' + edge.target.id + '">' + edge.target.cname + "</a>";
+        edgeObject["Target"] = '<a href="/node/' + edge.target.id + '">' + edge.target.cname + "</a>";
     }
     if (edge.source.id && edge.target.id) {
-        edgeObject["See Also"] = '<a target="_blank" href="/edges/' + edge.source.id + '/' + edge.target.id + '">All evidences</a>';
+        edgeObject["See Also"] = '<a target="_blank" href="/node/' + edge.source.id + '/edges/' + edge.target.id + '">All evidences</a>';
     }
 
     if (edge.id) {
@@ -326,7 +326,7 @@ function updateQueryResponse(response, tree) {
     const url = "/api/query/" + window.query + "/relabel";
 
     doAjaxCallWithCallback(url, function (networkResponse) {
-        window.history.pushState("BiNE", "BiNE", "/explore/query/" + window.query); // Updates the URL
+        window.history.pushState("BiNE", "BiNE", "/explore/" + window.query); // Updates the URL
 
         var data = updateNodePosition(networkResponse, positions); // Loads new data, first empty all created divs and clear the current network
 

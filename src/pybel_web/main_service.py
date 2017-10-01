@@ -2,6 +2,7 @@
 
 """This module runs the dictionary-backed PyBEL API"""
 
+import itertools as itt
 import logging
 import sys
 import time
@@ -147,20 +148,20 @@ def build_main_service(app):
         """Executes a pipeline"""
         d = query_form_to_dict(request.form)
         q = pybel_tools.query.Query.from_json(d)
-        qo = models.Query.from_query(manager, q, current_user)
+        query = models.Query.from_query(manager, q, current_user)
 
-        manager.session.add(qo)
+        manager.session.add(query)
         manager.session.commit()
 
-        return redirect(url_for('view_explorer_query', query_id=qo.id))
+        return redirect(url_for('view_explorer_query', query_id=query.id))
 
-    @app.route('/explore/query/<int:query_id>', methods=['GET'])
+    @app.route('/explore/<int:query_id>', methods=['GET'])
     def view_explorer_query(query_id):
         """Renders a page for the user to explore a network"""
         query = safe_get_query(query_id)
         return render_template('explorer.html', query=query)
 
-    @app.route('/explore/project/<int:project_id>', methods=['GET'])
+    @app.route('/project/<int:project_id>/explore', methods=['GET'])
     @login_required
     def view_explore_project(project_id):
         """Renders a page for the user to explore the full network from a project"""
@@ -178,7 +179,7 @@ def build_main_service(app):
         manager.session.commit()
         return redirect(url_for('view_explorer_query', query_id=query.id))
 
-    @app.route('/explore/network/<int:network_id>', methods=['GET'])
+    @app.route('/network/<int:network_id>/explore', methods=['GET'])
     def view_explore_network(network_id):
         """Renders a page for the user to explore a network"""
         if network_id not in get_network_ids_with_permission_helper(current_user, manager):
@@ -204,7 +205,7 @@ def build_main_service(app):
 
         return render_network_summary(network_id, graph)
 
-    @app.route('/summary/<int:network_id>/induction-query/')
+    @app.route('/network/<int:network_id>/induction-query/')
     def build_summary_link_query(network_id):
         """Induces over the nodes in a network"""
         nodes = [
@@ -214,10 +215,10 @@ def build_main_service(app):
 
         q = pybel_tools.query.Query([network_id])
         q.add_seed_induction(nodes)
-        qo = Query.from_query(manager, q, current_user)
-        manager.session.add(qo)
+        query = Query.from_query(manager, q, current_user)
+        manager.session.add(query)
         manager.session.commit()
-        return redirect(url_for('view_explorer_query', query_id=qo.id))
+        return redirect(url_for('view_explorer_query', query_id=query.id))
 
     @app.route('/definitions')
     def view_definitions():
@@ -334,15 +335,15 @@ def build_main_service(app):
             function_dict=data
         )
 
-    @app.route('/query/compare/<int:query_1_id>/<int:query_2_id>')
+    @app.route('/query/<int:query_1_id>/compare/<int:query_2_id>')
     def view_query_comparison(query_1_id, query_2_id):
         """View the comparison between the result of two queries"""
 
         query_1 = safe_get_query(query_1_id)
         query_2 = safe_get_query(query_2_id)
 
-        query_1_result = query_1.run(api)
-        query_2_result = query_2.run(api)
+        query_1_result = query_1.run(manager)
+        query_2_result = query_2.run(manager)
 
         data = calculate_overlap_dict(
             g1=query_1_result,
@@ -358,20 +359,12 @@ def build_main_service(app):
             data=data,
         )
 
-    @app.route('/edges/<source_id>/<target_id>')
-    @login_required
-    def view_relations(source_id, target_id):
-        """View a list of all relations between two nodes"""
-        source = manager.get_node_by_hash(source_id)
-        target = manager.get_node_by_hash(target_id)
-        relations = list(manager.query_edges(source=source, target=target))
-
-        if 'undirected' in request.args:
-            relations.extend(manager.query_edges(source=target, target=source))
-
+    def serve_relations(relations, source, target=None):
         data = defaultdict(list)
         ev2cit = {}
         for relation in relations:
+            if not relation.evidence:
+                continue
             ev = relation.evidence.text
             data[ev].append(relation.to_json()['data'])
             ev2cit[ev] = relation.evidence.citation.to_json()
@@ -381,8 +374,30 @@ def build_main_service(app):
             data=data,
             ev2cit=ev2cit,
             source_bel=source.bel,
-            target_bel=target.bel,
+            target_bel=target.bel if target else None,
         )
+
+    @app.route('/node/<source_id>/edges/<target_id>')
+    def view_relations(source_id, target_id):
+        """View a list of all relations between two nodes"""
+        source = manager.get_node_by_hash(source_id)
+        target = manager.get_node_by_hash(target_id)
+        relations = list(manager.query_edges(source=source, target=target))
+
+        if 'undirected' in request.args:
+            relations.extend(manager.query_edges(source=target, target=source))
+
+        return serve_relations(relations, source, target)
+
+    @app.route('/node/<node_id>')
+    def view_node(node_id):
+        """View a node summary with a list of all edges incident to the node"""
+        node = manager.get_node_by_hash(node_id)
+        relations = list(itt.chain(
+            manager.query_edges(source=node),
+            manager.query_edges(target=node)
+        ))
+        return serve_relations(relations, node)
 
     @app.route('/overview')
     @roles_required('admin')

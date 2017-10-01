@@ -12,7 +12,11 @@
             <h1>Evidences
 
                 <small>
-                    <code>{{ source_bel }}</code> to <code>{{ target_bel }}</code>
+                    <code>{{ source_bel }}</code>
+
+                    {% if target_bel %}
+                        to <code>{{ target_bel }}</code>
+                    {% endif %}
                 </small>
             </h1>
         </div>
