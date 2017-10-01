@@ -65,9 +65,9 @@ Do it from bash with extreme prejudice:
 
 Setting up with Docker
 ----------------------
-A simple Dockerfile is included at the root-level of the respository. This Dockerfile is inspired by the tutorials
-`here <http://containertutorials.com/docker-compose/flask-simple-app.html>`_ and
-`here <https://www.digitalocean.com/community/tutorials/docker-explained-how-to-containerize-python-web-applications>`_.
+A simple Dockerfile is included at the root-level of the respository. This Dockerfile is inspired by the tutorials from
+`Container Tutorials <http://containertutorials.com/docker-compose/flask-simple-app.html>`_ and
+`Digital Ocean <https://www.digitalocean.com/community/tutorials/docker-explained-how-to-containerize-python-web-applications>`_.
 
 - The virtual machine needs at least 2GB memory for the worker container
 - The database needs a packet size big enough to accommodate large BEL files (>10 mb)
