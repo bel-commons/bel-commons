@@ -5,6 +5,7 @@ import json
 
 import codecs
 from flask_security import RoleMixin, UserMixin
+from operator import attrgetter
 from sqlalchemy import (
     Column,
     Integer,
@@ -320,6 +321,13 @@ class User(Base, UserMixin):
             for project in self.projects
             for network in project.networks
         )
+
+    def get_sorted_queries(self):
+        """Gets a list of sorted queries for this user
+
+        :rtype: list[Query]
+        """
+        return sorted(self.queries, key=attrgetter('created'), reverse=True)
 
     def __str__(self):
         return self.email

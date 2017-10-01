@@ -271,7 +271,7 @@
                 </tr>
                 </thead>
                 <tbody>
-                {% for query in user.queries %}
+                {% for query in user.get_sorted_queries() %}
                     <tr>
                         <td>{{ query.id }}</td>
                         <td>
