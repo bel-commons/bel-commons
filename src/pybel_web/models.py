@@ -18,6 +18,7 @@ from sqlalchemy import (
     Index,
     LargeBinary,
     UniqueConstraint,
+    Float,
 )
 from sqlalchemy.orm import relationship, backref
 
@@ -94,7 +95,13 @@ class Report(Base):
 
     number_nodes = Column(Integer, nullable=True)
     number_edges = Column(Integer, nullable=True)
+    number_citations = Column(Integer, nullable=True)
+    number_authors = Column(Integer, nullable=True)
+    network_density = Column(Float, nullable=True)
+    average_degree = Column(Float, nullable=True)
+    number_components = Column(Integer, nullable=True)
     number_warnings = Column(Integer, nullable=True)
+    calculations = Column(LargeBinary(LONGBLOB), nullable=True, doc='A place to store a pickle of random stuf')
 
     message = Column(Text, nullable=True, doc='Error message')
     completed = Column(Boolean, nullable=True)
