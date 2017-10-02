@@ -948,7 +948,7 @@ def get_network(query_id):
     return serve_network(relabeled_graph)
 
 
-@api_blueprint.route('/api/query/<int:query_id>/paths/<int:source_id>/<int:target_id>/')
+@api_blueprint.route('/api/query/<int:query_id>/paths/<string:source_id>/<string:target_id>/')
 def get_paths(query_id, source_id, target_id):
     """Returns array of shortest/all paths given a source node and target node both belonging in the graph
 
@@ -1014,7 +1014,16 @@ def get_paths(query_id, source_id, target_id):
         shortest_path = nx.shortest_path(network, source=source, target=target)
     except nx.NetworkXNoPath:
         log.debug('No paths between: {} and {}'.format(source, target))
-        return 'No paths between the selected nodes'
+
+        # Returns normal message if it is not a random call from graph_controller.js
+        if RANDOM_PATH not in request.args:
+            return 'No paths between the selected nodes'
+
+        # In case the random node is an isolated one, returns it alone
+        if not network.neighbors(source)[0]:
+            return jsonify(api.get_node_hash(source))
+
+        shortest_path = nx.shortest_path(network, source=source, target=network.neighbors(source)[0])
 
     return jsonify(api.get_node_hashes(shortest_path))
 

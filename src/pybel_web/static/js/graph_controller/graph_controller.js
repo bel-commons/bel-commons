@@ -1626,7 +1626,7 @@ function initD3Force(graph, tree) {
     randomPaths.on("click", function () {
             var checkbox = pathForm.find("input[name='visualization-options']").is(":checked");
 
-            var args = {"paths_method": $("input[name=paths_method]:checked", pathForm).val()};
+            var args = {"paths_method": $("input[name=paths_method]:checked", pathForm).val(), "random": true};
 
             var undirected = pathForm.find("input[name='undirectionalize']").is(":checked");
 

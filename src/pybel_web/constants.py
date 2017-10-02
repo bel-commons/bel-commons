@@ -36,6 +36,7 @@ PATHOLOGY_FILTER = 'pathology_filter'
 PATHS_METHOD = 'paths_method'
 QUERY = 'query'
 AND = 'and'
+RANDOM_PATH = 'random'
 
 BLACK_LIST = {
     NETWORK_ID,
