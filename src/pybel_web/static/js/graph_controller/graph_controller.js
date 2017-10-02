@@ -250,7 +250,7 @@ function displayQueryInfo(query) {
 }
 
 /**
- * Highlights nodes in nodeArray
+ * Highlights border of nodes in nodeArray
  * @param {array} nodeArray
  */
 function highlightNodeBorder(nodeArray) {
@@ -261,22 +261,26 @@ function highlightNodeBorder(nodeArray) {
 
     if (highlightNodes["_groups"][0].length > 0) {
         $.each(highlightNodes["_groups"][0], function (index, value) {
-            value.children[1].removeAttribute('fill');
+            // Removes the fill - > black attribute
             value.children[1].setAttribute('fill', 'red');
+            // Uses a different attribute rather than fill because fill it is modified when mouse over
+            value.children[1].setAttribute('stroke', 'red');
+
         });
     }
 }
 
 /**
- * Remove highlighting all nodes
+ * Remove border highlighting in all nodes
  */
 function removeHighlightNodeBorder() {
 
     var highlightNodes = d3.select("#graph-chart").selectAll(".node");
 
     $.each(highlightNodes["_groups"][0], function (index, value) {
+        // Set all nodes the default fill: black attribute
         value.children[1].removeAttribute('fill');
-        value.children[1].setAttribute('fill', 'black');
+        value.children[1].removeAttribute('stroke');
     });
 
 }
@@ -1372,7 +1376,7 @@ function initD3Force(graph, tree) {
             var path = link.filter(function (el) {
                 // Source and target should be present in the edge and the distance in the array should be one
                 return ((data[x].indexOf(el.source.id) >= 0 && data[x].indexOf(el.target.id) >= 0)
-                && (Math.abs(data[x].indexOf(el.source.id) - data[x].indexOf(el.target.id)) === 1));
+                    && (Math.abs(data[x].indexOf(el.source.id) - data[x].indexOf(el.target.id)) === 1));
             });
 
             edgesInPaths.push(path);
@@ -1388,7 +1392,7 @@ function initD3Force(graph, tree) {
             var edgesInPath = link.filter(function (el) {
                 // Source and target should be present in the edge and the distance in the array should be one
                 return ((data[i].indexOf(el.source.id) >= 0 && data[i].indexOf(el.target.id) >= 0)
-                && (Math.abs(data[i].indexOf(el.source.id) - data[i].indexOf(el.target.id)) === 1));
+                    && (Math.abs(data[i].indexOf(el.source.id) - data[i].indexOf(el.target.id)) === 1));
             });
 
             // Select randomly a color and apply to this path
@@ -1424,7 +1428,7 @@ function initD3Force(graph, tree) {
             var edgesNotInPath = g.selectAll(".link").filter(function (el) {
                 // Source and target should be present in the edge and the distance in the array should be one
                 return !((paths.indexOf(el.source.id) >= 0 && paths.indexOf(el.target.id) >= 0)
-                && (Math.abs(paths.indexOf(el.source.id) - paths.indexOf(el.target.id)) === 1));
+                    && (Math.abs(paths.indexOf(el.source.id) - paths.indexOf(el.target.id)) === 1));
             });
 
             // If checkbox is True -> Hide all, Else -> Opacity 0.1
