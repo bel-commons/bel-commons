@@ -261,7 +261,8 @@ function highlightNodeBorder(nodeArray) {
 
     if (highlightNodes["_groups"][0].length > 0) {
         $.each(highlightNodes["_groups"][0], function (index, value) {
-            value.children[1].setAttribute('style', 'stroke: red');
+            value.children[1].removeAttribute('fill');
+            value.children[1].setAttribute('fill', 'red');
         });
     }
 }
@@ -269,13 +270,13 @@ function highlightNodeBorder(nodeArray) {
 /**
  * Remove highlighting all nodes
  */
-// TODO: Fix this
 function removeHighlightNodeBorder() {
 
     var highlightNodes = d3.select("#graph-chart").selectAll(".node");
 
     $.each(highlightNodes["_groups"][0], function (index, value) {
-        value.children[1].setAttribute('style', 'stroke: black');
+        value.children[1].removeAttribute('fill');
+        value.children[1].setAttribute('fill', 'black');
     });
 
 }
@@ -1371,7 +1372,7 @@ function initD3Force(graph, tree) {
             var path = link.filter(function (el) {
                 // Source and target should be present in the edge and the distance in the array should be one
                 return ((data[x].indexOf(el.source.id) >= 0 && data[x].indexOf(el.target.id) >= 0)
-                    && (Math.abs(data[x].indexOf(el.source.id) - data[x].indexOf(el.target.id)) === 1));
+                && (Math.abs(data[x].indexOf(el.source.id) - data[x].indexOf(el.target.id)) === 1));
             });
 
             edgesInPaths.push(path);
@@ -1387,7 +1388,7 @@ function initD3Force(graph, tree) {
             var edgesInPath = link.filter(function (el) {
                 // Source and target should be present in the edge and the distance in the array should be one
                 return ((data[i].indexOf(el.source.id) >= 0 && data[i].indexOf(el.target.id) >= 0)
-                    && (Math.abs(data[i].indexOf(el.source.id) - data[i].indexOf(el.target.id)) === 1));
+                && (Math.abs(data[i].indexOf(el.source.id) - data[i].indexOf(el.target.id)) === 1));
             });
 
             // Select randomly a color and apply to this path
@@ -1423,7 +1424,7 @@ function initD3Force(graph, tree) {
             var edgesNotInPath = g.selectAll(".link").filter(function (el) {
                 // Source and target should be present in the edge and the distance in the array should be one
                 return !((paths.indexOf(el.source.id) >= 0 && paths.indexOf(el.target.id) >= 0)
-                    && (Math.abs(paths.indexOf(el.source.id) - paths.indexOf(el.target.id)) === 1));
+                && (Math.abs(paths.indexOf(el.source.id) - paths.indexOf(el.target.id)) === 1));
             });
 
             // If checkbox is True -> Hide all, Else -> Opacity 0.1
@@ -1864,7 +1865,7 @@ function initD3Force(graph, tree) {
 
     // Hide node names button
 
-    var hideNodeNames = $("#hide_node_names");
+    var hideNodeNames = $("#hide-node-names");
 
     hideNodeNames.off("click"); // It will unbind the previous click if multiple graphs has been rendered
 
@@ -1873,7 +1874,7 @@ function initD3Force(graph, tree) {
         svg.selectAll(".node-name").style("display", "none");
     });
 
-    var restoreNodeNames = $("#restore_node_names");
+    var restoreNodeNames = $("#restore-node-names");
 
     restoreNodeNames.off("click"); // It will unbind the previous click if multiple graphs has been rendered
 
