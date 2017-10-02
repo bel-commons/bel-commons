@@ -1708,6 +1708,25 @@ function initD3Force(graph, tree) {
     });
 
 
+    // Update Highlight Dropdown
+    $("#highlight-search").on("keyup", function () {
+        // Get value from search form (fixing spaces and case insensitive
+        var searchText = $(this).val();
+        searchText = searchText.toLowerCase();
+        searchText = searchText.replace(/\s+/g, "");
+
+        $.each($("#highlight-list-ul")[0].childNodes, updateEdgeArray);
+
+        function updateEdgeArray() {
+
+            if ($(this)[0].nodeName !== "#text") {
+                var currentLiText = $(this).find("span")[0].innerHTML,
+                    showCurrentLi = ((currentLiText.toLowerCase()).replace(/\s+/g, "")).indexOf(searchText) !== -1;
+                $(this).toggle(showCurrentLi);
+            }
+        }
+    });
+
     // Get or show all paths between two nodes via Ajax
 
     var betwennessForm = $("#betweenness-centrality");
