@@ -948,7 +948,7 @@ def get_network(query_id):
     return serve_network(relabeled_graph)
 
 
-@api_blueprint.route('/api/query/<int:query_id>/paths/<string:source_id>/<string:target_id>/')
+@api_blueprint.route('/api/query/<int:query_id>/paths/<source_id>/<target_id>/')
 def get_paths(query_id, source_id, target_id):
     """Returns array of shortest/all paths given a source node and target node both belonging in the graph
 
