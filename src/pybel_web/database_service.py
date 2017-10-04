@@ -1066,8 +1066,8 @@ def get_all_pmids(query_id):
     tags:
         - query
     """
-    network = get_graph_from_request(query_id)
-    return jsonify(sorted(get_pubmed_identifiers(network)))
+    graph = get_graph_from_request(query_id)
+    return jsonify(sorted(get_pubmed_identifiers(graph)))
 
 
 @api_blueprint.route('/api/query/nodes/')
