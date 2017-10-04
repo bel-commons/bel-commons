@@ -1676,7 +1676,7 @@ def get_query_from_isolated_node(query_id, node_id):
         - query
     """
     parent_query = safe_get_query(query_id)
-    node = api.get_node_tuple_by_hash(node_id)
+    node = manager.get_node_tuple_by_hash(node_id)
 
     child_query = Query(network_ids=[
         network.id
@@ -2136,7 +2136,7 @@ def summarize_project(project_id):
         csv_list_entry = network.name, network.version
         csv_list_entry += tuple(
             v
-            for _, v in info_list(api.get_graph_by_id(network.id))
+            for _, v in info_list(network.as_bel())
         )
 
         csv_list.append(csv_list_entry)
@@ -2294,6 +2294,6 @@ def universe_summary():
         'info': info_json(graph)
     }
 
-    chart_data['networks'] = {'count': len(api.networks)},
+    chart_data['networks'] = {'count': manager.count_networks()},
 
     return jsonify(**chart_data)
