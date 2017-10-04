@@ -289,6 +289,32 @@ def download_naked_names(network_id):
     return _build_namespace_helper(graph, 'NAKED', names)
 
 
+def _build_annotation_helper(graph, annotation, values):
+    """Builds an annoation document helper
+
+    :param pybel.BELGraph graph:
+    :param str annotation:
+    :param dict[str,str] values:
+    :rtype: flask.Response
+    """
+    si = StringIO()
+
+    write_annotation(
+        keyword=annotation,
+        values=values,
+        author_name=graph.document.get(METADATA_AUTHORS),
+        author_contact=graph.document.get(METADATA_CONTACT),
+        citation_name=graph.document.get(METADATA_NAME),
+        description='This annotation was serialize by PyBEL Web',
+        file=si,
+    )
+
+    output = make_response(si.getvalue())
+    output.headers["Content-Disposition"] = "attachment; filename={}.belanno".format(annotation)
+    output.headers["Content-type"] = "text/plain"
+    return output
+
+
 @api_blueprint.route('/api/network/<int:network_id>/builder/annotation/list/<annotation>')
 def download_list_annotation(network_id, annotation):
     """Outputs an annotation built from the given list definition
@@ -317,22 +343,7 @@ def download_list_annotation(network_id, annotation):
         for value in graph.annotation_list[annotation]
     }
 
-    si = StringIO()
-
-    write_annotation(
-        keyword=annotation,
-        values=values,
-        author_name=graph.document.get(METADATA_AUTHORS),
-        author_contact=graph.document.get(METADATA_CONTACT),
-        citation_name=graph.document.get(METADATA_NAME),
-        description='This annotation was serialize by PyBEL Web',
-        file=si,
-    )
-
-    output = make_response(si.getvalue())
-    output.headers["Content-Disposition"] = "attachment; filename={}.belanno".format(annotation)
-    output.headers["Content-type"] = "text/plain"
-    return output
+    return _build_annotation_helper(graph, annotation, values)
 
 
 ####################################
