@@ -4,13 +4,13 @@ pybel-tools>=0.4.2
 ols_client==0.0.7
 sqlalchemy
 requests
-flask
-flask-bootstrap
+flask==0.12.2
+flask-bootstrap==3.3.7.1
 flask-wtf
-flask-security
+flask-security==3.0.0
 flask-admin
 flask-cors
-flask-sqlalchemy
+flask-sqlalchemy==2.2
 werkzeug
 flasgger
 click
