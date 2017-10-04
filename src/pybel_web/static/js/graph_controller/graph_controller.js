@@ -945,9 +945,7 @@ function initD3Force(graph, tree) {
         })
         .style("stroke-width", edgeStroke)
         .style("stroke-opacity", 0.4)
-        .on("click", function (d) {
-            displayEdgeInfo(d);
-        })
+        .on("click", displayEdgeInfo)
         .on("contextmenu", d3.contextMenu(edgeMenu)) // Attach context menu to edge link
         .attr("class", function (edge) {
             if (["decreases", "directlyDecreases", "increases", "directlyIncreases", "negativeCorrelation",
