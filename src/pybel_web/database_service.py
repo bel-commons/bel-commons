@@ -32,6 +32,7 @@ from pybel.constants import (
     METADATA_AUTHORS,
     METADATA_CONTACT,
     METADATA_NAME,
+    NAMESPACE_DOMAIN_OTHER
 )
 from pybel.manager.models import (
     Namespace,
@@ -105,8 +106,7 @@ api_blueprint = Blueprint('dbs', __name__)
 def get_graph_from_request(query_id):
     """Process the GET request returning the filtered network
 
-    :param int query_id: Query id
-    :return: A BEL graph
+    :param int query_id: The database query identifier
     :rtype: pybel.BELGraph
     """
     query = safe_get_query(query_id)
@@ -217,7 +217,7 @@ def _build_namespace_helper(graph, namespace, names):
     write_namespace(
         namespace_name=namespace,
         namespace_keyword=namespace,
-        namespace_domain='Other',
+        namespace_domain=NAMESPACE_DOMAIN_OTHER,
         author_name=graph.document.get(METADATA_AUTHORS),
         author_contact=graph.document.get(METADATA_CONTACT),
         citation_name=graph.document.get(METADATA_NAME),
@@ -680,6 +680,8 @@ def claim_network(network_id):
         user=current_user
     )
 
+    # TODO background other tasks for making calculations
+
     manager.session.add(report)
     manager.session.commit()
 
@@ -740,7 +742,8 @@ def get_graph_info_json(network_id):
         description: A summary of the network
     """
     graph = api.get_graph_by_id(network_id)
-    return jsonify(info_json(graph))
+    rv = info_json(graph)
+    return jsonify(rv)
 
 
 @api_blueprint.route('/api/network/<int:network_id>/name')
@@ -764,7 +767,12 @@ def get_network_name_by_id(network_id):
     return jsonify(network.name)
 
 
-def update_network_status(network_id, status):
+def update_network_status(network_id, public):
+    """Update whether a network is public or private
+    
+    :param int network_id: 
+    :param bool public:
+    """
     network = manager.session.query(Network).get(network_id)
 
     if network is None:
@@ -776,13 +784,13 @@ def update_network_status(network_id, status):
     if not current_user.is_admin or current_user.id != network.report.user_id:
         abort(403, 'You do not have permission to modify that network')
 
-    network.report.public = status
+    network.report.public = public
     manager.session.commit()
 
     return next_or_jsonify(
-        'Set public to {} for {}'.format(status, network),
+        'Set public to {} for {}'.format(public, network),
         network_id=network_id,
-        public=status,
+        public=public,
     )
 
 
