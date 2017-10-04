@@ -22,6 +22,9 @@ CLASSIFIERS = [
     'Topic :: Scientific/Engineering :: Bio-Informatics'
 ]
 INSTALL_REQUIRES = [
+    'ols_client==0.0.7',
+    'pybel>=0.9.0',
+    'pybel-tools>=0.4.2',
     'requests',
     'sqlalchemy',
     'flask',
@@ -34,19 +37,16 @@ INSTALL_REQUIRES = [
     'werkzeug',
     'flasgger',
     'networkx',
-    'pybel>=0.9.0',
     'click',
     'pandas',
     'celery',
     'obonet',
-    'pybel-tools>=0.4.0',
     'raven',
     'matplotlib_venn',
     'matplotlib',
     'gitpython',
     'six',
     'gunicorn',
-    'ols_client==0.0.7',
 ]
 EXTRAS_REQUIRE = {}
 TESTS_REQUIRE = []
