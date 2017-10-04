@@ -1372,8 +1372,8 @@ def store_comment(edge_id):
 # NODES
 ####################################
 
-@api_blueprint.route('/api/node/by_bel/<node_bel>', methods=['GET'])
-def nodes_by_bel(node_bel):
+@api_blueprint.route('/api/node/by_bel/<bel>', methods=['GET'])
+def nodes_by_bel(bel):
     """Gets all nodes that match the given BEL
 
     ---
@@ -1381,18 +1381,19 @@ def nodes_by_bel(node_bel):
         - node
     """
     nodes = api.query_nodes(bel=node_bel)
+    nodes = api.query_nodes(bel=bel)
     return jsonify(nodes)
 
 
-@api_blueprint.route('/api/node/by_name/<node_name>', methods=['GET'])
-def nodes_by_name(node_name):
+@api_blueprint.route('/api/node/by_name/<name>', methods=['GET'])
+def nodes_by_name(name):
     """Gets all nodes with the given name
 
     ---
     tags:
         - node
     """
-    nodes = api.query_nodes(name=node_name)
+    nodes = api.query_nodes(name=name)
     return jsonify(nodes)
 
 
