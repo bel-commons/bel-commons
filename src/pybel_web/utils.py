@@ -721,16 +721,21 @@ def current_user_has_query_rights(query_id):
     return user_has_query_rights(current_user, query)
 
 
+def get_query_or_404(query_id):
+    query = manager.session.query(Query).get(query_id)
+
+    if query is None:
+        abort(404, 'Missing query: {}'.format(query_id))
+
+    return query
+
 def safe_get_query(query_id):
     """Gets a query or raises an abort
 
     :param int query_id: The database identifier for a query
     :rtype: Query
     """
-    query = manager.session.query(Query).get(query_id)
-
-    if query is None:
-        abort(404, 'Query {} not found'.format(query_id))
+    query = get_query_or_404(query_id)
 
     if not user_has_query_rights(current_user, query):
         abort(403, 'Insufficient rights to run query {}'.format(query_id))
@@ -826,3 +831,12 @@ def get_node_by_hash_or_404(node_hash):
         abort(404, 'Node not found: {}'.format(node_hash))
 
     return node
+
+def get_edge_or_404(edge_hash):
+    edge = manager.get_edge_by_hash(edge_hash)
+
+    if edge is None:
+        abort(404, 'Edge {} not found'.format(edge_hash))
+
+    return edge
+

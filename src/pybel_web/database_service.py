@@ -95,6 +95,8 @@ from .utils import (
     next_or_jsonify,
     user_owns_network_or_403,
     get_node_by_hash_or_404,
+    get_query_or_404,
+    get_edge_or_404,
 )
 
 log = logging.getLogger(__name__)
@@ -1312,11 +1314,7 @@ def store_up_vote(edge_id):
     tags:
         - edge
     """
-    edge = manager.get_edge_by_hash(edge_id)
-
-    if edge is None:
-        abort(403, 'Edge {} not found'.format(edge_id))
-
+    edge = get_edge_or_404(edge_id)
     vote = get_or_create_vote(edge, current_user, True)
     return jsonify(vote.to_json())
 
@@ -1330,11 +1328,7 @@ def store_down_vote(edge_id):
     tags:
         - edge
     """
-    edge = manager.get_edge_by_hash(edge_id)
-
-    if edge is None:
-        abort(403, 'Edge {} not found'.format(edge_id))
-
+    edge = get_edge_or_404(edge_id)
     vote = get_or_create_vote(edge, current_user, False)
     return jsonify(vote.to_json())
 
@@ -1348,10 +1342,7 @@ def store_comment(edge_id):
     tags:
         - edge
     """
-    edge = manager.get_edge_by_hash(edge_id)
-
-    if edge is None:
-        abort(403, 'Edge {} not found'.format(edge_id))
+    edge = get_edge_or_404(edge_id)
 
     if 'comment' not in request.args:
         abort(403, 'Comment not found')
@@ -1380,7 +1371,6 @@ def nodes_by_bel(bel):
     tags:
         - node
     """
-    nodes = api.query_nodes(bel=node_bel)
     nodes = api.query_nodes(bel=bel)
     return jsonify(nodes)
 
@@ -1496,10 +1486,7 @@ def drop_query_by_id(query_id):
     tags:
         - query
     """
-    query = manager.session.query(models.Query).get(query_id)
-
-    if query is None:
-        abort(400, 'Invalid Query ID')
+    query = get_query_or_404(query_id)
 
     if not (current_user.is_admin or query.user_id == current_user.id):
         abort(403, 'Unauthorized user')
@@ -1528,7 +1515,7 @@ def drop_queries():
 @api_blueprint.route('/api/query/dropall/<int:user_id>', methods=['GET'])
 @login_required
 def drop_user_queries(user_id):
-    """Deletes all queries associated to the user
+    """Deletes all queries associated with the user
 
     ---
     tags:
@@ -1551,10 +1538,7 @@ def query_to_network(query_id):
     tags:
         - query
     """
-    query = manager.session.query(models.Query).get(query_id)
-
-    if query is None:
-        abort(404)
+    query = get_query_or_404(query_id)
 
     if not user_has_query_rights(current_user, query):
         abort(403, 'Insufficient rights to access query {}'.format(query_id))
@@ -1580,10 +1564,7 @@ def get_query_parent(query_id):
     tags:
         - query
     """
-    query = manager.session.query(models.Query).get(query_id)
-
-    if query is None:
-        abort(404)
+    query = get_query_or_404(query_id)
 
     if not user_has_query_rights(current_user, query):
         abort(403, 'Insufficient rights to access query {}'.format(query_id))
@@ -1608,10 +1589,7 @@ def get_query_oldest_ancestry(query_id):
     tags:
         - query
     """
-    query = manager.session.query(models.Query).get(query_id)
-
-    if query is None:
-        abort(404)
+    query = get_query_or_404(query_id)
 
     if not user_has_query_rights(current_user, query):
         abort(403, 'Insufficient rights to access query {}'.format(query_id))
@@ -1626,10 +1604,7 @@ def get_query_oldest_ancestry(query_id):
 
 def add_pipeline_entry(query_id, name, *args, **kwargs):
     """Adds an entry to the pipeline and """
-    query = manager.session.query(models.Query).get(query_id)
-
-    if query is None:
-        abort(404)
+    query = get_query_or_404(query_id)
 
     q = query.data
     q.pipeline.append(name, *args, **kwargs)
