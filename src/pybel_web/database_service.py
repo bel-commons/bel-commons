@@ -1536,7 +1536,7 @@ def drop_user_queries(user_id):
     if not (current_user.is_admin or user_id == current_user.id):
         abort(403, 'Unauthorized user')
 
-    manager.session.query(models.Query).filter(models.Query.user == current_user).delete()
+    manager.session.query(models.Query).filter(models.Query.user_id == user_id).delete()
     manager.session.commit()
 
     return next_or_jsonify('Dropped all queries associated with your account')
