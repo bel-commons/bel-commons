@@ -91,6 +91,7 @@ from .utils import (
     get_or_create_vote,
     next_or_jsonify,
     user_owns_network_or_403,
+    get_node_by_hash_or_404,
 )
 
 log = logging.getLogger(__name__)
@@ -1450,7 +1451,8 @@ def get_node_hash(node_id):
     tags:
         - node
     """
-    node = manager.get_node_by_hash(node_id)
+    node = get_node_by_hash_or_404(node_id)
+
     return jsonify(node.to_json())
 
 

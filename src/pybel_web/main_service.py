@@ -393,6 +393,10 @@ def build_main_service(app):
     def view_node(node_id):
         """View a node summary with a list of all edges incident to the node"""
         node = manager.get_node_by_hash(node_id)
+
+        if node is None:
+            abort(404, 'Node not found: {}'.format(node_id))
+
         relations = list(itt.chain(
             manager.query_edges(source=node),
             manager.query_edges(target=node)

@@ -812,3 +812,17 @@ def calculate_scores(graph, data, runs):
     scores = calculate_average_cmpa_on_subgraphs(candidate_mechanisms, LABEL, runs=runs)
 
     return scores
+
+
+def get_node_by_hash_or_404(node_hash):
+    """Gets a node's hash or sends a 404 missing message
+
+    :param str node_hash: Node hash
+    :rtype: pybel.manager.models.Node
+    """
+    node = manager.get_node_by_hash(node_hash)
+
+    if node is None:
+        abort(404, 'Node not found: {}'.format(node_hash))
+
+    return node
