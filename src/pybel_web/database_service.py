@@ -38,6 +38,7 @@ from pybel.manager.models import (
     Annotation,
     Network,
 )
+from pybel.utils import hash_node
 from pybel_tools import pipeline
 from pybel_tools.analysis.cmpa import RESULT_LABELS
 from pybel_tools.definition_utils import write_namespace, write_annotation
@@ -1007,8 +1008,11 @@ def get_paths(query_id, source_id, target_id):
         network = get_subgraph_by_node_filter(network, exclude_pathology_filter)
 
     if method == 'all':
-        all_paths = nx.all_simple_paths(network, source=source, target=target, cutoff=cutoff)
-        return jsonify(api.paths_tuples_to_ids(all_paths))
+        paths = nx.all_simple_paths(network, source=source, target=target, cutoff=cutoff)
+        return jsonify([
+            [hash_node(node) for node in path]
+            for path in paths
+        ])
 
     try:
         shortest_path = nx.shortest_path(network, source=source, target=target)
@@ -1021,11 +1025,15 @@ def get_paths(query_id, source_id, target_id):
 
         # In case the random node is an isolated one, returns it alone
         if not network.neighbors(source)[0]:
-            return jsonify(api.get_node_hash(source))
+            # TODO @ddomingof is this tested? A string isn't valid JSON iirc so I made it a list
+            return jsonify([hash_node(source)])
 
         shortest_path = nx.shortest_path(network, source=source, target=network.neighbors(source)[0])
 
-    return jsonify(api.get_node_hashes(shortest_path))
+    return jsonify([
+        hash_node(node)
+        for node in shortest_path
+    ])
 
 
 @api_blueprint.route('/api/query/<int:query_id>/centrality/<int:node_number>', methods=['GET'])
@@ -1045,7 +1053,7 @@ def get_nodes_by_betweenness_centrality(query_id, node_number):
     bw_dict = nx.betweenness_centrality(network)
 
     return jsonify([
-        api.get_node_hash(node)
+        hash_node(node)
         for node, score in sorted(bw_dict.items(), key=itemgetter(1), reverse=True)[:node_number]
     ])
 
@@ -1889,7 +1897,7 @@ def get_analysis(query_id, experiment_id):
     data = pickle.loads(experiment.result)
     results = [
         {
-            'node': api.get_node_hash(node),
+            'node': hash_node(node),
             'data': data[node]
         }
         for node in graph
@@ -1907,14 +1915,14 @@ def get_analysis_median(query_id, experiment_id):
     tags:
         - experiment
     """
-    network = get_graph_from_request(query_id)
+    graph = get_graph_from_request(query_id)
     experiment = get_experiment_or_404(experiment_id)
 
     data = pickle.loads(experiment.result)
     # position 3 is the 'median' score
     results = {
-        api.get_node_hash(node): data[node][3]
-        for node in network.nodes_iter()
+        hash_node(node): data[node][3]
+        for node in graph
         if node in data
     }
 
