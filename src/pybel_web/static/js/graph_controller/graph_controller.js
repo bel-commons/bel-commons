@@ -133,32 +133,31 @@ function displayEdgeInfo(edge) {
             edgeObject["Citation"] = edge.citation.reference;
         }
     }
+    if (edge.source.cname) {
+        edgeObject["Source"] = '<a href="/node/' + edge.source.id + '">' + edge.source.cname + "</a> ";
+
+        if (edge.subject) {
+            edgeObject["Source"] += ('<span> with ' + JSON.stringify(edge.subject) + '</span>');
+        }
+    }
     if (edge.relation) {
         edgeObject["Relationship"] = edge.relation;
     }
-    if (edge.subject) {
-        edgeObject["Subject Modifier"] = JSON.stringify(edge.subject);
-    }
-    if (edge.object) {
-        edgeObject["Object Modifier"] = JSON.stringify(edge.object);
+    if (edge.target.cname) {
+        edgeObject["Target"] = '<a href="/node/' + edge.target.id + '">' + edge.target.cname + "</a> ";
+
+        if (edge.object) {
+            edgeObject["Target"] += ('<span>with ' + JSON.stringify(edge.object) + '</span>');
+        }
     }
     if (edge.annotations && Object.keys(edge.annotations).length > 0) {
         edgeObject["Annotations"] = JSON.stringify(edge.annotations);
     }
-    if (edge.source.cname) {
-        edgeObject["Source"] = '<a href="/node/' + edge.source.id + '">' + edge.source.cname + "</a>";
-    }
-    if (edge.target.cname) {
-        edgeObject["Target"] = '<a href="/node/' + edge.target.id + '">' + edge.target.cname + "</a>";
-    }
     if (edge.source.id && edge.target.id) {
-        edgeObject["See Also"] = '<a target="_blank" href="/node/' + edge.source.id + '/edges/' + edge.target.id + '">All evidences</a>';
-    }
-
-    if (edge.id) {
-        edgeObject["Identifier"] = '<a href="/api/edge/' + edge.id + '">' + edge.id.slice(0, 10) + '</a>';
-
-        edgeObject["Feedback"] = '<button type="button" class="btn btn-primary" data-toggle="modal" data-target="#edge-feedback" data-edge="' + edge.id + '">Give Feedback</button>';
+        edgeObject["Tools"] = ('<a class="btn btn-primary btn-xs" target="_blank" href="/node/' +
+            edge.source.id + '/edges/' + edge.target.id + '">View All Evidences</a> ' +
+            '<button type="button" class="btn btn-primary btn-xs" data-toggle="modal" data-target="#edge-feedback" data-edge="' +
+            edge.id + '">Give Feedback</button>');
     }
 
 
@@ -1966,7 +1965,7 @@ function initD3Force(graph, tree) {
             commentButton.data('edge', edge_id);
 
             var modal = $(this);
-            modal.find('.modal-title').text('Edge ' + edge_id);
+            modal.find('.modal-title').text('Edge ' + edge_id.slice(0, 10));
 
             $.ajax({
                 url: "/api/edge/" + edge_id,
