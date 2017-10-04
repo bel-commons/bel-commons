@@ -136,7 +136,7 @@ function displayEdgeInfo(edge) {
     if (edge.relation) {
         edgeObject["Relationship"] = edge.relation;
     }
-    if (edge.annotations) {
+    if (edge.annotations && Object.keys(edge.annotations).length > 0) {
         edgeObject["Annotations"] = JSON.stringify(edge.annotations);
     }
     if (edge.source.cname) {
