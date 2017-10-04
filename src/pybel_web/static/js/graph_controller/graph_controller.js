@@ -100,7 +100,7 @@ function displayNodeInfo(node) {
         nodeObject["Description"] = node.description
     }
     if (node.id) {
-        nodeObject["Identifier"] = '<a href="/node/' + node.id + '">' + node.id + "</a>";
+        nodeObject["Identifier"] = '<a href="/node/' + node.id + '">' + node.id.slice(0, 10) + "</a>";
     }
 
     var row = 0;
@@ -156,7 +156,7 @@ function displayEdgeInfo(edge) {
     }
 
     if (edge.id) {
-        edgeObject["Identifier"] = '<a href="/api/edge/' + edge.id + '">' + edge.id + '</a>';
+        edgeObject["Identifier"] = '<a href="/api/edge/' + edge.id + '">' + edge.id.slice(0, 10) + '</a>';
 
         edgeObject["Feedback"] = '<button type="button" class="btn btn-primary" data-toggle="modal" data-target="#edge-feedback" data-edge="' + edge.id + '">Give Feedback</button>';
     }
