@@ -37,6 +37,8 @@ from pybel.manager.models import (
     Namespace,
     Annotation,
     Network,
+    Citation,
+    Author,
 )
 from pybel.utils import hash_node
 from pybel_tools import pipeline
@@ -463,8 +465,7 @@ def namespaces_by_network(network_id):
       200:
         description: The namespaces described in this network
     """
-    network_namespaces = api.query_namespaces(network_id=network_id)
-    return jsonify(network_namespaces)
+    abort(501)
 
 
 @api_blueprint.route('/api/network/<int:network_id>/annotations', methods=['GET'])
@@ -484,8 +485,7 @@ def annotations_by_network(network_id):
       200:
         description: The annotations referenced by the network
     """
-    network_annotations = api.query_annotations(network_id=network_id)
-    return jsonify(network_annotations)
+    abort(501)
 
 
 @api_blueprint.route('/api/network/<int:network_id>/citations', methods=['GET'])
@@ -505,8 +505,7 @@ def citations_by_network(network_id):
       200:
         description: The citations referenced by the edges in the network
     """
-    citations = api.query_citations(network_id=network_id)
-    return jsonify(citations)
+    abort(501)
 
 
 @api_blueprint.route('/api/network/<int:network_id>/edges', methods=['GET'])
@@ -1088,8 +1087,10 @@ def list_citations():
     tags:
         - citation
     """
-    citations = api.query_citations()
-    return jsonify(citations)
+    return jsonify([
+        citation.to_json(include_id=True)
+        for citation in manager.session.query(Citation).all()
+    ])
 
 
 @api_blueprint.route('/api/author/<author>/citations', methods=['GET'])
@@ -1100,8 +1101,12 @@ def list_citations_by_author(author):
     tags:
         - author
     """
-    citations = api.query_citations(author=author)
-    return jsonify(citations)
+    author = manager.session.query(Author).filter(Author.name == author)
+
+    return jsonify([
+        citation.to_json(include_id=True)
+        for citation in author.citations
+    ])
 
 
 @api_blueprint.route('/api/citation/pubmed/suggestion/')
@@ -1115,7 +1120,10 @@ def get_pubmed_suggestion():
     autocompletion_set = api.get_pubmed_containing_keyword(request.args['search'])
 
     return jsonify([
-        {"text": pubmed_identifier, "id": index}
+        {
+            "text": pubmed_identifier,
+            "id": index
+        }
         for index, pubmed_identifier in enumerate(autocompletion_set)
     ])
 
