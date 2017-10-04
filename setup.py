@@ -23,7 +23,7 @@ CLASSIFIERS = [
 ]
 INSTALL_REQUIRES = [
     'ols_client==0.0.7',
-    'pybel>=0.9.0',
+    'pybel>=0.9.2',
     'pybel-tools>=0.4.2',
     'networkx==1.11',
     'requests',
