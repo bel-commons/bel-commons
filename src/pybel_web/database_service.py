@@ -158,24 +158,6 @@ def list_namespaces():
     ])
 
 
-@api_blueprint.route('/api/namespace/<keyword>', methods=['GET'])
-def list_names(keyword):
-    """Lists all names from a given namespace, by keyword
-
-    ---
-    tags:
-        - namespace
-    parameters:
-      - name: keyword
-        in: path
-        description: The namespace keyword
-        required: true
-        type: integer
-    """
-    names = api.query_namespaces(name_list=True, keyword=keyword)
-    return jsonify(names)
-
-
 @api_blueprint.route('/api/namespace/<int:namespace_id>/drop')
 @roles_required('admin')
 def drop_namespace_by_id(namespace_id):
@@ -369,18 +351,6 @@ def list_annotations():
         annotation.to_json(include_id=True)
         for annotation in manager.list_annotations()
     ])
-
-
-@api_blueprint.route('/api/annotation/<keyword>', methods=['GET'])
-def list_annotation_names(keyword):
-    """Lists the values in an annotation, by keyword
-
-    ---
-    tags:
-        - annotation
-    """
-    values = api.query_annotations(name_list=True, keyword=keyword)
-    return jsonify(values)
 
 
 @api_blueprint.route('/api/annotation/<annotation_id>/drop')
