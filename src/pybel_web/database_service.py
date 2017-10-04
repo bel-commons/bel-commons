@@ -1045,12 +1045,12 @@ def get_nodes_by_betweenness_centrality(query_id, node_number):
         - query
 
     """
-    network = get_graph_from_request(query_id)
+    graph = get_graph_from_request(query_id)
 
-    if node_number > nx.number_of_nodes(network):
-        return 'The number introduced is bigger than the nodes in the network'
+    if node_number > graph.number_of_nodes():
+        node_number = graph.number_of_nodes()
 
-    bw_dict = nx.betweenness_centrality(network)
+    bw_dict = nx.betweenness_centrality(graph)
 
     return jsonify([
         hash_node(node)
