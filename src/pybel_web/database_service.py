@@ -249,7 +249,7 @@ def download_undefined_namespace(network_id, namespace):
         in: path
     """
     graph = api.get_graph_by_id(network_id)
-    names = get_undefined_namespace_names(graph, namespace)
+    names = get_undefined_namespace_names(graph, namespace)  # TODO put into report data
     return _build_namespace_helper(graph, namespace, names)
 
 
@@ -272,7 +272,7 @@ def download_missing_namespace(network_id, namespace):
         in: path
     """
     graph = api.get_graph_by_id(network_id)
-    names = get_incorrect_names_by_namespace(graph, namespace)
+    names = get_incorrect_names_by_namespace(graph, namespace)  # TODO put into report data
     return _build_namespace_helper(graph, namespace, names)
 
 
@@ -285,7 +285,7 @@ def download_naked_names(network_id):
         - network
     """
     graph = api.get_graph_by_id(network_id)
-    names = get_naked_names(graph)
+    names = get_naked_names(graph)  # TODO put into report data
     return _build_namespace_helper(graph, 'NAKED', names)
 
 
