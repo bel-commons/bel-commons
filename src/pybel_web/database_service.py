@@ -127,7 +127,7 @@ def receive():
         })
 
     try:
-        network = manager.insert_graph(network)
+        network = manager.insert_graph(network, store_parts=True)
         flask.flash('Success uploading {}'.format(network))
     except IntegrityError:
         flask.flash(integrity_message.format(network.name, network.version))
