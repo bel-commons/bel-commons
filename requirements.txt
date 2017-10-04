@@ -1,3 +1,7 @@
+networkx==1.11
+pybel>=0.9.0
+pybel-tools>=0.4.2
+ols_client==0.0.7
 sqlalchemy
 requests
 flask
@@ -9,15 +13,11 @@ flask-cors
 flask-sqlalchemy
 werkzeug
 flasgger
-networkx
 click
 pygments
 pandas
 celery
 obonet
-pybel>=0.9.0
-pybel-tools>=0.4.2
-ols_client==0.0.7
 raven
 matplotlib_venn
 matplotlib
