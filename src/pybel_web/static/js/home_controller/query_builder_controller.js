@@ -166,6 +166,10 @@ $(document).ready(function () {
         }, minLength: 2
     });
 
+    // Clicks all buttons in table
+    $('#selectAll').click(function (e) {
+        $("#network-table").find('td input:checkbox').prop('checked', this.checked);
+    });
 
 });
 
