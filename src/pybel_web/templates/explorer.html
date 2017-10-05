@@ -26,10 +26,6 @@
     <script type="text/javascript"
             src="https://cdnjs.cloudflare.com/ajax/libs/inspire-tree/1.12.1/inspire-tree-bundled.js"></script>
 
-    <script type="text/javascript">
-        // Arrays with selected nodes to expand/delete
-        window.query = {{ query.id }};
-    </script>
 {% endblock %}
 
 {% block styles %}
@@ -58,6 +54,19 @@
             src="{{ url_for('static', filename='js/d3-context-menu/js/d3-context-menu.js') }}"></script>
     <script type="text/javascript"
             src='https://cdnjs.cloudflare.com/ajax/libs/bootstrap-toggle/2.2.2/js/bootstrap-toggle.min.js'></script>
+
+    <script type="text/javascript">
+        // Arrays with selected nodes to expand/delete
+        window.query = {{ query.id }};
+
+        // Initializes popover
+        $(function () {
+            $('[data-toggle="popover"]').popover({
+                placement: 'top',
+                trigger: 'hover'
+            })
+        })
+    </script>
 {% endblock %}
 
 {% block content %}
@@ -131,7 +140,10 @@
                 <!-- Tab panes -->
                 <div class="tab-content">
                     <div class="tab-pane active" id="tree-panel" role="tabpanel">
-                        <button type="button" id="refresh-network"
+                        <button type="button" id="refresh-network" data-toggle="popover"
+                                title="Render the Network"
+                                data-content="Renders the Network using the selected filtering. Note that the Network
+                                will not be rendered if it contains more than 1500 nodes to avoid crashing your browser."
                                 class="btn btn-primary not-rounded width-50 pull-left">
                             Refresh Network
                         </button>
@@ -279,12 +291,16 @@
                 <h3 class="panel-title">Current Query Info</h3>
             </div>
             <div>
-                <button type="button" id="parent-query"
+                <button type="button" id="parent-query" data-toggle="popover"
+                        title="Previous Query"
+                        data-content="Renders the Network corresponding to the previous Query."
                         class="btn btn-primary not-rounded width-50 pull-left">
                     <span class="glyphicon glyphicon-backward" aria-hidden="true"></span>
                     Previous Query
                 </button>
-                <button type="button" id="original-query"
+                <button type="button" id="original-query" data-toggle="popover"
+                        title="Original Query"
+                        data-content="Renders the Network corresponding to the very first Query."
                         class="btn btn-primary not-rounded width-50 pull-right">
                     <span class="glyphicon glyphicon-fast-backward" aria-hidden="true"></span>
                     Original Query
