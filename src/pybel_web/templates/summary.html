@@ -17,7 +17,15 @@
     <script src="//code.jquery.com/jquery-1.12.4.js"></script>
     <script src="https://cdn.datatables.net/1.10.13/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.10.13/js/dataTables.bootstrap.min.js"></script>
-
+    <script>
+        // Initializes popover
+        $(function () {
+            $('[data-toggle="popover"]').popover({
+                placement: 'top',
+                trigger: 'hover'
+            })
+        })
+    </script>
 {% endblock %}
 
 {% block title %}Summary{% endblock %}
@@ -36,14 +44,27 @@
         <div class="panel panel-default">
             <div class="panel-body">
                 <a class="btn btn-primary" href="{{ url_for('view_networks') }}" role="button">List Networks</a>
-                <a class="btn btn-default" href="{{ url_for('view_explore_network', network_id=network_id) }}"
-                   role="button">
+                <a href="{{ url_for('view_explore_network', network_id=network.id) }}"
+                   class="btn btn-default" data-toggle="popover"
+                   title="Explore this Network"
+                   data-content="Visualize this Network in the Biological Network Explorer.
+                                       Note that if the network is larger than 1500 nodes, you would need to filter the
+                                       network before rendering it in order to avoid crash your browser.">
                     <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
                     Explore
                 </a>
-                <a class="btn btn-default"
-                   href="{{ url_for('analysis.view_network_analysis_uploader', network_id=network_id) }}"
-                   role="button">
+                <a href="{{ url_for('view_query_builder') }}"
+                   class="btn btn-default" data-toggle="popover"
+                   title="Perform a Query on this Network"
+                   data-content="You can ask specific questions to your network using the
+                                       Query Builder.">
+                    <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
+                    Query
+                </a>
+                <a href="{{ url_for('analysis.view_network_analysis_uploader', network_id=network.id) }}"
+                   class="btn btn-default" data-toggle="popover"
+                   title="Analyze this Network"
+                   data-content="Upload your experiments and run algorithms on your network.">
                     <span class="glyphicon glyphicon-flash" aria-hidden="true"></span>
                     Analyze
                 </a>
