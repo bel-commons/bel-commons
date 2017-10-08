@@ -22,7 +22,7 @@ CLASSIFIERS = [
     'Topic :: Scientific/Engineering :: Bio-Informatics'
 ]
 INSTALL_REQUIRES = [
-    'ols_client==0.0.7',
+    'ols_client>=0.0.8',
     'pybel>=0.9.2',
     'pybel-tools>=0.4.2',
     'networkx==1.11',
