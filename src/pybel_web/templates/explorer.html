@@ -85,10 +85,11 @@
                 <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#paths">
                     Path Mining
                 </button>
-                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#algorithms">
-                    Algorithms
-                </button>
-
+                {% if current_user.is_authenticated and current_user.is_beta_tester %}
+                    <button type="button" class="btn btn-warning" data-toggle="modal" data-target="#algorithms">
+                        Algorithms
+                    </button>
+                {% endif %}
                 {% if current_user.is_authenticated %}
                     <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#export">
                         Export

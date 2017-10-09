@@ -300,6 +300,11 @@ class User(Base, UserMixin):
             self.email.endswith('@scai-extern.fraunhofer.de')
         )
 
+    @property
+    def is_beta_tester(self):
+        """Is this user cut out for the truth?"""
+        return self.is_admin or self.has_role('beta')
+
     def get_owned_networks(self):
         """Gets all networks this user owns
 

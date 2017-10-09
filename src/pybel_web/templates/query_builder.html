@@ -129,7 +129,7 @@
                             <button type="button" class="btn btn-primary">Nodes</button>
                         </a>
 
-                        {% if current_user.is_authenticated and current_user.is_admin %}
+                        {% if current_user.is_beta_tester %}
                             <a data-toggle="tab" href="#name-panel">
                                 <button type="button" class="btn btn-warning">Names (Experimental)</button>
                             </a>
