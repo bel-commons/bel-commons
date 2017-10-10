@@ -190,7 +190,7 @@ class Role(Base, RoleMixin):
 
     id = Column(Integer(), primary_key=True)
     name = Column(String(80), unique=True, nullable=False)
-    description = Column(String(255))
+    description = Column(Text)
 
     def __str__(self):
         return self.name
@@ -213,7 +213,7 @@ class Project(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String(80), unique=True, index=True, nullable=False)
-    description = Column(String)
+    description = Column(Text)
 
     users = relationship('User', secondary=projects_users, backref=backref('projects', lazy='dynamic'))
 
