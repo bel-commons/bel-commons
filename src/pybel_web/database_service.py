@@ -1016,7 +1016,6 @@ def get_paths(query_id, source_id, target_id):
 
         # In case the random node is an isolated one, returns it alone
         if not network.neighbors(source)[0]:
-            # TODO @ddomingof is this tested? A string isn't valid JSON iirc so I made it a list
             return jsonify([hash_node(source)])
 
         shortest_path = nx.shortest_path(network, source=source, target=network.neighbors(source)[0])
@@ -2048,6 +2047,7 @@ def get_project_or_404(project_id):
 
     return project
 
+
 def safe_get_project(project_id):
     """Gets a project by identifier, aborts 404 if doesn't exist and aborts 403 if current user does not have rights
 
@@ -2063,6 +2063,7 @@ def safe_get_project(project_id):
         abort(403, 'User does not have permission to access this Project')
 
     return project
+
 
 @api_blueprint.route('/api/project/<int:project_id>')
 @login_required
