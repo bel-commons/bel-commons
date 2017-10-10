@@ -105,6 +105,7 @@ class Report(Base):
 
     message = Column(Text, nullable=True, doc='Error message')
     completed = Column(Boolean, nullable=True)
+    time = Column(Float, nullable=True, doc='Time took to complete')
 
     network_id = Column(
         Integer,

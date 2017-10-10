@@ -32,6 +32,7 @@ from .celery_utils import create_celery
 from .constants import CHARLIE_EMAIL, DANIEL_EMAIL, integrity_message, log_worker_path
 from .models import Report, Experiment
 from .utils import calculate_scores, manager
+import time
 
 log = get_task_logger(__name__)
 
@@ -138,6 +139,8 @@ def async_parser(report_id):
 
     :param int report_id: Report identifier
     """
+    t = time.time()
+
     report = manager.session.query(Report).get(report_id)
 
     if report is None:
@@ -282,6 +285,8 @@ def async_parser(report_id):
             pass
 
         report.completed = True
+        report.time = time.time() - t
+
         manager.session.commit()
 
         log.info('report #%d complete [%d]', report.id, network.id)
