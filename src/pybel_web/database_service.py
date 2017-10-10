@@ -2035,6 +2035,35 @@ def grant_network_to_user(network_id, user_id):
     return next_or_jsonify('Added rights for {} to {}'.format(network, user))
 
 
+def get_project_or_404(project_id):
+    """Get a project by id and aborts 404 if doesn't exist
+
+    :param int project_id:
+    :rtype: Project
+    """
+    project = manager.session.query(Project).get(project_id)
+
+    if project is None:
+        abort(404, 'Project {} does not exist'.format(project_id))
+
+    return project
+
+def safe_get_project(project_id):
+    """Gets a project by identifier, aborts 404 if doesn't exist and aborts 403 if current user does not have rights
+
+    :param project_id:
+    :return:
+    """
+    project = get_project_or_404(project_id)
+
+    if not current_user.is_authenticated:
+        abort(403, 'Not logged in')
+
+    if current_user.is_admin and not project.has_user(current_user):
+        abort(403, 'User does not have permission to access this Project')
+
+    return project
+
 @api_blueprint.route('/api/project/<int:project_id>')
 @login_required
 def get_project_metadata(project_id):
@@ -2044,13 +2073,7 @@ def get_project_metadata(project_id):
     tags:
         - project
     """
-    project = manager.session.query(Project).get(project_id)
-
-    if project is None:
-        abort(404)
-
-    if not current_user.is_admin and not project.has_user(current_user):
-        abort(403, 'User does not have permission to access this Project')
+    project = safe_get_project(project_id)
 
     return jsonify(**project.to_json())
 
@@ -2066,13 +2089,9 @@ def drop_project_by_id(project_id):
     tags:
         - project
     """
-    project = manager.session.query(Project).get(project_id)
+    project = safe_get_project(project_id)
 
-    if project is None:
-        abort(404)
-
-    if not current_user.is_admin and not project.has_user(current_user):
-        abort(403, 'User does not have permission to access this Project')
+    # FIXME cascade on project/users
 
     manager.session.delete(project)
     manager.session.commit()
@@ -2091,13 +2110,7 @@ def summarize_project(project_id):
     tags:
         - project
     """
-    project = manager.session.query(Project).get(project_id)
-
-    if project is None:
-        abort(404)
-
-    if not current_user.is_admin and not project.has_user(current_user):
-        abort(403, 'User does not have permission to access this Project')
+    project = safe_get_project(project_id)
 
     si = StringIO()
     cw = csv.writer(si)
@@ -2132,13 +2145,7 @@ def export_project_network(project_id, serve_format):
     tags:
         - project
     """
-    project = manager.session.query(Project).get(project_id)
-
-    if project is None:
-        abort(404)
-
-    if not current_user.is_admin and not project.has_user(current_user):
-        abort(403, 'User does not have permission to access this Project')
+    project = safe_get_project(project_id)
 
     network = project.as_bel()
 
