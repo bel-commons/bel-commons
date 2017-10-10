@@ -176,7 +176,8 @@ def run(host, port, default_config, debug, config, with_gunicorn):
 
 @main.command()
 @click.option('-c', '--concurrency', type=int, default=1)
-def worker(concurrency):
+@click.option('--debug', default='INFO', choices=['INFO', 'DEBUG'])
+def worker(concurrency, debug):
     """Runs the celery worker"""
     from .celery_worker import app
     from celery.bin import worker
@@ -185,7 +186,7 @@ def worker(concurrency):
 
     options = {
         'broker': 'amqp://guest:guest@localhost:5672//',
-        'loglevel': 'INFO',
+        'loglevel': debug,
         'traceback': True,
         'concurrency': concurrency
     }
