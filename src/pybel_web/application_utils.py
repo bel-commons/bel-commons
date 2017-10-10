@@ -70,8 +70,8 @@ def iter_public_networks(manager_):
 def build_network_ajax_manager(manager, user_datastore):
     """
 
-    :param pybel.manager.Manager manager:
-    :param user_datastore:
+    :param pybel.manager.Manager manager: A PyBE manager
+    :param flask_security.SQLAlchemyUserDatastore user_datastore: A flask security user datastore manager
     :rtype: QueryAjaxModelLoader
     """
     class NetworkAjaxModelLoader(QueryAjaxModelLoader):
@@ -101,7 +101,7 @@ def build_network_ajax_manager(manager, user_datastore):
                 }
 
                 if current_user.is_scai:
-                    scai_role = user_datastore.get_or_create_role(name='scai')
+                    scai_role = user_datastore.find_or_create_role(name='scai')
 
                     for user in scai_role.users:
                         for network in user.get_owned_networks():
