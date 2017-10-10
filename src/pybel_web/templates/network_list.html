@@ -28,7 +28,7 @@
         <script src="{{ url_for('static', filename='js/bootstrap-confirmation.min.js') }}"></script>
         <script>
             $('[data-toggle=confirmation]').confirmation({
-                rootSelector: '[data-toggle=confirmation]',
+                rootSelector: '[data-toggle=confirmation]'
                 // other options
             });
             // Initializes popover
@@ -207,15 +207,24 @@
                                     </a>
                                 </li>
                                 <li>
-                                    <a href="{{ url_for('view_explore_network', network_id=network.id) }}"
-                                       class="btn btn-default" data-toggle="popover"
-                                       title="Explore this Network"
-                                       data-content="Visualize this Network in the Biological Network Explorer.
-                                       Note that if the network is larger than 1500 nodes, you would need to filter the
-                                       network before rendering it in order to avoid crash your browser.">
-                                        <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
-                                        Explore
-                                    </a>
+                                    {% if network.report and network.report.number_nodes < 100 %}
+                                        <a href="{{ url_for('view_explore_network', network_id=network.id) }}"
+                                           class="btn btn-default" data-toggle="popover"
+                                           title="Explore this Network"
+                                           data-content="Visualize this Network in the Biological Network Explorer.
+                                   Note that if the network is larger than 100 nodes, you would need to filter the
+                                   network before rendering it in order to avoid crash your browser.">
+                                            <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
+                                            Explore
+                                        </a>
+                                    {% else %}
+                                        <button class="btn btn-default" data-toggle="popover"
+                                                title="Explore this Network" disabled
+                                                data-content="This network is too large to explore directly, so build a query first.">
+                                            <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
+                                            Explore
+                                        </button>
+                                    {% endif %}
                                 </li>
 
                                 <li>
