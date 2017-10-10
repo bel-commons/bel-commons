@@ -439,14 +439,13 @@ def sanitize_annotation(annotation_list):
     return dict(annotation_dict)
 
 
-# TODO @ddomingof document this
 def convert_seed_value(key, form, value):
-    """
+    """ Normalize the form to type:data format
 
-    :param key:
-    :param form:
-    :param value:
-    :return:
+    :param str key: seed method
+    :param ImmutableMultiDict form: Form dictionary
+    :param str value: data (nodes, authors...)
+    :return: Normalized data depending on the seeding method
     """
     if key == 'annotation':
         query_type = not form.get(AND)
@@ -454,7 +453,7 @@ def convert_seed_value(key, form, value):
     elif key in {'pubmed', 'authors'}:
         return form.getlist(value)
     else:
-        return api.get_nodes_by_hashes(form.getlist(value, type=int))
+        return api.get_nodes_by_hashes(form.getlist(value))
 
 
 def query_form_to_dict(form):
@@ -729,6 +728,7 @@ def get_query_or_404(query_id):
 
     return query
 
+
 def safe_get_query(query_id):
     """Gets a query or raises an abort
 
@@ -832,6 +832,7 @@ def get_node_by_hash_or_404(node_hash):
 
     return node
 
+
 def get_edge_or_404(edge_hash):
     edge = manager.get_edge_by_hash(edge_hash)
 
@@ -839,4 +840,3 @@ def get_edge_or_404(edge_hash):
         abort(404, 'Edge {} not found'.format(edge_hash))
 
     return edge
-
