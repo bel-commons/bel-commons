@@ -46,7 +46,7 @@
                 <a class="btn btn-primary" href="{{ url_for('view_networks') }}" role="button">List Networks</a>
 
                 {% if current_user.is_authenticated and current_user.is_beta_tester %}
-                    {% if network.report and network.report.number_of_nodes < 100 %}
+                    {% if network.report and network.report.number_nodes < 100 %}
                         <a href="{{ url_for('view_explore_network', network_id=network.id) }}"
                            class="btn btn-default" data-toggle="popover"
                            title="Explore this Network"
