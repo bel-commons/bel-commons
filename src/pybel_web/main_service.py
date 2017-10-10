@@ -141,6 +141,7 @@ def build_main_service(app):
             'query_builder.html',
             networks=networks,
             current_user=current_user,
+            preselected=request.args.get('start', type=int)
         )
 
     @app.route('/query/compile', methods=['POST'])

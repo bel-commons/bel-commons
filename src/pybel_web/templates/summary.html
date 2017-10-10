@@ -65,7 +65,7 @@
                         </button>
                     {% endif %}
                 {% endif %}
-                <a href="{{ url_for('view_query_builder') }}"
+                <a href="{{ url_for('view_query_builder', start=network.id) }}"
                    class="btn btn-default" data-toggle="popover"
                    title="Perform a Query on this Network"
                    data-content="You can ask specific questions to your network using the
