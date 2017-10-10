@@ -159,9 +159,9 @@ function displayEdgeInfo(edge) {
     }
     if (edge.source.id && edge.target.id) {
         edgeObject["Tools"] = ('<a class="btn btn-primary btn-xs" target="_blank" href="/node/' +
-        edge.source.id + '/edges/' + edge.target.id + '">View All Evidences</a> ' +
-        '<button type="button" class="btn btn-primary btn-xs" data-toggle="modal" data-target="#edge-feedback" data-edge="' +
-        edge.id + '">Give Feedback</button>');
+            edge.source.id + '/edges/' + edge.target.id + '">View All Evidences</a> ' +
+            '<button type="button" class="btn btn-primary btn-xs" data-toggle="modal" data-target="#edge-feedback" data-edge="' +
+            edge.id + '">Give Feedback</button>');
     }
 
 
@@ -235,9 +235,11 @@ function displayQueryInfo(query) {
         row++
     });
 
+    const query_summarize_url = "/api/query/" + query.id + "/summarize";
+
     $.ajax({
         type: "GET",
-        url: "/api/query/" + query.id + "/summarize",
+        url: query_summarize_url,
         dataType: "json",
         success: function (data) {
             var networkInfoTable = document.getElementById('network-info-table');
@@ -252,9 +254,9 @@ function displayQueryInfo(query) {
             });
         },
         error: function (request) {
-            alert(request.message);
+            alert(query_summarize_url + ": " + request.message);
         },
-        data: {},
+        data: {}
     });
 }
 
@@ -306,8 +308,8 @@ function doAjaxCallWithCallback(url, callback) {
         dataType: "json",
         success: callback,
         error: function (request) {
-            alert(request.message);
-        },
+            alert(url + ": " + request.message);
+        }
     });
 }
 
@@ -372,15 +374,7 @@ function insertRow(table, row, column1, column2) {
  * Gets the query info from the API and renders it in a table
  */
 function updateQueryTable() {
-    $.ajax({
-        type: "GET",
-        url: "/api/query/" + window.query + "/info",
-        dataType: "json",
-        success: displayQueryInfo,
-        error: function (request) {
-            alert(request.message);
-        },
-    });
+    doAjaxCallWithCallback("/api/query/" + window.query + "/info", displayQueryInfo);
 }
 
 /**
@@ -1383,7 +1377,7 @@ function initD3Force(graph, tree) {
             var path = link.filter(function (el) {
                 // Source and target should be present in the edge and the distance in the array should be one
                 return ((data[x].indexOf(el.source.id) >= 0 && data[x].indexOf(el.target.id) >= 0)
-                && (Math.abs(data[x].indexOf(el.source.id) - data[x].indexOf(el.target.id)) === 1));
+                    && (Math.abs(data[x].indexOf(el.source.id) - data[x].indexOf(el.target.id)) === 1));
             });
 
             edgesInPaths.push(path);
@@ -1399,7 +1393,7 @@ function initD3Force(graph, tree) {
             var edgesInPath = link.filter(function (el) {
                 // Source and target should be present in the edge and the distance in the array should be one
                 return ((data[i].indexOf(el.source.id) >= 0 && data[i].indexOf(el.target.id) >= 0)
-                && (Math.abs(data[i].indexOf(el.source.id) - data[i].indexOf(el.target.id)) === 1));
+                    && (Math.abs(data[i].indexOf(el.source.id) - data[i].indexOf(el.target.id)) === 1));
             });
 
             // Select randomly a color and apply to this path
@@ -1435,7 +1429,7 @@ function initD3Force(graph, tree) {
             var edgesNotInPath = g.selectAll(".link").filter(function (el) {
                 // Source and target should be present in the edge and the distance in the array should be one
                 return !((paths.indexOf(el.source.id) >= 0 && paths.indexOf(el.target.id) >= 0)
-                && (Math.abs(paths.indexOf(el.source.id) - paths.indexOf(el.target.id)) === 1));
+                    && (Math.abs(paths.indexOf(el.source.id) - paths.indexOf(el.target.id)) === 1));
             });
 
             // If checkbox is True -> Hide all, Else -> Opacity 0.1
@@ -1593,10 +1587,12 @@ function initD3Force(graph, tree) {
                 args["undirected"] = undirected;
             }
 
-            $.ajax({
-                url: "/api/query/" + window.query + "/paths/" +
+            const query_paths_url = "/api/query/" + window.query + "/paths/" +
                 nodeNamesToId[pathForm.find("input[name='source']").val()] + "/" +
-                nodeNamesToId[pathForm.find("input[name='target']").val()] + "/",
+                nodeNamesToId[pathForm.find("input[name='target']").val()] + "/";
+
+            $.ajax({
+                url: query_paths_url,
                 type: pathForm.attr("method"),
                 dataType: "json",
                 data: $.param(args, true),
@@ -1604,7 +1600,7 @@ function initD3Force(graph, tree) {
                     handlePathResponse(paths, checkbox, args["paths_method"]);
                 },
                 error: function (request) {
-                    alert(request.responseText);
+                    alert(query_paths_url + ': ' + request.responseText);
                 }
             })
         }
