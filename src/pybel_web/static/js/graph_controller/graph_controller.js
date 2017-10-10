@@ -18,6 +18,10 @@ $(document).on({
     },
     ajaxStop: function () {
         $body.removeClass("loading");
+    },
+    ajaxError: function () {
+        $body.removeClass("loading");
+        alert("An error occurred. Please reload the page.");
     }
 });
 
@@ -155,9 +159,9 @@ function displayEdgeInfo(edge) {
     }
     if (edge.source.id && edge.target.id) {
         edgeObject["Tools"] = ('<a class="btn btn-primary btn-xs" target="_blank" href="/node/' +
-            edge.source.id + '/edges/' + edge.target.id + '">View All Evidences</a> ' +
-            '<button type="button" class="btn btn-primary btn-xs" data-toggle="modal" data-target="#edge-feedback" data-edge="' +
-            edge.id + '">Give Feedback</button>');
+        edge.source.id + '/edges/' + edge.target.id + '">View All Evidences</a> ' +
+        '<button type="button" class="btn btn-primary btn-xs" data-toggle="modal" data-target="#edge-feedback" data-edge="' +
+        edge.id + '">Give Feedback</button>');
     }
 
 
@@ -1379,7 +1383,7 @@ function initD3Force(graph, tree) {
             var path = link.filter(function (el) {
                 // Source and target should be present in the edge and the distance in the array should be one
                 return ((data[x].indexOf(el.source.id) >= 0 && data[x].indexOf(el.target.id) >= 0)
-                    && (Math.abs(data[x].indexOf(el.source.id) - data[x].indexOf(el.target.id)) === 1));
+                && (Math.abs(data[x].indexOf(el.source.id) - data[x].indexOf(el.target.id)) === 1));
             });
 
             edgesInPaths.push(path);
@@ -1395,7 +1399,7 @@ function initD3Force(graph, tree) {
             var edgesInPath = link.filter(function (el) {
                 // Source and target should be present in the edge and the distance in the array should be one
                 return ((data[i].indexOf(el.source.id) >= 0 && data[i].indexOf(el.target.id) >= 0)
-                    && (Math.abs(data[i].indexOf(el.source.id) - data[i].indexOf(el.target.id)) === 1));
+                && (Math.abs(data[i].indexOf(el.source.id) - data[i].indexOf(el.target.id)) === 1));
             });
 
             // Select randomly a color and apply to this path
@@ -1431,7 +1435,7 @@ function initD3Force(graph, tree) {
             var edgesNotInPath = g.selectAll(".link").filter(function (el) {
                 // Source and target should be present in the edge and the distance in the array should be one
                 return !((paths.indexOf(el.source.id) >= 0 && paths.indexOf(el.target.id) >= 0)
-                    && (Math.abs(paths.indexOf(el.source.id) - paths.indexOf(el.target.id)) === 1));
+                && (Math.abs(paths.indexOf(el.source.id) - paths.indexOf(el.target.id)) === 1));
             });
 
             // If checkbox is True -> Hide all, Else -> Opacity 0.1
