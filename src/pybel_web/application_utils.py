@@ -152,7 +152,8 @@ def build_project_view(manager, user_datastore):
 
         def on_model_change(self, form, model, is_created):
             """Hacky - automatically add user when they create a project"""
-            model.users.append(current_user)
+            if current_user not in model.users:
+                model.users.append(current_user)
 
         form_ajax_refs = {
             'networks': build_network_ajax_manager(manager, user_datastore)
