@@ -282,7 +282,7 @@ def async_parser(report_id):
         try:
             report.average_degree = sum(graph.in_degree().values()) / float(report.number_nodes)
         except ZeroDivisionError:
-            pass
+            report.average_degree = 0.0
 
         report.completed = True
         report.time = time.time() - t
