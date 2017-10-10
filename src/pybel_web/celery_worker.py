@@ -144,11 +144,11 @@ def async_parser(report_id):
     report = manager.session.query(Report).get(report_id)
 
     if report is None:
-        raise ValueError('Report not found')
+        raise ValueError('Report {} not found'.format(report_id))
 
     log.info('Starting parse task for %s (report %s)', report.source_name, report.id)
 
-    def make_mail(subject, message):
+    def make_mail(subject, body):
         if 'mail' not in app.extensions:
             return
 
@@ -156,17 +156,17 @@ def async_parser(report_id):
             app.extensions['mail'].send_message(
                 subject=subject,
                 recipients=[report.user.email],
-                body=message,
+                body=body,
                 sender=pbw_sender,
             )
 
-    def finish_parsing(subject, message, log_exception=True):
+    def finish_parsing(subject, body, log_exception=True):
         if log_exception:
-            log.exception(message)
-        make_mail(subject, message)
-        report.message = message
+            log.exception(body)
+        make_mail(subject, body)
+        report.message = body
         manager.session.commit()
-        return message
+        return body
 
     try:
         log.info('parsing graph')
