@@ -211,11 +211,13 @@ class Project(Base):
     """Stores projects"""
     __tablename__ = PROJECT_TABLE_NAME
 
-    id = Column(Integer(), primary_key=True)
-    name = Column(String(80), unique=True, nullable=False)
-    description = Column(String(255))
+    id = Column(Integer, primary_key=True)
+    name = Column(String(80), unique=True, index=True, nullable=False)
+    description = Column(String)
 
     users = relationship('User', secondary=projects_users, backref=backref('projects', lazy='dynamic'))
+
+    # TODO why not just use the Assembly table for the many to many relationship?
     networks = relationship('Network', secondary=projects_networks, backref=backref('projects', lazy='dynamic'))
 
     def has_user(self, user):
@@ -236,6 +238,7 @@ class Project(Base):
         :rtype: pybel.BELGraph
         """
         return union(network.as_bel() for network in self.networks)
+        # return self.assembly.as_bel()
 
     def __str__(self):
         return self.name
