@@ -37,9 +37,11 @@ from pybel.constants import (
 from pybel.manager.models import (
     Namespace,
     Annotation,
+    AnnotationEntry,
     Network,
     Citation,
     Author,
+    Node
 )
 from pybel.utils import hash_node
 from pybel_tools import pipeline
@@ -79,6 +81,7 @@ from .models import (
     Experiment,
     Project,
     EdgeComment,
+
 )
 from .send_utils import serve_network
 from .utils import (
@@ -412,12 +415,20 @@ def suggest_annotation():
     tags:
         - annotation
     """
-    if not request.args['search']:
+    q = request.args.get('q')
+
+    if not q:
         return jsonify([])
 
-    autocompletion_set = api.get_annotations_containing_keyword(request.args['search'])
+    entries = manager.session.query(AnnotationEntry).filter(AnnotationEntry.name.contains(q))
 
-    return jsonify(autocompletion_set)
+    return jsonify([
+        {
+            'annotation': entry.annotation.name,
+            'value': entry.name
+        }
+        for entry in entries
+    ])
 
 
 ####################################
@@ -1126,14 +1137,19 @@ def get_pubmed_suggestion():
     tags:
         - citation
     """
-    autocompletion_set = api.get_pubmed_containing_keyword(request.args['search'])
+    q = request.args.get('q')
+
+    if not q:
+        return jsonify([])
+
+    citations = manager.session.query(Citation).filter(Citation.type == 'PubMed', Citation.reference.startswith(q))
 
     return jsonify([
         {
-            "text": pubmed_identifier,
-            "id": index
+            "text": citation.reference,
+            "id": citation.id
         }
-        for index, pubmed_identifier in enumerate(autocompletion_set)
+        for citation in citations
     ])
 
 
@@ -1154,21 +1170,26 @@ def get_all_authors(query_id):
 
 
 @api_blueprint.route('/api/author/suggestion/')
-def get_author_suggestion():
+def suggest_authors():
     """Return list of authors matching the author keyword
 
     ---
     tags:
         - author
     """
-    autocompletion_set = api.get_authors_containing_keyword(request.args['search'])
+    q = request.args.get('q')
+
+    if not q:
+        return jsonify([])
+
+    authors = manager.session.query(Author.name).filter(Author.name.contains(q))
 
     return jsonify([
         {
-            "id": index,
-            "text": pubmed_identifier,
+            "id": author.id,
+            "text": author.name,
         }
-        for index, pubmed_identifier in enumerate(autocompletion_set)
+        for author in authors
     ])
 
 
@@ -1445,18 +1466,26 @@ def get_node_hash(node_id):
 
 @api_blueprint.route('/api/node/suggestion/')
 def get_node_suggestion():
-    """Suggests a node based on the search criteria
+    """Suggests a node
 
     ---
     tags:
         - node
     """
-    if not request.args['search']:
+    q = request.args['q']
+
+    if not q:
         return jsonify([])
 
-    autocompletion_set = api.get_nodes_containing_keyword(request.args['search'])
+    nodes = manager.session.query(Node).filter(Node.bel.contains(q))
 
-    return jsonify(autocompletion_set)
+    return jsonify([
+        {
+            "text": node.bel,
+            "id": node.sha512
+        }
+        for node in nodes
+    ])
 
 
 ####################################
@@ -1466,13 +1495,17 @@ def get_node_suggestion():
 @api_blueprint.route('/api/pipeline/suggestion/')
 def get_pipeline_function_names():
     """Sends a list of functions to use in the pipeline"""
-    if not request.args['term']:
+    q = request.args.get('q')
+
+    if not q:
         return jsonify([])
+
+    q = q.casefold()
 
     return jsonify([
         p.replace("_", " ").capitalize()
         for p in pipeline.no_arguments_map
-        if request.args['term'].casefold() in p.replace("_", " ").casefold()
+        if q in p.replace("_", " ").casefold()
     ])
 
 

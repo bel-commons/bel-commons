@@ -35,7 +35,7 @@ $(document).ready(function () {
             dataType: "json",
             data: function (params) {
                 return {
-                    search: params.term
+                    q: params.term
                 };
             },
             delay: 250,
@@ -68,7 +68,7 @@ $(document).ready(function () {
             dataType: "json",
             data: function (params) {
                 return {
-                    search: params.term
+                    q: params.term
                 };
             },
             delay: 250,
@@ -101,7 +101,7 @@ $(document).ready(function () {
             dataType: "json",
             data: function (params) {
                 return {
-                    search: params.term
+                    q: params.term
                 };
             },
             delay: 250,
@@ -132,7 +132,7 @@ $(document).ready(function () {
             dataType: "json",
             data: function (params) {
                 return {
-                    search: params.term
+                    q: params.term
                 };
             },
             delay: 250,
@@ -157,7 +157,7 @@ $(document).ready(function () {
                 url: "/api/pipeline/suggestion/",
                 dataType: "json",
                 data: {
-                    term: request.term
+                    q: request.term
                 },
                 success: function (data) {
                     response(data); // functionName
@@ -203,7 +203,7 @@ $(function () {
                             url: "/api/pipeline/suggestion/",
                             dataType: "json",
                             data: {
-                                term: request.term
+                                q: request.term
                             },
                             success: function (data) {
                                 response(data);
