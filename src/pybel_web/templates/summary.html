@@ -44,15 +44,27 @@
         <div class="panel panel-default">
             <div class="panel-body">
                 <a class="btn btn-primary" href="{{ url_for('view_networks') }}" role="button">List Networks</a>
-                <a href="{{ url_for('view_explore_network', network_id=network.id) }}"
-                   class="btn btn-default" data-toggle="popover"
-                   title="Explore this Network"
-                   data-content="Visualize this Network in the Biological Network Explorer.
+
+                {% if current_user.is_authenticated and current_user.is_beta_tester %}
+                    {% if network.report and network.report.number_of_nodes < 100 %}
+                        <a href="{{ url_for('view_explore_network', network_id=network.id) }}"
+                           class="btn btn-default" data-toggle="popover"
+                           title="Explore this Network"
+                           data-content="Visualize this Network in the Biological Network Explorer.
                                        Note that if the network is larger than 1500 nodes, you would need to filter the
                                        network before rendering it in order to avoid crash your browser.">
-                    <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
-                    Explore
-                </a>
+                            <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
+                            Explore
+                        </a>
+                    {% else %}
+                        <button class="btn btn-default" data-toggle="popover"
+                                title="Explore this Network" disabled="True"
+                                data-content="This network is too large to explore directly, so build a query first.">
+                            <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
+                            Explore
+                        </button>
+                    {% endif %}
+                {% endif %}
                 <a href="{{ url_for('view_query_builder') }}"
                    class="btn btn-default" data-toggle="popover"
                    title="Perform a Query on this Network"
