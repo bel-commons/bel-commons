@@ -158,29 +158,29 @@ class Report(Base):
 roles_users = Table(
     ROLE_USER_TABLE_NAME,
     Base.metadata,
-    Column('user_id', Integer, ForeignKey('{}.id'.format(USER_TABLE_NAME))),
-    Column('role_id', Integer, ForeignKey('{}.id'.format(ROLE_TABLE_NAME)))
+    Column('user_id', Integer, ForeignKey('{}.id'.format(USER_TABLE_NAME)), primary_key=True),
+    Column('role_id', Integer, ForeignKey('{}.id'.format(ROLE_TABLE_NAME)), primary_key=True)
 )
 
 users_networks = Table(
     USER_NETWORK_TABLE_NAME,
     Base.metadata,
-    Column('user_id', Integer, ForeignKey('{}.id'.format(USER_TABLE_NAME))),
-    Column('network_id', Integer, ForeignKey('{}.id'.format(NETWORK_TABLE_NAME)))
+    Column('user_id', Integer, ForeignKey('{}.id'.format(USER_TABLE_NAME)), primary_key=True),
+    Column('network_id', Integer, ForeignKey('{}.id'.format(NETWORK_TABLE_NAME)), primary_key=True)
 )
 
 projects_users = Table(
     PROJECT_USER_TABLE_NAME,
     Base.metadata,
-    Column('project_id', Integer, ForeignKey('{}.id'.format(PROJECT_TABLE_NAME))),
-    Column('user_id', Integer, ForeignKey('{}.id'.format(USER_TABLE_NAME)))
+    Column('project_id', Integer, ForeignKey('{}.id'.format(PROJECT_TABLE_NAME)), primary_key=True),
+    Column('user_id', Integer, ForeignKey('{}.id'.format(USER_TABLE_NAME)), primary_key=True)
 )
 
 projects_networks = Table(
     PROJECT_NETWORK_TABLE_NAME,
     Base.metadata,
-    Column('project_id', Integer, ForeignKey('{}.id'.format(PROJECT_TABLE_NAME))),
-    Column('network_id', Integer, ForeignKey('{}.id'.format(NETWORK_TABLE_NAME)))
+    Column('project_id', Integer, ForeignKey('{}.id'.format(PROJECT_TABLE_NAME)), primary_key=True),
+    Column('network_id', Integer, ForeignKey('{}.id'.format(NETWORK_TABLE_NAME)), primary_key=True)
 )
 
 
