@@ -107,7 +107,7 @@ log = logging.getLogger(__name__)
 api_blueprint = Blueprint('dbs', __name__)
 
 
-@lru_cache(maxsize=32)
+@lru_cache(maxsize=64)
 def get_graph_from_request(query_id):
     """Process the GET request returning the filtered network
 
