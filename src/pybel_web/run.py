@@ -51,7 +51,6 @@ pbw_log.addHandler(fh)
 app = create_application()
 
 build_main_service(app)
-build_admin_service(app)
 app.register_blueprint(curation_blueprint)
 app.register_blueprint(parser_async_blueprint)
 app.register_blueprint(api_blueprint)
