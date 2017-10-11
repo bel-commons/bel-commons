@@ -1608,8 +1608,8 @@ def query_to_network(query_id):
 
     network_ids = rv['network_ids']
     rv['networks'] = [
-        str(graph)
-        for graph in api.get_graphs_by_ids(network_ids)
+        '{} v{}'.format(name, version)
+        for name, version in manager.session.query(Network.name, Network.version).filter(Network.id.in_(network_ids))
     ]
 
     return jsonify(rv)
@@ -1662,26 +1662,19 @@ def get_query_oldest_ancestry(query_id):
 
 
 def add_pipeline_entry(query_id, name, *args, **kwargs):
-    """Adds an entry to the pipeline and """
-    query = get_query_or_404(query_id)
+    """Adds an entry to the pipeline
+
+    :param int query_id: The identifier of the query
+    :param str name: The name of the function to append
+    """
+    query = safe_get_query(query_id)
 
     q = query.data
     q.pipeline.append(name, *args, **kwargs)
 
-    try:
-        result = q.run(api)
-    except Exception as e:
-        return jsonify(
-            status=400,
-            query_id=query_id,
-            args=args,
-            kwargs=kwargs,
-            exception=str(e)
-        )
-
     qo = models.Query(
         assembly=query.assembly,
-        seeding=json.dumps(q.seeds),
+        seeding=json.dumps(q.seeds), # TODO replace with q.seeding_to_jsons()?
         pipeline_protocol=q.pipeline.to_jsons(),
         dump=q.to_jsons(),
         parent_id=query_id,
@@ -1695,7 +1688,7 @@ def add_pipeline_entry(query_id, name, *args, **kwargs):
 
     return jsonify({
         'status': 200,
-        'id': qo.id
+        'id': qo.id,
     })
 
 

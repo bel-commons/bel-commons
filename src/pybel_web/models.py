@@ -189,7 +189,7 @@ class Role(Base, RoleMixin):
     """Stores user roles"""
     __tablename__ = ROLE_TABLE_NAME
 
-    id = Column(Integer(), primary_key=True)
+    id = Column(Integer, primary_key=True)
     name = Column(String(80), unique=True, nullable=False)
     description = Column(Text)
 
@@ -382,7 +382,7 @@ class Assembly(Base):
     """Describes an assembly of networks"""
     __tablename__ = ASSEMBLY_TABLE_NAME
 
-    id = Column(Integer(), primary_key=True)
+    id = Column(Integer, primary_key=True)
     name = Column(String(255), unique=True, nullable=True)
 
     user_id = Column(Integer, ForeignKey('{}.id'.format(USER_TABLE_NAME)), doc='The creator of this assembly')
@@ -448,7 +448,7 @@ class Query(Base):
     """Describes a :class:`pybel_tools.query.Query`"""
     __tablename__ = QUERY_TABLE_NAME
 
-    id = Column(Integer(), primary_key=True)
+    id = Column(Integer, primary_key=True)
 
     user_id = Column(Integer, ForeignKey('{}.id'.format(USER_TABLE_NAME)), doc='The user who created the query')
     user = relationship('User', backref=backref('queries', lazy='dynamic'))
