@@ -252,7 +252,10 @@ class FlaskPyBEL:
             :param pybel.BELGraph graph: A BEL graph
             :param list node_hashes: A list of node hashes
             """
-            nodes = self.api.get_node_tuples_by_hashes(node_hashes)
+            nodes = [
+                self.manager.get_node_tuple_by_hash(node_hash)
+                for node_hash in node_hashes
+            ]
             return expand_nodes_neighborhoods(universe, graph, nodes)
 
         @uni_in_place_mutator
@@ -263,7 +266,7 @@ class FlaskPyBEL:
             :param pybel.BELGraph graph: A BEL graph
             :param node_hash: The node hash
             """
-            node = self.api.get_node_tuple_by_hash(node_hash)
+            node = self.manager.get_node_tuple_by_hash(node_hash)
             return expand_node_neighborhood(universe, graph, node)
 
         @in_place_mutator

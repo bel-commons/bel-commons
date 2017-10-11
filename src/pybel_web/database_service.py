@@ -7,13 +7,13 @@ import json
 import logging
 import pickle
 import time
-from functools import lru_cache
-from operator import itemgetter
 
 import flask
 import networkx as nx
 from flask import Blueprint, abort, current_app, flash, jsonify, make_response, redirect, request
 from flask_security import current_user, login_required, roles_required
+from functools import lru_cache
+from operator import itemgetter
 from six import StringIO
 from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
@@ -25,7 +25,7 @@ from pybel.constants import (
     METADATA_NAME,
     NAMESPACE_DOMAIN_OTHER,
 )
-from pybel.manager.models import Annotation, AnnotationEntry, Author, Citation, Namespace, Network, Node
+from pybel.manager.models import Annotation, AnnotationEntry, Author, Citation, Edge, Namespace, Network, Node
 from pybel.utils import hash_node
 from pybel_tools import pipeline
 from pybel_tools.analysis.cmpa import RESULT_LABELS
@@ -34,9 +34,8 @@ from pybel_tools.filters.node_filters import exclude_pathology_filter
 from pybel_tools.query import Query
 from pybel_tools.selection import get_subgraph_by_annotations, get_subgraph_by_node_filter
 from pybel_tools.summary import (
-    count_citation_years, count_functions, count_namespaces, count_relations,
-    count_variants, get_activities, get_authors, get_degradations, get_incorrect_names_by_namespace, get_naked_names,
-    get_pubmed_identifiers, get_translocated, get_tree_annotations, get_undefined_namespace_names, info_json, info_list,
+    get_authors, get_incorrect_names_by_namespace, get_naked_names,
+    get_pubmed_identifiers, get_tree_annotations, get_undefined_namespace_names, info_json, info_list,
 )
 from . import models
 from .constants import *
@@ -45,9 +44,8 @@ from .models import EdgeComment, Experiment, Project, Report, User
 from .send_utils import serve_network
 from .utils import (
     api, current_user_has_query_rights, get_edge_or_404, get_network_ids_with_permission_helper,
-    get_node_by_hash_or_404, get_or_create_vote, get_query_ancestor_id, get_query_or_404, get_recent_reports, manager,
-    next_or_jsonify, relabel_nodes_to_hashes, safe_get_query, user_datastore, user_has_query_rights,
-    user_owns_network_or_403,
+    get_node_by_hash_or_404, get_or_create_vote, get_query_ancestor_id, get_recent_reports, manager,
+    next_or_jsonify, relabel_nodes_to_hashes, safe_get_query, user_datastore, user_owns_network_or_403,
 )
 
 log = logging.getLogger(__name__)
@@ -504,11 +502,13 @@ def edges_by_network(network_id):
     offset_start = request.args.get('offset_start', type=int)
     offset_end = request.args.get('offset_end', type=int)
 
-    edges = api.query_edges(
-        network_id=network_id,
-        offset_start=offset_start,
-        offset_end=offset_end,
-    )
+    network = manager.get_network_by_id(network_id)
+
+    edges = [
+        edge.to_json(include_id=True)
+        for edge in network.edges
+    ]
+
     return jsonify(edges)
 
 
@@ -529,8 +529,8 @@ def nodes_by_network(network_id):
       200:
         description: The nodes referenced by the edges in the network
     """
-    nodes = api.query_nodes(network_id=network_id)
-    return jsonify(nodes)
+    network = manager.get_network_by_id(network_id)
+    return jsonify_nodes(network.nodes)
 
 
 def drop_network_helper(network_id):
@@ -1034,17 +1034,6 @@ def get_all_pmids(query_id):
     return jsonify(sorted(get_pubmed_identifiers(graph)))
 
 
-@api_blueprint.route('/api/query/nodes/')
-def get_node_hashes():
-    """Gets the dictionary of {node id: pybel node tuples}
-
-    ---
-    tags:
-        - node
-    """
-    return jsonify(api.nid_node)
-
-
 @api_blueprint.route('/api/query/<int:query_id>/summarize')
 def get_query_summary(query_id):
     """Gets a summary of the results from a given query
@@ -1171,39 +1160,39 @@ def suggest_authors():
 # EDGES
 ####################################
 
-@api_blueprint.route('/api/edge/by_bel/statement/<statement_bel>', methods=['GET'])
-def edges_by_bel_statement(statement_bel):
+@api_blueprint.route('/api/edge/by_bel/statement/<bel>', methods=['GET'])
+def edges_by_bel_statement(bel):
     """Get edges that match the given BEL
 
     ---
     tags:
         - edge
     """
-    edges = api.query_edges(statement=statement_bel)
+    edges = manager.query_edges(bel=bel)
     return jsonify(edges)
 
 
-@api_blueprint.route('/api/edge/by_bel/source/<source_bel>', methods=['GET'])
-def edges_by_bel_source(source_bel):
+@api_blueprint.route('/api/edge/by_bel/source/<source>', methods=['GET'])
+def edges_by_bel_source(source):
     """Get edges whose sources match the given BEL
 
     ---
     tags:
         - edge
     """
-    edges = api.query_edges(source=source_bel)
+    edges = manager.query_edges(source=source)
     return jsonify(edges)
 
 
-@api_blueprint.route('/api/edge/by_bel/target/<target_bel>', methods=['GET'])
-def edges_by_bel_target(target_bel):
+@api_blueprint.route('/api/edge/by_bel/target/<target>', methods=['GET'])
+def edges_by_bel_target(target):
     """Gets edges whose targets match the given BEL
 
     ---
     tags:
         - edge
     """
-    edges = api.query_edges(target=target_bel)
+    edges = manager.query_edges(target=target)
     return jsonify(edges)
 
 
@@ -1215,7 +1204,7 @@ def edges_by_pmid(pmid):
     tags:
         - citation
     """
-    edges = api.query_edges(pmid=pmid)
+    edges = manager.query_edges(citation=pmid)
     return jsonify(edges)
 
 
@@ -1227,7 +1216,8 @@ def edges_by_author(author):
     tags:
         - author
     """
-    edges = api.query_edges(author=author)
+    citation = manager.query_citations(author=author)
+    edges = manager.query_edges(citation=citation)
     return jsonify(edges)
 
 
@@ -1239,19 +1229,17 @@ def edges_by_annotation(annotation, value):
     tags:
         - annotation
     """
-    edges = api.query_edges(annotations={annotation: value})
+    edges = manager.query_edges(annotations={annotation: value})
     return jsonify(edges)
 
 
-def get_edge_entry(edge_hash):
+def get_edge_entry(edge):
     """Gets edge information by edge identifier
 
-    :param int edge_hash: The identifier of a given edge
+    :param Edge edge: The  given edge
     :return: A dictionary representing the information about the given edge
     :rtype: dict
     """
-    edge = manager.get_edge_by_hash(edge_hash)
-
     data = edge.to_json()
 
     data['comments'] = [
@@ -1283,8 +1271,8 @@ def get_all_edges():
         - edge
     """
     return jsonify([
-        get_edge_entry(edge_id)
-        for edge_id in api.eid_edge
+        get_edge_entry(edge)
+        for edge in manager.session.query(Edge).all()
     ])
 
 
@@ -1357,6 +1345,10 @@ def store_comment(edge_id):
 # NODES
 ####################################
 
+def jsonify_nodes(nodes):
+    return jsonify(node.to_json(include_id=True) for node in nodes)
+
+
 @api_blueprint.route('/api/node/by_bel/<bel>', methods=['GET'])
 def nodes_by_bel(bel):
     """Gets all nodes that match the given BEL
@@ -1365,8 +1357,8 @@ def nodes_by_bel(bel):
     tags:
         - node
     """
-    nodes = api.query_nodes(bel=bel)
-    return jsonify(nodes)
+    nodes = manager.query_nodes(bel=bel)
+    return jsonify_nodes(nodes)
 
 
 @api_blueprint.route('/api/node/by_name/<name>', methods=['GET'])
@@ -1377,8 +1369,8 @@ def nodes_by_name(name):
     tags:
         - node
     """
-    nodes = api.query_nodes(name=name)
-    return jsonify(nodes)
+    nodes = manager.query_nodes(name=name)
+    return jsonify_nodes(nodes)
 
 
 @api_blueprint.route('/api/namespace/<namespace>/nodes', methods=['GET'])
@@ -1389,8 +1381,8 @@ def nodes_by_namespace(namespace):
     tags:
         - namespace
     """
-    nodes = api.query_nodes(namespace=namespace)
-    return jsonify(nodes)
+    nodes = manager.query_nodes(namespace=namespace)
+    return jsonify_nodes(nodes)
 
 
 @api_blueprint.route('/api/namespace/<namespace>/name/<name>/nodes', methods=['GET'])
@@ -1401,8 +1393,8 @@ def nodes_by_namespace_name(namespace, name):
     tags:
         - namespace
     """
-    nodes = api.query_nodes(namespace=namespace, name=name)
-    return jsonify(nodes)
+    nodes = manager.query_nodes(namespace=namespace, name=name)
+    return jsonify_nodes(nodes)
 
 
 @api_blueprint.route('/api/node')
@@ -1415,11 +1407,8 @@ def get_all_nodes():
         - node
     """
     return jsonify([
-        {
-            'id': nid,
-            'node': node
-        }
-        for nid, node in api.nid_node.items()
+        node.to_json(include_id=True)
+        for node in manager.session.query(Node).all()
     ])
 
 
@@ -1492,10 +1481,7 @@ def drop_query_by_id(query_id):
     tags:
         - query
     """
-    query = get_query_or_404(query_id)
-
-    if not (current_user.is_admin or query.user_id == current_user.id):
-        abort(403, 'Unauthorized user')
+    query = safe_get_query(query_id)
 
     manager.session.delete(query)
     manager.session.commit()
@@ -1544,10 +1530,7 @@ def query_to_network(query_id):
     tags:
         - query
     """
-    query = get_query_or_404(query_id)
-
-    if not user_has_query_rights(current_user, query):
-        abort(403, 'Insufficient rights to access query {}'.format(query_id))
+    query = safe_get_query(query_id)
 
     rv = query.data.to_json()
     rv['id'] = query.id
@@ -1570,10 +1553,7 @@ def get_query_parent(query_id):
     tags:
         - query
     """
-    query = get_query_or_404(query_id)
-
-    if not user_has_query_rights(current_user, query):
-        abort(403, 'Insufficient rights to access query {}'.format(query_id))
+    query = safe_get_query(query_id)
 
     if not query.parent:
         return jsonify({
@@ -1595,10 +1575,7 @@ def get_query_oldest_ancestry(query_id):
     tags:
         - query
     """
-    query = get_query_or_404(query_id)
-
-    if not user_has_query_rights(current_user, query):
-        abort(403, 'Insufficient rights to access query {}'.format(query_id))
+    query = safe_get_query(query_id)
 
     ancestor_id = get_query_ancestor_id(query.id)
 
@@ -1766,10 +1743,7 @@ def get_all_users():
         - user
     """
     return jsonify([
-        {
-            'id': user.id,
-            'email': user.email
-        }
+        user.to_json(include_id=True)
         for user in manager.session.query(User).all()
     ])
 
@@ -1783,10 +1757,7 @@ def get_current_user():
     tags:
         - user
     """
-    return jsonify({
-        'id': current_user.id,
-        'email': current_user.email
-    })
+    return jsonify(current_user.to_json())
 
 
 @api_blueprint.route('/api/user/<user>/add_role/<role>')
@@ -2259,22 +2230,13 @@ def list_all_network_overview():
 def universe_summary():
     """Renders the graph summary page"""
 
-    graph = api.universe
-
     chart_data = {
-        'entities': count_functions(graph),
-        'relations': count_relations(graph),
-        'modifiers': {
-            'Translocations': len(get_translocated(graph)),
-            'Degradations': len(get_degradations(graph)),
-            'Molecular Activities': len(get_activities(graph))
-        },
-        'variants': count_variants(graph),
-        'namespaces': count_namespaces(graph),
-        'citations_years': count_citation_years(graph),
-        'info': info_json(graph)
+        'networks': manager.count_networks(),
+        'entities': manager.count_nodes(),
+        'relations': manager.count_edges(),
+        'namespaces': manager.count_namespaces(),
+        'annotations': manager.count_annotations(),
+        # TODO count variants, transformations, modifications, degradation, etc
     }
-
-    chart_data['networks'] = {'count': manager.count_networks()},
 
     return jsonify(**chart_data)

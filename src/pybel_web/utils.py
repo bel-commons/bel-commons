@@ -777,10 +777,9 @@ def next_or_jsonify(message, *args, status=200, category='message', **kwargs):
     """Neatly wraps a redirect to a new URL if the ``next`` argument is set in the request otherwise sends JSON
     feedback.
 
-    :param str message:
-    :param int status:
-    :param str category:
-    :param dict kwargs:
+    :param str message: The message to send
+    :param int status: The status to send
+    :param str category: An optional category for the :func:`flask.flash`
     :return: A Flask Response object
     """
     if args:
