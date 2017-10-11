@@ -1672,17 +1672,6 @@ def add_pipeline_entry(query_id, name, *args, **kwargs):
     q = query.data
     q.pipeline.append(name, *args, **kwargs)
 
-    try:
-        result = q.run(api)
-    except Exception as e:
-        return jsonify(
-            status=400,
-            query_id=query_id,
-            args=args,
-            kwargs=kwargs,
-            exception=str(e)
-        )
-
     qo = models.Query(
         assembly=query.assembly,
         seeding=json.dumps(q.seeds), # TODO replace with q.seeding_to_jsons()?
