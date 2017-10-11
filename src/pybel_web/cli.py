@@ -123,7 +123,7 @@ def main():
 @click.option('-v', '--debug', count=True, help="Turn on debugging. More v's, more debugging")
 @click.option('--config', type=click.File('r'), help='Additional configuration in a JSON file')
 @click.option('--with-gunicorn', is_flag=True)
-@click.option('-w', '--workers', type=int, default=number_of_workers(), doc='Number of workers')
+@click.option('-w', '--workers', type=int, default=number_of_workers(), help='Number of workers')
 def run(host, port, default_config, debug, config, with_gunicorn, workers):
     """Runs PyBEL Web"""
     set_debug_param(debug)
