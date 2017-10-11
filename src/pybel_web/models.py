@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 
-import codecs
 import datetime
 import json
-from operator import attrgetter
 
+import codecs
 from flask_security import RoleMixin, UserMixin
+from operator import attrgetter
 from six.moves.cPickle import dumps, loads
 from sqlalchemy import (
     Boolean, Column, DateTime, Float, ForeignKey, Index, Integer, LargeBinary, String, Table, Text,
@@ -33,6 +33,7 @@ PROJECT_NETWORK_TABLE_NAME = 'pybel_project_network'
 USER_NETWORK_TABLE_NAME = 'pybel_user_network'
 COMMENT_TABLE_NAME = 'pybel_comment'
 VOTE_TABLE_NAME = 'pybel_vote'
+OVERLAP_TABLE_NAME = 'pybel_overlap'
 
 
 class Experiment(Base):
@@ -649,3 +650,16 @@ class EdgeComment(Base):
             },
             'comment': self.comment
         }
+
+
+class NetworkOverlap(Base):
+    """Describes the network overlap based on nodes"""
+    __tablename__ = OVERLAP_TABLE_NAME
+
+    left_id = Column(Integer, ForeignKey('{}.id'.format(NETWORK_TABLE_NAME)), primary_key=True)
+    left = relationship('Network', foreign_keys=[left_id], backref=backref('overlaps', lazy='dynamic'))
+
+    right_id = Column(Integer, ForeignKey('{}.id'.format(NETWORK_TABLE_NAME)), primary_key=True)
+    right = relationship('Network', foreign_keys=[right_id])
+
+    overlap = Column(Float, nullable=False, doc='The node overlap between the two networks')

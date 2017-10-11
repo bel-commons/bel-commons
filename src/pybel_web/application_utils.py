@@ -4,51 +4,25 @@ import datetime
 import logging
 from itertools import chain
 
-from flask import g, render_template, redirect, request
+from flask import g, redirect, render_template, request
 from flask_admin import Admin
 from flask_admin.contrib.sqla.ajax import QueryAjaxModelLoader
 from flask_admin.model.ajax import DEFAULT_PAGE_SIZE
-from flask_security import SQLAlchemyUserDatastore, url_for_security, current_user
+from flask_security import SQLAlchemyUserDatastore, current_user, url_for_security
 from raven.contrib.flask import Sentry
 from sqlalchemy import or_
 
-from pybel.manager.models import (
-    Edge,
-    Node,
-    Citation,
-    Evidence,
-    Author,
-    Network,
-    Namespace,
-    Annotation
-)
-from pybel_tools.api import DatabaseService
-from pybel_tools.mutation import expand_nodes_neighborhoods, expand_node_neighborhood
-from pybel_tools.pipeline import uni_in_place_mutator, in_place_mutator
+from pybel.manager.models import Annotation, Author, Citation, Edge, Evidence, Namespace, Network, Node
+from pybel_tools.mutation import expand_node_neighborhood, expand_nodes_neighborhoods
+from pybel_tools.pipeline import in_place_mutator, uni_in_place_mutator
 from .admin_utils import (
-    ModelViewBase,
-    ModelView,
-    UserView,
-    NetworkView,
-    NodeView,
-    CitationView,
-    EdgeView,
-    EvidenceView,
-    ExperimentView,
-    ReportView,
+    CitationView, EdgeView, EvidenceView, ExperimentView, ModelView, ModelViewBase, NetworkView,
+    NodeView, ReportView, UserView,
 )
-from .constants import CHARLIE_EMAIL, DANIEL_EMAIL, ALEX_EMAIL
+from .constants import ALEX_EMAIL, CHARLIE_EMAIL, DANIEL_EMAIL
 from .models import (
-    Base,
-    Role,
+    Assembly, Base, EdgeComment, EdgeVote, Experiment, NetworkOverlap, Project, Query, Report, Role,
     User,
-    Report,
-    Experiment,
-    Query,
-    Assembly,
-    Project,
-    EdgeVote,
-    EdgeComment
 )
 
 log = logging.getLogger(__name__)
@@ -74,6 +48,7 @@ def build_network_ajax_manager(manager, user_datastore):
     :param flask_security.SQLAlchemyUserDatastore user_datastore: A flask security user datastore manager
     :rtype: QueryAjaxModelLoader
     """
+
     class NetworkAjaxModelLoader(QueryAjaxModelLoader):
         """Custom Network AJAX loader for Flask Admin"""
 
@@ -117,7 +92,6 @@ def build_network_ajax_manager(manager, user_datastore):
     return NetworkAjaxModelLoader()
 
 
-
 def build_project_view(manager, user_datastore):
     """
 
@@ -125,6 +99,7 @@ def build_project_view(manager, user_datastore):
     :param user_datastore:
     :rtype: type[ModelView]
     """
+
     class ProjectView(ModelViewBase):
         """Special view to allow users of given projects to manage them"""
 
@@ -161,6 +136,7 @@ def build_project_view(manager, user_datastore):
 
     return ProjectView
 
+
 class FlaskPyBEL:
     """Encapsulates the data needed for the PyBEL Web Application"""
 
@@ -175,7 +151,6 @@ class FlaskPyBEL:
         self.sentry = None
         self.manager = None
         self.user_datastore = None
-        self.api = None
 
         if app is not None and manager is not None:
             self.init_app(app, manager)
@@ -201,7 +176,6 @@ class FlaskPyBEL:
         except:
             log.exception('Failed to create all')
 
-        self.api = DatabaseService(manager=self.manager)
         self.user_datastore = SQLAlchemyUserDatastore(self.manager, User, Role)
 
         self.user_datastore.find_or_create_role(
@@ -235,7 +209,7 @@ class FlaskPyBEL:
             """You must not cross this error"""
             return render_template('403.html')
 
-        # register functions from API
+        # register functions with decorator
         @uni_in_place_mutator
         def expand_nodes_neighborhoods_by_ids(universe, graph, node_hashes):
             """Expands around the neighborhoods of a list of nodes by identifier
@@ -336,6 +310,7 @@ class FlaskPyBEL:
         admin.add_view(ModelView(Assembly, manager.session))
         admin.add_view(ModelView(EdgeVote, manager.session))
         admin.add_view(ModelView(EdgeComment, manager.session))
+        admin.add_view(ModelView(NetworkOverlap, manager.session))
         admin.add_view(build_project_view(self.manager, self.user_datastore)(Project, manager.session))
 
         return admin
@@ -368,15 +343,6 @@ def get_user_datastore(app):
     :rtype: flask_security.DatabaseService
     """
     return FlaskPyBEL.get_state(app).user_datastore
-
-
-def get_api(app):
-    """Gets the dictionary service from a Flask app
-
-    :param flask.Flask app: A Flask app
-    :rtype: DatabaseService
-    """
-    return FlaskPyBEL.get_state(app).api
 
 
 def get_manager(app):

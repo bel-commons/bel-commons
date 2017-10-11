@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
 
-import base64
 import datetime
 import itertools as itt
 import logging
 import pickle
 import time
-import warnings
-from collections import Counter, defaultdict
 
+import base64
 import networkx as nx
 import pandas
+import warnings
+from collections import Counter, defaultdict
 from flask import abort, current_app, flash, jsonify, redirect, render_template, request
 from flask_security import current_user
 from six import BytesIO
@@ -42,10 +42,10 @@ from pybel_tools.summary import (
     get_undefined_annotations, get_undefined_namespaces, get_unused_annotations, get_unused_list_annotation_values,
     get_unused_namespaces,
 )
-from pybel_tools.utils import prepare_c3, prepare_c3_time_series
-from .application_utils import get_api, get_manager, get_user_datastore
+from pybel_tools.utils import min_tanimoto_set_similarity, prepare_c3, prepare_c3_time_series
+from .application_utils import get_manager, get_user_datastore
 from .constants import AND, reporting_log
-from .models import EdgeVote, Experiment, Query, Report, User
+from .models import EdgeVote, Experiment, NetworkOverlap, Query, Report, User
 
 log = logging.getLogger(__name__)
 
@@ -60,14 +60,6 @@ def get_manager_proxy():
     return LocalProxy(lambda: get_manager(current_app))
 
 
-def get_api_proxy():
-    """Gets a proxy for the api from the current app
-
-    :rtype: pybel_tools.api.DatabaseService
-    """
-    return LocalProxy(lambda: get_api(current_app))
-
-
 def get_userdatastore_proxy():
     """Gets a proxy for the user datastore from the current app
 
@@ -77,7 +69,6 @@ def get_userdatastore_proxy():
 
 
 manager = get_manager_proxy()
-api = get_api_proxy()
 user_datastore = get_userdatastore_proxy()
 
 
@@ -91,7 +82,7 @@ def sanitize_list_of_str(l):
 
 
 def get_top_overlaps(network_id, number=10):
-    overlap_counter = api.get_node_overlap(network_id)
+    overlap_counter = get_node_overlaps(network_id)
     allowed_network_ids = get_network_ids_with_permission_helper(current_user, manager)
     overlaps = [
         (manager.get_network_by_id(network_id), v)
@@ -864,3 +855,43 @@ def relabel_nodes_to_hashes(graph, copy=False):
     graph.graph['PYBEL_RELABELED'] = True
 
     return graph
+
+
+def get_node_overlaps(network_id):
+    """Calculates overlaps to all other networks in the database
+
+    :param int network_id: The network database identifier
+    :return: A dictionary from {int network_id: float similarity} for this network to all other networks
+    :rtype: collections.Counter[int,float]
+    """
+    t = time.time()
+
+    network = manager.get_network_by_id(network_id)
+    nodes = set(node.id for node in network.nodes)
+
+    rv = Counter({
+        ol.right.id: ol.overlap
+        for ol in network.overlaps
+    })
+
+    for other_network in manager.list_recent_networks():
+        if other_network.id == network_id:
+            continue
+
+        if other_network.id in rv:
+            continue
+
+        other_network_nodes = set(node.id for node in other_network.nodes)
+
+        overlap = min_tanimoto_set_similarity(nodes, other_network_nodes)
+
+        rv[other_network.id] = overlap
+
+        no = NetworkOverlap(left=network, right=other_network, overlap=overlap)
+        manager.session.add(no)
+
+    manager.session.commit()
+
+    log.debug('Cached node overlaps for network %s in %.2f seconds', network_id, time.time() - t)
+
+    return rv

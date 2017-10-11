@@ -4,19 +4,19 @@ import json
 import logging
 import pickle
 import time
-from operator import itemgetter
 
 import flask
 import pandas
-from flask import current_app, redirect, url_for, render_template, Blueprint, abort
-from flask_security import login_required, current_user
+from flask import Blueprint, abort, current_app, redirect, render_template, url_for
+from flask_security import current_user, login_required
+from operator import itemgetter
 
 from pybel.constants import PYBEL_CONNECTION
 from pybel_tools.analysis.cmpa import RESULT_LABELS
 from .celery_utils import create_celery
 from .forms import DifferentialGeneExpressionForm
 from .models import Experiment, Query
-from .utils import manager, safe_get_query, get_network_ids_with_permission_helper, api
+from .utils import get_network_ids_with_permission_helper, manager, safe_get_query
 
 log = logging.getLogger(__name__)
 

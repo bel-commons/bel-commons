@@ -43,8 +43,8 @@ from .main_service import BLACK_LIST, PATHS_METHOD, UNDIRECTED
 from .models import EdgeComment, Experiment, Project, Report, User
 from .send_utils import serve_network
 from .utils import (
-    api, current_user_has_query_rights, get_edge_or_404, get_network_ids_with_permission_helper,
-    get_node_by_hash_or_404, get_or_create_vote, get_query_ancestor_id, get_recent_reports, manager,
+    current_user_has_query_rights, get_edge_or_404, get_network_ids_with_permission_helper,
+    get_node_by_hash_or_404, get_node_overlaps, get_or_create_vote, get_query_ancestor_id, get_recent_reports, manager,
     next_or_jsonify, relabel_nodes_to_hashes, safe_get_query, user_datastore, user_owns_network_or_403,
 )
 
@@ -61,7 +61,7 @@ def get_graph_from_request(query_id):
     :rtype: Optional[pybel.BELGraph]
     """
     query = safe_get_query(query_id)
-    return query.run(api)
+    return query.run(manager)
 
 
 @api_blueprint.route('/api/receive', methods=['POST'])
@@ -546,7 +546,6 @@ def drop_network_helper(network_id):
         manager.session.delete(network)
         manager.session.commit()
 
-        api.forget_network(network_id)
     except Exception as e:
         manager.session.rollback()
 
@@ -606,8 +605,6 @@ def drop_networks():
 
     for network_id, in manager.session.query(Network.id).all():
         drop_network_helper(network_id)
-
-    api.clear()
 
     return next_or_jsonify('Dropped all networks')
 
@@ -2194,7 +2191,7 @@ def list_all_network_overview():
     for source_network in manager.list_networks():
         source_network_id = source_network.id
         source_bel_graph = manager.get_graph_by_id(source_network_id)
-        overlap = api.get_node_overlap(source_network_id)
+        overlap = get_node_overlaps(source_network_id)
 
         node_elements.append({
             'data': {
