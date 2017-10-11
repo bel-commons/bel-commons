@@ -847,7 +847,7 @@ def make_network_private(network_id):
 # NETWORK QUERIES
 ####################################
 
-@lru_cache(maxsize=32)
+@lru_cache(maxsize=64)
 def get_tree_from_query(query_id):
     """Gets the tree json for a givennetwork
 
