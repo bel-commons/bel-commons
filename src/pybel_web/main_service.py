@@ -72,13 +72,6 @@ def build_dictionary_service_admin(app):
         manager.session.rollback()
         return next_or_jsonify('rolled back')
 
-    @app.route('/admin/enrich')
-    @roles_required('admin')
-    def run_enrich_authors():
-        """Enriches information in network. Be patient"""
-        enrich_pubmed_citations(api.universe)
-        return next_or_jsonify('enriched authors')
-
     @app.route('/admin/nuke/')
     @roles_required('admin')
     def nuke():
