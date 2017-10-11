@@ -1182,7 +1182,7 @@ def suggest_authors():
     if not q:
         return jsonify([])
 
-    authors = manager.session.query(Author.name).filter(Author.name.contains(q))
+    authors = manager.session.query(Author).filter(Author.name.contains(q)).all()
 
     return jsonify([
         {
