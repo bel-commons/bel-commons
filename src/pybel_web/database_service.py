@@ -855,6 +855,10 @@ def get_tree_from_query(query_id):
     :rtype: dict
     """
     graph = get_graph_from_request(query_id)
+
+    if graph is None:
+        return
+
     return get_tree_annotations(graph)
 
 
@@ -872,7 +876,19 @@ def get_tree_api(query_id):
         required: true
         type: integer
     """
-    rv = get_tree_from_query(query_id)
+
+    rv = {
+        'query': query_id
+    }
+
+    tree = get_tree_from_query(query_id)
+
+    if tree is not None:
+        rv['status'] = True
+        rv['payload'] = tree
+    else:
+        rv['status'] = False
+
     return jsonify(rv)
 
 
@@ -1090,8 +1106,19 @@ def get_query_summary(query_id):
     tags:
         - query
     """
+    rv = {
+        'query': query_id
+    }
+
     network = get_graph_from_request(query_id)
-    return jsonify(info_json(network))
+
+    if network is not None:
+        rv['status'] = True
+        rv['payload'] = info_json(network)
+    else:
+        rv['status'] = False
+
+    return jsonify(rv)
 
 
 ####################################
