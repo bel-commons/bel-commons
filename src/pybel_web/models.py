@@ -148,6 +148,22 @@ class Report(Base):
     def failed(self):
         return self.completed is not None and not self.completed
 
+    def as_info_json(self):
+        """Returns this object as a JSON summary
+
+        :rtype: dict
+        """
+        return dict([
+            ('Nodes', self.number_nodes),
+            ('Edges', self.number_edges),
+            ('Citations', self.number_citations),
+            ('Authors', self.number_authors),
+            ('Network density', self.network_density),
+            ('Components', self.number_components),
+            ('Average degree', self.average_degree),
+            ('Compilation warnings', self.number_warnings)
+        ])
+
     def __repr__(self):
         if self.incomplete:
             return '<Report {}: incomplete {}>'.format(self.id, self.source_name)

@@ -6,8 +6,10 @@ import itertools as itt
 import logging
 import pickle
 import time
-from collections import defaultdict
+import warnings
+from collections import Counter, defaultdict
 
+import networkx as nx
 import pandas
 from flask import abort, current_app, flash, jsonify, redirect, render_template, request
 from flask_security import current_user
@@ -16,7 +18,7 @@ from sqlalchemy import func
 from werkzeug.local import LocalProxy
 
 import pybel
-from pybel.canonicalize import node_to_bel
+from pybel.canonicalize import calculate_canonical_name, node_to_bel
 from pybel.constants import GENE, RELATION
 from pybel.manager import Network
 from pybel.parser.canonicalize import node_to_tuple
@@ -34,10 +36,11 @@ from pybel_tools.generation import generate_bioprocess_mechanisms
 from pybel_tools.integration import overlay_type_data
 from pybel_tools.mutation import collapse_by_central_dogma_to_genes, rewire_variants_to_genes
 from pybel_tools.summary import (
-    count_error_types, count_functions, count_namespaces, count_relations, count_variants,
-    get_annotations, get_citation_years, get_modifications_count, get_most_common_errors, get_naked_names,
-    get_namespaces_with_incorrect_names, get_pubmed_identifiers, get_undefined_annotations, get_undefined_namespaces,
-    get_unused_annotations, get_unused_list_annotation_values, get_unused_namespaces,
+    count_error_types, count_functions, count_namespaces, count_pathologies,
+    count_relations, count_variants, get_annotations, get_citation_years, get_modifications_count,
+    get_most_common_errors, get_naked_names, get_namespaces_with_incorrect_names, get_pubmed_identifiers,
+    get_undefined_annotations, get_undefined_namespaces, get_unused_annotations, get_unused_list_annotation_values,
+    get_unused_namespaces,
 )
 from pybel_tools.utils import prepare_c3, prepare_c3_time_series
 from .application_utils import get_api, get_manager, get_user_datastore
@@ -102,6 +105,20 @@ def canonical_hash(graph, node):
     data = graph.node[node]
     canonical_node_tuple = node_to_tuple(data)
     return hash_node(canonical_node_tuple)
+
+
+def get_top_hubs(graph, count=15):
+    return {
+        calculate_canonical_name(graph, node): v
+        for node, v in Counter(graph.degree()).most_common(count)
+    }
+
+
+def count_top_pathologies(graph, count=15):
+    return {
+        calculate_canonical_name(graph, node): v
+        for node, v in count_pathologies(graph).most_common(count)
+    }
 
 
 def get_network_summary_dict(graph):
@@ -202,6 +219,8 @@ def get_network_summary_dict(graph):
         error_count=count_error_types(graph),
         modifications_count=get_modifications_count(graph),
         error_groups=get_most_common_errors(graph),
+        hub_data=get_top_hubs(graph),
+        disease_data=count_top_pathologies(graph),
     )
 
 
@@ -224,15 +243,22 @@ def render_network_summary(network_id):
             network.report.dump_calculations(er)
             manager.session.commit()
 
-
     citation_years = er['citation_years']
     function_count = er['function_count']
     relation_count = er['relation_count']
     error_count = er['error_count']
     modifications_count = er['modifications_count']
 
-    hub_data = api.get_top_degree(network_id)
-    disease_data = api.get_top_pathologies(network_id)
+    hub_data = er.get('hub_data')  # FIXME assume it's there
+
+    if not hub_data:
+        log.warning('Calculating hub data on the fly')
+        hub_data = get_top_hubs(graph)
+
+    disease_data = er.get('disease_data')  # FIXME assume it's there
+
+    if not disease_data:
+        disease_data = count_top_pathologies(graph)
 
     overlaps = get_top_overlaps(network_id)
     network_versions = manager.get_networks_by_name(graph.name)
@@ -816,3 +842,26 @@ def get_edge_or_404(edge_hash):
         abort(404, 'Edge {} not found'.format(edge_hash))
 
     return edge
+
+
+def relabel_nodes_to_hashes(graph, copy=False):
+    """Relabels nodes to hashes in the graph
+
+    :param pybel.BELGraph graph:
+    :param bool copy: Copy the graph?
+    :rtype: pybel.BELGraph
+    """
+    warnings.warn('should use the pybel implementation of this', DeprecationWarning)
+    if 'PYBEL_RELABELED' in graph.graph:
+        log.warning('%s has already been relabeled', graph.name)
+        return graph
+
+    mapping = {}
+    for node in graph:
+        mapping[node] = hash_node(node)
+
+    nx.relabel.relabel_nodes(graph, mapping, copy=copy)
+
+    graph.graph['PYBEL_RELABELED'] = True
+
+    return graph

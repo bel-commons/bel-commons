@@ -13,14 +13,12 @@ from flask_cors import cross_origin
 from pybel import from_url
 from pybel.struct import union
 from pybel_tools.selection import (
-    get_subgraph_by_annotations,
-    get_subgraph_by_edge_filter,
-    search_node_names,
-    get_subgraph_by_neighborhood
+    get_subgraph_by_annotations, get_subgraph_by_edge_filter,
+    get_subgraph_by_neighborhood, search_node_names,
 )
 from .graph_utils import build_annotation_search_filter
 from .send_utils import serve_network
-from .utils import manager, api
+from .utils import manager, relabel_nodes_to_hashes
 
 log = logging.getLogger(__name__)
 
@@ -72,7 +70,7 @@ def get_neurommsigs():
 
     network = get_subgraph_by_annotations(alzheimers_network, {'Subgraph': subgraph_annotations}, True)
 
-    network = api.relabel_nodes_to_identifiers(network)
+    network = relabel_nodes_to_hashes(network)
 
     return serve_network(network)
 
@@ -90,7 +88,7 @@ def get_mozg_query(network_id):
     values = request.args.getlist('value[]')
     log.debug('Values: %s', values)
 
-    graph = api.get_graph_by_id(network_id)
+    graph = manager.get_graph_by_id(network_id)
     nodes = search_node_names(graph, values)
     neighborhoods = get_subgraph_by_neighborhood(graph, nodes)
 
@@ -98,5 +96,5 @@ def get_mozg_query(network_id):
 
     result = neighborhoods + filtered_graph
 
-    network = api.relabel_nodes_to_identifiers(result)
+    network = relabel_nodes_to_hashes(result)
     return serve_network(network)

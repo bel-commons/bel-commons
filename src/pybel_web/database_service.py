@@ -7,22 +7,13 @@ import json
 import logging
 import pickle
 import time
+from functools import lru_cache
+from operator import itemgetter
 
 import flask
 import networkx as nx
-from flask import (
-    Blueprint,
-    make_response,
-    flash,
-    current_app,
-    jsonify,
-    redirect,
-    request,
-    abort,
-)
-from flask_security import roles_required, login_required, current_user
-from functools import lru_cache
-from operator import itemgetter
+from flask import Blueprint, abort, current_app, flash, jsonify, make_response, redirect, request
+from flask_security import current_user, login_required, roles_required
 from six import StringIO
 from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
@@ -32,74 +23,31 @@ from pybel.constants import (
     METADATA_AUTHORS,
     METADATA_CONTACT,
     METADATA_NAME,
-    NAMESPACE_DOMAIN_OTHER
+    NAMESPACE_DOMAIN_OTHER,
 )
-from pybel.manager.models import (
-    Namespace,
-    Annotation,
-    AnnotationEntry,
-    Network,
-    Citation,
-    Author,
-    Node
-)
+from pybel.manager.models import Annotation, AnnotationEntry, Author, Citation, Namespace, Network, Node
 from pybel.utils import hash_node
 from pybel_tools import pipeline
 from pybel_tools.analysis.cmpa import RESULT_LABELS
-from pybel_tools.definition_utils import write_namespace, write_annotation
+from pybel_tools.definition_utils import write_annotation, write_namespace
 from pybel_tools.filters.node_filters import exclude_pathology_filter
 from pybel_tools.query import Query
 from pybel_tools.selection import get_subgraph_by_annotations, get_subgraph_by_node_filter
 from pybel_tools.summary import (
-    count_functions,
-    count_relations,
-    get_translocated,
-    get_degradations,
-    get_activities,
-    count_namespaces,
-    info_json,
-    info_list,
-    get_authors,
-    get_pubmed_identifiers,
-    get_undefined_namespace_names,
-    get_incorrect_names_by_namespace,
-    get_naked_names,
-    count_citation_years,
-    count_variants,
-    get_tree_annotations,
+    count_citation_years, count_functions, count_namespaces, count_relations,
+    count_variants, get_activities, get_authors, get_degradations, get_incorrect_names_by_namespace, get_naked_names,
+    get_pubmed_identifiers, get_translocated, get_tree_annotations, get_undefined_namespace_names, info_json, info_list,
 )
 from . import models
 from .constants import *
-from .main_service import (
-    PATHS_METHOD,
-    UNDIRECTED,
-    BLACK_LIST
-)
-from .models import (
-    Report,
-    User,
-    Experiment,
-    Project,
-    EdgeComment,
-
-)
+from .main_service import BLACK_LIST, PATHS_METHOD, UNDIRECTED
+from .models import EdgeComment, Experiment, Project, Report, User
 from .send_utils import serve_network
 from .utils import (
-    get_recent_reports,
-    manager,
-    api,
-    user_datastore,
-    get_query_ancestor_id,
-    get_network_ids_with_permission_helper,
-    user_has_query_rights,
-    current_user_has_query_rights,
-    safe_get_query,
-    get_or_create_vote,
-    next_or_jsonify,
+    api, current_user_has_query_rights, get_edge_or_404, get_network_ids_with_permission_helper,
+    get_node_by_hash_or_404, get_or_create_vote, get_query_ancestor_id, get_query_or_404, get_recent_reports, manager,
+    next_or_jsonify, relabel_nodes_to_hashes, safe_get_query, user_datastore, user_has_query_rights,
     user_owns_network_or_403,
-    get_node_by_hash_or_404,
-    get_query_or_404,
-    get_edge_or_404,
 )
 
 log = logging.getLogger(__name__)
@@ -255,7 +203,7 @@ def download_undefined_namespace(network_id, namespace):
       - name: namespace
         in: path
     """
-    graph = api.get_graph_by_id(network_id)
+    graph = manager.get_graph_by_id(network_id)
     names = get_undefined_namespace_names(graph, namespace)  # TODO put into report data
     return _build_namespace_helper(graph, namespace, names)
 
@@ -278,7 +226,7 @@ def download_missing_namespace(network_id, namespace):
       - name: namespace
         in: path
     """
-    graph = api.get_graph_by_id(network_id)
+    graph = manager.get_graph_by_id(network_id)
     names = get_incorrect_names_by_namespace(graph, namespace)  # TODO put into report data
     return _build_namespace_helper(graph, namespace, names)
 
@@ -291,7 +239,7 @@ def download_naked_names(network_id):
     tags:
         - network
     """
-    graph = api.get_graph_by_id(network_id)
+    graph = manager.get_graph_by_id(network_id)
     names = get_naked_names(graph)  # TODO put into report data
     return _build_namespace_helper(graph, 'NAKED', names)
 
@@ -339,7 +287,7 @@ def download_list_annotation(network_id, annotation):
       - name: annotation
         in: path
     """
-    graph = api.get_graph_by_id(network_id)
+    graph = manager.get_graph_by_id(network_id)
 
     if annotation not in graph.annotation_list:
         abort(400, 'Graph does not contain this list annotation')
@@ -732,7 +680,7 @@ def export_network(network_id, serve_format):
     if network_id not in network_ids:
         abort(403, 'You do not have permission to download the selected network')
 
-    graph = api.get_graph_by_id(network_id)
+    graph = manager.get_graph_by_id(network_id)
 
     return serve_network(graph, serve_format)
 
@@ -754,9 +702,8 @@ def get_graph_info_json(network_id):
       200:
         description: A summary of the network
     """
-    graph = api.get_graph_by_id(network_id)
-    rv = info_json(graph)
-    return jsonify(rv)
+    network = manager.get_network_by_id(network_id)
+    return jsonify(network.report.as_info_json())
 
 
 @api_blueprint.route('/api/network/<int:network_id>/name')
@@ -963,7 +910,7 @@ def get_network(query_id):
         type: integer
     """
     graph = get_graph_from_request(query_id)
-    relabeled_graph = api.relabel_nodes_to_identifiers(graph)
+    relabeled_graph = relabel_nodes_to_hashes(graph)
     return serve_network(relabeled_graph)
 
 
@@ -1674,7 +1621,7 @@ def add_pipeline_entry(query_id, name, *args, **kwargs):
 
     qo = models.Query(
         assembly=query.assembly,
-        seeding=json.dumps(q.seeds), # TODO replace with q.seeding_to_jsons()?
+        seeding=json.dumps(q.seeds),  # TODO replace with q.seeding_to_jsons()?
         pipeline_protocol=q.pipeline.to_jsons(),
         dump=q.to_jsons(),
         parent_id=query_id,
@@ -2275,7 +2222,7 @@ def list_all_network_overview():
 
     for source_network in manager.list_networks():
         source_network_id = source_network.id
-        source_bel_graph = api.get_graph_by_id(source_network_id)
+        source_bel_graph = manager.get_graph_by_id(source_network_id)
         overlap = api.get_node_overlap(source_network_id)
 
         node_elements.append({
