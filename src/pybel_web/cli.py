@@ -123,7 +123,8 @@ def main():
 @click.option('-v', '--debug', count=True, help="Turn on debugging. More v's, more debugging")
 @click.option('--config', type=click.File('r'), help='Additional configuration in a JSON file')
 @click.option('--with-gunicorn', is_flag=True)
-def run(host, port, default_config, debug, config, with_gunicorn):
+@click.option('-w', '--workers', type=int, default=number_of_workers(), doc='Number of workers')
+def run(host, port, default_config, debug, config, with_gunicorn, workers):
     """Runs PyBEL Web"""
     set_debug_param(debug)
     if debug < 3:
@@ -166,7 +167,7 @@ def run(host, port, default_config, debug, config, with_gunicorn):
     if with_gunicorn:
         gunicorn_app = StandaloneApplication(app, {
             'bind': '%s:%s' % (host, port),
-            'workers': number_of_workers(),
+            'workers': workers,
         })
         gunicorn_app.run()
 
