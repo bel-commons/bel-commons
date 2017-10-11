@@ -245,45 +245,45 @@ class FlaskPyBEL:
 
         # register functions from API
         @uni_in_place_mutator
-        def expand_nodes_neighborhoods_by_ids(universe, graph, node_ids):
+        def expand_nodes_neighborhoods_by_ids(universe, graph, node_hashes):
             """Expands around the neighborhoods of a list of nodes by identifier
 
             :param pybel.BELGraph universe: A BEL graph
             :param pybel.BELGraph graph: A BEL graph
-            :param list node_ids: A list of node hashes
+            :param list node_hashes: A list of node hashes
             """
-            nodes = self.api.get_nodes_by_hashes(node_ids)
+            nodes = self.api.get_node_tuples_by_hashes(node_hashes)
             return expand_nodes_neighborhoods(universe, graph, nodes)
 
         @uni_in_place_mutator
-        def expand_node_neighborhood_by_id(universe, graph, node_id):
+        def expand_node_neighborhood_by_id(universe, graph, node_hash):
             """Expands around the neighborhoods of a node by identifier
 
             :param pybel.BELGraph universe: A BEL graph
             :param pybel.BELGraph graph: A BEL graph
-            :param node_id: The node hash
+            :param node_hash: The node hash
             """
-            node = self.api.get_node_tuple_by_hash(node_id)
+            node = self.api.get_node_tuple_by_hash(node_hash)
             return expand_node_neighborhood(universe, graph, node)
 
         @in_place_mutator
-        def delete_nodes_by_ids(graph, node_ids):
+        def delete_nodes_by_ids(graph, node_hashes):
             """Removes a list of nodes by identifier
 
             :param pybel.BELGraph graph: A BEL graph
-            :param list node_ids: A list of node hashes
+            :param list node_hashes: A list of node hashes
             """
-            nodes = self.api.get_nodes_by_hashes(node_ids)
+            nodes = self.manager.get_node_tuples_by_hashes(node_hashes)
             graph.remove_nodes_from(nodes)
 
         @in_place_mutator
-        def delete_node_by_id(graph, node_id):
+        def delete_node_by_id(graph, node_hash):
             """Removes a node by identifier
 
             :param pybel.BELGraph graph: A BEL graph
-            :param node_id: A node hash
+            :param node_hash: A node hash
             """
-            node = self.api.get_node_tuple_by_hash(node_id)
+            node = self.manager.get_node_tuple_by_hash(node_hash)
             graph.remove_node(node)
 
         self._prepare_service()

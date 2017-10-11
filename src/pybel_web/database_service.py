@@ -1009,8 +1009,8 @@ def get_paths(query_id, source_id, target_id):
 
     cutoff = request.args.get('cutoff', 7)
 
-    source = api.get_node_tuple_by_hash(source_id)
-    target = api.get_node_tuple_by_hash(target_id)
+    source = manager.get_node_tuple_by_hash(source_id)
+    target = manager.get_node_tuple_by_hash(target_id)
 
     log.info('Source: %s, target: %s', source, target)
 

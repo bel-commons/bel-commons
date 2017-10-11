@@ -80,7 +80,7 @@ from .models import (
     Report,
     Experiment,
     Query,
-    EdgeVote
+    EdgeVote,
 )
 
 log = logging.getLogger(__name__)
@@ -453,7 +453,11 @@ def convert_seed_value(key, form, value):
     elif key in {'pubmed', 'authors'}:
         return form.getlist(value)
     else:
-        return api.get_nodes_by_hashes(form.getlist(value))
+        node_hashes = form.getlist(value)
+        return [
+            manager.get_node_tuple_by_hash(node_hash)
+            for node_hash in node_hashes
+        ]
 
 
 def query_form_to_dict(form):
