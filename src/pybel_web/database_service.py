@@ -1575,17 +1575,17 @@ def query_to_network(query_id):
     if not user_has_query_rights(current_user, query):
         abort(403, 'Insufficient rights to access query {}'.format(query_id))
 
-    j = query.data.to_json()
-    j['id'] = query.id
-    j['creator'] = str(query.user)
+    rv = query.data.to_json()
+    rv['id'] = query.id
+    rv['creator'] = str(query.user)
 
-    network_ids = j['network_ids']
-    j['networks'] = [
+    network_ids = rv['network_ids']
+    rv['networks'] = [
         str(graph)
         for graph in api.get_graphs_by_ids(network_ids)
     ]
 
-    return jsonify(j)
+    return jsonify(rv)
 
 
 @api_blueprint.route('/api/query/<int:query_id>/parent', methods=['GET'])
