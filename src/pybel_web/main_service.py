@@ -16,12 +16,12 @@ from flask import (
     send_file,
     flash,
     render_template,
-    abort
+    abort,
 )
 from flask_security import (
     roles_required,
     current_user,
-    login_required
+    login_required,
 )
 
 import pybel_tools.query
@@ -46,7 +46,7 @@ from .utils import (
     get_networks_with_permission,
     safe_get_query,
     next_or_jsonify,
-    query_form_to_dict
+    query_form_to_dict,
 )
 
 log = logging.getLogger(__name__)
@@ -197,14 +197,7 @@ def build_main_service(app):
         if network_id not in get_network_ids_with_permission_helper(current_user, manager):
             abort(403, 'Insufficient rights for network {}'.format(network_id))
 
-        try:
-            network = manager.get_network_by_id(network_id)
-            graph = from_bytes(network.blob, check_version=current_app.config.get('PYBEL_DS_CHECK_VERSION'))
-        except Exception as e:
-            flash("Problem getting graph {}: ({}) {}".format(network_id, type(e), e), category='error')
-            return redirect(url_for('view_networks'))
-
-        return render_network_summary(network_id, graph)
+        return render_network_summary(network_id)
 
     @app.route('/network/<int:network_id>/induction-query/')
     def build_summary_link_query(network_id):

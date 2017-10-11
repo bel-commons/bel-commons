@@ -1,31 +1,22 @@
 # -*- coding: utf-8 -*-
 
+import codecs
 import datetime
 import json
-
-import codecs
-from flask_security import RoleMixin, UserMixin
 from operator import attrgetter
+
+from flask_security import RoleMixin, UserMixin
+from six.moves.cPickle import loads
 from sqlalchemy import (
-    Column,
-    Integer,
-    ForeignKey,
-    DateTime,
-    Boolean,
-    Text,
-    Table,
-    String,
-    Index,
-    LargeBinary,
+    Boolean, Column, DateTime, Float, ForeignKey, Index, Integer, LargeBinary, String, Table, Text,
     UniqueConstraint,
-    Float,
 )
-from sqlalchemy.orm import relationship, backref
+from sqlalchemy.orm import backref, relationship
 
 import pybel_tools.query
 from pybel import from_lines
 from pybel.manager import Base
-from pybel.manager.models import LONGBLOB, NETWORK_TABLE_NAME, Network, EDGE_TABLE_NAME
+from pybel.manager.models import EDGE_TABLE_NAME, LONGBLOB, NETWORK_TABLE_NAME, Network
 from pybel.struct import union
 
 EXPERIMENT_TABLE_NAME = 'pybel_experiment'
@@ -134,6 +125,13 @@ class Report(Base):
             allow_nested=self.allow_nested,
             citation_clearing=self.citation_clearing,
         )
+
+    def get_calculations(self):
+        """Gets the summary calculations dictionary from this network
+
+        :rtype: dict
+        """
+        return loads(self.calculations)
 
     @property
     def incomplete(self):

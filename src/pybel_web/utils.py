@@ -1,23 +1,15 @@
 # -*- coding: utf-8 -*-
 
+import base64
 import datetime
 import itertools as itt
 import logging
 import pickle
 import time
-
-import base64
-import pandas
 from collections import defaultdict
-from flask import (
-    current_app,
-    render_template,
-    abort,
-    request,
-    flash,
-    redirect,
-    jsonify,
-)
+
+import pandas
+from flask import abort, current_app, flash, jsonify, redirect, render_template, request
 from flask_security import current_user
 from six import BytesIO
 from sqlalchemy import func
@@ -25,63 +17,32 @@ from werkzeug.local import LocalProxy
 
 import pybel
 from pybel.canonicalize import node_to_bel
-from pybel.constants import RELATION, GENE
+from pybel.constants import GENE, RELATION
 from pybel.manager import Network
 from pybel.parser.canonicalize import node_to_tuple
 from pybel.struct.filters import filter_edges
 from pybel.utils import hash_node
 from pybel_tools.analysis.cmpa import calculate_average_scores_on_subgraphs as calculate_average_cmpa_on_subgraphs
 from pybel_tools.analysis.stability import (
-    get_contradiction_summary,
-    get_regulatory_pairs,
-    get_chaotic_pairs,
-    get_dampened_pairs,
+    get_chaotic_pairs, get_chaotic_triplets, get_contradiction_summary,
+    get_dampened_pairs, get_dampened_triplets, get_decrease_mismatch_triplets, get_increase_mismatch_triplets,
+    get_jens_unstable, get_mutually_unstable_correlation_triples, get_regulatory_pairs,
     get_separate_unstable_correlation_triples,
-    get_mutually_unstable_correlation_triples,
-    get_jens_unstable,
-    get_increase_mismatch_triplets,
-    get_decrease_mismatch_triplets,
-    get_chaotic_triplets,
-    get_dampened_triplets,
 )
-from pybel_tools.filters import (
-    remove_nodes_by_namespace,
-    edge_has_pathology_causal,
-    iter_undefined_families,
-)
+from pybel_tools.filters import edge_has_pathology_causal, iter_undefined_families, remove_nodes_by_namespace
 from pybel_tools.generation import generate_bioprocess_mechanisms
 from pybel_tools.integration import overlay_type_data
 from pybel_tools.mutation import collapse_by_central_dogma_to_genes, rewire_variants_to_genes
 from pybel_tools.summary import (
-    count_functions,
-    count_relations,
-    count_error_types,
-    count_namespaces,
-    get_naked_names,
-    get_pubmed_identifiers,
-    get_annotations,
-    get_unused_annotations,
-    get_unused_list_annotation_values,
-    get_undefined_namespaces,
-    get_undefined_annotations,
-    get_namespaces_with_incorrect_names,
-    info_list,
-    count_variants,
-    get_unused_namespaces,
-    get_modifications_count,
-    get_citation_years,
-    get_most_common_errors,
+    count_error_types, count_functions, count_namespaces, count_relations, count_variants,
+    get_annotations, get_citation_years, get_modifications_count, get_most_common_errors, get_naked_names,
+    get_namespaces_with_incorrect_names, get_pubmed_identifiers, get_undefined_annotations, get_undefined_namespaces,
+    get_unused_annotations, get_unused_list_annotation_values, get_unused_namespaces,
 )
 from pybel_tools.utils import prepare_c3, prepare_c3_time_series
 from .application_utils import get_api, get_manager, get_user_datastore
-from .constants import reporting_log, AND
-from .models import (
-    User,
-    Report,
-    Experiment,
-    Query,
-    EdgeVote,
-)
+from .constants import AND, reporting_log
+from .models import EdgeVote, Experiment, Query, Report, User
 
 log = logging.getLogger(__name__)
 
@@ -143,12 +104,7 @@ def canonical_hash(graph, node):
     return hash_node(canonical_node_tuple)
 
 
-def render_network_summary(network_id, graph):
-    """Renders the graph summary page
-    
-    :param int network_id: 
-    :param pybel.BELGraph graph: 
-    """
+def get_network_summary_dict(graph):
     node_bel_cache = {}
 
     def dcn(node):
@@ -193,77 +149,97 @@ def render_network_summary(network_id, graph):
             canonical_hash(graph, c_tuple)
         )
 
-    regulatory_pairs = [
-        get_pair_tuple(u, v)
-        for u, v in get_regulatory_pairs(graph)
-    ]
+    return dict(
+        regulatory_pairs=[
+            get_pair_tuple(u, v)
+            for u, v in get_regulatory_pairs(graph)
+        ],
 
-    unstable_pairs = list(itt.chain(
-        (get_pair_tuple(u, v) + ('Chaotic',) for u, v, in get_chaotic_pairs(graph)),
-        (get_pair_tuple(u, v) + ('Dampened',) for u, v, in get_dampened_pairs(graph)),
-    ))
+        unstable_pairs=list(itt.chain(
+            (get_pair_tuple(u, v) + ('Chaotic',) for u, v, in get_chaotic_pairs(graph)),
+            (get_pair_tuple(u, v) + ('Dampened',) for u, v, in get_dampened_pairs(graph)),
+        )),
 
-    contradictory_pairs = [
-        get_pair_tuple(u, v) + (relation,)
-        for u, v, relation in get_contradiction_summary(graph)
-    ]
+        contradictory_pairs=[
+            get_pair_tuple(u, v) + (relation,)
+            for u, v, relation in get_contradiction_summary(graph)
+        ],
 
-    contradictory_triplets = list(itt.chain(
-        (get_triplet_tuple(a, b, c) + ('Separate',) for a, b, c in get_separate_unstable_correlation_triples(graph)),
-        (get_triplet_tuple(a, b, c) + ('Mutual',) for a, b, c in get_mutually_unstable_correlation_triples(graph)),
-        (get_triplet_tuple(a, b, c) + ('Jens',) for a, b, c in get_jens_unstable(graph)),
-        (get_triplet_tuple(a, b, c) + ('Increase Mismatch',) for a, b, c in get_increase_mismatch_triplets(graph)),
-        (get_triplet_tuple(a, b, c) + ('Decrease Mismatch',) for a, b, c in get_decrease_mismatch_triplets(graph)),
-    ))
+        contradictory_triplets=list(itt.chain(
+            (get_triplet_tuple(a, b, c) + ('Separate',) for a, b, c in
+             get_separate_unstable_correlation_triples(graph)),
+            (get_triplet_tuple(a, b, c) + ('Mutual',) for a, b, c in get_mutually_unstable_correlation_triples(graph)),
+            (get_triplet_tuple(a, b, c) + ('Jens',) for a, b, c in get_jens_unstable(graph)),
+            (get_triplet_tuple(a, b, c) + ('Increase Mismatch',) for a, b, c in get_increase_mismatch_triplets(graph)),
+            (get_triplet_tuple(a, b, c) + ('Decrease Mismatch',) for a, b, c in get_decrease_mismatch_triplets(graph)),
+        )),
 
-    unstable_triplets = list(itt.chain(
-        (get_triplet_tuple(a, b, c) + ('Chaotic',) for a, b, c in get_chaotic_triplets(graph)),
-        (get_triplet_tuple(a, b, c) + ('Dampened',) for a, b, c in get_dampened_triplets(graph)),
-    ))
+        unstable_triplets=list(itt.chain(
+            (get_triplet_tuple(a, b, c) + ('Chaotic',) for a, b, c in get_chaotic_triplets(graph)),
+            (get_triplet_tuple(a, b, c) + ('Dampened',) for a, b, c in get_dampened_triplets(graph)),
+        )),
 
-    causal_pathologies = sorted({
-        get_pair_tuple(u, v) + (d[RELATION],)
-        for u, v, _, d in filter_edges(graph, edge_has_pathology_causal)
-    })
+        causal_pathologies=sorted({
+            get_pair_tuple(u, v) + (d[RELATION],)
+            for u, v, _, d in filter_edges(graph, edge_has_pathology_causal)
+        }),
 
-    undefined_families = [
-        (dcn(node), canonical_hash(graph, node))
-        for node in iter_undefined_families(graph, ['SFAM', 'GFAM'])
-    ]
+        undefined_families=[
+            (dcn(node), canonical_hash(graph, node))
+            for node in iter_undefined_families(graph, ['SFAM', 'GFAM'])
+        ],
 
-    undefined_namespaces = get_undefined_namespaces(graph)
-    undefined_annotations = get_undefined_annotations(graph)
-    namespaces_with_incorrect_names = get_namespaces_with_incorrect_names(graph)
-    unused_namespaces = get_unused_namespaces(graph)
-    unused_annotations = get_unused_annotations(graph)
-    unused_list_annotation_values = get_unused_list_annotation_values(graph)
-    citation_years = get_citation_years(graph)
-    naked_names = get_naked_names(graph)
-    function_count = count_functions(graph)
-    relation_count = count_relations(graph)
-    error_count = count_error_types(graph)
-    modifications_count = get_modifications_count(graph)
-    error_groups = get_most_common_errors(graph)
+        undefined_namespaces=get_undefined_namespaces(graph),
+        undefined_annotations=get_undefined_annotations(graph),
+        namespaces_with_incorrect_names=get_namespaces_with_incorrect_names(graph),
+        unused_namespaces=get_unused_namespaces(graph),
+        unused_annotations=get_unused_annotations(graph),
+        unused_list_annotation_values=get_unused_list_annotation_values(graph),
+        citation_years=get_citation_years(graph),
+        naked_names=get_naked_names(graph),
+        function_count=count_functions(graph),
+        relation_count=count_relations(graph),
+        error_count=count_error_types(graph),
+        modifications_count=get_modifications_count(graph),
+        error_groups=get_most_common_errors(graph),
+    )
+
+
+def render_network_summary(network_id):
+    """Renders the graph summary page
+    
+    :param int network_id: 
+    :param pybel.BELGraph graph: 
+    """
+    network = manager.session.query(Network).get(network_id)
+    graph = network.as_bel()
+
+    try:
+        er = network.report.get_calculations()
+    except:  # TODO remove this later
+        log.warning('Falling back to on-the-fly calculation of summary of %s', network)
+        er = get_network_summary_dict(graph)
+
+    citation_years = er['citation_years']
+    function_count = er['function_count']
+    relation_count = er['relation_count']
+    error_count = er['error_count']
+    modifications_count = er['modifications_count']
 
     hub_data = api.get_top_degree(network_id)
     disease_data = api.get_top_pathologies(network_id)
 
+    overlaps = get_top_overlaps(network_id)
+    network_versions = manager.get_networks_by_name(graph.name)
+
     return render_template(
         'summary.html',
         current_user=current_user,
-        info_list=info_list(graph),
-        network=manager.session.query(Network).get(network_id),
+        network=network,
         graph=graph,
         network_id=network_id,
-        network_versions=manager.get_networks_by_name(graph.name),
-        overlaps=get_top_overlaps(network_id),
-
-        undefined_namespaces=sorted(undefined_namespaces),
-        unused_namespaces=sorted(unused_namespaces),
-        undefined_annotations=sorted(undefined_annotations),
-        unused_annotations=sorted(unused_annotations),
-        unused_list_annotation_values=sorted(unused_list_annotation_values.items()),
-
+        network_versions=network_versions,
+        overlaps=overlaps,
         chart_1_data=prepare_c3(function_count, 'Entity Type'),
         chart_2_data=prepare_c3(relation_count, 'Relationship Type'),
         chart_3_data=prepare_c3(error_count, 'Error Type') if error_count else None,
@@ -273,16 +249,7 @@ def render_network_summary(network_id, graph):
         chart_7_data=prepare_c3(hub_data, 'Top Hubs'),
         chart_9_data=prepare_c3(disease_data, 'Pathologies') if disease_data else None,
         chart_10_data=prepare_c3_time_series(citation_years, 'Number of articles') if citation_years else None,
-        error_groups=error_groups,
-        regulatory_pairs=regulatory_pairs,
-        contradictory_pairs=contradictory_pairs,
-        unstable_pairs=unstable_pairs,
-        contradictory_triplets=contradictory_triplets,
-        unstable_triplets=unstable_triplets,
-        namespaces_with_incorrect_names=namespaces_with_incorrect_names,
-        causal_pathologies=causal_pathologies,
-        undefined_families=undefined_families,
-        naked_names=naked_names,
+        **er
     )
 
 

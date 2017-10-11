@@ -34,8 +34,8 @@
     <a id="top"></a>
     <div class="container">
         <div class="page-header">
-            <h1>Summary of {{ graph.name }}
-                <small class="text-muted">{{ graph.version }}</small>
+            <h1>Summary of {{ network.name }}
+                <small class="text-muted">{{ network.version }}</small>
             </h1>
         </div>
 
@@ -238,22 +238,22 @@
                     {% endif %}
 
                     <dt>Authors</dt>
-                    <dd>{{ graph.document['authors'] }}</dd>
+                    <dd>{{ network.authors }}</dd>
 
                     <dt>Contact</dt>
-                    <dd>{{ graph.document['contact'] }}</dd>
+                    <dd>{{ network.contact }}</dd>
 
-                    {% if graph.description %}
+                    {% if network.description %}
                         <dt>Description</dt>
 
-                        <dd>{{ graph.description }}</dd>
+                        <dd>{{ network.description }}</dd>
                     {% endif %}
 
                     <dt>License</dt>
-                    <dd>{{ graph.document['licenses'] }}</dd>
+                    <dd>{{ network.licenses }}</dd>
 
                     <dt>Copyright</dt>
-                    <dd>{{ graph.document['copyright'] }}</dd>
+                    <dd>{{ network.copyright }}</dd>
                 </dl>
             </div>
         </div>
@@ -269,10 +269,22 @@
             </div>
             <div class="panel-body">
                 <dl class="dl-horizontal">
-                    {% for key, value in info_list %}
-                        <dt>{{ key }}</dt>
-                        <dd>{{ value }}</dd>
-                    {% endfor %}
+                    <dt>Number Nodes</dt>
+                    <dd>{{ network.report.number_nodes }}</dd>
+                    <dt>Number Edges</dt>
+                    <dd>{{ network.report.number_edges }}</dd>
+                    <dt>Number Components</dt>
+                    <dd>{{ network.report.number_components }}</dd>
+                    <dt>Network Density</dt>
+                    <dd>{{ network.report.network_density }}</dd>
+                    <dt>Average Degree</dt>
+                    <dd>{{ network.report.average_degree }}</dd>
+                    <dt>Number Citations</dt>
+                    <dd>{{ network.report.number_citations }}</dd>
+                    <dt>Number Authors</dt>
+                    <dd>{{ network.report.number_authors }}</dd>
+                    <dt>Number BEL Errors</dt>
+                    <dd>{{ network.report.number_warnings }}</dd>
                 </dl>
             </div>
         </div>
@@ -429,7 +441,7 @@
                         used. It is suggested to delete their definitions from the BEL script to improve readability
                         and parsing speed.</p>
                     <ul>
-                        {% for unused_namespace in unused_namespaces %}
+                        {% for unused_namespace in unused_namespaces|sort %}
                             <li>{{ unused_namespace }}</li>
                         {% endfor %}
                     </ul>
@@ -486,7 +498,7 @@
                     <p><strong>Note:</strong> this may be due to errors occurring in all statements with these
                         annotations.</p>
                     <ul class="row">
-                        {% for unused_annotation in unused_annotations %}
+                        {% for unused_annotation in unused_annotations|sort %}
                             <li class="col-lg-3 col-md-4 col-sm-6">
                                 {{ unused_annotation }}
                             </li>
@@ -521,7 +533,7 @@
                     </tr>
                     </thead>
                     <tbody>
-                    {% for annotation, values in unused_list_annotation_values %}
+                    {% for annotation, values in unused_list_annotation_values.items()|sort %}
                         <tr>
                             <td>{{ annotation }}</td>
                             <td>
@@ -642,7 +654,7 @@
                         defined. Click the links to download them as enumerated namespaces, and update the BEL script
                         accordingly.</p>
                     <ul class="row">
-                        {% for undefined_namespace in undefined_namespaces %}
+                        {% for undefined_namespace in undefined_namespaces|sort %}
                             <li class="col-lg-3 col-md-4 col-sm-6">
                                 <a href="{{ url_for('dbs.download_undefined_namespace', network_id=network_id, namespace=undefined_namespace) }}">
                                     {{ undefined_namespace }}
@@ -670,7 +682,7 @@
                         defined.
                     </p>
                     <ul class="row">
-                        {% for undefined_annotation in undefined_annotations %}
+                        {% for undefined_annotation in undefined_annotations|sort %}
                             <li class="col-lg-3 col-md-4 col-sm-6">
                                 {{ undefined_annotation }}
                             </li>

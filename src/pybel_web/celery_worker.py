@@ -8,31 +8,31 @@ Run the celery worker with:
 While also laughing at how ridiculously redundant this nomenclature is.
 """
 
-import logging
-import pickle
-
 import hashlib
-import networkx as nx
+import logging
 import os
+import time
+
+import networkx as nx
 import requests.exceptions
 from celery.utils.log import get_task_logger
+from six.moves.cPickle import dumps, loads
 from sqlalchemy.exc import IntegrityError, OperationalError
 
 from pybel import from_url, to_bytes
-from pybel.constants import METADATA_DESCRIPTION, METADATA_CONTACT, METADATA_LICENSES
+from pybel.constants import METADATA_CONTACT, METADATA_DESCRIPTION, METADATA_LICENSES
 from pybel.manager.models import Network
 from pybel.parser.parse_exceptions import InconsistentDefinitionError
 from pybel_tools.constants import BMS_BASE
 from pybel_tools.ioutils import convert_directory
 from pybel_tools.mutation import add_canonical_names, enrich_pubmed_citations, infer_central_dogma
-from pybel_tools.summary.provenance import count_unique_citations, count_unique_authors
+from pybel_tools.summary.provenance import count_unique_authors, count_unique_citations
 from pybel_tools.utils import enable_cool_mode
 from .application import create_application
 from .celery_utils import create_celery
 from .constants import CHARLIE_EMAIL, DANIEL_EMAIL, integrity_message, log_worker_path
-from .models import Report, Experiment
-from .utils import calculate_scores, manager
-import time
+from .models import Experiment, Report
+from .utils import calculate_scores, get_network_summary_dict, manager
 
 log = get_task_logger(__name__)
 
@@ -287,6 +287,9 @@ def async_parser(report_id):
         report.completed = True
         report.time = time.time() - t
 
+        summary_dict = get_network_summary_dict(graph)
+        report.calculations = dumps(summary_dict)
+
         manager.session.commit()
 
         log.info('report #%d complete [%d]', report.id, network.id)
@@ -316,7 +319,7 @@ def run_cmpa(experiment_id):
 
     graph = experiment.query.run(manager)
 
-    df = pickle.loads(experiment.source)
+    df = loads(experiment.source)
 
     gene_column = experiment.gene_column
     data_column = experiment.data_column
@@ -328,7 +331,7 @@ def run_cmpa(experiment_id):
 
     scores = calculate_scores(graph, data, experiment.permutations)
 
-    experiment.result = pickle.dumps(scores)
+    experiment.result = dumps(scores)
     experiment.completed = True
 
     try:
