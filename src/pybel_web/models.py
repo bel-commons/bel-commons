@@ -532,7 +532,7 @@ class Query(Base):
         """A wrapper around the :meth:`pybel_tools.query.Query.run` function of the enclosed
         :class:`pybel_tools.pipeline.Query` object.
 
-        :type manager: pybel.manager.Manager or pybel_tools.api.DatabaseService
+        :type manager: pybel.manager.Manager
         :return: The result of this query
         :rtype: Optional[pybel.BELGraph]
         """
