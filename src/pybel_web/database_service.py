@@ -1662,8 +1662,12 @@ def get_query_oldest_ancestry(query_id):
 
 
 def add_pipeline_entry(query_id, name, *args, **kwargs):
-    """Adds an entry to the pipeline and """
-    query = get_query_or_404(query_id)
+    """Adds an entry to the pipeline
+
+    :param int query_id: The identifier of the query
+    :param str name: The name of the function to append
+    """
+    query = safe_get_query(query_id)
 
     q = query.data
     q.pipeline.append(name, *args, **kwargs)
