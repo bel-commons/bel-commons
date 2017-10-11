@@ -849,7 +849,7 @@ def make_network_private(network_id):
 
 @lru_cache(maxsize=64)
 def get_tree_from_query(query_id):
-    """Gets the tree json for a givennetwork
+    """Gets the tree json for a given network
 
     :param int query_id:
     :rtype: dict
