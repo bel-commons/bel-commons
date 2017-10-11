@@ -424,7 +424,7 @@ def suggest_annotation():
 
     return jsonify([
         {
-            'annotation': entry.annotation.name,
+            'annotation': entry.annotation.keyword,
             'value': entry.name
         }
         for entry in entries
