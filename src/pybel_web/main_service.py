@@ -57,14 +57,6 @@ def build_dictionary_service_admin(app):
     manager = get_manager(app)
     api = get_api(app)
 
-    @app.route('/admin/reload')
-    @roles_required('admin')
-    def run_reload():
-        """Reloads the networks and supernetwork"""
-        api.clear()
-        api.cache_networks(force_reload=True)
-        return next_or_jsonify('reloaded networks')
-
     @app.route('/admin/rollback')
     @roles_required('admin')
     def rollback():
@@ -78,9 +70,6 @@ def build_dictionary_service_admin(app):
         """Destroys the database and recreates it"""
         log.info('nuking database')
         Base.metadata.drop_all(manager.engine, checkfirst=True)
-        Base.metadata.drop_all(manager.engine, checkfirst=True)
-        log.info('restarting dictionary service')
-        api.clear()
         log.info('   the dust settles')
         return next_or_jsonify('nuked the database')
 

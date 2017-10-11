@@ -215,14 +215,6 @@ class FlaskPyBEL:
 
         self.user_datastore.commit()
 
-        if app.config.get('PYBEL_DS_PRELOAD', False):
-            log.info('preloading networks')
-            self.api.cache_networks(
-                force_reload=app.config.get('PYBEL_WEB_FORCE_RELOAD', False),
-                eager=app.config.get('PYBEL_DS_EAGER', False)
-            )
-            log.info('pre-loaded the dict service')
-
         app.extensions = getattr(app, 'extensions', {})
         app.extensions[self.APP_NAME] = self
 
