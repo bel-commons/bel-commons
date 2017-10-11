@@ -1685,7 +1685,7 @@ def add_pipeline_entry(query_id, name, *args, **kwargs):
 
     qo = models.Query(
         assembly=query.assembly,
-        seeding=json.dumps(q.seeds),
+        seeding=json.dumps(q.seeds), # TODO replace with q.seeding_to_jsons()?
         pipeline_protocol=q.pipeline.to_jsons(),
         dump=q.to_jsons(),
         parent_id=query_id,
@@ -1699,7 +1699,7 @@ def add_pipeline_entry(query_id, name, *args, **kwargs):
 
     return jsonify({
         'status': 200,
-        'id': qo.id
+        'id': qo.id,
     })
 
 
