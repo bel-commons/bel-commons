@@ -512,7 +512,7 @@ class Query(Base):
 
         :type manager: pybel.manager.Manager or pybel_tools.api.DatabaseService
         :return: The result of this query
-        :rtype: pybel.BELGraph
+        :rtype: Optional[pybel.BELGraph]
         """
         return self.data.run(manager)
 

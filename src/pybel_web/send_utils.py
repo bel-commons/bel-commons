@@ -62,17 +62,22 @@ def to_json_custom(graph, _id='id', source='source', target='target', key='key')
 
 
 def serve_network(graph, serve_format=None):
-    """A helper function to serialize a graph and download as a file"""
+    """A helper function to serialize a graph and download as a file
+
+    :param Optional[pybel.BELGraph] graph: A BEL graph
+    :param str serve_format: The format to serve the network
+    :rtype: flask.Response
+    """
     if serve_format is None or serve_format == 'json':
         return jsonify(to_json_custom(graph))
 
-    if serve_format == 'cx':
+    elif serve_format == 'cx':
         return jsonify(to_cx(graph))
 
-    if serve_format == 'jgif':
+    elif serve_format == 'jgif':
         return jsonify(to_jgif(graph))
 
-    if serve_format == 'bytes':
+    elif serve_format == 'bytes':
         data = BytesIO(to_bytes(graph))
         return send_file(
             data,
@@ -81,12 +86,12 @@ def serve_network(graph, serve_format=None):
             attachment_filename='graph.gpickle'
         )
 
-    if serve_format == 'bel':
+    elif serve_format == 'bel':
         serialize_authors(graph)
         data = '\n'.join(to_bel_lines(graph))
         return Response(data, mimetype='text/plain')
 
-    if serve_format == 'graphml':
+    elif serve_format == 'graphml':
         bio = BytesIO()
         to_graphml(graph, bio)
         bio.seek(0)
@@ -97,7 +102,7 @@ def serve_network(graph, serve_format=None):
             as_attachment=True
         )
 
-    if serve_format == 'sif':
+    elif serve_format == 'sif':
         bio = StringIO()
         to_sif(graph, bio)
         bio.seek(0)
@@ -108,7 +113,7 @@ def serve_network(graph, serve_format=None):
             as_attachment=True
         )
 
-    if serve_format == 'csv':
+    elif serve_format == 'csv':
         bio = StringIO()
         to_csv(graph, bio)
         bio.seek(0)
@@ -120,7 +125,7 @@ def serve_network(graph, serve_format=None):
             as_attachment=True
         )
 
-    if serve_format == 'gsea':
+    elif serve_format == 'gsea':
         bio = StringIO()
         to_gsea(graph, bio)
         bio.seek(0)

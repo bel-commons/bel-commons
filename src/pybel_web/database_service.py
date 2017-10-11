@@ -112,7 +112,7 @@ def get_graph_from_request(query_id):
     """Process the GET request returning the filtered network
 
     :param int query_id: The database query identifier
-    :rtype: pybel.BELGraph
+    :rtype: Optional[pybel.BELGraph]
     """
     query = safe_get_query(query_id)
     return query.run(api)
@@ -1165,8 +1165,8 @@ def get_all_authors(query_id):
     tags:
         - query
     """
-    network = get_graph_from_request(query_id)
-    return jsonify(sorted(get_authors(network)))
+    graph = get_graph_from_request(query_id)
+    return jsonify(sorted(get_authors(graph)))
 
 
 @api_blueprint.route('/api/author/suggestion/')
