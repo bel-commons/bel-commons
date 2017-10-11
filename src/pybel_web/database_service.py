@@ -1608,8 +1608,8 @@ def query_to_network(query_id):
 
     network_ids = rv['network_ids']
     rv['networks'] = [
-        str(graph)
-        for graph in api.get_graphs_by_ids(network_ids)
+        '{} v{}'.format(name, version)
+        for name, version in manager.session.query(Network.name, Network.version).filter(Network.id.in_(network_ids))
     ]
 
     return jsonify(rv)
