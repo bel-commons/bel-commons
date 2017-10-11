@@ -1281,7 +1281,8 @@ def get_edge_by_id(edge_id):
     tags:
         - edge
     """
-    return jsonify(get_edge_entry(edge_id))
+    edge = get_edge_or_404(edge_id)
+    return jsonify(get_edge_entry(edge))
 
 
 @api_blueprint.route('/api/edge/<edge_id>/vote/up')
