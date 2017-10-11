@@ -288,7 +288,7 @@ def async_parser(report_id):
         report.time = time.time() - t
 
         summary_dict = get_network_summary_dict(graph)
-        report.calculations = dumps(summary_dict)
+        report.dump_calculations(summary_dict)
 
         manager.session.commit()
 

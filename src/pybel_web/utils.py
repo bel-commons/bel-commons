@@ -220,6 +220,11 @@ def render_network_summary(network_id):
         log.warning('Falling back to on-the-fly calculation of summary of %s', network)
         er = get_network_summary_dict(graph)
 
+        if network.report:
+            network.report.dump_calculations(er)
+            manager.session.commit()
+
+
     citation_years = er['citation_years']
     function_count = er['function_count']
     relation_count = er['relation_count']

@@ -6,7 +6,7 @@ import json
 from operator import attrgetter
 
 from flask_security import RoleMixin, UserMixin
-from six.moves.cPickle import loads
+from six.moves.cPickle import dumps, loads
 from sqlalchemy import (
     Boolean, Column, DateTime, Float, ForeignKey, Index, Integer, LargeBinary, String, Table, Text,
     UniqueConstraint,
@@ -125,6 +125,13 @@ class Report(Base):
             allow_nested=self.allow_nested,
             citation_clearing=self.citation_clearing,
         )
+
+    def dump_calculations(self, calculations_dict):
+        """Stores a calculations dict
+
+        :param dict calculations_dict:
+        """
+        self.calculations = dumps(calculations_dict)
 
     def get_calculations(self):
         """Gets the summary calculations dictionary from this network
