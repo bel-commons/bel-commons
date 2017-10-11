@@ -181,10 +181,9 @@ function displayEdgeInfo(edge) {
 
 /**
  * Renders query info table
- * @param {object} query object
+ * @param {object} query result returned by the query info endpoint
  */
 function displayQueryInfo(query) {
-
     var dynamicTable = document.getElementById('query-table');
 
     while (dynamicTable.rows.length > 0) {
@@ -195,15 +194,15 @@ function displayQueryInfo(query) {
 
     queryObject["Identifier"] = query.id;
     queryObject["Creator"] = query.creator;
-
     queryObject["Assembly"] = query.networks.join(", ");
+
     if (query.seeding.length !== 0) {
-        var querySeeding = query.seeding.map(function (object) {
-            if (object.type == "annotation") {
+        queryObject["Seeding"] = query.seeding.map(function (object) {
+            if (object.type === "annotation") {
 
                 var arr = [];
 
-                if (object.data.or == true) {
+                if (object.data.or === true) {
                     var queryType = "Any of the annotations are present in a given edge"
                 } else {
                     var queryType = "All of the annotations are present in a given edge"
@@ -218,7 +217,6 @@ function displayQueryInfo(query) {
             }
             return object.type + ": [" + object.data + "]";
         });
-        queryObject["Seeding"] = querySeeding;
     }
 
     if (query.pipeline.length !== 0) {
@@ -241,22 +239,26 @@ function displayQueryInfo(query) {
         type: "GET",
         url: query_summarize_url,
         dataType: "json",
-        success: function (data) {
+        success: function (response) {
+            if (response.status === false) {
+                alert('No results. build a new query.');
+                return
+            }
+
             var networkInfoTable = document.getElementById('network-info-table');
 
             while (networkInfoTable.rows.length > 0) {
                 networkInfoTable.deleteRow(0);
             }
             var row = 0;
-            $.each(data, function (key, value) {
+            $.each(response.payload, function (key, value) {
                 insertRow(networkInfoTable, row, key, value);
                 row++
             });
         },
         error: function (request) {
             alert(query_summarize_url + ": " + request.message);
-        },
-        data: {}
+        }
     });
 }
 
@@ -339,10 +341,10 @@ function updateQueryResponse(response, tree) {
 
     reloadTree(tree); // Inits tree from network annotations
 
-    const url = "/api/query/" + window.query + "/relabel";
+    const url = "/api/query/" + response.id + "/relabel";
 
     doAjaxCallWithCallback(url, function (networkResponse) {
-        window.history.pushState("BiNE", "BiNE", "/explore/" + window.query); // Updates the URL
+        window.history.pushState("BiNE", "BiNE", "/explore/" + response.id); // Updates the URL
 
         var data = updateNodePosition(networkResponse, positions); // Loads new data, first empty all created divs and clear the current network
 
@@ -352,7 +354,7 @@ function updateQueryResponse(response, tree) {
 
         highlightNodeBorder(data["newNodes"]); // Highlights nodes that were not in present query
 
-        updateQueryTable(); // Updates Query Table
+        updateQueryTable(response.id); // Updates Query Table
     });
 }
 
@@ -371,10 +373,11 @@ function insertRow(table, row, column1, column2) {
 
 
 /**
- * Gets the query info from the API and renders it in a table
+ * Gets the query info from the API and renders it in a table\
+ * @param {int} queryIdentifier
  */
-function updateQueryTable() {
-    doAjaxCallWithCallback("/api/query/" + window.query + "/info", displayQueryInfo);
+function updateQueryTable(queryIdentifier) {
+    doAjaxCallWithCallback("/api/query/" + queryIdentifier + "/info", displayQueryInfo);
 }
 
 /**
@@ -402,9 +405,14 @@ function reloadTree(tree) {
     const url = "/api/query/" + window.query + "/tree/";
 
     doAjaxCallWithCallback(url, function (response) {
-        tree.removeAll(); //Clean tree
-        tree.load(response);
-        initTreeTools(tree);
+        if (response.status === false) {
+            alert('The query returned no results.')
+
+        } else {
+            tree.removeAll(); //Clean tree
+            tree.load(response.payload);
+            initTreeTools(tree);
+        }
     });
 }
 
@@ -424,60 +432,63 @@ function backToOldQuery(response, tree) {
 
 $(document).ready(function () {
 
-    updateQueryTable();  // Renders table info of the given query
+    // Export to BEL
+    $("#bel-button").click(function () {
+        $.ajax({
+            url: "/api/query/" + window.query + "/export/bel",
+            dataType: "text"
+        }).done(function (response) {
+            downloadText(response, "MyNetwork.bel")
+        });
+    });
+
+    // Export network as an image
+    d3.select("#save-svg-graph").on("click", downloadSvg);
+
+    updateQueryTable(window.query);  // Renders table info of the given query
 
     const url = "/api/query/" + window.query + "/tree/";
 
     doAjaxCallWithCallback(url, function (response) {
         // Inits the Annotation tree
-        var tree = new InspireTree({
-            target: "#tree",
-            selection: {
-                mode: "checkbox",
-                multiple: true
-            },
-            data: response
-        });
 
-        initTreeTools(tree); // Enable search/expands tree
-
-        $.getJSON("/api/query/" + window.query + "/relabel", function (networkJson) {
-            networkSizeChecking(networkJson, tree);
-        });
-
-        $("#refresh-network").on("click", function () {
-
-            var treeSelection = getSelectedNodesFromTree(tree);
-
-            if ($('#andortoggle').prop('checked') === true) {
-                treeSelection["and"] = true;
-            }
-
-            $.ajax({
-                url: "/api/query/" + window.query + "/add_annotation_filter/",
-                data: $.param(treeSelection, true),
-                dataType: "json"
-            }).done(function (response) {
-                updateQueryResponse(response, tree);
+        if (response.status === false) {
+            alert('Query has no results. Build a new query')
+        } else {
+            var tree = new InspireTree({
+                target: "#tree",
+                selection: {
+                    mode: "checkbox",
+                    multiple: true
+                },
+                data: response.payload
             });
-        });
 
-        $("#collapse-tree").on("click", function () {
-            tree.collapseDeep();
-        });
+            initTreeTools(tree); // Enable search/expands tree
 
-        // Export network as an image
-        d3.select("#save-svg-graph").on("click", downloadSvg);
-
-        // Export to BEL
-        $("#bel-button").click(function () {
-            $.ajax({
-                url: "/api/query/" + window.query + "/export/bel",
-                dataType: "text"
-            }).done(function (response) {
-                downloadText(response, "MyNetwork.bel")
+            $.getJSON("/api/query/" + window.query + "/relabel", function (networkJson) {
+                networkSizeChecking(networkJson, tree);
             });
-        });
+
+            $("#refresh-network").on("click", function () {
+
+                var treeSelection = getSelectedNodesFromTree(tree);
+
+                if ($('#andortoggle').prop('checked') === true) {
+                    treeSelection["and"] = true;
+                }
+
+                $.ajax({
+                    url: "/api/query/" + window.query + "/add_annotation_filter/",
+                    data: $.param(treeSelection, true),
+                    dataType: "json"
+                }).done(function (response) {
+                    updateQueryResponse(response, tree);
+                });
+            });
+
+            $("#collapse-tree").on("click", tree.collapseDeep);
+        }
 
         // Back to parent query
         $("#parent-query").click(function () {
@@ -693,20 +704,6 @@ function initD3Force(graph, tree) {
             },
             disabled: false // optional, defaults to false
         },
-        // {
-        //     title: "Expand node neighbors from user universe",
-        //     action: function (elm, node, i) {
-        //         // Variables explanation:
-        //         // elm: [object SVGGElement] d: [object NodeObject] i: (#Number)
-        //         $.ajax({
-        //             url: "/api/network/", //TODO
-        //             dataType: "json"
-        //         }).done(function (response) {
-        //             updateQueryResponse(response, tree);
-        //         });
-        //     },
-        //     disabled: false // optional, defaults to false
-        // },
         {
             title: "Delete node",
             action: function (elm, node, i) {
@@ -729,7 +726,6 @@ function initD3Force(graph, tree) {
                 });
             }
         }
-
     ];
 
     // Definition of context menu for nodes
