@@ -8,45 +8,22 @@ import sys
 import time
 
 from collections import defaultdict
-from flask import (
-    current_app,
-    request,
-    url_for,
-    redirect,
-    send_file,
-    flash,
-    render_template,
-    abort,
-)
-from flask_security import (
-    roles_required,
-    current_user,
-    login_required,
-)
+from flask import abort, current_app, redirect, render_template, request, send_file, url_for
+from flask_security import current_user, login_required, roles_required
 
 import pybel_tools.query
-from pybel import from_bytes
-from pybel.manager.models import (
-    Namespace,
-    Annotation,
-)
+from pybel.manager.models import Annotation, Namespace
 from pybel.utils import get_version as get_pybel_version
 from pybel_tools.constants import GENE_FAMILIES
-from pybel_tools.mutation.metadata import enrich_pubmed_citations
 from pybel_tools.pipeline import no_arguments_map
 from pybel_tools.utils import get_version as get_pybel_tools_version
 from . import models
-from .application_utils import get_api, get_manager
+from .application_utils import get_manager
 from .constants import *
-from .models import Base, User, Report, Query, Project
+from .models import Base, Project, Query, Report, User
 from .utils import (
-    render_network_summary,
-    calculate_overlap_dict,
-    get_network_ids_with_permission_helper,
-    get_networks_with_permission,
-    safe_get_query,
-    next_or_jsonify,
-    query_form_to_dict,
+    calculate_overlap_dict, get_network_ids_with_permission_helper, get_networks_with_permission,
+    next_or_jsonify, query_form_to_dict, render_network_summary, safe_get_query,
 )
 
 log = logging.getLogger(__name__)
@@ -55,7 +32,6 @@ log = logging.getLogger(__name__)
 def build_dictionary_service_admin(app):
     """Dictionary Service Admin Functions"""
     manager = get_manager(app)
-    api = get_api(app)
 
     @app.route('/admin/rollback')
     @roles_required('admin')
