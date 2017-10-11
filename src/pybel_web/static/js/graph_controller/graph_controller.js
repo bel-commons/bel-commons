@@ -1509,7 +1509,7 @@ function initD3Force(graph, tree) {
     $.each(graph.links, function (key, value) {
 
         $("#edge-list-ul").append("<li class='list-group-item'><input class='edge-checkbox' type='checkbox'><span>" +
-            value.source.cname + '<strong><i>' + value.relation + ' </i></strong>' + value.target.cname + "</span></li>");
+            value.source.cname + ' <strong><i>' + value.relation + '</i></strong> ' + value.target.cname + "</span></li>");
 
     });
 
