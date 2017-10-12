@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
 
+import base64
 import datetime
 import itertools as itt
 import logging
 import pickle
 import time
-
-import base64
-import networkx as nx
-import pandas
 import warnings
 from collections import Counter, defaultdict
+
+import networkx as nx
+import pandas
 from flask import abort, current_app, flash, jsonify, redirect, render_template, request
 from flask_security import current_user
 from six import BytesIO
@@ -897,29 +897,54 @@ def get_node_overlaps(network_id):
     return rv
 
 
-def fill_out_report(network, report, graph=None):
+def make_graph_summary(graph):
+    """Makes a graph summary for sticking in the report
+
+    :param pybel.BELGraph graph:
+    :rtype: dict
+    """
+    log.info('starting to summarize graph')
+    t = time.time()
+
+    number_nodes = graph.number_of_nodes()
+
+    try:
+        average_degree = sum(graph.in_degree().values()) / float(number_nodes)
+    except ZeroDivisionError:
+        average_degree = 0.0
+
+    rv = dict(
+        number_nodes=number_nodes,
+        number_edges=graph.number_of_edges(),
+        number_warnings=len(graph.warnings),
+        number_citations=count_unique_citations(graph),
+        number_authors=count_unique_authors(graph),
+        number_components=nx.number_weakly_connected_components(graph),
+        network_density=nx.density(graph),
+        average_degree=average_degree,
+        summary_dict=get_network_summary_dict(graph),
+    )
+
+    log.info('calculated summary in %.2f', time.time() - t)
+
+    return rv
+
+
+def fill_out_report(network, report, graph_summary):
     """Fills out a report
 
     :param Network network:
     :param Report report:
-    :param pybel.BELGraph graph:
+    :param dict graph_summary:
     """
-    if graph is None:
-        graph = network.as_bel()
-
     report.network = network
-    report.number_nodes = graph.number_of_nodes()
-    report.number_edges = graph.number_of_edges()
-    report.number_warnings = len(graph.warnings)
-    report.number_citations = count_unique_citations(graph)
-    report.number_authors = count_unique_authors(graph)
-    report.number_components = nx.number_weakly_connected_components(graph)
-    report.network_density = nx.density(graph)
-
-    try:
-        report.average_degree = sum(graph.in_degree().values()) / float(report.number_nodes)
-    except ZeroDivisionError:
-        report.average_degree = 0.0
-
-    summary_dict = get_network_summary_dict(graph)
-    report.dump_calculations(summary_dict)
+    report.number_nodes = graph_summary['number_nodes']
+    report.number_edges = graph_summary['number_edges']
+    report.number_warnings = graph_summary['number_warnings']
+    report.number_citations = graph_summary['number_citations']
+    report.number_authors = graph_summary['number_authors']
+    report.number_components = graph_summary['number_components']
+    report.network_density = graph_summary['network_density']
+    report.average_degree = graph_summary['average_degree']
+    report.dump_calculations(graph_summary['summary_dict'])
+    report.completed = True

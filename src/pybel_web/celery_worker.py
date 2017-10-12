@@ -8,11 +8,11 @@ Run the celery worker with:
 While also laughing at how ridiculously redundant this nomenclature is.
 """
 
+import hashlib
 import logging
+import os
 import time
 
-import hashlib
-import os
 import requests.exceptions
 from celery.utils.log import get_task_logger
 from six.moves.cPickle import dumps, loads
@@ -30,7 +30,7 @@ from .application import create_application
 from .celery_utils import create_celery
 from .constants import CHARLIE_EMAIL, DANIEL_EMAIL, integrity_message, log_worker_path
 from .models import Experiment, Report
-from .utils import calculate_scores, fill_out_report, get_network_summary_dict, manager
+from .utils import calculate_scores, fill_out_report, make_graph_summary, manager
 
 log = get_task_logger(__name__)
 
@@ -244,9 +244,11 @@ def async_parser(report_id):
             infer_central_dogma(graph)
 
         enrich_pubmed_citations(graph, manager=manager)
+
     except (IntegrityError, OperationalError):
         manager.session.rollback()
         log.exception('problem with database while fixing citations')
+
     except:
         log.exception('problem fixing citations')
 
@@ -255,7 +257,6 @@ def async_parser(report_id):
     try:
         log.info('inserting graph')
         network = manager.insert_graph(graph, store_parts=app.config.get('PYBEL_USE_EDGE_STORE', True))
-        manager.session.add(network)
 
     except IntegrityError:
         manager.session.rollback()
@@ -274,15 +275,13 @@ def async_parser(report_id):
 
     log.info('done storing [%d]. starting to make report.', network.id)
 
-    try:
-        fill_out_report(network, report, graph)
+    graph_summary = make_graph_summary(graph)
 
-        report.completed = True
+    try:
+        fill_out_report(network, report, graph_summary)
         report.time = time.time() - t
 
-        summary_dict = get_network_summary_dict(graph)
-        report.dump_calculations(summary_dict)
-
+        manager.session.add(report)
         manager.session.commit()
 
         log.info('report #%d complete [%d]', report.id, network.id)
@@ -294,6 +293,7 @@ def async_parser(report_id):
     except Exception as e:
         manager.session.rollback()
         make_mail('Report unsuccessful for {}'.format(source_name), str(e))
+        log.exception('Problem filling out report')
         return -1
 
     finally:
