@@ -24,7 +24,7 @@ class NetworkView(ModelView):
 
 class ReportView(ModelView):
     """Special view for reports"""
-    column_exclude_list = ['source']
+    column_exclude_list = ['source', 'calculations']
 
 
 class NodeView(ModelView):
