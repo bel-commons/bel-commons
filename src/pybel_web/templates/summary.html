@@ -440,9 +440,9 @@
                     <p>The source BEL script contained references to the following namespaces, but they were never
                         used. It is suggested to delete their definitions from the BEL script to improve readability
                         and parsing speed.</p>
-                    <ul>
+                    <ul class="row">
                         {% for unused_namespace in unused_namespaces|sort %}
-                            <li>{{ unused_namespace }}</li>
+                            <li class="col-lg-3 col-md-4 col-sm-6">{{ unused_namespace }}</li>
                         {% endfor %}
                     </ul>
                 </div>
