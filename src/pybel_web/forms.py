@@ -72,7 +72,7 @@ class ParserForm(FlaskForm):
     allow_nested = BooleanField('My document contains nested statements')
     citation_clearing = BooleanField("My document sometimes has evidences before citations - disable citation clearing")
     public = BooleanField('Make my knowledge assembly publicly available', default=True)
-    infer_origin = BooleanField('Infer the central dogma', default=False)
+    infer_origin = BooleanField('Infer the <a href="https://en.wikipedia.org/wiki/Central_dogma_of_molecular_biology">central dogma</a>', default=False)
     encoding = RadioField(
         'Encoding',
         choices=[
