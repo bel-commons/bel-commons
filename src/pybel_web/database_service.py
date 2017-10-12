@@ -260,7 +260,7 @@ def _build_annotation_helper(graph, annotation, values):
         author_name=graph.document.get(METADATA_AUTHORS),
         author_contact=graph.document.get(METADATA_CONTACT),
         citation_name=graph.document.get(METADATA_NAME),
-        description='This annotation was serialize by PyBEL Web',
+        description='This annotation was serialize by PyBEL Web from {}'.format(graph),
         file=si,
     )
 
