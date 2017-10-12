@@ -994,8 +994,8 @@ def get_paths(query_id, source_id, target_id):
 
     cutoff = request.args.get('cutoff', 7)
 
-    source = manager.get_node_tuple_by_hash(source_id)
-    target = manager.get_node_tuple_by_hash(target_id)
+    source = source_id
+    target = target_id
 
     log.info('Source: %s, target: %s', source, target)
 
@@ -1013,7 +1013,10 @@ def get_paths(query_id, source_id, target_id):
     if method == 'all':
         paths = nx.all_simple_paths(network, source=source, target=target, cutoff=cutoff)
         return jsonify([
-            [hash_node(node) for node in path]
+            [
+                node
+                for node in path
+            ]
             for path in paths
         ])
 
@@ -1028,12 +1031,12 @@ def get_paths(query_id, source_id, target_id):
 
         # In case the random node is an isolated one, returns it alone
         if not network.neighbors(source)[0]:
-            return jsonify([hash_node(source)])
+            return jsonify([source])
 
         shortest_path = nx.shortest_path(network, source=source, target=network.neighbors(source)[0])
 
     return jsonify([
-        hash_node(node)
+        node
         for node in shortest_path
     ])
 
