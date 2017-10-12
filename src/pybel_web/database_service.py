@@ -2162,8 +2162,8 @@ def pillage():
 def view_config():
     """Lists the application configuration"""
     return jsonify({
-        k: str(v)
-        for k, v in current_app.config.items()
+        key: str(value)
+        for key, value in current_app.config.items()
     })
 
 
