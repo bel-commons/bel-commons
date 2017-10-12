@@ -12,26 +12,26 @@ Servers
 
 Running from the Command Line
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-To start, type ``tmux ls`` to see the sessions already opened.
+To start, type ``tmux ls`` to see the sessions already opened. Inside each session, either create or attach
+a virtual machine.
 
 Celery Worker
 *************
 The point of the Celery worker is to take care of running tasks in separate processes, so things like compilation
 and analyses don't cause the server to stall up.
 
-1. Attach the celery worker service with ``tmux attach -t pybel_worker``
-2. Quit with ``ctrl-c``
-3. Rerun with ``python3 -m celery -A pybel_web.celery_worker.celery worker``
-4. Quit the ``tmux`` session with ``ctrl-b`` then ``d``
+1. Attach the celery worker service with ``tmux attach -t worker``
+2. Rerun with ``pybel-web worker`` which basically calls the same as: ``python3 -m celery -A pybel_web.celery_worker.celery worker``
+3. Quit the ``tmux`` session with ``ctrl-b`` then ``d``
 
 Flask Application
 *****************
 The flask app needs to be run at ``0.0.0.0`` to be exposed to the outside. Otherwise, this defaults to localhost and
 can only be accessed from on bart. Additionally, logging can be shown with ``-v``. More v's, more logging.
 
-1. Attach the Flask session with ``tmux attach -t pybel_flask``
+1. Attach the Flask session with ``tmux attach -t runner``
 2. Quit with ``ctrl-c``
-3. Rerun with ``python3 -m pybel_web run --host "0.0.0.0" --port 5000 -vv``
+3. Rerun with ``pybel_web run -vv``. On production, use the ``--with-gunicorn`` option to enable multithreading.
 4. Quit the ``tmux`` session with ``ctrl-b`` then ``d``
 
 Running the Development Server
