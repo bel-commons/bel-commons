@@ -159,9 +159,9 @@ function displayEdgeInfo(edge) {
     }
     if (edge.source.id && edge.target.id) {
         edgeObject["Tools"] = ('<a class="btn btn-primary btn-xs" target="_blank" href="/node/' +
-            edge.source.id + '/edges/' + edge.target.id + '">View All Evidences</a> ' +
-            '<button type="button" class="btn btn-primary btn-xs" data-toggle="modal" data-target="#edge-feedback" data-edge="' +
-            edge.id + '">Give Feedback</button>');
+        edge.source.id + '/edges/' + edge.target.id + '">View All Evidences</a> ' +
+        '<button type="button" class="btn btn-primary btn-xs" data-toggle="modal" data-target="#edge-feedback" data-edge="' +
+        edge.id + '">Give Feedback</button>');
     }
 
 
@@ -1231,7 +1231,7 @@ function initD3Force(graph, tree) {
         // Filtered not selected links
         var edgesNotInArray = g.selectAll(".link").filter(function (edgeObject) {
 
-            if (edgeArray.indexOf(edgeObject.source[property] + " " + edgeObject.relation + " " + edgeObject.target[property]) >= 0) {
+            if (edgeArray.indexOf(edgeObject.source[property] + "-" + edgeObject.target[property]) >= 0) {
                 nodesInEdges.push(edgeObject.source[property]);
                 nodesInEdges.push(edgeObject.target[property]);
             }
@@ -1373,7 +1373,7 @@ function initD3Force(graph, tree) {
             var path = link.filter(function (el) {
                 // Source and target should be present in the edge and the distance in the array should be one
                 return ((data[x].indexOf(el.source.id) >= 0 && data[x].indexOf(el.target.id) >= 0)
-                    && (Math.abs(data[x].indexOf(el.source.id) - data[x].indexOf(el.target.id)) === 1));
+                && (Math.abs(data[x].indexOf(el.source.id) - data[x].indexOf(el.target.id)) === 1));
             });
 
             edgesInPaths.push(path);
@@ -1389,7 +1389,7 @@ function initD3Force(graph, tree) {
             var edgesInPath = link.filter(function (el) {
                 // Source and target should be present in the edge and the distance in the array should be one
                 return ((data[i].indexOf(el.source.id) >= 0 && data[i].indexOf(el.target.id) >= 0)
-                    && (Math.abs(data[i].indexOf(el.source.id) - data[i].indexOf(el.target.id)) === 1));
+                && (Math.abs(data[i].indexOf(el.source.id) - data[i].indexOf(el.target.id)) === 1));
             });
 
             // Select randomly a color and apply to this path
@@ -1425,7 +1425,7 @@ function initD3Force(graph, tree) {
             var edgesNotInPath = g.selectAll(".link").filter(function (el) {
                 // Source and target should be present in the edge and the distance in the array should be one
                 return !((paths.indexOf(el.source.id) >= 0 && paths.indexOf(el.target.id) >= 0)
-                    && (Math.abs(paths.indexOf(el.source.id) - paths.indexOf(el.target.id)) === 1));
+                && (Math.abs(paths.indexOf(el.source.id) - paths.indexOf(el.target.id)) === 1));
             });
 
             // If checkbox is True -> Hide all, Else -> Opacity 0.1
@@ -1508,8 +1508,9 @@ function initD3Force(graph, tree) {
 
     $.each(graph.links, function (key, value) {
 
-        $("#edge-list-ul").append("<li class='list-group-item'><input class='edge-checkbox' type='checkbox'><span>" +
-            value.source.cname + ' <strong><i>' + value.relation + '</i></strong> ' + value.target.cname + "</span></li>");
+        $("#edge-list-ul").append("<li class='list-group-item'><input class='edge-checkbox' type='checkbox'><span id="
+            + value.source.id + '-' + value.target.id + ">" + value.source.cname + ' <strong><i>' + value.relation +
+            '</i></strong> ' + value.target.cname + "</span></li>");
 
     });
 
@@ -1522,12 +1523,12 @@ function initD3Force(graph, tree) {
 
         var checkedItems = [];
         $(".edge-checkbox:checked").each(function (idx, li) {
-            checkedItems.push(li.parentElement.childNodes[1].innerHTML);
+            checkedItems.push(li.parentElement.childNodes[1].id);
         });
 
         resetAttributes();
 
-        highlightEdges(checkedItems, 'cname');
+        highlightEdges(checkedItems, 'id');
 
         resetAttributesDoubleClick()
     });
