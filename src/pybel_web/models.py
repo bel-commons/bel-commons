@@ -142,6 +142,14 @@ class Report(Base):
         return loads(self.calculations)
 
     @property
+    def is_displayable(self):
+        """Is this network small enough to confidently display
+
+        :rtype: bool
+        """
+        return self.number_nodes and self.number_nodes < 100
+
+    @property
     def incomplete(self):
         return self.completed is None and not self.message
 

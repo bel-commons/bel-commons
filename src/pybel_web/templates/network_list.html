@@ -203,7 +203,7 @@
                                     </a>
                                 </li>
                                 <li>
-                                    {% if network.report and network.report.number_nodes < 100 %}
+                                    {% if network.report and network.report.is_displayable %}
                                         <a href="{{ url_for('view_explore_network', network_id=network.id) }}"
                                            class="btn btn-default" data-toggle="popover"
                                            title="Explore this Network"
