@@ -7,13 +7,13 @@ import json
 import logging
 import pickle
 import time
+from functools import lru_cache
+from operator import itemgetter
 
 import flask
 import networkx as nx
 from flask import Blueprint, abort, current_app, flash, jsonify, make_response, redirect, request
 from flask_security import current_user, login_required, roles_required
-from functools import lru_cache
-from operator import itemgetter
 from six import StringIO
 from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
@@ -46,8 +46,8 @@ from .send_utils import serve_network
 from .utils import (
     current_user_has_query_rights, fill_out_report, get_edge_or_404,
     get_network_ids_with_permission_helper, get_node_by_hash_or_404, get_node_overlaps, get_or_create_vote,
-    get_query_ancestor_id, get_recent_reports, manager, next_or_jsonify, relabel_nodes_to_hashes, safe_get_query,
-    user_datastore, user_owns_network_or_403,
+    get_query_ancestor_id, get_recent_reports, make_graph_summary, manager, next_or_jsonify, relabel_nodes_to_hashes,
+    safe_get_query, user_datastore, user_owns_network_or_403,
 )
 
 log = logging.getLogger(__name__)
@@ -611,29 +611,36 @@ def drop_networks():
     return next_or_jsonify('Dropped all networks')
 
 
-def _help_claim_network(network):
+def _help_claim_network(network_id, user_id):
     """Claims a network and fills out its report
 
-    :param Network network: A network to claim
+    :param int network_id: A network to claim
     :rtype: Optional[Report]
     """
+    network = manager.session.query(Network).get(network_id)
+
+    if network is None:
+        abort(404)
+
     if network.report:
         return
 
+    graph = network.as_bel()
+    add_canonical_names(graph)
+    network.store_bel(graph)
+
+    manager.session.add(network)
+    manager.session.commit()
+
+    graph_summary = make_graph_summary(graph)
+
     report = Report(
-        user=current_user,
-        completed=True,
+        user_id=user_id,
         public=False,
         time=0.0,
     )
 
-    graph = network.as_bel()
-
-    add_canonical_names(graph)
-
-    fill_out_report(network, report, graph)
-
-    network.store_bel(graph)
+    fill_out_report(network, report, graph_summary)
 
     manager.session.add(report)
     manager.session.commit()
@@ -657,7 +664,7 @@ def claim_network(network_id):
     if network is None:
         abort(404)
 
-    res = _help_claim_network(network)
+    res = _help_claim_network(network, current_user.id)
 
     if not res:
         return next_or_jsonify(
@@ -683,7 +690,7 @@ def pillage():
         if network.report is not None:
             continue
 
-        res = _help_claim_network(network)
+        res = _help_claim_network(network, current_user.id)
 
         if res:
             counter += 1
@@ -758,9 +765,6 @@ def get_network_name_by_id(network_id):
         required: true
         type: integer
     """
-    if network_id == 0:
-        return ''
-
     network = manager.get_network_by_id(network_id)
     return jsonify(network.name)
 

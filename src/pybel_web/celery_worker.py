@@ -8,11 +8,11 @@ Run the celery worker with:
 While also laughing at how ridiculously redundant this nomenclature is.
 """
 
+import hashlib
 import logging
+import os
 import time
 
-import hashlib
-import os
 import requests.exceptions
 from celery.utils.log import get_task_logger
 from six.moves.cPickle import dumps, loads
@@ -30,7 +30,7 @@ from .application import create_application
 from .celery_utils import create_celery
 from .constants import CHARLIE_EMAIL, DANIEL_EMAIL, integrity_message, log_worker_path
 from .models import Experiment, Report
-from .utils import calculate_scores, fill_out_report, get_network_summary_dict, manager
+from .utils import calculate_scores, fill_out_report, make_graph_summary, manager
 
 log = get_task_logger(__name__)
 
@@ -145,7 +145,10 @@ def async_parser(report_id):
     if report is None:
         raise ValueError('Report {} not found'.format(report_id))
 
-    log.info('Starting parse task for %s (report %s)', report.source_name, report.id)
+    report_id = report.id
+    source_name = report.source_name
+
+    log.info('Starting parse task for %s (report %s)', source_name, report_id)
 
     def make_mail(subject, body):
         if 'mail' not in app.extensions:
@@ -173,23 +176,24 @@ def async_parser(report_id):
 
     except requests.exceptions.ConnectionError:
         message = 'Connection to resource could not be established.'
-        return finish_parsing('Parsing Failed', message)
+        return finish_parsing('Parsing Failed for {}'.format(source_name), message)
 
     except InconsistentDefinitionError as e:
-        message = 'Parsing failed because {} was redefined on line {}.'.format(e.definition, e.line_number)
-        return finish_parsing('Parsing Failed', message)
+        message = 'Parsing failed for {} because {} was redefined on line {}.'.format(source_name, e.definition,
+                                                                                      e.line_number)
+        return finish_parsing('Parsing Failed for {}'.format(source_name), message)
 
     except Exception as e:
-        message = 'Parsing failed from a general error: {}'.format(e)
-        return finish_parsing('Parsing Failed', message)
+        message = 'Parsing failed for {} from a general error: {}'.format(source_name, e)
+        return finish_parsing('Parsing Failed for {}'.format(source_name), message)
 
     if not graph.name:
-        message = 'Graph does not have a name'
-        return finish_parsing('Parsing Failed', message)
+        message = 'Parsing failed for {} because SET DOCUMENT Name was missing.'.format(source_name)
+        return finish_parsing('Parsing Failed for {}'.format(source_name), message)
 
     if not graph.version:
-        message = 'Graph does not have a version'
-        return finish_parsing('Parsing Failed', message)
+        message = 'Parsing failed for {} because SET DOCUMENT Version was missing.'.format(source_name)
+        return finish_parsing('Parsing Failed for {}'.format(source_name), message)
 
     problem = {
         k: v
@@ -198,8 +202,8 @@ def async_parser(report_id):
     }
 
     if problem:
-        message = 'Your document was rejected because it has "default" metadata: {}'.format(problem)
-        return finish_parsing('Document Rejected', message)
+        message = '{} was rejected because it has "default" metadata: {}'.format(source_name, problem)
+        return finish_parsing('Rejected {}'.format(source_name), message)
 
     network = manager.session.query(Network).filter(Network.name == graph.name,
                                                     Network.version == graph.version).one_or_none()
@@ -208,7 +212,7 @@ def async_parser(report_id):
         message = integrity_message.format(graph.name, graph.version)
 
         if network.report.user == report.user:  # This user is being a fool
-            return finish_parsing('Upload Failed', message)
+            return finish_parsing('Uploading Failed for {}'.format(source_name), message)
 
         if hashlib.sha1(network.blob).hexdigest() != hashlib.sha1(to_bytes(network)).hexdigest():
             with app.app_context():
@@ -223,14 +227,14 @@ def async_parser(report_id):
                     sender=pbw_sender,
                 )
 
-            return finish_parsing('Upload Failed', message)
+            return finish_parsing('Upload Failed for {}'.format(source_name), message)
 
         # Grant rights to this user
         network.users.append(report.user)
         manager.session.commit()
 
-        message = 'Granted rights for {} to {}'.format(network, report.user)
-        return finish_parsing('Granted Rights', message, log_exception=False)
+        message = 'Granted rights for {} to {} after parsing {}'.format(network, report.user, source_name)
+        return finish_parsing('Granted Rights from {}'.format(source_name), message, log_exception=False)
 
     try:
         log.info('enriching graph')
@@ -240,54 +244,56 @@ def async_parser(report_id):
             infer_central_dogma(graph)
 
         enrich_pubmed_citations(graph, manager=manager)
+
     except (IntegrityError, OperationalError):
         manager.session.rollback()
         log.exception('problem with database while fixing citations')
+
     except:
         log.exception('problem fixing citations')
+
+    upload_failed_text = 'Upload Failed for {}'.format(source_name)
 
     try:
         log.info('inserting graph')
         network = manager.insert_graph(graph, store_parts=app.config.get('PYBEL_USE_EDGE_STORE', True))
-        manager.session.add(network)
 
     except IntegrityError:
         manager.session.rollback()
         message = integrity_message.format(graph.name, graph.version)
-        return finish_parsing('Upload Failed', message)
+        return finish_parsing(upload_failed_text, message)
 
     except OperationalError:
         manager.session.rollback()
         message = 'Database is locked. Unable to upload.'
-        return finish_parsing('Upload Failed', message)
+        return finish_parsing(upload_failed_text, message)
 
     except Exception as e:
         manager.session.rollback()
         message = "Error storing in database: {}".format(e)
-        return finish_parsing('Upload Failed', message)
+        return finish_parsing(upload_failed_text, message)
 
-    log.info('done storing [%d]', network.id)
+    log.info('done storing [%d]. starting to make report.', network.id)
+
+    graph_summary = make_graph_summary(graph)
 
     try:
-        fill_out_report(network, report, graph)
-
-        report.completed = True
+        fill_out_report(network, report, graph_summary)
         report.time = time.time() - t
 
-        summary_dict = get_network_summary_dict(graph)
-        report.dump_calculations(summary_dict)
-
+        manager.session.add(report)
         manager.session.commit()
 
         log.info('report #%d complete [%d]', report.id, network.id)
-        make_mail('Successfully uploaded {}'.format(graph),
-                  '{} is done parsing. Check the network list page.'.format(graph))
+        make_mail('Successfully uploaded {} ({})'.format(source_name, graph),
+                  '{} ({}) is done parsing. Check the network list page.'.format(source_name, graph))
 
         return network.id
 
     except Exception as e:
         manager.session.rollback()
-        make_mail('Report unsuccessful', str(e))
+        make_mail('Report unsuccessful for {}'.format(source_name), str(e))
+        log.exception('Problem filling out report')
         return -1
 
     finally:

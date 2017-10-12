@@ -657,7 +657,8 @@ class NetworkOverlap(Base):
     __tablename__ = OVERLAP_TABLE_NAME
 
     left_id = Column(Integer, ForeignKey('{}.id'.format(NETWORK_TABLE_NAME)), primary_key=True)
-    left = relationship('Network', foreign_keys=[left_id], backref=backref('overlaps', lazy='dynamic'))
+    left = relationship('Network', foreign_keys=[left_id],
+                        backref=backref('overlaps', lazy='dynamic', cascade="all, delete-orphan"))
 
     right_id = Column(Integer, ForeignKey('{}.id'.format(NETWORK_TABLE_NAME)), primary_key=True)
     right = relationship('Network', foreign_keys=[right_id])
