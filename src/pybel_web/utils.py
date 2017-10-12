@@ -903,7 +903,7 @@ def make_graph_summary(graph):
     :param pybel.BELGraph graph:
     :rtype: dict
     """
-    log.info('starting to summarize graph')
+    log.info('starting to summarize {}'.format(graph))
     t = time.time()
 
     number_nodes = graph.number_of_nodes()
