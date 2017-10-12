@@ -65,6 +65,7 @@ def parse_folder(folder, **kwargs):
         folder,
         connection=manager,
         upload=True,
+        canonicalize=True,
         infer_central_dogma=True,
         enrich_citations=True,
         enrich_genes=True,
