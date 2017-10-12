@@ -31,6 +31,7 @@ from pybel_tools import pipeline
 from pybel_tools.analysis.cmpa import RESULT_LABELS
 from pybel_tools.definition_utils import write_annotation, write_namespace
 from pybel_tools.filters.node_filters import exclude_pathology_filter
+from pybel_tools.mutation import add_canonical_names
 from pybel_tools.query import Query
 from pybel_tools.selection import get_subgraph_by_annotations, get_subgraph_by_node_filter
 from pybel_tools.summary import (
@@ -43,9 +44,10 @@ from .main_service import BLACK_LIST, PATHS_METHOD, UNDIRECTED
 from .models import EdgeComment, Experiment, Project, Report, User
 from .send_utils import serve_network
 from .utils import (
-    current_user_has_query_rights, get_edge_or_404, get_network_ids_with_permission_helper,
-    get_node_by_hash_or_404, get_node_overlaps, get_or_create_vote, get_query_ancestor_id, get_recent_reports, manager,
-    next_or_jsonify, relabel_nodes_to_hashes, safe_get_query, user_datastore, user_owns_network_or_403,
+    current_user_has_query_rights, fill_out_report, get_edge_or_404,
+    get_network_ids_with_permission_helper, get_node_by_hash_or_404, get_node_overlaps, get_or_create_vote,
+    get_query_ancestor_id, get_recent_reports, manager, next_or_jsonify, relabel_nodes_to_hashes, safe_get_query,
+    user_datastore, user_owns_network_or_403,
 )
 
 log = logging.getLogger(__name__)
@@ -609,6 +611,36 @@ def drop_networks():
     return next_or_jsonify('Dropped all networks')
 
 
+def _help_claim_network(network):
+    """Claims a network and fills out its report
+
+    :param Network network: A network to claim
+    :rtype: Optional[Report]
+    """
+    if network.report:
+        return
+
+    report = Report(
+        user=current_user,
+        completed=True,
+        public=False,
+        time=0.0,
+    )
+
+    graph = network.as_bel()
+
+    add_canonical_names(graph)
+
+    fill_out_report(network, report, graph)
+
+    network.store_bel(graph)
+
+    manager.session.add(report)
+    manager.session.commit()
+
+    return report
+
+
 @api_blueprint.route('/api/network/<int:network_id>/claim')
 @roles_required('admin')
 def claim_network(network_id):
@@ -625,29 +657,38 @@ def claim_network(network_id):
     if network is None:
         abort(404)
 
-    if network.report:
-        if 'next' in request.args:
-            return next_or_jsonify(
-                'Already claimed by {}'.format(network.report.user),
-                network={'id': network.id},
-                owner={'id': network.report.user.id},
-            )
+    res = _help_claim_network(network)
 
-    report = Report(
-        network=network,
-        user=current_user
-    )
-
-    # TODO background other tasks for making calculations
-
-    manager.session.add(report)
-    manager.session.commit()
+    if not res:
+        return next_or_jsonify(
+            'Already claimed by {}'.format(network.report.user),
+            network={'id': network.id},
+            owner={'id': network.report.user.id},
+        )
 
     return next_or_jsonify(
         'Claimed {}'.format(network),
         network={'id': network.id},
         owner={'id': current_user.id}
     )
+
+
+@api_blueprint.route('/api/network/pillage')
+@roles_required('admin')
+def pillage():
+    """Claims all unclaimed networks"""
+    counter = 0
+
+    for network in manager.session.query(Network):
+        if network.report is not None:
+            continue
+
+        res = _help_claim_network(network)
+
+        if res:
+            counter += 1
+
+    return next_or_jsonify('Claimed {} networks'.format(counter))
 
 
 @api_blueprint.route('/api/network', methods=['GET'])
@@ -2125,36 +2166,6 @@ def export_project_network(project_id, serve_format):
 ####################################
 # METADATA
 ####################################
-
-@api_blueprint.route('/api/pillage')
-@roles_required('admin')
-def pillage():
-    """Claims all unclaimed networks"""
-    counter = 0
-
-    for network in manager.session.query(Network):
-        if network.report is not None:
-            continue
-
-        counter += 1
-
-        graph = network.as_bel()
-
-        report = Report(
-            network=network,
-            user=current_user,
-            completed=True,
-            number_nodes=graph.number_of_nodes(),
-            number_edges=graph.number_of_edges(),
-            number_warnings=len(graph.warnings),
-            public=False
-        )
-
-        manager.session.add(report)
-
-    manager.session.commit()
-
-    return next_or_jsonify('Claimed {} networks'.format(counter))
 
 
 @api_blueprint.route('/api/meta/config')

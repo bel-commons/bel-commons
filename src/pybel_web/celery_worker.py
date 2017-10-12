@@ -8,12 +8,11 @@ Run the celery worker with:
 While also laughing at how ridiculously redundant this nomenclature is.
 """
 
-import hashlib
 import logging
-import os
 import time
 
-import networkx as nx
+import hashlib
+import os
 import requests.exceptions
 from celery.utils.log import get_task_logger
 from six.moves.cPickle import dumps, loads
@@ -26,13 +25,12 @@ from pybel.parser.parse_exceptions import InconsistentDefinitionError
 from pybel_tools.constants import BMS_BASE
 from pybel_tools.ioutils import convert_directory
 from pybel_tools.mutation import add_canonical_names, enrich_pubmed_citations, infer_central_dogma
-from pybel_tools.summary.provenance import count_unique_authors, count_unique_citations
 from pybel_tools.utils import enable_cool_mode
 from .application import create_application
 from .celery_utils import create_celery
 from .constants import CHARLIE_EMAIL, DANIEL_EMAIL, integrity_message, log_worker_path
 from .models import Experiment, Report
-from .utils import calculate_scores, get_network_summary_dict, manager
+from .utils import calculate_scores, fill_out_report, get_network_summary_dict, manager
 
 log = get_task_logger(__name__)
 
@@ -271,19 +269,7 @@ def async_parser(report_id):
     log.info('done storing [%d]', network.id)
 
     try:
-        report.network = network
-        report.number_nodes = graph.number_of_nodes()
-        report.number_edges = graph.number_of_edges()
-        report.number_warnings = len(graph.warnings)
-        report.number_citations = count_unique_citations(graph)
-        report.number_authors = count_unique_authors(graph)
-        report.number_components = nx.number_weakly_connected_components(graph)
-        report.network_density = nx.density(graph)
-
-        try:
-            report.average_degree = sum(graph.in_degree().values()) / float(report.number_nodes)
-        except ZeroDivisionError:
-            report.average_degree = 0.0
+        fill_out_report(network, report, graph)
 
         report.completed = True
         report.time = time.time() - t

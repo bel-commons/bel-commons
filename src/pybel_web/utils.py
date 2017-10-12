@@ -37,10 +37,10 @@ from pybel_tools.integration import overlay_type_data
 from pybel_tools.mutation import collapse_by_central_dogma_to_genes, rewire_variants_to_genes
 from pybel_tools.summary import (
     count_error_types, count_functions, count_namespaces, count_pathologies,
-    count_relations, count_variants, get_annotations, get_citation_years, get_modifications_count,
-    get_most_common_errors, get_naked_names, get_namespaces_with_incorrect_names, get_pubmed_identifiers,
-    get_undefined_annotations, get_undefined_namespaces, get_unused_annotations, get_unused_list_annotation_values,
-    get_unused_namespaces,
+    count_relations, count_unique_authors, count_unique_citations, count_variants, get_annotations, get_citation_years,
+    get_modifications_count, get_most_common_errors, get_naked_names, get_namespaces_with_incorrect_names,
+    get_pubmed_identifiers, get_undefined_annotations, get_undefined_namespaces, get_unused_annotations,
+    get_unused_list_annotation_values, get_unused_namespaces,
 )
 from pybel_tools.utils import min_tanimoto_set_similarity, prepare_c3, prepare_c3_time_series
 from .application_utils import get_manager, get_user_datastore
@@ -895,3 +895,31 @@ def get_node_overlaps(network_id):
     log.debug('Cached node overlaps for network %s in %.2f seconds', network_id, time.time() - t)
 
     return rv
+
+
+def fill_out_report(network, report, graph=None):
+    """Fills out a report
+
+    :param Network network:
+    :param Report report:
+    :param pybel.BELGraph graph:
+    """
+    if graph is None:
+        graph = network.as_bel()
+
+    report.network = network
+    report.number_nodes = graph.number_of_nodes()
+    report.number_edges = graph.number_of_edges()
+    report.number_warnings = len(graph.warnings)
+    report.number_citations = count_unique_citations(graph)
+    report.number_authors = count_unique_authors(graph)
+    report.number_components = nx.number_weakly_connected_components(graph)
+    report.network_density = nx.density(graph)
+
+    try:
+        report.average_degree = sum(graph.in_degree().values()) / float(report.number_nodes)
+    except ZeroDivisionError:
+        report.average_degree = 0.0
+
+    summary_dict = get_network_summary_dict(graph)
+    report.dump_calculations(summary_dict)
