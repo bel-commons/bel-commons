@@ -64,7 +64,6 @@ class WebTest(unittest.TestCase):
         self.pybel = FlaskPyBEL.get_state(self.app_instance)
 
         self.manager = self.pybel.manager
-        self.api = self.pybel.api
 
         self.pybel.user_datastore.create_user(
             email=TEST_USER_EMAIL,
