@@ -1489,7 +1489,7 @@ function initD3Force(graph, tree) {
         var checkedItems = [];
         $(".node-checkbox:checked").each(function (idx, li) {
             // Get the class of the span element (node-ID) Strips "node-" and evaluate the string to integer
-            checkedItems.push(parseInt(li.parentElement.childNodes[2].className.replace("node-", "")));
+            checkedItems.push(li.parentElement.childNodes[2].className.replace("node-", ""));
         });
 
         resetAttributes();
