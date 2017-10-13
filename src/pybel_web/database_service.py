@@ -1209,6 +1209,7 @@ def suggest_authors():
 @roles_required('admin')
 def drop_edges():
     """Drops all edges"""
+    log.warning('dropping all edges')
     manager.session.query(Edge).delete()
     manager.session.commit()
 
@@ -1403,6 +1404,7 @@ def store_comment(edge_id):
 @roles_required('admin')
 def drop_nodes():
     """Drops all edges"""
+    log.warning('dropping all nodes')
     manager.session.query(Node).delete()
     manager.session.commit()
 
