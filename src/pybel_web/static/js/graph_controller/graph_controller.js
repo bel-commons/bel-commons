@@ -138,20 +138,20 @@ function displayEdgeInfo(edge) {
         }
     }
     if (edge.source.cname) {
-        edgeObject["Source"] = '<a href="/node/' + edge.source.id + '">' + edge.source.cname + "</a> ";
+        edgeObject["Subject"] = '<a href="/node/' + edge.source.id + '">' + edge.source.cname + "</a> ";
 
         if (edge.subject) {
-            edgeObject["Source"] += ('<span> with ' + JSON.stringify(edge.subject) + '</span>');
+            edgeObject["Subject"] += ('<span> with ' + JSON.stringify(edge.subject) + '</span>');
         }
     }
     if (edge.relation) {
-        edgeObject["Relationship"] = edge.relation;
+        edgeObject["Predicate"] = edge.relation;
     }
     if (edge.target.cname) {
-        edgeObject["Target"] = '<a href="/node/' + edge.target.id + '">' + edge.target.cname + "</a> ";
+        edgeObject["Object"] = '<a href="/node/' + edge.target.id + '">' + edge.target.cname + "</a> ";
 
         if (edge.object) {
-            edgeObject["Target"] += ('<span>with ' + JSON.stringify(edge.object) + '</span>');
+            edgeObject["Object"] += ('<span>with ' + JSON.stringify(edge.object) + '</span>');
         }
     }
     if (edge.annotations && Object.keys(edge.annotations).length > 0) {
