@@ -149,7 +149,7 @@ def build_main_service(app):
         manager.session.commit()
         return redirect(url_for('view_explorer_query', query_id=query.id))
 
-    @app.route('/summary/<int:network_id>/statistics')
+    @app.route('/summary/<int:network_id>')
     def view_summarize_statistics(network_id):
         """Renders a page with the parsing errors for a given BEL script"""
         if network_id not in get_network_ids_with_permission_helper(current_user, manager):
