@@ -23,6 +23,7 @@ from pybel.constants import GENE, RELATION
 from pybel.manager import Network
 from pybel.parser.canonicalize import node_to_tuple
 from pybel.struct.filters import filter_edges
+from pybel.summary import get_syntax_errors
 from pybel.utils import hash_node
 from pybel_tools.analysis.cmpa import calculate_average_scores_on_subgraphs as calculate_average_cmpa_on_subgraphs
 from pybel_tools.analysis.stability import (
@@ -215,7 +216,7 @@ def get_network_summary_dict(graph):
     )
 
 
-def render_network_summary(network_id):
+def render_network_summary(network_id, template='summary.html'):
     """Renders the graph summary page
     
     :param int network_id: 
@@ -254,8 +255,10 @@ def render_network_summary(network_id):
     overlaps = get_top_overlaps(network_id)
     network_versions = manager.get_networks_by_name(graph.name)
 
+    syntax_errors = get_syntax_errors(graph)
+
     return render_template(
-        'summary.html',
+        template,
         current_user=current_user,
         network=network,
         graph=graph,
@@ -271,6 +274,7 @@ def render_network_summary(network_id):
         chart_7_data=prepare_c3(hub_data, 'Top Hubs'),
         chart_9_data=prepare_c3(disease_data, 'Pathologies') if disease_data else None,
         chart_10_data=prepare_c3_time_series(citation_years, 'Number of articles') if citation_years else None,
+        syntax_errors=syntax_errors,
         **er
     )
 

@@ -6,8 +6,8 @@ import itertools as itt
 import logging
 import sys
 import time
-
 from collections import defaultdict
+
 from flask import abort, current_app, redirect, render_template, request, send_file, url_for
 from flask_security import current_user, login_required, roles_required
 
@@ -156,6 +156,13 @@ def build_main_service(app):
             abort(403, 'Insufficient rights for network {}'.format(network_id))
 
         return render_network_summary(network_id)
+
+    @app.route('/summary/<int:network_id>/compilation')
+    def view_compilation_summary(network_id):
+        if network_id not in get_network_ids_with_permission_helper(current_user, manager):
+            abort(403, 'Insufficient rights for network {}'.format(network_id))
+
+        return render_network_summary(network_id, template='summarize_compilation.html')
 
     @app.route('/network/<int:network_id>/induction-query/')
     def build_summary_link_query(network_id):
