@@ -442,8 +442,10 @@ $(document).ready(function () {
         });
     });
 
-    // Export network as an image
-    d3.select("#save-svg-graph").on("click", downloadSvg);
+    // // Export network as an image
+    d3.select("#save-svg-graph").on("click", function () {
+        saveSvgAsPng(d3.select('#graph-svg').nodes()[0], 'MyNetwork.png');
+    });
 
     updateQueryTable(window.query);  // Renders table info of the given query
 
@@ -524,6 +526,7 @@ function renderEmptyFrame() {
 
     var svg = d3.select("#graph-chart").append("svg")
         .attr("class", "svg-border")
+        .attr("id", "graph-svg")
         .attr("width", w)
         .attr("height", h);
 
@@ -646,24 +649,6 @@ function findDuplicates(data) {
     });
 
     return duplicates;
-}
-
-
-function downloadSvg() {
-    try {
-        var isFileSaverSupported = !!new Blob();
-    } catch (e) {
-        alert("blob not supported");
-    }
-
-    var html = d3.select("svg")
-        .attr("title", "test2")
-        .attr("version", 1.1)
-        .attr("xmlns", "http://www.w3.org/2000/svg")
-        .node().parentNode.innerHTML;
-
-    var blob = new Blob([html], {type: "image/svg+xml"});
-    saveAs(blob, "MyGraph.svg");
 }
 
 function downloadText(response, name) {
@@ -842,6 +827,7 @@ function initD3Force(graph, tree) {
 
     var svg = d3.select("#graph-chart").append("svg")
         .attr("class", "svg-border")
+        .attr("id", "graph-svg")
         .attr("width", w)
         .attr("height", h);
 

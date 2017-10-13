@@ -18,8 +18,7 @@
 {% block styles %}
     {{ super() }}
     <link rel="stylesheet" type="text/css" href='https://code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css'/>
-    <link rel="stylesheet" type="text/css"
-          href='https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/css/select2.min.css'/>
+
 {% endblock %}
 
 {% block scripts %}
@@ -45,8 +44,6 @@
             src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/js/select2.full.min.js"></script>
     <script type="text/javascript"
             src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
-    <script type="text/javascript"
-            src="{{ url_for('static', filename='js/home_controller/home_controller.js') }}"></script>
 {% endblock %}
 
 {% block content %}
