@@ -1537,7 +1537,7 @@ def get_pipeline_function_names():
 @api_blueprint.route('/api/query/<int:query_id>/drop', methods=['GET'])
 @login_required
 def drop_query_by_id(query_id):
-    """Deletes a query
+    """Drops a query
 
     ---
     tags:
@@ -1569,7 +1569,7 @@ def drop_queries():
 @api_blueprint.route('/api/query/dropall/<int:user_id>', methods=['GET'])
 @login_required
 def drop_user_queries(user_id):
-    """Deletes all queries associated with the user
+    """Drops all queries associated with the user
 
     ---
     tags:
