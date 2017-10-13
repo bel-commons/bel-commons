@@ -216,11 +216,11 @@ def get_network_summary_dict(graph):
     )
 
 
-def render_network_summary(network_id, template='summary.html'):
+def render_network_summary(network_id, template):
     """Renders the graph summary page
     
-    :param int network_id: 
-    :param pybel.BELGraph graph: 
+    :param int network_id:
+    :param str template:
     """
     network = manager.session.query(Network).get(network_id)
     graph = network.as_bel()

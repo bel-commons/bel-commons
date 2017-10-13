@@ -1,0 +1,600 @@
+{% extends "base.html" %}
+
+{% import "bootstrap/wtf.html" as wtf %}
+{% import "bootstrap/fixes.html" as fixes %}
+{% import "bootstrap/utils.html" as util %}
+
+{% block styles %}
+    {{ super() }}
+    <link href="{{ url_for('static', filename='css/c3.min.css') }}" rel="stylesheet" type="text/css"/>
+{% endblock %}
+
+{% block head %}
+    {{ super() }}
+
+    <script src="{{ url_for('static', filename='js/d3.3.5.17.min.js') }}" charset="utf-8"></script>
+    <script src="{{ url_for('static', filename='js/c3.min.js') }}"></script>
+    <script src="//code.jquery.com/jquery-1.12.4.js"></script>
+    <script src="https://cdn.datatables.net/1.10.13/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.10.13/js/dataTables.bootstrap.min.js"></script>
+    <script>
+        // Initializes popover
+        $(function () {
+            $('[data-toggle="popover"]').popover({
+                placement: 'top',
+                trigger: 'hover'
+            })
+        })
+    </script>
+{% endblock %}
+
+{% block title %}Biogrammar{% endblock %}
+
+{% block content %}
+    <a id="top"></a>
+    <div class="container">
+        <div class="page-header">
+            <h1>Biogrammar Summary of {{ network.name }}
+                <small class="text-muted">{{ network.version }}</small>
+            </h1>
+        </div>
+
+        {{ util.flashed_messages(dismissible=True, container=False) }}
+
+        <div class="panel panel-default">
+            <div class="panel-body">
+                <a class="btn btn-primary" href="{{ url_for('view_networks') }}" role="button">List Networks</a>
+
+                {% if network.report and network.report.is_displayable %}
+                    <a href="{{ url_for('view_explore_network', network_id=network.id) }}"
+                       class="btn btn-default" data-toggle="popover"
+                       title="Explore this Network"
+                       data-content="Visualize this Network in the Biological Network Explorer.
+                                   Note that if the network is larger than 100 nodes, you would need to filter the
+                                   network before rendering it in order to avoid crash your browser.">
+                        <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
+                        Explore
+                    </a>
+                {% else %}
+                    <button class="btn btn-default" data-toggle="popover"
+                            title="Explore this Network" disabled
+                            data-content="This network is too large to explore directly, so build a query first.">
+                        <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
+                        Explore
+                    </button>
+                {% endif %}
+
+                <a href="{{ url_for('view_query_builder', start=network.id) }}"
+                   class="btn btn-default" data-toggle="popover"
+                   title="Perform a Query on this Network"
+                   data-content="You can ask specific questions to your network using the
+                                       Query Builder.">
+                    <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
+                    Query
+                </a>
+                <a href="{{ url_for('analysis.view_network_analysis_uploader', network_id=network.id) }}"
+                   class="btn btn-default" data-toggle="popover"
+                   title="Analyze this Network"
+                   data-content="Upload your experiments and run algorithms on your network.">
+                    <span class="glyphicon glyphicon-flash" aria-hidden="true"></span>
+                    Analyze
+                </a>
+                <a class="btn btn-default" href="{{ url_for('analysis.view_analyses', network_id=network_id) }}"
+                   role="button">
+                    <span class="glyphicon glyphicon-tasks" aria-hidden="true"></span>
+                    Results
+                </a>
+
+                {% if current_user.is_authenticated %}
+                    <a class="btn btn-default" role="button"
+                       href="{{ url_for('dbs.export_network', network_id=network_id, serve_format='bel') }}">
+                        <span class="glyphicon glyphicon-download" aria-hidden="true"></span> BEL Script</a>
+                    <a class="btn btn-default" role="button"
+                       href="{{ url_for('dbs.export_network', network_id=network_id, serve_format='json') }}">
+                        <span class="glyphicon glyphicon-download" aria-hidden="true"></span> Node-Link JSON</a>
+                    <a class="btn btn-default" role="button"
+                       href="{{ url_for('dbs.export_network', network_id=network_id, serve_format='cx') }}">
+                        <span class="glyphicon glyphicon-download" aria-hidden="true"></span> CX JSON</a>
+                {% endif %}
+
+                {% if current_user.is_admin %}
+                    <a class="btn btn-danger" role="button"
+                       href="{{ url_for('dbs.drop_network', network_id=network_id, next=url_for('home')) }}">
+                        <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
+                        Drop
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if network_versions is defined and network_versions|length > 1 %}
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Versions
+                        <span class="badge">{{ network_versions|length }}</span>
+                        <a class="pull-right" href="#top">
+                            <span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span>
+                        </a>
+                    </h3>
+                </div>
+                <div class="panel-body">
+                    <ul class="list-inline">
+                        {% for network_version in network_versions %}
+                            {% if network_version.id == network_id %}
+                                <li>
+                                    <a class="btn btn-info" role="button"
+                                       href="{{ url_for('view_summary', network_id=network_version.id) }}">{{ network_version.version }}</a>
+                                </li>
+                            {% else %}
+                                <li>
+                                    <a class="btn btn-default" role="button"
+                                       href="{{ url_for('view_summary', network_id=network_version.id) }}">{{ network_version.version }}</a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        {% endif %}
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Table of Contents</h3>
+            </div>
+            <div class="panel-body">
+                <ol>
+                    <li><a href="#provenance">Provenance</a></li>
+
+                    {% if regulatory_pairs is defined and regulatory_pairs|length > 0 %}
+                        <li><a href="#regulatory-pairs">Regulatory Pairs</a></li>
+                    {% endif %}
+
+                    {% if contradictory_pairs is defined and contradictory_pairs|length > 0 %}
+                        <li><a href="#contradictory-pairs">Contradictory Pairs</a></li>
+                    {% endif %}
+
+                    {% if unstable_pairs is defined and unstable_pairs|length > 0 %}
+                        <li><a href="#unstable-pairs">Unstable Pairs</a></li>
+                    {% endif %}
+
+                    {% if contradictory_triplets is defined and contradictory_triplets|length > 0 %}
+                        <li><a href="#contradictory-triplets">Contradictory Triplets</a></li>
+                    {% endif %}
+
+                    {% if unstable_triplets is defined and unstable_triplets|length > 0 %}
+                        <li><a href="#unstable-triplets">Unstable Triplets</a></li>
+                    {% endif %}
+
+                    {% if causal_pathologies is defined and causal_pathologies|length > 0 %}
+                        <li><a href="#causal-pathologies">Causal Pathologies</a></li>
+                    {% endif %}
+
+                    {% if undefined_families is defined and undefined_families|length > 0 %}
+                        <li><a href="#undefined-families">Undefined Families</a></li>
+                    {% endif %}
+                </ol>
+            </div>
+        </div>
+
+        <a id="provenance"></a>
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Provenance
+                    <a class="pull-right" href="#top">
+                        <span class="glyphicon glyphicon-arrow-up"></span>
+                    </a>
+                </h3>
+            </div>
+            <div class="panel-body">
+                <dl class="dl-horizontal">
+                    {% if network.report %}
+                        <dt>Upload</dt>
+                        <dd>{{ network.report.user.email }} at {{ network.report.created }}</dd>
+                    {% endif %}
+
+                    <dt>Authors</dt>
+                    <dd>{{ network.authors }}</dd>
+
+                    <dt>Contact</dt>
+                    <dd>{{ network.contact }}</dd>
+
+                    {% if network.description %}
+                        <dt>Description</dt>
+
+                        <dd>{{ network.description }}</dd>
+                    {% endif %}
+
+                    <dt>License</dt>
+                    <dd>{{ network.licenses }}</dd>
+
+                    <dt>Copyright</dt>
+                    <dd>{{ network.copyright }}</dd>
+                </dl>
+            </div>
+        </div>
+
+        {% if regulatory_pairs is defined and regulatory_pairs|length > 0 %}
+            <a id="regulatory-pairs"></a>
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Regulatory Pairs
+                        <span class="badge">{{ regulatory_pairs|length }}</span>
+                        <a class="pull-right" href="#top">
+                            <span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span>
+                        </a>
+                    </h3>
+                </div>
+                <div class="panel-body">
+                    <p>
+                        These pairs of nodes represent motifs like <code>A increases B</code> and
+                        <code>B decreases A</code>.
+                    </p>
+                </div>
+                <table class="table table-hover table-responsive table-striped">
+                    <thead>
+                    <tr>
+                        <th></th>
+                        <th>Node A</th>
+                        <th>Node B</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for source, source_id, target, target_id in regulatory_pairs %}
+                        <tr>
+                            <td>
+                                <a href="{{ url_for('build_summary_link_query', network_id=network_id, nodes=[source_id, target_id]) }}"
+                                   data-toggle="tooltip" data-placement="top"
+                                   title="Explore BEL network induced over these nodes">
+                                    <span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span>
+                                </a>
+                                <a href="{{ url_for('view_relations', source_id=source_id, target_id=target_id, undirected='yes') }}"
+                                   data-toggle="tooltip" data-placement="top" title="List all evidences">
+                                    <span class="glyphicon glyphicon-th-list" aria-hidden="true"></span>
+                                </a>
+                            </td>
+                            <td>{{ source }}</td>
+                            <td>{{ target }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+
+        {% if contradictory_pairs is defined and contradictory_pairs|length > 0 %}
+            <a id="contradictory-pairs"></a>
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Contradictory Statements
+                        <span class="badge">{{ contradictory_pairs|length }}</span>
+                        <a class="pull-right" href="#top">
+                            <span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span>
+                        </a>
+                    </h3>
+                </div>
+                <div class="panel-body">
+                    <p>These pairs of nodes have a contradiction in their causal relationships, meaning they have more
+                        than one of <code>INCREASES</code>, <code>DECREASES</code>, or <code>CAUSES NO CHANGE</code>.
+                        This may be due to different experimental conditions, so these statements need to be carefully
+                        considered in analyses.
+                    </p>
+                </div>
+                <table class="table table-hover table-responsive table-striped">
+                    <thead>
+                    <tr>
+                        <th></th>
+                        <th>Source</th>
+                        <th>Relations</th>
+                        <th>Target</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for source, source_id, target, target_id, relations in contradictory_pairs %}
+                        <tr>
+                            <td>
+                                <a href="{{ url_for('build_summary_link_query', network_id=network_id, nodes=[source_id, target_id]) }}"
+                                   data-toggle="tooltip" data-placement="top"
+                                   title="Explore BEL network induced over these nodes">
+                                    <span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span>
+                                </a>
+                                <a href="{{ url_for('view_relations', source_id=source_id, target_id=target_id) }}"
+                                   data-toggle="tooltip" data-placement="top" title="List evidences">
+                                    <span class="glyphicon glyphicon-th-list" aria-hidden="true"></span>
+                                </a>
+                            </td>
+                            <td>{{ source }}</td>
+                            <td>{{ ', '.join(relations) }}</td>
+                            <td>{{ target }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+
+        {% if unstable_pairs is defined and unstable_pairs|length > 0 %}
+            <a id="unstable-pairs"></a>
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Unstable Pairs
+                        <span class="badge">{{ unstable_pairs|length }}</span>
+                        <a class="pull-right" href="#top">
+                            <span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span>
+                        </a>
+                    </h3>
+                </div>
+                <div class="panel-body">
+                    <dl>
+                        <dt>Chaotic Pairs</dt>
+                        <dd>Nodes that mutually increase each other, such as when both <code>A increases B</code> and
+                            <code>B
+                                increases A</code>.
+                        </dd>
+                        <dt>Dampened Pairs</dt>
+                        <dd>Nodes that mutually decrease each other, such as when both <code>A decreases B</code> and
+                            <code>B
+                                decreases A</code>.
+                        </dd>
+                    </dl>
+                    <p>While neither chaotic nor dampened pairs are biologically invalid, they require additional
+                        context to understand their regulation.</p>
+                </div>
+                <table class="table table-hover table-responsive table-striped">
+                    <thead>
+                    <tr>
+                        <th></th>
+                        <th>Type</th>
+                        <th>Node A</th>
+                        <th>Node B</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for source, source_id, target, target_id, label in unstable_pairs %}
+                        <tr>
+                            <td>
+                                <a href="{{ url_for('build_summary_link_query', network_id=network_id, nodes=[source_id, target_id]) }}"
+                                   data-toggle="tooltip" data-placement="top"
+                                   title="Explore BEL network induced over these nodes">
+                                    <span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span>
+                                </a>
+                                <a href="{{ url_for('view_relations', source_id=source_id, target_id=target_id, undirected='yes') }}"
+                                   data-toggle="tooltip" data-placement="top" title="List all evidences">
+                                    <span class="glyphicon glyphicon-th-list" aria-hidden="true"></span>
+                                </a>
+                            </td>
+                            <td>{{ label }}</td>
+                            <td>{{ source }}</td>
+                            <td>{{ target }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+
+        {% if contradictory_triplets is defined and contradictory_triplets|length > 0 %}
+            <a id="contradictory-triplets"></a>
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Contradictory Triplets
+                        <span class="badge">{{ contradictory_triplets|length }}</span>
+                        <a class="pull-right" href="#top">
+                            <span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span>
+                        </a>
+                    </h3>
+                </div>
+                <div class="panel-body">
+                    <p>Analysis of triple stability comes from a deep graph theoretic background. It identifies
+                        triangles within the graph that have logically inconsistent relations.</p>
+                    <dl>
+                        <dt>Separately Unstable Triplet</dt>
+                        <dd>When both <code>A positiveCorrelation B</code>, <code>B negativeCorrelation C</code>, but
+                            <code>C positiveCorrelation A</code>.
+                        </dd>
+                        <dt>Mutually Unstable Triplets</dt>
+                        <dd>When both <code>A negativeCorrelation B</code>, <code>B negativeCorrelation C</code>, and
+                            <code>C negativeCorrelation A</code>.
+                        </dd>
+                        <dt>Jens Contradictory Triplet</dt>
+                        <dd>When <code>A increases B</code>, <code>A decreases C</code>, and <code>C positiveCorrelation
+                            A</code>.
+                        </dd>
+                        <dt>Increase Mismatch Triplet</dt>
+                        <dd>When <code>A increases B</code>, <code>A increases C</code>, and <code>C negativeCorrelation
+                            A</code>.
+                        </dd>
+                        <dt>Decrease Mismatch Triplet</dt>
+                        <dd>When <code>A decreases B</code>, <code>A decreases C</code>, and <code>C negativeCorrelation
+                            A</code>.
+                        </dd>
+                    </dl>
+                </div>
+                <table class="table table-hover table-responsive table-striped">
+                    <thead>
+                    <tr>
+                        <th></th>
+                        <th>Type</th>
+                        <th>Node A</th>
+                        <th>Node B</th>
+                        <th>Node C</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for a, aid, b, bid, c, cid, label in contradictory_triplets %}
+                        <tr>
+                            <td>
+                                <a href="{{ url_for('build_summary_link_query', network_id=network_id, nodes=[aid, bid, cid]) }}"
+                                   data-toggle="tooltip" data-placement="top"
+                                   title="Explore BEL network induced over these nodes">
+                                    <span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span>
+                                </a>
+                            </td>
+                            <td>{{ label }}</td>
+                            <td>{{ a }}</td>
+                            <td>{{ b }}</td>
+                            <td>{{ c }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+
+        {% if unstable_triplets is defined and unstable_triplets|length > 0 %}
+            <a id="unstable-triplets"></a>
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Unstable Triplets
+                        <span class="badge">{{ unstable_triplets|length }}</span>
+                        <a class="pull-right" href="#top">
+                            <span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span>
+                        </a>
+                    </h3>
+                </div>
+                <div class="panel-body">
+                    <p>Like unstable pairs, unstable triplets require additional context to understand their
+                        mechanisms of regulation.</p>
+                    <dl>
+                        <dt>Chaotic Triplets</dt>
+                        <dd>A triplet of nodes that mutually increase each other, such as when <code>A increases
+                            B</code>,
+                            <code>B increases C</code>, and <code>C increases A</code>.
+                        </dd>
+                        <dt>Dampened Triplets</dt>
+                        <dd>A triplet of nodes that mutually decreases each other, such as when <code>A decreases
+                            B</code>,
+                            <code>B decreases C</code>, and <code>C decreases A</code>.
+                        </dd>
+                    </dl>
+                </div>
+                <table class="table table-hover table-responsive table-striped">
+                    <thead>
+                    <tr>
+                        <th></th>
+                        <th>Type</th>
+                        <th>Node A</th>
+                        <th>Node B</th>
+                        <th>Node C</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for a, aid, b, bid, c, cid, label in unstable_triplets %}
+                        <tr>
+                            <td>
+                                <a href="{{ url_for('build_summary_link_query', network_id=network_id, nodes=[aid, bid, cid]) }}"
+                                   data-toggle="tooltip" data-placement="top"
+                                   title="Explore BEL network induced over these nodes">
+                                    <span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span>
+                                </a>
+                            </td>
+                            <td>{{ label }}</td>
+                            <td>{{ a }}</td>
+                            <td>{{ b }}</td>
+                            <td>{{ c }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+
+        {% if causal_pathologies is defined and causal_pathologies|length > 0 %}
+            <a id="causal-pathologies"></a>
+            <div class="panel panel-warning">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Causal Pathologies
+                        <span class="badge">{{ causal_pathologies|length }}</span>
+                        <a class="pull-right" href="#top">
+                            <span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span>
+                        </a>
+                    </h3>
+                </div>
+                <div class="panel-body">
+                    <p>Pathologies are the result of molecular and physical processes, and do not make sense as
+                        the subject of causal statements.
+                    </p>
+                </div>
+                <table class="table table-hover table-responsive table-striped">
+                    <thead>
+                    <tr>
+                        <th></th>
+                        <th>Source</th>
+                        <th>Relation</th>
+                        <th>Target</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for source, source_id, target, target_id, relation in causal_pathologies %}
+                        <tr>
+                            <td>
+                                <a href="{{ url_for('build_summary_link_query', network_id=network_id, nodes=[source_id, target_id]) }}"
+                                   data-toggle="tooltip" data-placement="top"
+                                   title="Explore BEL network induced over these nodes">
+                                    <span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span>
+                                </a>
+                            </td>
+                            <td>{{ source }}</td>
+                            <td>{{ relation }}</td>
+                            <td>{{ target }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+
+        {% if undefined_families is defined and undefined_families|length > 0 %}
+            <a id="undefined-families"></a>
+            <div class="panel panel-warning">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Undefined Families
+                        <span class="badge">{{ undefined_families|length }}</span>
+                        <a class="pull-right" href="#top">
+                            <span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span>
+                        </a>
+                    </h3>
+                </div>
+                <div class="panel-body">
+                    <p>Families that are referenced without definition are problematic for analysis. Consider
+                        additional steps during compilation for integrating information, or more thoughtful curation.
+                    </p>
+                </div>
+                <table class="table table-hover table-responsive table-striped">
+                    <thead>
+                    <tr>
+                        <th></th>
+                        <th>Node</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for source, source_id in undefined_families %}
+                        <tr>
+                            <td>
+                                <a href="{{ url_for('build_summary_link_query', network_id=network_id, seed_method='neighbors', nodes=[source_id]) }}"
+                                   data-toggle="tooltip" data-placement="top"
+                                   title="Explore BEL network induced over these nodes">
+                                    <span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span>
+                                </a>
+                            </td>
+                            <td><code>{{ source }}</code></td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+
+    </div>
+
+    {% include "footer.html" %}
+{% endblock %}
+
+{% block scripts %}
+    {{ super() }}
+
+    <script>
+        $(function () {
+            $('[data-toggle="tooltip"]').tooltip()
+        })
+    </script>
+{% endblock %}
