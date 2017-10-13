@@ -1822,7 +1822,7 @@ def add_user_role(user, role):
 
 @api_blueprint.route('/api/user/<user>/remove_role/<role>')
 @roles_required('admin')
-def remove_user_role(user, role):
+def drop_user_role(user, role):
     """Removes a role from a user
 
     ---
@@ -1834,10 +1834,10 @@ def remove_user_role(user, role):
     return jsonify({'status': 200})
 
 
-@api_blueprint.route('/api/user/<int:user_id>/delete')
+@api_blueprint.route('/api/user/<int:user_id>/drop')
 @roles_required('admin')
-def delete_user(user_id):
-    """Deletes a user
+def drop_user(user_id):
+    """Drops a user
 
     ---
     tags:
