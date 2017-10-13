@@ -1205,6 +1205,14 @@ def suggest_authors():
 # EDGES
 ####################################
 
+@api_blueprint.route('/api/edge/drop', methods=['GET'])
+@roles_required('admin')
+def drop_edges():
+    """Drops all edges"""
+    manager.session.query(Edge).delete()
+    manager.session.commit()
+
+
 @api_blueprint.route('/api/edge/by_bel/statement/<bel>', methods=['GET'])
 def edges_by_bel_statement(bel):
     """Get edges that match the given BEL
@@ -1390,6 +1398,14 @@ def store_comment(edge_id):
 ####################################
 # NODES
 ####################################
+
+@api_blueprint.route('/api/node/drop', methods=['GET'])
+@roles_required('admin')
+def drop_nodes():
+    """Drops all edges"""
+    manager.session.query(Node).delete()
+    manager.session.commit()
+
 
 def jsonify_nodes(nodes):
     return jsonify(node.to_json(include_id=True) for node in nodes)
