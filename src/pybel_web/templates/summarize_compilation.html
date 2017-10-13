@@ -123,12 +123,12 @@
                             {% if network_version.id == network_id %}
                                 <li>
                                     <a class="btn btn-info" role="button"
-                                       href="{{ url_for('view_summary', network_id=network_version.id) }}">{{ network_version.version }}</a>
+                                       href="{{ url_for('view_summarize_compilation', network_id=network_version.id) }}">{{ network_version.version }}</a>
                                 </li>
                             {% else %}
                                 <li>
                                     <a class="btn btn-default" role="button"
-                                       href="{{ url_for('view_summary', network_id=network_version.id) }}">{{ network_version.version }}</a>
+                                       href="{{ url_for('view_summarize_compilation', network_id=network_version.id) }}">{{ network_version.version }}</a>
                                 </li>
                             {% endif %}
                         {% endfor %}
@@ -719,7 +719,12 @@
         };
 
         $(document).ready(function () {
-            $('#syntaxErrorTable').pageMe({pagerSelector: '#syntaxErrorPager', showPrevNext: true, hidePageNumbers: false, perPage: 20});
+            $('#syntaxErrorTable').pageMe({
+                pagerSelector: '#syntaxErrorPager',
+                showPrevNext: true,
+                hidePageNumbers: false,
+                perPage: 20
+            });
             $('#myTable').pageMe({pagerSelector: '#myPager', showPrevNext: true, hidePageNumbers: false, perPage: 20});
         });
     </script>

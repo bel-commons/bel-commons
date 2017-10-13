@@ -116,7 +116,7 @@
                                     <ul>
                                         {% for project_network in project.networks %}
                                             <li>
-                                                <a href="{{ url_for('view_summary', network_id=project_network.id) }}">
+                                                <a href="{{ url_for('view_summarize_statistics', network_id=project_network.id) }}">
                                                     {{ project_network }}
                                                 </a>
                                             </li>
@@ -163,7 +163,7 @@
                             <td>
                                 <div class="pull-right">
                                     <a class="btn btn-default btn-xs"
-                                       href="{{ url_for('view_summary', network_id=report.network.id) }}">
+                                       href="{{ url_for('view_summarize_statistics', network_id=report.network.id) }}">
                                         <span class="glyphicon glyphicon-signal" aria-hidden="true"></span>
                                     </a>
                                     <a class="btn btn-default btn-xs"
@@ -278,7 +278,7 @@
                             <ul>
                                 {% for network in query.assembly.networks %}
                                     <li>
-                                        <a href="{{ url_for('view_summary', network_id=network.id) }}">{{ network }}</a>
+                                        <a href="{{ url_for('view_summarize_statistics', network_id=network.id) }}">{{ network }}</a>
                                     </li>
                                 {% endfor %}
                             </ul>
