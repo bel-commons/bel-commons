@@ -544,6 +544,8 @@ def drop_network_helper(network_id):
     if not current_user.is_admin:
         user_owns_network_or_403(network, current_user)
 
+    log.info('dropping network %s', network_id)
+
     try:
         manager.session.delete(network)
         manager.session.commit()
@@ -1205,13 +1207,14 @@ def suggest_authors():
 # EDGES
 ####################################
 
-@api_blueprint.route('/api/edge/drop', methods=['GET'])
+@api_blueprint.route('/api/edge/drop_all', methods=['GET'])
 @roles_required('admin')
 def drop_edges():
     """Drops all edges"""
     log.warning('dropping all edges')
     manager.session.query(Edge).delete()
     manager.session.commit()
+    return next_or_jsonify('dropped all nodes')
 
 
 @api_blueprint.route('/api/edge/by_bel/statement/<bel>', methods=['GET'])
@@ -1407,6 +1410,7 @@ def drop_nodes():
     log.warning('dropping all nodes')
     manager.session.query(Node).delete()
     manager.session.commit()
+    return next_or_jsonify('dropped all nodes')
 
 
 def jsonify_nodes(nodes):
