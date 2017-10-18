@@ -669,6 +669,7 @@ class NetworkOverlap(Base):
                         backref=backref('overlaps', lazy='dynamic', cascade="all, delete-orphan"))
 
     right_id = Column(Integer, ForeignKey('{}.id'.format(NETWORK_TABLE_NAME)), primary_key=True)
-    right = relationship('Network', foreign_keys=[right_id])
+    right = relationship('Network', foreign_keys=[right_id],
+                         backref=backref('incoming_overlaps', lazy='dynamic', cascade="all, delete-orphan"))
 
     overlap = Column(Float, nullable=False, doc='The node overlap between the two networks')
