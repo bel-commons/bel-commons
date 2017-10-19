@@ -955,9 +955,6 @@ def get_network(query_id):
     """
     graph = get_graph_from_request(query_id)
     payload = to_json_custom(graph)
-
-    log.warning('paload: %s', payload)
-
     return jsonify(payload)
 
 

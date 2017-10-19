@@ -192,11 +192,9 @@ function displayEdgeInfo(edge) {
                     edgeObject[sk] += '<dt>Annotations</dt><dd>' + JSON.stringify(context.annotations) + '</dd>';
                 }
 
-                edgeObject[sk] += '<dt>Identifier</dt><dd><a href="/api/edge/' + context.id + '"><code>' + sk + '</code></a></dd>';
-
-
-                edgeObject[sk] += '<dt>Tools</dt><dd><button type="button" class="btn btn-primary btn-xs" data-toggle="modal" data-target="#edge-feedback" data-edge="' +
-                    context.id + '">Give Feedback</button></dd>';
+                edgeObject[sk] += '<dt>Links</dt><dd><a href="/api/edge/' + context.id + '">' + 'More Information</a> or ';
+                edgeObject[sk] += '<a href="#" data-toggle="modal" data-target="#edge-feedback" data-edge="' +
+                    context.id + '">Give Feedback</a></dd>';
 
                 edgeObject[sk] += '</dl>';
             }
