@@ -829,7 +829,12 @@ def get_node_by_hash_or_404(node_hash):
     return node
 
 
-def get_edge_or_404(edge_hash):
+def get_edge_by_hash_or_404(edge_hash):
+    """Gets an edge if it exists or sends a 404
+
+    :param str edge_hash: A PyBEL edge hash
+    :rtype: Edge
+    """
     edge = manager.get_edge_by_hash(edge_hash)
 
     if edge is None:

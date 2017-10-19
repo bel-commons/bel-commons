@@ -44,7 +44,7 @@ from .main_service import BLACK_LIST, PATHS_METHOD, UNDIRECTED
 from .models import EdgeComment, Experiment, Project, Report, User
 from .send_utils import serve_network
 from .utils import (
-    current_user_has_query_rights, fill_out_report, get_edge_or_404,
+    current_user_has_query_rights, fill_out_report, get_edge_by_hash_or_404,
     get_network_ids_with_permission_helper, get_node_by_hash_or_404, get_node_overlaps, get_or_create_vote,
     get_query_ancestor_id, get_recent_reports, make_graph_summary, manager, next_or_jsonify, relabel_nodes_to_hashes,
     safe_get_query, user_datastore, user_owns_network_or_403,
@@ -1333,15 +1333,15 @@ def get_all_edges():
     ])
 
 
-@api_blueprint.route('/api/edge/<edge_id>')
-def get_edge_by_id(edge_id):
+@api_blueprint.route('/api/edge/<edge_hash>')
+def get_edge_by_id(edge_hash):
     """Gets an edge data dictionary by id
 
     ---
     tags:
         - edge
     """
-    edge = get_edge_or_404(edge_id)
+    edge = get_edge_by_hash_or_404(edge_hash)
     return jsonify(get_edge_entry(edge))
 
 
@@ -1354,7 +1354,7 @@ def store_up_vote(edge_id):
     tags:
         - edge
     """
-    edge = get_edge_or_404(edge_id)
+    edge = get_edge_by_hash_or_404(edge_id)
     vote = get_or_create_vote(edge, current_user, True)
     return jsonify(vote.to_json())
 
@@ -1368,7 +1368,7 @@ def store_down_vote(edge_id):
     tags:
         - edge
     """
-    edge = get_edge_or_404(edge_id)
+    edge = get_edge_by_hash_or_404(edge_id)
     vote = get_or_create_vote(edge, current_user, False)
     return jsonify(vote.to_json())
 
@@ -1382,7 +1382,7 @@ def store_comment(edge_id):
     tags:
         - edge
     """
-    edge = get_edge_or_404(edge_id)
+    edge = get_edge_by_hash_or_404(edge_id)
 
     if 'comment' not in request.args:
         abort(403, 'Comment not found')
