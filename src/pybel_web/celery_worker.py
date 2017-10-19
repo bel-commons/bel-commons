@@ -24,13 +24,13 @@ from pybel.manager.models import Network
 from pybel.parser.parse_exceptions import InconsistentDefinitionError
 from pybel_tools.constants import BMS_BASE
 from pybel_tools.ioutils import convert_directory
-from pybel_tools.mutation import add_canonical_names, enrich_pubmed_citations, infer_central_dogma
+from pybel_tools.mutation import add_canonical_names, add_identifiers, enrich_pubmed_citations, infer_central_dogma
 from pybel_tools.utils import enable_cool_mode
-from .application import create_application
-from .celery_utils import create_celery
-from .constants import CHARLIE_EMAIL, DANIEL_EMAIL, integrity_message, log_worker_path
-from .models import Experiment, Report
-from .utils import calculate_scores, fill_out_report, make_graph_summary, manager
+from pybel_web.application import create_application
+from pybel_web.celery_utils import create_celery
+from pybel_web.constants import CHARLIE_EMAIL, DANIEL_EMAIL, integrity_message, log_worker_path
+from pybel_web.models import Experiment, Report
+from pybel_web.utils import calculate_scores, fill_out_report, make_graph_summary, manager
 
 log = get_task_logger(__name__)
 
@@ -239,6 +239,8 @@ def async_parser(report_id):
     try:
         log.info('enriching graph')
         add_canonical_names(graph)
+
+        add_identifiers(graph)
 
         if report.infer_origin:
             infer_central_dogma(graph)
