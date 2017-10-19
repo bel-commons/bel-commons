@@ -325,15 +325,21 @@ def build_main_service(app):
             data=data,
         )
 
-    def serve_relations(relations, source, target=None):
+    def serve_relations(edges, source, target=None):
+        """Serves a list of edges
+
+        :param list[Edge] edges:
+        :param Node source:
+        :param Node target:
+        """
         data = defaultdict(list)
         ev2cit = {}
-        for relation in relations:
-            if not relation.evidence:
+        for edge in edges:
+            if not edge.evidence:
                 continue
-            ev = relation.evidence.text
-            data[ev].append(relation.to_json()['data'])
-            ev2cit[ev] = relation.evidence.citation.to_json()
+            ev = edge.evidence.text
+            data[ev].append((edge, edge.to_json()))
+            ev2cit[ev] = edge.evidence.citation.to_json()
 
         return render_template(
             'evidence_list.html',

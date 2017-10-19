@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
 
 import logging
+from collections import defaultdict
 
-from flask import send_file, Response, jsonify
-from six import StringIO, BytesIO
+from flask import Response, jsonify, send_file
+from six import BytesIO, StringIO
 
-from pybel import to_cx, to_bel_lines, to_graphml, to_bytes, to_csv, to_sif, to_jgif, to_gsea
-from pybel.constants import GRAPH_ANNOTATION_LIST, RELATION
-from pybel.utils import hash_node
+from pybel import to_bel_lines, to_bytes, to_csv, to_cx, to_graphml, to_gsea, to_jgif, to_sif
+from pybel.canonicalize import calculate_canonical_name, edge_to_bel
+from pybel.constants import RELATION, TWO_WAY_RELATIONS, CAUSAL_INCREASE_RELATIONS, CAUSAL_DECREASE_RELATIONS, INCREASES, DECREASES
+from pybel.utils import hash_edge, hash_node
 from pybel_tools.mutation.metadata import serialize_authors
 
 __all__ = [
@@ -19,44 +21,54 @@ log = logging.getLogger(__name__)
 
 
 def to_json_custom(graph, _id='id', source='source', target='target', key='key'):
-    result = {
-        'directed': graph.is_directed(),
-        'multigraph': graph.is_multigraph(),
-        'graph': graph.graph
-    }
-
-    if GRAPH_ANNOTATION_LIST in result['graph']:
-        result['graph'][GRAPH_ANNOTATION_LIST] = {
-            k: list(sorted(v))
-            for k, v in result['graph'][GRAPH_ANNOTATION_LIST].items()
-        }
+    result = {}
 
     mapping = {}
 
     result['nodes'] = []
     for i, node in enumerate(sorted(graph.nodes_iter(), key=hash_node)):
         nd = graph.node[node].copy()
-        nd[_id] = node
+        nd[_id] = hash_node(node)
         result['nodes'].append(nd)
         mapping[node] = i
 
     edge_set = set()
 
-    result['links'] = []
+    rr = {}
+
     for u, v, k, d in graph.edges_iter(keys=True, data=True):
 
-        if (u, v, d[RELATION]) in edge_set:  # Avoids duplicate sending multiple edges between nodes with same relation
-            continue
+        if d[RELATION] in TWO_WAY_RELATIONS and (u, v) != tuple(sorted((u, v))):
+            continue  # don't keep two way edges twice
 
-        ed = {
-            source: mapping[u],
-            target: mapping[v],
-            key: k,
+        entry_code = u, v
+
+        edge_hash = hash_edge(u, v, k, d)
+
+        if entry_code not in edge_set:  # Avoids duplicate sending multiple edges between nodes with same relation
+            rr[entry_code] = {
+                source: mapping[u],
+                target: mapping[v],
+                'contexts': []
+            }
+
+            edge_set.add(entry_code)
+
+        payload = {
+            'id': edge_hash,
+            'bel': edge_to_bel(graph, u, v, d)
         }
-        ed.update(d)
-        result['links'].append(ed)
+        payload.update(d)
 
-        edge_set.add((u, v, d[RELATION]))
+        if d[RELATION] in CAUSAL_INCREASE_RELATIONS:
+            rr[entry_code][RELATION] = INCREASES
+
+        elif d[RELATION] in CAUSAL_DECREASE_RELATIONS:
+            rr[entry_code][RELATION] = DECREASES
+
+        rr[entry_code]['contexts'].append(payload)
+
+    result['links'] = list(rr.values())
 
     return result
 

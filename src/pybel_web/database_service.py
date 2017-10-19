@@ -42,7 +42,7 @@ from . import models
 from .constants import *
 from .main_service import BLACK_LIST, PATHS_METHOD, UNDIRECTED
 from .models import EdgeComment, Experiment, Project, Report, User
-from .send_utils import serve_network
+from .send_utils import serve_network, to_json_custom
 from .utils import (
     current_user_has_query_rights, fill_out_report, get_edge_by_hash_or_404,
     get_network_ids_with_permission_helper, get_node_by_hash_or_404, get_node_overlaps, get_or_create_vote,
@@ -954,8 +954,11 @@ def get_network(query_id):
         type: integer
     """
     graph = get_graph_from_request(query_id)
-    relabeled_graph = relabel_nodes_to_hashes(graph)
-    return serve_network(relabeled_graph)
+    payload = to_json_custom(graph)
+
+    log.warning('paload: %s', payload)
+
+    return jsonify(payload)
 
 
 @api_blueprint.route('/api/query/<int:query_id>/paths/<source_id>/<target_id>/')
@@ -1327,15 +1330,22 @@ def get_all_edges():
     tags:
         - edge
     """
+    limit = request.args.get('limit', type=int)
+
+    bq = manager.session.query(Edge)
+
+    if limit:
+        bq = bq.limit(limit)
+
     return jsonify([
         get_edge_entry(edge)
-        for edge in manager.session.query(Edge).all()
+        for edge in bq.all()
     ])
 
 
 @api_blueprint.route('/api/edge/<edge_hash>')
-def get_edge_by_id(edge_hash):
-    """Gets an edge data dictionary by id
+def get_edge_by_hash(edge_hash):
+    """Gets an edge data dictionary by hash
 
     ---
     tags:
@@ -1343,6 +1353,23 @@ def get_edge_by_id(edge_hash):
     """
     edge = get_edge_by_hash_or_404(edge_hash)
     return jsonify(get_edge_entry(edge))
+
+
+@api_blueprint.route('/api/edge/hash_starts/<edge_hash>')
+@roles_required('admin')
+def get_edge_by_hash_start(edge_hash):
+    """Gets an edge data dictionary by the beginning of its hash
+
+    ---
+    tags:
+        - edge
+    """
+    edges = manager.session.query(Edge).filter(Edge.sha512.startswith(edge_hash))
+
+    return jsonify([
+        edge.to_json(include_id=True)
+        for edge in edges
+    ])
 
 
 @api_blueprint.route('/api/edge/<edge_id>/vote/up')

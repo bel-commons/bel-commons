@@ -104,7 +104,7 @@ function displayNodeInfo(node) {
         nodeObject["Description"] = node.description
     }
     if (node.id) {
-        nodeObject["Identifier"] = '<a href="/node/' + node.id + '">' + node.id.slice(0, 10) + "</a>";
+        nodeObject["Identifier"] = '<a href="/node/' + node.id + '"><code>' + node.id.slice(0, 10) + "</code></a>";
     }
 
     var row = 0;
@@ -144,9 +144,6 @@ function displayEdgeInfo(edge) {
             edgeObject["Subject"] += ('<span> with ' + JSON.stringify(edge.subject) + '</span>');
         }
     }
-    if (edge.relation) {
-        edgeObject["Predicate"] = edge.relation;
-    }
     if (edge.target.cname) {
         edgeObject["Object"] = '<a href="/node/' + edge.target.id + '">' + edge.target.cname + "</a> ";
 
@@ -158,12 +155,53 @@ function displayEdgeInfo(edge) {
         edgeObject["Annotations"] = JSON.stringify(edge.annotations);
     }
     if (edge.source.id && edge.target.id) {
-        edgeObject["Tools"] = ('<a class="btn btn-primary btn-xs" target="_blank" href="/node/' +
-        edge.source.id + '/edges/' + edge.target.id + '">View All Evidences</a> ' +
-        '<button type="button" class="btn btn-primary btn-xs" data-toggle="modal" data-target="#edge-feedback" data-edge="' +
-        edge.id + '">Give Feedback</button>');
+        edgeObject["Tools"] = '<a class="btn btn-primary btn-xs" target="_blank" href="/node/' +
+            edge.source.id + '/edges/' + edge.target.id + '">View All Evidences</a>';
+    }
+    if (edge.id) {
+        edgeObject["Identifier"] = '<a href="/api/edge/' + edge.id + '"><code>' + edge.id.slice(0, 10) + "</code></a>";
     }
 
+    if (edge.contexts) {
+        $.each(edge.contexts, function (key, context) {
+
+                const sk = context.id.slice(0, 10);
+                edgeObject[sk] = '<dl class="dl-horizontal">';
+                edgeObject[sk] += '<dt>BEL</dt><dd><code>' + context.bel + '</code></dd>';
+
+                if (context.citation) {
+                    edgeObject[sk] += '<dt>Citation</dt><dd>';
+                    if (context.citation.type === "PubMed") {
+                        edgeObject[sk] += "<a href=https://www.ncbi.nlm.nih.gov/pubmed/" + context.citation.reference + " target='_blank' " +
+                            "style='text-decoration: underline'>PMID:" + context.citation.reference + "</a>";
+                    } else if (context.citation.type === "URL") {
+                        edgeObject[sk] += "<a href=" + context.citation.reference + " target='_blank' " +
+                            "style='text-decoration: underline'>" + context.citation.reference + "</a>";
+                    } else {
+                        // TODO handle DOIs?
+                        edgeObject[sk] += context.citation.reference;
+                    }
+                    edgeObject[sk] += '</dd>';
+                }
+
+                if (context.evidence) {
+                    edgeObject[sk] += '<dt>Support</dt><dd>' + context.evidence + "</dd>";
+                }
+
+                if (context.annotations && Object.keys(context.annotations).length > 0) {
+                    edgeObject[sk] += '<dt>Annotations</dt><dd>' + JSON.stringify(context.annotations) + '</dd>';
+                }
+
+                edgeObject[sk] += '<dt>Identifier</dt><dd><a href="/api/edge/' + context.id + '"><code>' + sk + '</code></a></dd>';
+
+
+                edgeObject[sk] += '<dt>Tools</dt><dd><button type="button" class="btn btn-primary btn-xs" data-toggle="modal" data-target="#edge-feedback" data-edge="' +
+                    context.id + '">Give Feedback</button></dd>';
+
+                edgeObject[sk] += '</dl>';
+            }
+        );
+    }
 
     var dynamicTable = document.getElementById('info-table');
 
@@ -1359,7 +1397,7 @@ function initD3Force(graph, tree) {
             var path = link.filter(function (el) {
                 // Source and target should be present in the edge and the distance in the array should be one
                 return ((data[x].indexOf(el.source.id) >= 0 && data[x].indexOf(el.target.id) >= 0)
-                && (Math.abs(data[x].indexOf(el.source.id) - data[x].indexOf(el.target.id)) === 1));
+                    && (Math.abs(data[x].indexOf(el.source.id) - data[x].indexOf(el.target.id)) === 1));
             });
 
             edgesInPaths.push(path);
@@ -1375,7 +1413,7 @@ function initD3Force(graph, tree) {
             var edgesInPath = link.filter(function (el) {
                 // Source and target should be present in the edge and the distance in the array should be one
                 return ((data[i].indexOf(el.source.id) >= 0 && data[i].indexOf(el.target.id) >= 0)
-                && (Math.abs(data[i].indexOf(el.source.id) - data[i].indexOf(el.target.id)) === 1));
+                    && (Math.abs(data[i].indexOf(el.source.id) - data[i].indexOf(el.target.id)) === 1));
             });
 
             // Select randomly a color and apply to this path
@@ -1411,7 +1449,7 @@ function initD3Force(graph, tree) {
             var edgesNotInPath = g.selectAll(".link").filter(function (el) {
                 // Source and target should be present in the edge and the distance in the array should be one
                 return !((paths.indexOf(el.source.id) >= 0 && paths.indexOf(el.target.id) >= 0)
-                && (Math.abs(paths.indexOf(el.source.id) - paths.indexOf(el.target.id)) === 1));
+                    && (Math.abs(paths.indexOf(el.source.id) - paths.indexOf(el.target.id)) === 1));
             });
 
             // If checkbox is True -> Hide all, Else -> Opacity 0.1
