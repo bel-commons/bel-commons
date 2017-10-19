@@ -402,6 +402,26 @@
 
         <!-- BEL Parser Errors -->
 
+        <a id="content-statistics"></a>
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Warning Statistics
+                    <a class="pull-right" href="#top">
+                        <span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span>
+                    </a>
+                </h3>
+            </div>
+            <div class="panel-body">
+                <div class="row">
+                    {% if chart_3_data %}
+                        <div class="col-md-4">
+                            <div id="chart3"></div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
         {% if syntax_errors|length > 0 %}
             <a id="graph-syntax-errors"></a>
             <div class="panel panel-danger panel-table">
@@ -727,5 +747,38 @@
             });
             $('#myTable').pageMe({pagerSelector: '#myPager', showPrevNext: true, hidePageNumbers: false, perPage: 20});
         });
+    </script>
+
+
+    <script>
+        {% if chart_3_data %}
+            var chart3 = c3.generate({
+                padding: {
+                    top: 15,
+                    left: 100
+                },
+                size: {
+                    height: 350
+                },
+                bindto: '#chart3',
+                data: {
+                    x: 'x',
+                    columns: {{ chart_3_data|safe}},
+                    type: 'bar'
+                },
+                title: {
+                    text: 'Warning Types'
+                },
+                axis: {
+                    rotated: true,
+                    x: {
+                        type: 'category'
+                    }
+                },
+                legend: {
+                    show: false
+                }
+            });
+        {% endif %}
     </script>
 {% endblock %}

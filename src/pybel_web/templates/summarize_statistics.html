@@ -231,11 +231,6 @@
             </div>
             <div class="panel-body">
                 <div class="row">
-                    {% if chart_3_data %}
-                        <div class="col-md-4">
-                            <div id="chart3"></div>
-                        </div>
-                    {% endif %}
                     <div class="col-md-4">
                         <div id="chart1"></div>
                     </div>
@@ -381,36 +376,6 @@
                 show: false
             }
         });
-
-        {% if chart_3_data %}
-            var chart3 = c3.generate({
-                padding: {
-                    top: 15,
-                    left: 100
-                },
-                size: {
-                    height: 350
-                },
-                bindto: '#chart3',
-                data: {
-                    x: 'x',
-                    columns: {{ chart_3_data|safe}},
-                    type: 'bar'
-                },
-                title: {
-                    text: 'Warning Types'
-                },
-                axis: {
-                    rotated: true,
-                    x: {
-                        type: 'category'
-                    }
-                },
-                legend: {
-                    show: false
-                }
-            });
-        {% endif %}
 
         {% if chart_4_data %}
             var chart4 = c3.generate({
