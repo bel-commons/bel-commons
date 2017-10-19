@@ -19,7 +19,7 @@
             src="https://cdnjs.cloudflare.com/ajax/libs/d3-sankey/0.4.2/d3-sankey.js"></script>
     <script type="text/javascript"
             src="https://cdnjs.cloudflare.com/ajax/libs/inspire-tree/1.12.1/inspire-tree-bundled.js"></script>
-
+    <script type="text/javascript" src="{{ url_for('static', filename='js/svg_to_png/saveSvgAsPng.js') }}"></script>
 {% endblock %}
 
 {% block styles %}
@@ -29,7 +29,6 @@
     <link rel="stylesheet" type="text/css" href='https://code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css'/>
     <link rel="stylesheet" type="text/css"
           href='https://cdnjs.cloudflare.com/ajax/libs/bootstrap-toggle/2.2.2/css/bootstrap-toggle.min.css'/>
-    <link rel="stylesheet" href="{{ url_for('static', filename='js/svg_to_png/saveSvgAsPng.js') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='js/d3-context-menu/css/d3-context-menu.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/graph.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/legend.css') }}">
