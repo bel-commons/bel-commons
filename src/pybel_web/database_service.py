@@ -2128,6 +2128,21 @@ def safe_get_project(project_id):
     return project
 
 
+@api_blueprint.route('/api/project')
+@roles_required('admin')
+def get_project_metadata(project_id):
+    """Returns all project as a JSON file
+
+    ---
+    tags:
+        - project
+    """
+    return jsonify([
+        project.to_json(include_id=True)
+        for project in manager.session.query(Project).all()
+    ])
+
+
 @api_blueprint.route('/api/project/<int:project_id>')
 @login_required
 def get_project_metadata(project_id):
