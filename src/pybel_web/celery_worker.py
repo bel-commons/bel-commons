@@ -12,17 +12,15 @@ import hashlib
 import logging
 import os
 import time
-import uuid
-from smtplib import SMTPSenderRefused
 
 import requests.exceptions
 from celery.utils.log import get_task_logger
-from flask_mail import Message
+from flask import url_for
 from six.moves.cPickle import dumps, loads
 from sqlalchemy.exc import IntegrityError, OperationalError
 
-from pybel import from_url, to_bel_lines, to_bel_path, to_bytes
-from pybel.constants import METADATA_CONTACT, METADATA_DESCRIPTION, METADATA_LICENSES, PYBEL_DATA_DIR
+from pybel import from_url, to_bel_path, to_bytes
+from pybel.constants import METADATA_CONTACT, METADATA_DESCRIPTION, METADATA_LICENSES
 from pybel.manager.models import Network
 from pybel.parser.parse_exceptions import InconsistentDefinitionError
 from pybel.struct import union
@@ -32,7 +30,7 @@ from pybel_tools.mutation import add_canonical_names, add_identifiers, enrich_pu
 from pybel_tools.utils import enable_cool_mode
 from pybel_web.application import create_application
 from pybel_web.celery_utils import create_celery
-from pybel_web.constants import CHARLIE_EMAIL, DANIEL_EMAIL, integrity_message, log_worker_path
+from pybel_web.constants import CHARLIE_EMAIL, DANIEL_EMAIL, integrity_message, log_worker_path, merged_document_folder
 from pybel_web.models import Experiment, Project, Report, User
 from pybel_web.utils import calculate_scores, fill_out_report, make_graph_summary, manager
 
@@ -322,48 +320,32 @@ def merge_project(user_id, project_id):
 
     graph = union(graphs)
 
-    # option 1 - store back into database
-    # rg = manager.insert_graph(graph)
-
-    # option 2 - store as temporary file, then serve that shit
-    # need to get secure file path and secure directory
-    graph.name = uuid.uuid4()
+    graph.name = hashlib.sha1(to_bytes(graph)).hexdigest()
     graph.version = '1.0.0'
 
-    if 'mail' not in app.extensions:
-        path = os.path.join(PYBEL_DATA_DIR, '{}.bel'.format(graph.name))
+    path = os.path.join(merged_document_folder, '{}.bel'.format(graph.name))
+
+    url_link = 'http://{}/download/bel/{}'.format(app.config['SERVER_NAME'], graph.name)
+
+    if os.path.exists(path):
+        log.warning('Already merged in: %s', path)
+        log.warning('Download from: %s', url_link)
+    else:
         to_bel_path(graph, path)
-        log.warning('Merge took %.2f seconds to %s', time.time() - t, path)
+        log.info('Merge took %.2f seconds to %s', time.time() - t, path)
+
+    if 'mail' not in app.extensions:
+        log.warning('Download from: %s', url_link)
         return
 
-    lines = to_bel_lines(graph)
-    s = '\n'.join(lines)
-
-    log.info('Merge took %.2f seconds', time.time() - t)
-
-    msg = Message(
+    app.extensions['mail'].send_message(
         subject='Merged BEL Project BEL Resources: {} '.format(project.name),
         recipients=[user.email],
         body='The BEL documents from {} were merged. '
-             'The resulting BEL script is attached and given the serial number {}'.format(project.name, graph.name),
+             'The resulting BEL script is attached and '
+             'given the serial number {}. Download from: {}'.format(project.name, graph.name, url_link),
         sender=pbw_sender
     )
-
-    msg.attach('{}.bel'.format(graph.name), 'text/plain', s)
-
-    try:
-        app.extensions['mail'].send(msg)
-    except SMTPSenderRefused as e:
-        if e.args[0] == 552:  # Message too big
-            app.extensions['mail'].send_message(
-                subject='Failed to Merge Project BEL Resources: {} '.format(project.name),
-                recipients=[user.email],
-                body='The resulting BEL graph is too large and cannot be emailed. '
-                     'Future releases will handle larger networks better.',
-                sender=pbw_sender
-            )
-        else:
-            raise e
 
     return 1
 

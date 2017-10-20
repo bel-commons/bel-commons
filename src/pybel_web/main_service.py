@@ -9,6 +9,7 @@ import time
 from collections import defaultdict
 
 from flask import abort, current_app, redirect, render_template, request, send_file, url_for, flash
+import flask
 from flask_security import current_user, login_required, roles_required
 
 import pybel_tools.query
@@ -137,6 +138,13 @@ def build_main_service(app):
         manager.session.add(query)
         manager.session.commit()
         return redirect(url_for('view_explorer_query', query_id=query.id))
+
+    @app.route('/project/<int:project_id>/merge/<int:user_id>')
+    def send_async_project_merge(user_id, project_id):
+        """Sends async merge task"""
+        task = current_app.celery.send_task('merge-project', args=[user_id, project_id])
+        flash('Merge task sent: {}'.format(task))
+        return redirect(url_for('view_current_user_activity'))
 
     @app.route('/network/<int:network_id>/explore', methods=['GET'])
     def view_explore_network(network_id):
@@ -270,14 +278,6 @@ def build_main_service(app):
 
         return render_template('user_activity.html', user=user, pending_reports=pending_reports)
 
-    @app.route('/admin/project_merge/<int:user_id>/<int:project_id>')
-    @roles_required('admin')
-    def send_async_project_merge(user_id, project_id):
-        """Sends async merge task"""
-        task = current_app.celery.send_task('merge-project', args=[user_id, project_id])
-        flash('Merge task sent: {}'.format(task))
-        return redirect(url_for('view_current_user_activity'))
-
     @app.route('/reporting', methods=['GET'])
     def view_reports():
         """Shows the uploading reporting"""
@@ -388,3 +388,14 @@ def build_main_service(app):
     def view_overview():
         """Views the overview"""
         return render_template('overview.html')
+
+    @app.route('/download/bel/<fid>')
+    def download_saved_file(fid):
+        """Downloads a BEL file"""
+        name = '{}.bel'.format(fid)
+        path = os.path.join(merged_document_folder, name)
+
+        if not os.path.exists(path):
+            abort(404, 'BEL file does not exist')
+
+        return flask.send_file(path)  # TODO delete as cleanup

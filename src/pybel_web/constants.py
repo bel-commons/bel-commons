@@ -4,7 +4,7 @@ from logging import getLogger
 
 import os
 
-from pybel.constants import PYBEL_LOG_DIR
+from pybel.constants import PYBEL_LOG_DIR, PYBEL_DATA_DIR
 from pybel_tools.constants import BMS_BASE
 
 PYBEL_WEB_VERSION = '0.1.1'
@@ -58,3 +58,8 @@ DANIEL_EMAIL = 'daniel.domingo.fernandez@scai.fraunhofer.de'
 ALEX_EMAIL = 'aliaksandr.masny@scai.fraunhofer.de'
 
 BMS_IS_AVAILABLE = BMS_BASE in os.environ
+
+merged_document_folder = os.path.join(PYBEL_DATA_DIR, 'pbw_merged_documents')
+
+if not os.path.exists(merged_document_folder):
+    os.mkdir(merged_document_folder)
