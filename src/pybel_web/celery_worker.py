@@ -12,16 +12,19 @@ import hashlib
 import logging
 import os
 import time
+import uuid
 
 import requests.exceptions
 from celery.utils.log import get_task_logger
+from flask_mail import Message
 from six.moves.cPickle import dumps, loads
 from sqlalchemy.exc import IntegrityError, OperationalError
 
-from pybel import from_url, to_bytes
-from pybel.constants import METADATA_CONTACT, METADATA_DESCRIPTION, METADATA_LICENSES
+from pybel import from_url, to_bel_lines, to_bel_path, to_bytes
+from pybel.constants import METADATA_CONTACT, METADATA_DESCRIPTION, METADATA_LICENSES, PYBEL_DATA_DIR
 from pybel.manager.models import Network
 from pybel.parser.parse_exceptions import InconsistentDefinitionError
+from pybel.struct import union
 from pybel_tools.constants import BMS_BASE
 from pybel_tools.ioutils import convert_directory
 from pybel_tools.mutation import add_canonical_names, add_identifiers, enrich_pubmed_citations, infer_central_dogma
@@ -29,7 +32,7 @@ from pybel_tools.utils import enable_cool_mode
 from pybel_web.application import create_application
 from pybel_web.celery_utils import create_celery
 from pybel_web.constants import CHARLIE_EMAIL, DANIEL_EMAIL, integrity_message, log_worker_path
-from pybel_web.models import Experiment, Report
+from pybel_web.models import Experiment, Project, Report, User
 from pybel_web.utils import calculate_scores, fill_out_report, make_graph_summary, manager
 
 log = get_task_logger(__name__)
@@ -300,6 +303,55 @@ def async_parser(report_id):
 
     finally:
         manager.session.close()
+
+
+@celery.task(name='merge-project')
+def merge_project(user_id, project_id):
+    """Merges the graphs in a project and does stuff
+
+    :param int user_id: The database identifier of the user
+    :param int project_id: The database identifier of the project
+    """
+    t = time.time()
+
+    user = manager.session.query(User).get(user_id)
+    project = manager.session.query(Project).get(project_id)
+
+    graphs = [network.as_bel() for network in project.networks]
+
+    graph = union(graphs)
+
+    # option 1 - store back into database
+    # rg = manager.insert_graph(graph)
+
+    # option 2 - store as temporary file, then serve that shit
+    # need to get secure file path and secure directory
+    graph.name = uuid.uuid4()
+    graph.version = '1.0.0'
+
+    if 'mail' not in app.extensions:
+        path = os.path.join(PYBEL_DATA_DIR, '{}.bel'.format(graph.name))
+        to_bel_path(graph, path)
+        log.warning('Merge took %.2f seconds to %s', time.time() - t, path)
+        return
+
+    lines = to_bel_lines(graph)
+    s = '\n'.join(lines)
+
+    log.info('Merge took %.2f seconds', time.time() - t)
+
+    msg = Message(
+        subject='Merged {} BEL'.format(project.name),
+        recipients=[user.email],
+        body='The BEL documents from {} were merged. The resulting BEL script is attached'.format(project.name),
+        sender=pbw_sender
+    )
+
+    msg.attach('merged.bel', 'text/plain', s)
+
+    app.extensions['mail'].send(msg)
+
+    return 1
 
 
 @celery.task(name='run-cmpa')

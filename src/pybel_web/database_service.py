@@ -2112,6 +2112,16 @@ def get_project_or_404(project_id):
     return project
 
 
+def user_has_project_rights(user, project):
+    """Does this user have rights to this project
+
+    :param user:
+    :param project:
+    :rtype: bool
+    """
+    return user.is_admin or project.has_user(current_user)
+
+
 def safe_get_project(project_id):
     """Gets a project by identifier, aborts 404 if doesn't exist and aborts 403 if current user does not have rights
 
@@ -2123,7 +2133,7 @@ def safe_get_project(project_id):
     if not current_user.is_authenticated:
         abort(403, 'Not logged in')
 
-    if current_user.is_admin and not project.has_user(current_user):
+    if not user_has_project_rights(current_user, project):
         abort(403, 'User does not have permission to access this Project')
 
     return project

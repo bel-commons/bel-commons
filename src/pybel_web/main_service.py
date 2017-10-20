@@ -8,7 +8,7 @@ import sys
 import time
 from collections import defaultdict
 
-from flask import abort, current_app, redirect, render_template, request, send_file, url_for
+from flask import abort, current_app, redirect, render_template, request, send_file, url_for, flash
 from flask_security import current_user, login_required, roles_required
 
 import pybel_tools.query
@@ -269,6 +269,14 @@ def build_main_service(app):
         ]
 
         return render_template('user_activity.html', user=user, pending_reports=pending_reports)
+
+    @app.route('/admin/project_merge/<int:user_id>/<int:project_id>')
+    @roles_required('admin')
+    def send_async_project_merge(user_id, project_id):
+        """Sends async merge task"""
+        task = current_app.celery.send_task('merge-project', args=[user_id, project_id])
+        flash('Merge task sent: {}'.format(task))
+        return redirect(url_for('view_current_user_activity'))
 
     @app.route('/reporting', methods=['GET'])
     def view_reports():
