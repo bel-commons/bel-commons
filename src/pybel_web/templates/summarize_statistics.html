@@ -100,8 +100,10 @@
             <div class="panel-body">
                 <dl class="dl-horizontal">
                     {% if network.report %}
-                        <dt>Upload</dt>
-                        <dd>{{ network.report.user.email }} at {{ network.report.created }}</dd>
+                        <dt>Uploader</dt>
+                        <dd>{{ network.report.user.email }}</dd>
+                        <dt>Upload Time</dt>
+                        <dd>{{ network.report.created }}</dd>
                     {% endif %}
 
                     <dt>Authors</dt>
