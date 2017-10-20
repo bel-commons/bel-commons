@@ -9,13 +9,12 @@ How to Run PyBEL Web
 """
 
 import logging
-
 import os
 
 from .analysis_service import analysis_blueprint
 from .application import create_application
 from .bms_service import bms_blueprint
-from .constants import log_runner_path, BMS_IS_AVAILABLE
+from .constants import BMS_IS_AVAILABLE, log_runner_path
 from .curation_service import curation_blueprint
 from .database_service import api_blueprint
 from .external_services import external_blueprint

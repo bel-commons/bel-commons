@@ -20,30 +20,28 @@ import datetime
 import json
 import logging
 import multiprocessing
+import os
 import sys
 import time
 
 import click
 import gunicorn.app.base
-import os
 from flask_security import SQLAlchemyUserDatastore
 
-from pybel.constants import get_cache_connection, PYBEL_CONNECTION, PYBEL_DATA_DIR
+from pybel.constants import PYBEL_CONNECTION, PYBEL_DATA_DIR, get_cache_connection
 from pybel.manager import Manager
 from pybel.manager.models import Base, Network
 from pybel.utils import get_version as pybel_version
-from pybel_tools.utils import enable_cool_mode
-from pybel_tools.utils import get_version as pybel_tools_get_version
+from pybel_tools.utils import enable_cool_mode, get_version as pybel_tools_get_version
 from .analysis_service import analysis_blueprint
 from .application import create_application
 from .bms_service import bms_blueprint
-from .constants import BMS_IS_AVAILABLE
-from .constants import log_runner_path, CHARLIE_EMAIL
+from .constants import BMS_IS_AVAILABLE, CHARLIE_EMAIL, log_runner_path
 from .curation_service import curation_blueprint
 from .database_service import api_blueprint
 from .external_services import belief_blueprint, external_blueprint
 from .main_service import build_main_service
-from .models import Role, User, Report, Project, Experiment
+from .models import Experiment, Project, Report, Role, User
 from .parser_async_service import parser_async_blueprint
 from .parser_endpoint import build_parser_service
 from .utils import iterate_user_strings

@@ -8,8 +8,8 @@ import sys
 import time
 from collections import defaultdict
 
-from flask import abort, current_app, redirect, render_template, request, send_file, url_for, flash
 import flask
+from flask import abort, current_app, flash, redirect, render_template, request, send_file, url_for
 from flask_security import current_user, login_required, roles_required
 
 import pybel_tools.query

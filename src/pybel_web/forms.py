@@ -5,24 +5,13 @@
 from flask_security import RegisterForm
 from flask_security.forms import get_form_field_label
 from flask_wtf import FlaskForm
-from flask_wtf.file import FileField, FileAllowed
-from wtforms.fields import (
-    StringField,
-    SubmitField,
-    BooleanField,
-    RadioField,
-    HiddenField,
-    IntegerField,
-)
+from flask_wtf.file import FileAllowed, FileField
+from wtforms.fields import BooleanField, HiddenField, IntegerField, RadioField, StringField, SubmitField
 from wtforms.validators import DataRequired, URL
 
 from pybel_tools.selection.induce_subgraph import (
-    SEED_TYPE_INDUCTION,
-    SEED_TYPE_PATHS,
-    SEED_TYPE_NEIGHBORS,
-    SEED_TYPE_DOUBLE_NEIGHBORS,
-    SEED_TYPE_UPSTREAM,
-    SEED_TYPE_DOWNSTREAM,
+    SEED_TYPE_DOUBLE_NEIGHBORS, SEED_TYPE_DOWNSTREAM, SEED_TYPE_INDUCTION,
+    SEED_TYPE_NEIGHBORS, SEED_TYPE_PATHS, SEED_TYPE_UPSTREAM,
 )
 
 

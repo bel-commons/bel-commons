@@ -9,6 +9,7 @@ import pickle
 import time
 from functools import lru_cache
 from operator import itemgetter
+
 import flask
 import networkx as nx
 from flask import Blueprint, abort, current_app, flash, jsonify, make_response, redirect, request

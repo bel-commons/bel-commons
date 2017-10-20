@@ -15,7 +15,6 @@ import time
 
 import requests.exceptions
 from celery.utils.log import get_task_logger
-from flask import url_for
 from six.moves.cPickle import dumps, loads
 from sqlalchemy.exc import IntegrityError, OperationalError
 

@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 
+import os
 from logging import getLogger
 
-import os
-
-from pybel.constants import PYBEL_LOG_DIR, PYBEL_DATA_DIR
+from pybel.constants import PYBEL_DATA_DIR, PYBEL_LOG_DIR
 from pybel_tools.constants import BMS_BASE
 
 PYBEL_WEB_VERSION = '0.1.1'

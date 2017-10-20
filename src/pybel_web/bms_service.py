@@ -4,12 +4,12 @@ import logging
 import time
 
 import git
-from flask import current_app, Blueprint, flash, redirect, url_for, jsonify
+from flask import Blueprint, current_app, flash, jsonify, redirect, url_for
 from flask_security import roles_required
 
 from pybel_tools.ioutils import get_paths_recursive, upload_recursive
 from .constants import *
-from .utils import next_or_jsonify, manager
+from .utils import manager, next_or_jsonify
 
 log = logging.getLogger(__name__)
 

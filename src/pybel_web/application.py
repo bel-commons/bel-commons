@@ -10,11 +10,11 @@ Resources:
 """
 
 import logging
+import os
 import socket
 import time
 from getpass import getuser
 
-import os
 from flasgger import Swagger
 from flask import (
     Flask,
@@ -25,10 +25,8 @@ from flask_security import Security
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.routing import BaseConverter
 
-from pybel.constants import PYBEL_CONNECTION
-from pybel.constants import config as pybel_config
-from pybel.constants import get_cache_connection
-from pybel.manager import Manager, BaseManager
+from pybel.constants import PYBEL_CONNECTION, config as pybel_config, get_cache_connection
+from pybel.manager import BaseManager, Manager
 from .application_utils import FlaskPyBEL
 from .celery_utils import create_celery
 from .constants import PYBEL_WEB_VERSION

@@ -1,19 +1,19 @@
 # -*- coding: utf-8 -*-
 
+import codecs
 import logging
+import re
 import time
 
-import codecs
-import re
-from flask import Blueprint, render_template, request, make_response
-from flask_security import login_required, current_user
+from flask import Blueprint, make_response, render_template, request
+from flask_security import current_user, login_required
 from flask_wtf import FlaskForm
-from flask_wtf.file import FileField, FileAllowed
+from flask_wtf.file import FileAllowed, FileField
+from ols_client import OlsClient
 from six import StringIO
 from wtforms import fields
 from wtforms.validators import DataRequired
 
-from ols_client import OlsClient
 from pybel.constants import NAMESPACE_DOMAIN_TYPES
 from pybel.utils import parse_bel_resource
 from pybel_tools.definition_utils import write_namespace

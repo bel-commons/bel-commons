@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 
+import codecs
 import datetime
 import json
-
-import codecs
-from flask_security import RoleMixin, UserMixin
 from operator import attrgetter
+
+from flask_security import RoleMixin, UserMixin
 from six.moves.cPickle import dumps, loads
 from sqlalchemy import (
     Boolean, Column, DateTime, Float, ForeignKey, Index, Integer, LargeBinary, String, Table, Text,

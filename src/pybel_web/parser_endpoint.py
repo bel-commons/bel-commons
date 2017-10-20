@@ -5,7 +5,7 @@ import time
 from getpass import getuser
 
 import flask
-from flask import request, jsonify
+from flask import jsonify, request
 
 from pybel import BELGraph
 from pybel.constants import *

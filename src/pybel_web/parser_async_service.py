@@ -2,16 +2,16 @@
 
 from __future__ import unicode_literals
 
+import hashlib
 import logging
 
-import hashlib
-from flask import render_template, current_app, Blueprint, flash, redirect, url_for
+from flask import Blueprint, current_app, flash, redirect, render_template, url_for
 from flask_security import current_user, login_required
 
 from pybel.constants import PYBEL_CONNECTION
 from .celery_utils import create_celery
 from .constants import reporting_log
-from .forms import ParserForm, ParseUrlForm
+from .forms import ParseUrlForm, ParserForm
 from .models import Report
 from .utils import manager
 

@@ -4,12 +4,12 @@ import json
 import logging
 import pickle
 import time
+from operator import itemgetter
 
 import flask
 import pandas
 from flask import Blueprint, abort, current_app, redirect, render_template, url_for
 from flask_security import current_user, login_required
-from operator import itemgetter
 
 from pybel.constants import PYBEL_CONNECTION
 from pybel_tools.analysis.cmpa import RESULT_LABELS

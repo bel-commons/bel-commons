@@ -1,14 +1,16 @@
 # -*- coding: utf-8 -*-
 
 import logging
-from collections import defaultdict
 
 from flask import Response, jsonify, send_file
 from six import BytesIO, StringIO
 
 from pybel import to_bel_lines, to_bytes, to_csv, to_cx, to_graphml, to_gsea, to_jgif, to_sif
-from pybel.canonicalize import calculate_canonical_name, edge_to_bel
-from pybel.constants import RELATION, TWO_WAY_RELATIONS, CAUSAL_INCREASE_RELATIONS, CAUSAL_DECREASE_RELATIONS, INCREASES, DECREASES
+from pybel.canonicalize import edge_to_bel
+from pybel.constants import (
+    CAUSAL_DECREASE_RELATIONS, CAUSAL_INCREASE_RELATIONS, DECREASES, INCREASES, RELATION,
+    TWO_WAY_RELATIONS,
+)
 from pybel.utils import hash_edge, hash_node
 from pybel_tools.mutation.metadata import serialize_authors
 
