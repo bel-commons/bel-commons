@@ -87,7 +87,7 @@ def build_main_service(app):
 
         return render_template(
             'network_list.html',
-            networks=networks,
+            networks=sorted(networks, key=lambda network: network.created, reverse=True),
             current_user=current_user,
         )
 
