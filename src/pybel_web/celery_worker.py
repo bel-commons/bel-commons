@@ -342,10 +342,10 @@ def merge_project(user_id, project_id):
     log.info('Merge took %.2f seconds', time.time() - t)
 
     msg = Message(
-        subject='Merged Project BEL Resources: {} '.format(project.name),
+        subject='Merged BEL Project BEL Resources: {} '.format(project.name),
         recipients=[user.email],
-        body='The BEL documents from {} were merged. The resulting BEL script is attached and given the serial number {}'.format(
-            project.name, graph.name),
+        body='The BEL documents from {} were merged. '
+             'The resulting BEL script is attached and given the serial number {}'.format(project.name, graph.name),
         sender=pbw_sender
     )
 
@@ -356,9 +356,10 @@ def merge_project(user_id, project_id):
     except SMTPSenderRefused as e:
         if e.args[0] == 552:  # Message too big
             app.extensions['mail'].send_message(
-                subject='Failed: Merged Project BEL Resources: {} '.format(project.name),
+                subject='Failed to Merge Project BEL Resources: {} '.format(project.name),
                 recipients=[user.email],
-                body='The resulting BEL graph is too large and cannot be emailed',
+                body='The resulting BEL graph is too large and cannot be emailed. '
+                     'Future releases will handle larger networks better.',
                 sender=pbw_sender
             )
         else:

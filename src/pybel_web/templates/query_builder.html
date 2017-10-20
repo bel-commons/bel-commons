@@ -103,7 +103,7 @@
                         {% for network in networks %}
                             <tr>
                                 <td>
-                                    {% if preselected and preselected == network.id %}
+                                    {% if preselected and network.id == preselected %}
                                         <input type="checkbox" class="networks" name="network_ids[]"
                                                value="{{ network.id }}" checked="checked"/>
                                     {% else %}

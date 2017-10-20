@@ -9,7 +9,6 @@ import pickle
 import time
 from functools import lru_cache
 from operator import itemgetter
-
 import flask
 import networkx as nx
 from flask import Blueprint, abort, current_app, flash, jsonify, make_response, redirect, request
@@ -1533,7 +1532,7 @@ def get_node_suggestion():
     if not q:
         return jsonify([])
 
-    nodes = manager.session.query(Node).filter(Node.bel.contains(q))
+    nodes = manager.session.query(Node).filter(Node.bel.contains(q)).order_by(func.length(Node.bel))
 
     return jsonify([
         {
