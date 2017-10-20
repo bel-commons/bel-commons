@@ -341,13 +341,14 @@ def merge_project(user_id, project_id):
     log.info('Merge took %.2f seconds', time.time() - t)
 
     msg = Message(
-        subject='Merged {} BEL'.format(project.name),
+        subject='Merged Project BEL Resources: {} '.format(project.name),
         recipients=[user.email],
-        body='The BEL documents from {} were merged. The resulting BEL script is attached'.format(project.name),
+        body='The BEL documents from {} were merged. The resulting BEL script is attached and given the serial number {}'.format(
+            project.name, graph.name),
         sender=pbw_sender
     )
 
-    msg.attach('merged.bel', 'text/plain', s)
+    msg.attach('{}.bel'.format(graph.name), 'text/plain', s)
 
     app.extensions['mail'].send(msg)
 
