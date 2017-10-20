@@ -13,6 +13,7 @@ import logging
 import os
 import time
 import uuid
+from smtplib import SMTPSenderRefused
 
 import requests.exceptions
 from celery.utils.log import get_task_logger
@@ -350,7 +351,18 @@ def merge_project(user_id, project_id):
 
     msg.attach('{}.bel'.format(graph.name), 'text/plain', s)
 
-    app.extensions['mail'].send(msg)
+    try:
+        app.extensions['mail'].send(msg)
+    except SMTPSenderRefused as e:
+        if e.args[0] == 552:  # Message too big
+            app.extensions['mail'].send_message(
+                subject='Failed: Merged Project BEL Resources: {} '.format(project.name),
+                recipients=[user.email],
+                body='The resulting BEL graph is too large and cannot be emailed',
+                sender=pbw_sender
+            )
+        else:
+            raise e
 
     return 1
 
