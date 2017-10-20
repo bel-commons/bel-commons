@@ -2130,7 +2130,7 @@ def safe_get_project(project_id):
 
 @api_blueprint.route('/api/project')
 @roles_required('admin')
-def get_project_metadata(project_id):
+def get_all_projects():
     """Returns all project as a JSON file
 
     ---
