@@ -1,0 +1,70 @@
+<div class="panel panel-default">
+    <div class="panel-body">
+        <a class="btn btn-primary" href="{{ url_for('view_networks') }}" role="button">List Networks</a>
+
+        {% if network.report and network.report.is_displayable %}
+            <a href="{{ url_for('view_explore_network', network_id=network.id) }}"
+               class="btn btn-default" data-toggle="popover"
+               title="Explore this Network"
+               data-content="Visualize this Network in the Biological Network Explorer.
+                                   Note that if the network is larger than 100 nodes, you would need to filter the
+                                   network before rendering it in order to avoid crash your browser.">
+                <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
+                Explore
+            </a>
+        {% else %}
+            <button class="btn btn-default" data-toggle="popover"
+                    title="Explore this Network" disabled
+                    data-content="This network is too large to explore directly, so build a query first.">
+                <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
+                Explore
+            </button>
+        {% endif %}
+
+        <a href="{{ url_for('view_query_builder', start=network.id) }}"
+           class="btn btn-default" data-toggle="popover"
+           title="Perform a Query on this Network"
+           data-content="You can ask specific questions to your network using the
+                                       Query Builder.">
+            <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
+            Query
+        </a>
+
+        {% if current_user.is_beta_tester %}
+            <a href="{{ url_for('analysis.view_network_analysis_uploader', network_id=network.id) }}"
+               class="btn btn-warning" data-toggle="popover"
+               title="Analyze this Network"
+               data-content="Upload your experiments and run algorithms on your network.">
+                <span class="glyphicon glyphicon-flash" aria-hidden="true"></span>
+                Analyze
+            </a>
+
+
+            <a class="btn btn-warning" href="{{ url_for('analysis.view_analyses', network_id=network_id) }}"
+               role="button">
+                <span class="glyphicon glyphicon-tasks" aria-hidden="true"></span>
+                Results
+            </a>
+        {% endif %}
+
+        {% if current_user.is_authenticated %}
+            <a class="btn btn-default" role="button"
+               href="{{ url_for('dbs.export_network', network_id=network_id, serve_format='bel') }}">
+                <span class="glyphicon glyphicon-download" aria-hidden="true"></span> BEL Script</a>
+            <a class="btn btn-default" role="button"
+               href="{{ url_for('dbs.export_network', network_id=network_id, serve_format='json') }}">
+                <span class="glyphicon glyphicon-download" aria-hidden="true"></span> Node-Link JSON</a>
+            <a class="btn btn-default" role="button"
+               href="{{ url_for('dbs.export_network', network_id=network_id, serve_format='cx') }}">
+                <span class="glyphicon glyphicon-download" aria-hidden="true"></span> CX JSON</a>
+        {% endif %}
+
+        {% if current_user.is_admin %}
+            <a class="btn btn-danger" role="button"
+               href="{{ url_for('dbs.drop_network', network_id=network_id, next=url_for('home')) }}">
+                <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
+                Drop
+            </a>
+        {% endif %}
+    </div>
+</div>

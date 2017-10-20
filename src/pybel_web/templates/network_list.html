@@ -252,15 +252,18 @@
                                         Query
                                     </a>
                                 </li>
-                                <li>
-                                    <a href="{{ url_for('analysis.view_network_analysis_uploader', network_id=network.id) }}"
-                                       class="btn btn-default" data-toggle="popover"
-                                       title="Analyze this Network"
-                                       data-content="Upload your experiments and run algorithms on your network.">
-                                        <span class="glyphicon glyphicon-flash" aria-hidden="true"></span>
-                                        Analyze
-                                    </a>
-                                </li>
+
+                                {% if current_user.is_beta_tester %}
+                                    <li>
+                                        <a href="{{ url_for('analysis.view_network_analysis_uploader', network_id=network.id) }}"
+                                           class="btn btn-default" data-toggle="popover"
+                                           title="Analyze this Network"
+                                           data-content="Upload your experiments and run algorithms on your network.">
+                                            <span class="glyphicon glyphicon-flash" aria-hidden="true"></span>
+                                            Analyze
+                                        </a>
+                                    </li>
+                                {% endif %}
                                 {% if current_user.is_authenticated %}
                                     {% if network.report and network.report.user == current_user %}
                                         <li>

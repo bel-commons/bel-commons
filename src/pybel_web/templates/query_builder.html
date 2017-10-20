@@ -136,7 +136,7 @@
 
                         {% if current_user.is_beta_tester %}
                             <a data-toggle="tab" href="#name-panel">
-                                <button type="button" class="btn btn-warning">Names (Experimental)</button>
+                                <button type="button" class="btn btn-warning">Names</button>
                             </a>
                         {% endif %}
 
@@ -146,9 +146,12 @@
                         <a data-toggle="tab" href="#author-panel">
                             <button type="button" class="btn btn-primary" value="authors">Authors</button>
                         </a>
-                        <a data-toggle="tab" href="#annotation-panel">
-                            <button type="button" class="btn btn-primary" value="annotations">Annotations</button>
-                        </a>
+
+                        {% if current_user.is_beta_tester %}
+                            <a data-toggle="tab" href="#annotation-panel">
+                                <button type="button" class="btn btn-warning" value="annotations">Annotations</button>
+                            </a>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -224,7 +227,7 @@
                     </div>
                 </div>
 
-                <div class="panel panel-default tab-pane fade" id="name-panel">
+                <div class="panel panel-warning tab-pane fade" id="name-panel">
                     <div class="panel-heading">
                         <h3 class="panel-title">Seeding by Name Search</h3>
                     </div>
@@ -286,7 +289,7 @@
                     </div>
                 </div>
 
-                <div class="panel panel-default tab-pane fade" id="annotation-panel">
+                <div class="panel panel-warning tab-pane fade" id="annotation-panel">
                     <div class="panel-heading">
                         <h3 class="panel-title">Seeding by Annotation</h3>
                     </div>
@@ -314,34 +317,41 @@
                     </div>
                 </div>
 
-                <div class="panel panel-default">
-                    <div class="panel-heading">
-                        <h3 class="panel-title">Filters and Mutations</h3>
+
+                {% if current_user.is_beta_tester %}
+                    <div class="panel panel-warning">
+                        <div class="panel-heading">
+                            <h3 class="panel-title">Filters and Mutations</h3>
+                        </div>
+                        <div class="panel-body">
+                            <p>Please choose any filters you want to apply on the query. For a list of available
+                                functions
+                                please see <a href="{{ url_for("view_pipeline_help") }}">here</a>.</p>
+                            <p><strong>Use Case:</strong> You might want to collapse all nodes from the central dogma
+                                (GENE,
+                                RNA, PROTEIN) to PROTEIN.</p>
+                            <div data-role="dynamic-fields">
+                                <div class="form-inline">
+                                    <div class="form-group">
+                                        <label class="sr-only" for="pipeline">Pipeline</label>
+                                        <input type="text" class="form-control" name="pipeline[]" id="pipeline"
+                                               placeholder="Please enter the PyBEL function that will be applied to the query"
+                                               style=" min-width: 500px;">
+                                    </div>
+                                    <button class="btn btn-danger" data-role="remove">
+                                        <span class="glyphicon glyphicon-remove"></span>
+                                    </button>
+                                    <button class="btn btn-primary" data-role="add">
+                                        <span class="glyphicon glyphicon-plus"></span>
+                                    </button>
+                                </div>  <!-- /div.form-inline -->
+                            </div>  <!-- /div[data-role="dynamic-fields"] -->
+                        </div>
                     </div>
-                    <div class="panel-body">
-                        <p>Please choose any filters you want to apply on the query. For a list of available functions
-                            please see <a href="{{ url_for("view_pipeline_help") }}">here</a>.</p>
-                        <p><strong>Use Case:</strong> You might want to collapse all nodes from the central dogma (GENE,
-                            RNA, PROTEIN) to PROTEIN.</p>
-                        <div data-role="dynamic-fields">
-                            <div class="form-inline">
-                                <div class="form-group">
-                                    <label class="sr-only" for="pipeline">Pipeline</label>
-                                    <input type="text" class="form-control" name="pipeline[]" id="pipeline"
-                                           placeholder="Please enter the PyBEL function that will be applied to the query"
-                                           style=" min-width: 500px;">
-                                </div>
-                                <button class="btn btn-danger" data-role="remove">
-                                    <span class="glyphicon glyphicon-remove"></span>
-                                </button>
-                                <button class="btn btn-primary" data-role="add">
-                                    <span class="glyphicon glyphicon-plus"></span>
-                                </button>
-                            </div>  <!-- /div.form-inline -->
-                        </div>  <!-- /div[data-role="dynamic-fields"] -->
-                    </div>
-                </div>
+                {% endif %}
+
             </div>
+
             <div class="text-center" style="margin-bottom: 20px">
                 <input class="btn btn-primary btn-lg" id="submit-query" placeholder="Submit Query" type="submit">
             </div>
