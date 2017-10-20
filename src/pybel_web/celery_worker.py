@@ -325,7 +325,7 @@ def merge_project(user_id, project_id):
 
     path = os.path.join(merged_document_folder, '{}.bel'.format(graph.name))
 
-    url_link = 'http://{}/download/bel/{}'.format(app.config['PYBEL_MERGE_SERVER_PREFIX'], graph.name)
+    url_link = '{}/download/bel/{}'.format(app.config['PYBEL_MERGE_SERVER_PREFIX'], graph.name)
 
     if os.path.exists(path):
         log.warning('Already merged in: %s', path)
