@@ -26,6 +26,7 @@ from pybel.constants import (
     NAMESPACE_DOMAIN_OTHER,
 )
 from pybel.manager.models import Annotation, AnnotationEntry, Author, Citation, Edge, Namespace, Network, Node
+from pybel.struct import union
 from pybel.utils import hash_node
 from pybel_tools import pipeline
 from pybel_tools.analysis.cmpa import RESULT_LABELS
@@ -46,8 +47,8 @@ from .send_utils import serve_network, to_json_custom
 from .utils import (
     current_user_has_query_rights, fill_out_report, get_edge_by_hash_or_404,
     get_network_ids_with_permission_helper, get_node_by_hash_or_404, get_node_overlaps, get_or_create_vote,
-    get_query_ancestor_id, get_recent_reports, make_graph_summary, manager, next_or_jsonify, relabel_nodes_to_hashes,
-    safe_get_query, user_datastore, user_owns_network_or_403,
+    get_query_ancestor_id, get_recent_reports, make_graph_summary, manager, next_or_jsonify, safe_get_query,
+    user_datastore, user_owns_network_or_403,
 )
 
 log = logging.getLogger(__name__)
@@ -2226,7 +2227,9 @@ def export_project_network(project_id, serve_format):
     """
     project = safe_get_project(project_id)
 
-    network = project.as_bel()
+    networks = [network.as_bel() for network in project.networks]
+
+    network = union(networks)
 
     return serve_network(network, serve_format)
 
