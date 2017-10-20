@@ -192,9 +192,14 @@ function displayEdgeInfo(edge) {
                     edgeObject[sk] += '<dt>Annotations</dt><dd>' + JSON.stringify(context.annotations) + '</dd>';
                 }
 
-                edgeObject[sk] += '<dt>Links</dt><dd><a href="/api/edge/' + context.id + '">' + 'More Information</a> or ';
-                edgeObject[sk] += '<a href="#" data-toggle="modal" data-target="#edge-feedback" data-edge="' +
-                    context.id + '">Give Feedback</a></dd>';
+                edgeObject[sk] += '<dt>Links</dt><dd><a href="/api/edge/' + context.id + '">' + 'More Information</a> ';
+
+                if (window.allow_voting === true) {
+                    edgeObject[sk] += 'or <a href="#" data-toggle="modal" data-target="#edge-feedback" data-edge="' +
+                        context.id + '">Give Feedback</a>';
+                }
+
+                edgeObject[sk] += '</dd>';
 
                 edgeObject[sk] += '</dl>';
             }

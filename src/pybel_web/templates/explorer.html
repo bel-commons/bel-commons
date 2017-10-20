@@ -20,6 +20,15 @@
     <script type="text/javascript"
             src="https://cdnjs.cloudflare.com/ajax/libs/inspire-tree/1.12.1/inspire-tree-bundled.js"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='js/svg_to_png/saveSvgAsPng.js') }}"></script>
+
+    <script type="text/javascript">
+        {% if current_user.is_beta_tester %}
+            window.allow_voting = true;
+        {% else %}
+            window.allow_voting = false;
+        {% endif %}
+    </script>
+
 {% endblock %}
 
 {% block styles %}
@@ -34,8 +43,6 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/legend.css') }}">
 {% endblock %}
 
-
-
 {% block scripts %}
     {{ super() }}
     <script type="text/javascript"
@@ -43,7 +50,7 @@
     <script type="text/javascript"
             src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.16.0/jquery.validate.min.js"></script>
     <script type="text/javascript"
-            src="{{ url_for('static', filename='js/graph_controller/graph_controller.js', version='20171019') }}"></script>
+            src="{{ url_for('static', filename='js/graph_controller/graph_controller.js', version='20171020') }}"></script>
     <script type="text/javascript"
             src="{{ url_for('static', filename='js/d3-context-menu/js/d3-context-menu.js') }}"></script>
     <script type="text/javascript"
