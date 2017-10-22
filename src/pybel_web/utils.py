@@ -883,25 +883,26 @@ def get_node_overlaps(network_id):
         for ol in network.overlaps
     })
 
-    for other_network in manager.list_recent_networks():
-        if other_network.id == network_id:
-            continue
+    uncached_networks = list(
+        other_network
+        for other_network in manager.list_recent_networks()
+        if other_network.id != network_id and  other_network.id not in rv
+    )
 
-        if other_network.id in rv:
-            continue
+    if uncached_networks:
+        for other_network in uncached_networks:
+            other_network_nodes = set(node.id for node in other_network.nodes)
 
-        other_network_nodes = set(node.id for node in other_network.nodes)
+            overlap = min_tanimoto_set_similarity(nodes, other_network_nodes)
 
-        overlap = min_tanimoto_set_similarity(nodes, other_network_nodes)
+            rv[other_network.id] = overlap
 
-        rv[other_network.id] = overlap
+            no = NetworkOverlap(left=network, right=other_network, overlap=overlap)
+            manager.session.add(no)
 
-        no = NetworkOverlap(left=network, right=other_network, overlap=overlap)
-        manager.session.add(no)
+        manager.session.commit()
 
-    manager.session.commit()
-
-    log.debug('Cached node overlaps for network %s in %.2f seconds', network_id, time.time() - t)
+        log.debug('Cached node overlaps for network %s in %.2f seconds', network_id, time.time() - t)
 
     return rv
 
