@@ -82,35 +82,30 @@
                 <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#info-graph">
                     Help
                 </button>
-                {% if current_user.is_beta_tester %}
-                    <button type="button" class="btn btn-warning" data-toggle="modal" data-target="#paths">
-                        Path Mining
-                    </button>
-                {% endif %}
-                {% current_user.is_beta_tester %}
-                    <button type="button" class="btn btn-warning" data-toggle="modal" data-target="#algorithms">
-                        Algorithms
-                    </button>
-                {% endif %}
+                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#controls">
+                    Controls
+                </button>
+
                 {% if current_user.is_authenticated %}
                     <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#export">
                         Export
                     </button>
-
-                    {% if current_user.is_beta_tester %}
-                        <button type="button" id="analyze-button" class="btn btn-warning">
-                            <span class="glyphicon glyphicon-flash" aria-hidden="true"></span>
-                            Analyze
-                        </button>
-                    {% endif %}
                 {% endif %}
 
-                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#controls">
-                    Controls
-                </button>
                 {% if current_user.is_beta_tester %}
+
+                    <button type="button" class="btn btn-warning" data-toggle="modal" data-target="#paths">
+                        Path Mining
+                    </button>
+                    <button type="button" class="btn btn-warning" data-toggle="modal" data-target="#algorithms">
+                        Algorithms
+                    </button>
                     <button type="button" class="btn btn-warning" data-toggle="modal" data-target="#network-tools">
                         Tools
+                    </button>
+                    <button type="button" id="analyze-button" class="btn btn-warning">
+                        <span class="glyphicon glyphicon-flash" aria-hidden="true"></span>
+                        Analyze
                     </button>
                 {% endif %}
             </div>
@@ -386,7 +381,7 @@
                     </table>
                     <hr>
                     <h4 class="text-center">
-                        Node legend
+                        Node Legend
                     </h4>
                     <table class="table table-responsive">
                         <thead>
