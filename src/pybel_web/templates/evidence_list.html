@@ -45,7 +45,6 @@
                     {% for em, edge in edges %}
                         <div class="list-group-item-text">
                             <dl class="dl-horizontal">
-
                                 <dt>BEL</dt>
                                 <dd><code>{{ em.bel }}</code></dd>
 
@@ -53,7 +52,6 @@
                                     <dt>Database Identifier</dt>
                                     <dd>{{ em.id }}</dd>
                                 {% endif %}
-
 
                                 <dt>Annotations</dt>
                                 <dd>{{ edge['data']['annotations'] }}</dd>
@@ -63,6 +61,17 @@
                                     <a href="{{ url_for('dbs.get_edge_by_hash', edge_hash=em.sha512) }}">
                                         <code>{{ em.sha512[:10] }}</code>
                                     </a>
+                                </dd>
+
+                                <dt>Networks</dt>
+                                <dd>
+                                    <ul class="list-inline">
+                                        {% for edge_network in em.networks %}
+                                            <li class="list-inline-item">
+                                                <a href="{{ url_for('view_summarize_statistics', network_id=edge_network.id) }}">{{ edge_network }}</a>
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
                                 </dd>
                             </dl>
                         </div>
