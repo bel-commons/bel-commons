@@ -45,31 +45,25 @@
                     {% for em, edge in edges %}
                         <div class="list-group-item-text">
                             <dl class="dl-horizontal">
+
+                                <dt>BEL</dt>
+                                <dd><code>{{ em.bel }}</code></dd>
+
                                 {% if current_user.is_admin %}
                                     <dt>Database Identifier</dt>
                                     <dd>{{ em.id }}</dd>
                                 {% endif %}
-                                <dt>Edge Hash</dt>
+
+
+                                <dt>Annotations</dt>
+                                <dd>{{ edge['data']['annotations'] }}</dd>
+
+                                <dt>Identifier</dt>
                                 <dd>
                                     <a href="{{ url_for('dbs.get_edge_by_hash', edge_hash=em.sha512) }}">
                                         <code>{{ em.sha512[:10] }}</code>
                                     </a>
                                 </dd>
-                                <dt>Relation</dt>
-                                <dd>{{ edge['data']['relation'] }}</dd>
-
-                                {% if 'subject' in edge['data'] %}
-                                    <dt>Subject</dt>
-                                    <dd>{{ edge['data']['subject'] }}</dd>
-                                {% endif %}
-
-                                {% if 'object' in edge['data'] %}
-                                    <dt>Object</dt>
-                                    <dd>{{ edge['data']['object'] }}</dd>
-                                {% endif %}
-
-                                <dt>Annotations</dt>
-                                <dd>{{ edge['data']['annotations'] }}</dd>
                             </dl>
                         </div>
                     {% endfor %}
