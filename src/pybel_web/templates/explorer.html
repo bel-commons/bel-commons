@@ -16,8 +16,6 @@
     <script type="text/javascript"
             src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.5.0/d3.min.js"></script>
     <script type="text/javascript"
-            src="https://cdnjs.cloudflare.com/ajax/libs/d3-sankey/0.4.2/d3-sankey.js"></script>
-    <script type="text/javascript"
             src="https://cdnjs.cloudflare.com/ajax/libs/inspire-tree/1.12.1/inspire-tree-bundled.js"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='js/svg_to_png/saveSvgAsPng.js') }}"></script>
 
@@ -45,6 +43,7 @@
 
 {% block scripts %}
     {{ super() }}
+
     <script type="text/javascript"
             src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
     <script type="text/javascript"
@@ -88,7 +87,7 @@
                         Path Mining
                     </button>
                 {% endif %}
-                {% if current_user.is_authenticated and current_user.is_beta_tester %}
+                {% current_user.is_beta_tester %}
                     <button type="button" class="btn btn-warning" data-toggle="modal" data-target="#algorithms">
                         Algorithms
                     </button>
@@ -99,7 +98,7 @@
                     </button>
 
                     {% if current_user.is_beta_tester %}
-                        <button type="button" id="analyze-button" class="btn btn-primary">
+                        <button type="button" id="analyze-button" class="btn btn-warning">
                             <span class="glyphicon glyphicon-flash" aria-hidden="true"></span>
                             Analyze
                         </button>
@@ -120,7 +119,7 @@
         <div class="row" style="margin-right: 0; margin-bottom:20px"><!-- visualization row -->
             <div id="graph-chart" class="col-lg-8"></div>
             <div class="panel panel-default col-lg-4"
-                 style="max-height: 585px;height: 585px;padding-right: 0px;padding-left: 0px; margin-bottom:0">
+                 style="max-height: 585px;height: 585px;padding-right: 0;padding-left: 0; margin-bottom:0">
 
                 <!-- Nav tabs -->
                 <ul class="nav nav-tabs nav-center-tabs">
@@ -164,7 +163,7 @@
                                aria-describedby="sizing-addon1" type="text"/>
                         <input class="btn-block" data-toggle="toggle" data-width="100%"
                                data-style="android" data-on="All Annotations Should Be Present" value=""
-                               id="andortoggle" data-off="Any Annotation Present" type="checkbox">
+                               title="And/Or Toggle" id="andortoggle" data-off="Any Annotation Present" type="checkbox">
                         <div id="tree" style="max-height:425px; overflow:auto;"></div>
                     </div>
                     <div class="tab-pane not-rounded" id="nodes-panel" role="tabpanel">
