@@ -35,10 +35,11 @@
                     <div class="col-sm-6 col-md-3">
                         <div class="thumbnail">
                             <div class="caption">
-                                <h3>RESTFul API</h3>
-                                <p>We provide a RESTful service for querying graphs the same way our service does to
-                                    provide visualization. The definition of this service is given using the
-                                    <a href="https://www.openapis.org/">OpenAPI</a> specification.
+                                <h3>Programmatic Access</h3>
+                                <p>Our RESTful service is documented with the
+                                    <a href="https://www.openapis.org/">OpenAPI</a> specification. In the future, we
+                                    will also provide a <a href="http://graphql.org/learn/">GraphQL</a>
+                                    API using <a href="https://github.com/graphql-python/graphene">graphene</a>.</p>
                                 </p>
                                 <p>
                                     <a href="{{ url_for('flasgger.apidocs') }}" class="btn btn-primary">
@@ -46,21 +47,6 @@
                                     </a>
                                     <a href="{{ url_for('flasgger.apispec_1') }}" class="btn btn-primary">
                                         OpenAPI Spec
-                                    </a>
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-sm-6 col-md-3">
-                        <div class="thumbnail">
-                            <div class="caption">
-                                <h3>GraphQL API</h3>
-                                <p>In the future we will also provide a <a href="http://graphql.org/learn/">GraphQL</a>
-                                    API using <a href="https://github.com/graphql-python/graphene">graphene</a>.</p>
-                                <p>
-                                    <a href="http://graphql.org/learn/" class="btn btn-primary" role="button">
-                                        Learn More
                                     </a>
                                 </p>
                             </div>
@@ -130,21 +116,12 @@
                     <div class="col-sm-6 col-md-6">
                         <div class="thumbnail">
                             <div class="caption">
-                                <h3>References</h3>
+                                <h3>Citations</h3>
                                 <ul>
                                     <li>
-                                        Charles Tapley Hoyt, Andrej Konotopez, & Christian Ebeling. (2017, May 28).
-                                        pybel/pybel v0.5.9. Zenodo.
-                                        <a href="http://doi.org/10.5281/zenodo.583734">
-                                            http://doi.org/10.5281/zenodo.583734
-                                        </a>
-                                    </li>
-                                    <li>
-                                        Charles Tapley Hoyt, Daniel Domingo-Fernandez, Andrej Konotopez, & Christian
-                                        Ebeling. (2017, May 26). pybel/pybel-tools v0.1.11. Zenodo.
-                                        <a href="http://doi.org/10.5281/zenodo.583576">
-                                            http://doi.org/10.5281/zenodo.583576
-                                        </a>
+                                        Charles Tapley Hoyt, et al.; PyBEL: a Computational
+                                        Framework for Biological Expression Language, Bioinformatics, btx660, <a
+                                            href="https://doi.org/10.1093/bioinformatics/btx660">https://doi.org/10.1093/bioinformatics/btx660</a>
                                     </li>
                                 </ul>
                             </div>
