@@ -86,7 +86,7 @@
                                     </li>
                                     <li>
                                         <a href="{{ url_for('send_async_project_merge', user_id=current_user.id, project_id=project.id) }}"
-                                           class="btn btn-warning" data-toggle="tooltip" data-placement="top"
+                                           class="btn btn-default" data-toggle="tooltip" data-placement="top"
                                            title="Merge all networks into a single BEL document and email as a single BEL script">
                                             <span class="glyphicon glyphicon-download" aria-hidden="true"></span>
                                             Merge and Email BEL
@@ -183,7 +183,7 @@
         </div>
 
         {% if current_user.is_beta_tester %}
-            <div class="panel panel-default">
+            <div class="panel panel-warning">
                 <div class="panel-heading">
                     <h3 class="panel-title">My Experiments</h3>
                 </div>
