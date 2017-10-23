@@ -9,7 +9,7 @@ These endpoints should expose data as JSON, and not rely on templates, since the
 packages and locations
 """
 
-__version__ = '0.2.0'
+__version__ = '0.2.1-dev'
 
 __title__ = 'pybel_web'
 __description__ = 'PyBEL Web'
