@@ -6,7 +6,7 @@ from logging import getLogger
 from pybel.constants import PYBEL_DATA_DIR, PYBEL_LOG_DIR
 from pybel_tools.constants import BMS_BASE
 
-PYBEL_WEB_VERSION = '0.1.1'
+PYBEL_WEB_VERSION = '0.2.0-dev'
 
 PYBEL_CACHE_CONNECTION = 'pybel_cache_connection'
 PYBEL_DEFINITION_MANAGER = 'pybel_definition_manager'
