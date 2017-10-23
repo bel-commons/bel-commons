@@ -220,7 +220,7 @@ def setup(manager):
 @click.option('-f', '--file', type=click.File('r'), default=user_dump_path, help='Input user/role file')
 @click.pass_obj
 def load(manager, file):
-    """Dump stuff for loading later (in lieu of having proper migrations)"""
+    """Load dumped stuff for loading later (in lieu of having proper migrations)"""
     ds = SQLAlchemyUserDatastore(manager, User, Role)
 
     for line in file:
@@ -231,7 +231,7 @@ def load(manager, file):
             u = ds.create_user(
                 email=email,
                 password=password,
-                name=name,
+                name=(name or None),
                 confirmed_at=datetime.datetime.now()
             )
             click.echo('added {}'.format(u))
