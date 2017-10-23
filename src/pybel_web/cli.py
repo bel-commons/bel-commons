@@ -224,14 +224,16 @@ def load(manager, file):
     ds = SQLAlchemyUserDatastore(manager, User, Role)
 
     for line in file:
-        email, password, roles, name = line.strip().split('\t')
+
+        line = line.strip().split('\t')
+        email, password, roles = line[:3]
         u = ds.find_user(email=email)
 
         if not u:
             u = ds.create_user(
                 email=email,
                 password=password,
-                name=(name or None),
+                name=(None if len(line) < 4 else line[3]),
                 confirmed_at=datetime.datetime.now()
             )
             click.echo('added {}'.format(u))
