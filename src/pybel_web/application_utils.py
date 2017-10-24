@@ -12,7 +12,7 @@ from flask_security import SQLAlchemyUserDatastore, current_user, url_for_securi
 from raven.contrib.flask import Sentry
 from sqlalchemy import or_
 
-from pybel.manager.models import Annotation, Author, Citation, Edge, Evidence, Namespace, Network, Node
+from pybel.manager.models import Annotation, Author, Citation, Edge, Evidence, Namespace, Network, Node, AnnotationEntry, NamespaceEntry
 from pybel_tools.mutation import expand_node_neighborhood, expand_nodes_neighborhoods
 from pybel_tools.pipeline import in_place_mutator, uni_in_place_mutator
 from .admin_utils import (
@@ -297,7 +297,9 @@ class FlaskPyBEL:
         admin.add_view(UserView(User, manager.session))
         admin.add_view(ModelView(Role, manager.session))
         admin.add_view(ModelView(Namespace, manager.session))
+        admin.add_view(ModelView(NamespaceEntry, manager.session))
         admin.add_view(ModelView(Annotation, manager.session))
+        admin.add_view(ModelView(AnnotationEntry, manager.session))
         admin.add_view(NetworkView(Network, manager.session))
         admin.add_view(NodeView(Node, manager.session))
         admin.add_view(EdgeView(Edge, manager.session))
