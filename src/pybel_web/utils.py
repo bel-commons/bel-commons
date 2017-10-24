@@ -913,7 +913,7 @@ def make_graph_summary(graph):
     :param pybel.BELGraph graph:
     :rtype: dict
     """
-    log.info('starting to summarize {}'.format(graph))
+    log.info('summarizing %s',graph)
     t = time.time()
 
     number_nodes = graph.number_of_nodes()
@@ -935,7 +935,7 @@ def make_graph_summary(graph):
         summary_dict=get_network_summary_dict(graph),
     )
 
-    log.info('calculated summary in %.2f', time.time() - t)
+    log.info('summarized %s in %.2f seconds', graph, time.time() - t)
 
     return rv
 
