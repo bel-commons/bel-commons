@@ -124,7 +124,7 @@ def parse_by_url(url):
         return 'Parsing failed for {}. '.format(url)
 
     try:
-        network = manager.insert_graph(graph)
+        network = manager.insert_graph(graph, store_parts=app.config.get("PYBEL_USE_EDGE_STORE""", True))
         return network.id
     except:
         manager.session.rollback()
@@ -258,8 +258,8 @@ def async_parser(report_id):
     upload_failed_text = 'Upload Failed for {}'.format(source_name)
 
     try:
-        log.info('inserting graph')
-        network = manager.insert_graph(graph, store_parts=app.config.get('PYBEL_USE_EDGE_STORE', True))
+        log.info('inserting %s', graph)
+        network = manager.insert_graph(graph, store_parts=app.config.get("PYBEL_USE_EDGE_STORE", True))
 
     except IntegrityError:
         manager.session.rollback()
