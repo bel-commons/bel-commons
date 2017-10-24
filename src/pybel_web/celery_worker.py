@@ -18,7 +18,7 @@ from celery.utils.log import get_task_logger
 from six.moves.cPickle import dumps, loads
 from sqlalchemy.exc import IntegrityError, OperationalError
 
-from pybel import from_url, to_bel_path, to_bytes
+from pybel import from_url, to_bel_path, to_bytes, from_json
 from pybel.constants import METADATA_CONTACT, METADATA_DESCRIPTION, METADATA_LICENSES
 from pybel.manager.models import Network
 from pybel.parser.parse_exceptions import InconsistentDefinitionError
@@ -400,3 +400,24 @@ def run_cmpa(experiment_id):
             )
 
     return experiment_id
+
+
+@celery.task(name='receive-network')
+def async_recieve(payload):
+    """Receives a JSON serialized BEL graph"""
+    try:
+        graph = from_json(payload)
+    except:
+        return -1
+
+    try:
+        manager.insert_graph(graph, store_parts=app.config.get("PYBEL_USE_EDGE_STORE", True))
+    except IntegrityError:
+        manager.session.rollback()
+        return -1
+    except:
+        log.exception('Upload error')
+        manager.session.rollback()
+        return -1
+
+    return 0

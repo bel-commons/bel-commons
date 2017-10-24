@@ -16,7 +16,6 @@ from flask import Blueprint, abort, current_app, flash, jsonify, make_response, 
 from flask_security import current_user, login_required, roles_required
 from six import StringIO
 from sqlalchemy import func
-from sqlalchemy.exc import IntegrityError
 
 import pybel
 from pybel.constants import (
@@ -70,30 +69,9 @@ def get_graph_from_request(query_id):
 @api_blueprint.route('/api/receive', methods=['POST'])
 def receive():
     """Receives a JSON serialized BEL graph"""
-    try:
-        network = pybel.from_json(request.get_json())
-    except Exception as e:
-        if 'next' in request.args:
-            flask.flash('Error parsing json')
-            return redirect(request.args['next'])
-
-        return jsonify({
-            'status': '400',
-            'exception': str(e),
-        })
-
-    try:
-        network = manager.insert_graph(network, store_parts=True)
-        flask.flash('Success uploading {}'.format(network))
-    except IntegrityError:
-        flask.flash(integrity_message.format(network.name, network.version))
-        manager.session.rollback()
-    except:
-        flask.flash("Error storing in database")
-        log.exception('Upload error')
-        manager.session.rollback()
-
-    return next_or_jsonify('Success', network_id=network.id)
+    payload = request.get_json()
+    task = current_app.celery.send_task('receive-network', args=[payload])
+    return next_or_jsonify('Sent async receive task', network_id=task.id)
 
 
 ####################################
