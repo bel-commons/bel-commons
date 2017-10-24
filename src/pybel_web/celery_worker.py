@@ -20,12 +20,13 @@ from sqlalchemy.exc import IntegrityError, OperationalError
 
 from pybel import from_url, to_bel_path, to_bytes, from_json
 from pybel.constants import METADATA_CONTACT, METADATA_DESCRIPTION, METADATA_LICENSES
+from pybel.manager.citation_utils import enrich_pubmed_citations
 from pybel.manager.models import Network
 from pybel.parser.parse_exceptions import InconsistentDefinitionError
 from pybel.struct import union
 from pybel_tools.constants import BMS_BASE
 from pybel_tools.ioutils import convert_directory
-from pybel_tools.mutation import add_canonical_names, add_identifiers, enrich_pubmed_citations, infer_central_dogma
+from pybel_tools.mutation import add_canonical_names, add_identifiers, infer_central_dogma
 from pybel_tools.utils import enable_cool_mode
 from pybel_web.application import create_application
 from pybel_web.celery_utils import create_celery
