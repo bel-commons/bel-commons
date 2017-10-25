@@ -216,7 +216,7 @@ def async_parser(report_id):
         if network.report.user == report.user:  # This user is being a fool
             return finish_parsing('Uploading Failed for {}'.format(source_name), message)
 
-        if hashlib.sha1(network.blob).hexdigest() != hashlib.sha1(to_bytes(network)).hexdigest():
+        if hashlib.sha1(network.blob).hexdigest() != hashlib.sha1(to_bytes(graph)).hexdigest():
             with app.app_context():
                 app.extensions['mail'].send_message(
                     subject='Possible attempted Espionage',
