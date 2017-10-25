@@ -226,7 +226,7 @@ def load(manager, file):
     for line in file:
 
         line = line.strip().split('\t')
-        email, password, roles = line[:2]
+        email, password = line[:2]
         u = ds.find_user(email=email)
 
         if not u:
@@ -237,22 +237,17 @@ def load(manager, file):
                 confirmed_at=datetime.datetime.now()
             )
 
-            try:
+            if 4 <= len(line):
                 u.name = line[3]
-            except:  # there isn't an entry in position 3
-                pass
 
             click.echo('added {}'.format(u))
             ds.commit()
 
-            try:
-
-                for role_name in line[2].strip().split(','):
+            if 3 <= len(line):
+                roles = line[2].strip().split(',')
+                for role_name in roles:
                     r = ds.find_or_create_role(name=role_name)
                     ds.add_role_to_user(u, r)
-
-            except:  # there isn't an entry in position 2
-                pass
 
     ds.commit()
 
