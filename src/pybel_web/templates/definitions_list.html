@@ -41,7 +41,12 @@
                 <h3 class="panel-title">Namespaces</h3>
             </div>
             <div class="panel-body">
-                <p>The list below enumerates the cached namespaces.</p>
+                <p>
+                    BEL borrows some ideas from the semantic web that resources at a given location should be
+                    persistent. However, the BEL namespace file format contains a flag to signify namespaces that
+                    might change over time that is only very narrowly appropriate for custom terminologies as they are
+                    under development. These namespaces are not cached and are not listed.
+                </p>
             </div>
             <div class="list-group">
                 {% for namespace in namespaces %}
