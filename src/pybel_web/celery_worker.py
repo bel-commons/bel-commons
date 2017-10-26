@@ -9,6 +9,7 @@ While also laughing at how ridiculously redundant this nomenclature is.
 """
 
 import hashlib
+import json
 import logging
 import os
 import time
@@ -20,6 +21,7 @@ from sqlalchemy.exc import IntegrityError, OperationalError
 
 from pybel import from_url, to_bel_path, to_bytes, from_json
 from pybel.constants import METADATA_CONTACT, METADATA_DESCRIPTION, METADATA_LICENSES
+from pybel.manager.cache_manager import EdgeAddError
 from pybel.manager.citation_utils import enrich_pubmed_citations
 from pybel.manager.models import Network
 from pybel.parser.parse_exceptions import InconsistentDefinitionError
@@ -270,6 +272,11 @@ def async_parser(report_id):
     except OperationalError:
         manager.session.rollback()
         message = 'Database is locked. Unable to upload.'
+        return finish_parsing(upload_failed_text, message)
+
+    except EdgeAddError as e:
+        manager.session.rollback()
+        message = "Error storing in database: {}\nPayload: {}".format(e, json.dumps(e.args[1], indent=2))
         return finish_parsing(upload_failed_text, message)
 
     except Exception as e:
