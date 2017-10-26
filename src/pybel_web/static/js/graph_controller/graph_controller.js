@@ -401,6 +401,10 @@ function updateQueryResponse(response, tree) {
 
 /**
  * Creates a new row in Node/Edge info table
+ * @param {object} table: table object
+ * @param {int} row: row number
+ * @param {string} column1: string for column1
+ * @param {string} column2: string for column2
  */
 function insertRow(table, row, column1, column2) {
 
