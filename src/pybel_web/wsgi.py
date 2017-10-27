@@ -11,16 +11,16 @@ How to Run PyBEL Web
 import logging
 import os
 
-from .analysis_service import analysis_blueprint
-from .application import create_application
-from .bms_service import bms_blueprint
-from .constants import BMS_IS_AVAILABLE, log_runner_path
-from .curation_service import curation_blueprint
-from .database_service import api_blueprint
-from .external_services import external_blueprint
-from .main_service import build_main_service
-from .parser_async_service import parser_async_blueprint
-from .parser_endpoint import build_parser_service
+from pybel_web.analysis_service import analysis_blueprint
+from pybel_web.application import create_application
+from pybel_web.bms_service import bms_blueprint
+from pybel_web.constants import BMS_IS_AVAILABLE, log_runner_path
+from pybel_web.curation_service import curation_blueprint
+from pybel_web.database_service import api_blueprint
+from pybel_web.external_services import external_blueprint
+from pybel_web.main_service import build_main_service
+from pybel_web.parser_async_service import parser_async_blueprint
+from pybel_web.parser_endpoint import build_parser_service
 
 datefmt = '%H:%M:%S'
 fmt = "%(asctime)s - %(levelname)s - %(name)s - %(message)s"
