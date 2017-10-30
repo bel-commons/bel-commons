@@ -1,6 +1,14 @@
 PyBEL Web
 =========
 
+Installation
+------------
+
+RDBMS Connectors
+~~~~~~~~~~~~~~~~
+- Suggested to install `pip install mysqlclient` since it enables multithreading
+
+
 Deployment
 ----------
 
