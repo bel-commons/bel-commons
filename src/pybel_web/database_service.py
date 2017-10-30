@@ -532,6 +532,8 @@ def drop_network_helper(network_id):
     except Exception as e:
         manager.session.rollback()
 
+        log.exception('Failed to drop network %d (%s)', network, network.id)
+
         if 'next' in request.args:
             flash('Dropped network #{} failed: {}'.format(network_id, e), category='error')
             return redirect(request.args['next'])
