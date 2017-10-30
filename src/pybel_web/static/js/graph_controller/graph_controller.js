@@ -281,7 +281,7 @@ function displayQueryInfo(query) {
         dataType: "json",
         success: function (response) {
             if (response.status === false) {
-                alert('No results. build a new query.');
+                alert('Query has no results. Build a new query');
                 return
             }
 
@@ -450,8 +450,7 @@ function reloadTree(tree) {
 
     doAjaxCallWithCallback(url, function (response) {
         if (response.status === false) {
-            alert('The query returned no results.')
-
+            alert('Query has no results. Build a new query');
         } else {
             tree.removeAll(); //Clean tree
             tree.load(response.payload);
@@ -499,7 +498,7 @@ $(document).ready(function () {
         // Inits the Annotation tree
 
         if (response.status === false) {
-            alert('Query has no results. Build a new query')
+            alert('Query has no results. Build a new query');
         } else {
             var tree = new InspireTree({
                 target: "#tree",
@@ -1403,7 +1402,7 @@ function initD3Force(graph, tree) {
             var path = link.filter(function (el) {
                 // Source and target should be present in the edge and the distance in the array should be one
                 return ((data[x].indexOf(el.source.id) >= 0 && data[x].indexOf(el.target.id) >= 0)
-                    && (Math.abs(data[x].indexOf(el.source.id) - data[x].indexOf(el.target.id)) === 1));
+                && (Math.abs(data[x].indexOf(el.source.id) - data[x].indexOf(el.target.id)) === 1));
             });
 
             edgesInPaths.push(path);
@@ -1419,7 +1418,7 @@ function initD3Force(graph, tree) {
             var edgesInPath = link.filter(function (el) {
                 // Source and target should be present in the edge and the distance in the array should be one
                 return ((data[i].indexOf(el.source.id) >= 0 && data[i].indexOf(el.target.id) >= 0)
-                    && (Math.abs(data[i].indexOf(el.source.id) - data[i].indexOf(el.target.id)) === 1));
+                && (Math.abs(data[i].indexOf(el.source.id) - data[i].indexOf(el.target.id)) === 1));
             });
 
             // Select randomly a color and apply to this path
@@ -1455,7 +1454,7 @@ function initD3Force(graph, tree) {
             var edgesNotInPath = g.selectAll(".link").filter(function (el) {
                 // Source and target should be present in the edge and the distance in the array should be one
                 return !((paths.indexOf(el.source.id) >= 0 && paths.indexOf(el.target.id) >= 0)
-                    && (Math.abs(paths.indexOf(el.source.id) - paths.indexOf(el.target.id)) === 1));
+                && (Math.abs(paths.indexOf(el.source.id) - paths.indexOf(el.target.id)) === 1));
             });
 
             // If checkbox is True -> Hide all, Else -> Opacity 0.1
