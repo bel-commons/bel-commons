@@ -17,7 +17,6 @@ click
 pygments
 pandas
 celery
-obonet
 raven
 matplotlib_venn
 matplotlib

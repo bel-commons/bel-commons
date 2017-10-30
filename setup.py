@@ -40,7 +40,6 @@ INSTALL_REQUIRES = [
     'click',
     'pandas',
     'celery',
-    'obonet',
     'raven',
     'matplotlib_venn',
     'matplotlib',
