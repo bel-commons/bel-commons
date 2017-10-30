@@ -450,7 +450,14 @@ function reloadTree(tree) {
 
     doAjaxCallWithCallback(url, function (response) {
         if (response.status === false) {
-            alert('Query has no results. Build a new query');
+            // sets a global variable so the alert is only shown once (otherwise queryInfo would also show the alert
+            if (window.noResults === undefined) {
+                window.noResults = true;
+                alert('Query has no results. Build a new query');
+            }
+            else {
+                window.noResults = undefined;
+            }
         } else {
             tree.removeAll(); //Clean tree
             tree.load(response.payload);
@@ -498,7 +505,14 @@ $(document).ready(function () {
         // Inits the Annotation tree
 
         if (response.status === false) {
-            alert('Query has no results. Build a new query');
+            // sets a global variable so the alert is only shown once (otherwise queryInfo would also show the alert
+            if (window.noResults === undefined) {
+                window.noResults = true;
+                alert('Query has no results. Build a new query');
+            }
+            else {
+                window.noResults = undefined;
+            }
         } else {
             var tree = new InspireTree({
                 target: "#tree",
