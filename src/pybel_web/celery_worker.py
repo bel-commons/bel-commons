@@ -57,66 +57,6 @@ dumb_belief_stuff = {
 
 pbw_sender = ("PyBEL Web", 'pybel@scai.fraunhofer.de')
 
-
-def parse_folder(folder, **kwargs):
-    """Parses everything in a folder
-
-    :param str folder:
-    """
-    convert_directory(
-        folder,
-        connection=manager,
-        upload=True,
-        canonicalize=True,
-        infer_central_dogma=True,
-        enrich_citations=True,
-        enrich_genes=True,
-        enrich_go=False,
-        **kwargs
-    )
-
-
-@celery.task(name='parse-aetionomy')
-def parse_aetionomy():
-    """Converts the AETIONOMY folder in the BMS"""
-    folder = os.path.join(os.environ[BMS_BASE], 'aetionomy')
-    parse_folder(folder)
-
-
-@celery.task(name='parse-selventa')
-def parse_selventa():
-    """Converts the Selventa folder in the BMS"""
-    folder = os.path.join(os.environ[BMS_BASE], 'selventa')
-    parse_folder(folder, citation_clearing=False, allow_nested=True)
-
-
-@celery.task(name='parse-bel4imocede')
-def parse_bel4imocede():
-    """Converts the BEL4IMOCEDE folder in the BMS"""
-    folder = os.path.join(os.environ[BMS_BASE], 'BEL4IMOCEDE')
-    parse_folder(folder)
-
-
-@celery.task(name='parse-ptsd')
-def parse_ptsd():
-    """Converts the CVBIO PTSD folder in the BMS"""
-    folder = os.path.join(os.environ[BMS_BASE], 'cvbio', 'PTSD')
-    parse_folder(folder)
-
-
-@celery.task(name='parse-tbi')
-def parse_tbi():
-    """Converts the CVBIO TBI folder in the BMS"""
-    folder = os.path.join(os.environ[BMS_BASE], 'cvbio', 'TBI')
-    parse_folder(folder)
-
-
-@celery.task(name='parse-bms')
-def parse_bms():
-    """Converts the entire BMS"""
-    parse_folder(os.environ[BMS_BASE])
-
-
 @celery.task(name='parse-url')
 def parse_by_url(url):
     """Parses a graph at the given URL resource"""

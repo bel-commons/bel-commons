@@ -112,7 +112,7 @@ class Report(Base):
 
         :rtype: list[str]
         """
-        return codecs.decode(self.source, self.encoding).split('\n')
+        return codecs.decode(self.source, self.encoding or 'utf-8').split('\n')
 
     def parse_graph(self, manager):
         """Parses the graph from the latent BEL Script

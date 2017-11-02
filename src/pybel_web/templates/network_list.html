@@ -92,22 +92,6 @@
                         </a>
                     </p>
                     {% if BMS_BASE %}
-                        <h4>Ensure BMS BEL Documents</h4>
-                        <p>
-                            <a class="btn btn-info" href="{{ url_for('bms.list_bms_pickles', next=url_for('home')) }}"
-                               role="button">
-                                List BMS Pickles
-                            </a>
-                            <a class="btn btn-warning"
-                               href="{{ url_for('bms.upload_aetionomy', next=url_for('home')) }}"
-                               role="button">
-                                Sync Upload AETIONOMY Pickles
-                            </a>
-                            <a class="btn btn-warning" href="{{ url_for('bms.upload_bms', next=url_for('home')) }}"
-                               role="button">
-                                Sync Upload BMS Pickles
-                            </a>
-                        </p>
                         <h4>Async Parse Folders</h4>
                         <p>
                             <a class="btn btn-danger" href="{{ url_for('bms.ensure_selventa', next=url_for('home')) }}"
