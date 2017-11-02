@@ -281,8 +281,14 @@ function displayQueryInfo(query) {
         dataType: "json",
         success: function (response) {
             if (response.status === false) {
-                alert('Query has no results. Build a new query');
-                return
+                // sets a global variable so the alert is only shown once (otherwise queryInfo would also show the alert
+                if (window.noResults === undefined) {
+                    window.noResults = true;
+                    alert('Query has no results. Build a new query');
+                }
+                else {
+                    window.noResults = undefined;
+                }
             }
 
             var networkInfoTable = document.getElementById('network-info-table');
