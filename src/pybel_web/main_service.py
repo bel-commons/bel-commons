@@ -65,6 +65,12 @@ def build_dictionary_service_admin(app):
         task = current_app.celery.send_task('parse-url', args=[GENE_FAMILIES])
         return next_or_jsonify('Queued task to parse HGNC Gene Families: {}'.format(task))
 
+    @app.route('/admin/configuration')
+    @roles_required('admin')
+    def view_config():
+        """Render the configuration"""
+        return render_template('deployment.html', config=current_app.config)
+
 
 def build_main_service(app):
     """Builds the PyBEL main service
