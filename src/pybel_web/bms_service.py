@@ -16,8 +16,15 @@ log = logging.getLogger(__name__)
 
 bms_blueprint = Blueprint('bms', __name__)
 
+
 def make_folder_queue(folder_path, allow_nested=False, citation_clearing=True, infer_origin=False):
-    """This shuld be pretty similar to the one above"""
+    """This shuld be pretty similar to the one above
+
+    :param str folder_path:
+    :param bool allow_nested:
+    :param bool citation_clearing:
+    :param bool infer_origin:
+    """
     tasks = []
 
     for path in get_paths_recursive(folder_path):

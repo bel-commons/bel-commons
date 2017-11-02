@@ -216,7 +216,7 @@ def async_parser(report_id):
 
     except EdgeAddError as e:
         manager.session.rollback()
-        message = "Error storing in database: {}\nPayload: {}".format(e, json.dumps(e.args[1], indent=2))
+        message = "Error storing in database: {}.\n\nPayload: {}".format(e, json.dumps(e.args[1], indent=2))
         return finish_parsing(upload_failed_text, message)
 
     except Exception as e:
