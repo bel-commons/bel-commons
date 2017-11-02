@@ -3,8 +3,8 @@
 import os
 from logging import getLogger
 
+import pybel_tools.constants
 from pybel.constants import PYBEL_DATA_DIR, PYBEL_LOG_DIR
-from pybel_tools.constants import BMS_BASE
 
 PYBEL_WEB_VERSION = '0.2.1-dev'
 
@@ -56,7 +56,7 @@ CHARLIE_EMAIL = 'charles.hoyt@scai.fraunhofer.de'
 DANIEL_EMAIL = 'daniel.domingo.fernandez@scai.fraunhofer.de'
 ALEX_EMAIL = 'aliaksandr.masny@scai.fraunhofer.de'
 
-BMS_IS_AVAILABLE = BMS_BASE in os.environ
+BMS_BASE = os.environ.get(pybel_tools.constants.BMS_BASE)
 
 merged_document_folder = os.path.join(PYBEL_DATA_DIR, 'pbw_merged_documents')
 

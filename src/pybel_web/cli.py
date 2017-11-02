@@ -36,7 +36,7 @@ from pybel_tools.utils import enable_cool_mode, get_version as pybel_tools_get_v
 from .analysis_service import analysis_blueprint
 from .application import create_application
 from .bms_service import bms_blueprint
-from .constants import BMS_IS_AVAILABLE, CHARLIE_EMAIL, log_runner_path
+from .constants import BMS_BASE, CHARLIE_EMAIL, log_runner_path
 from .curation_service import curation_blueprint
 from .database_service import api_blueprint
 from .external_services import belief_blueprint, external_blueprint
@@ -154,7 +154,7 @@ def run(host, port, default_config, debug, config, with_gunicorn, workers):
     app.register_blueprint(belief_blueprint)
     app.register_blueprint(external_blueprint)
 
-    if BMS_IS_AVAILABLE:
+    if BMS_BASE:
         app.register_blueprint(bms_blueprint)
 
     if app.config.get('PYBEL_WEB_PARSER_API'):

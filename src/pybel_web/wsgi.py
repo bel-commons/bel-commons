@@ -13,7 +13,7 @@ import logging
 from pybel_web.analysis_service import analysis_blueprint
 from pybel_web.application import create_application
 from pybel_web.bms_service import bms_blueprint
-from pybel_web.constants import BMS_IS_AVAILABLE
+from pybel_web.constants import BMS_BASE
 from pybel_web.curation_service import curation_blueprint
 from pybel_web.database_service import api_blueprint
 from pybel_web.external_services import external_blueprint
@@ -45,7 +45,7 @@ app.register_blueprint(api_blueprint)
 app.register_blueprint(analysis_blueprint)
 app.register_blueprint(external_blueprint)
 
-if BMS_IS_AVAILABLE:
+if BMS_BASE:
     app.register_blueprint(bms_blueprint)
 
 if app.config.get('PYBEL_WEB_PARSER_API'):

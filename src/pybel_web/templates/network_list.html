@@ -91,7 +91,7 @@
                             Gene Families
                         </a>
                     </p>
-                    {% if HAS_BMS %}
+                    {% if BMS_BASE %}
                         <h4>Ensure BMS BEL Documents</h4>
                         <p>
                             <a class="btn btn-info" href="{{ url_for('bms.list_bms_pickles', next=url_for('home')) }}"
