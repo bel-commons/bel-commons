@@ -16,7 +16,6 @@ log = logging.getLogger(__name__)
 
 bms_blueprint = Blueprint('bms', __name__)
 
-
 def make_folder_queue(folder_path, allow_nested=False, citation_clearing=True, infer_origin=False):
     """This shuld be pretty similar to the one above"""
     tasks = []
@@ -61,7 +60,7 @@ def make_folder_queue(folder_path, allow_nested=False, citation_clearing=True, i
 @bms_blueprint.route('/admin/bms/meta/git-update')
 def git_pull():
     """Updates the Biological Model Store git repository"""
-    g = git.cmd.Git(BMS_BASE)
+    g = git.cmd.Git(current_app.config.get('BMS_BASE'))
     res = g.pull()
 
     return next_or_jsonify(res)
@@ -71,7 +70,7 @@ def git_pull():
 @roles_required('admin')
 def ensure_bms():
     """Parses and stores the entire Biological Model Store repository"""
-    tasks = make_folder_queue(BMS_BASE)
+    tasks = make_folder_queue(current_app.config.get('BMS_BASE'))
     return next_or_jsonify('Queued tasks to parse the BMS: {}'.format(tasks))
 
 
@@ -79,7 +78,7 @@ def ensure_bms():
 @roles_required('admin')
 def ensure_aetionomy():
     """Parses and stores the AETIONOMY resources from the Biological Model Store repository"""
-    folder = os.path.join(BMS_BASE, 'aetionomy')
+    folder = os.path.join(current_app.config.get('BMS_BASE'), 'aetionomy')
     tasks = make_folder_queue(folder)
     return next_or_jsonify('Queued task to parse the AETIONOMY folder: {}'.format(tasks))
 
@@ -88,7 +87,7 @@ def ensure_aetionomy():
 @roles_required('admin')
 def ensure_selventa():
     """Parses and stores the Selventa resources from the Biological Model Store repository"""
-    folder = os.path.join(BMS_BASE, 'selventa')
+    folder = os.path.join(current_app.config.get('BMS_BASE'), 'selventa')
     tasks = make_folder_queue(folder, citation_clearing=False, allow_nested=True)
     return next_or_jsonify('Queued task to parse the Selventa folder: {}'.format(tasks))
 
@@ -97,7 +96,7 @@ def ensure_selventa():
 @roles_required('admin')
 def ensure_ptsd():
     """Parses and stores the PTSD resources from the Biological Model Store repository"""
-    folder = os.path.join(BMS_BASE, 'cvbio', 'PTSD')
+    folder = os.path.join(current_app.config.get('BMS_BASE'), 'cvbio', 'PTSD')
     tasks = make_folder_queue(folder)
     return next_or_jsonify('Queued task to parse the PTSD folder: {}'.format(tasks))
 
@@ -106,7 +105,7 @@ def ensure_ptsd():
 @roles_required('admin')
 def ensure_tbi():
     """Parses and stores the TBI resources from the Biological Model Store repository"""
-    folder = os.path.join(BMS_BASE, 'cvbio', 'TBI')
+    folder = os.path.join(current_app.config.get('BMS_BASE'), 'cvbio', 'TBI')
     tasks = make_folder_queue(folder)
     return next_or_jsonify('Queued task to parse the TBI folder: {}'.format(tasks))
 
@@ -115,6 +114,6 @@ def ensure_tbi():
 @roles_required('admin')
 def ensure_bel4imocede():
     """Parses and stores the BEL4IMOCEDE resources from the Biological Model Store repository"""
-    folder = os.path.join(BMS_BASE, 'cvbio', 'BEL4IMOCEDE')
+    folder = os.path.join(current_app.config.get('BMS_BASE'), 'cvbio', 'BEL4IMOCEDE')
     tasks = make_folder_queue(folder)
     return next_or_jsonify('Queued task to parse the BEL4IMOCEDE folder: {}'.format(tasks))
