@@ -96,8 +96,8 @@ def create_application(get_mail=False, config_location=None, **kwargs):
     :rtype: flask.Flask
     """
     app = Flask(__name__)
-    app.config.update(pybel_config)
     app.config.from_object(get_config_location(config_location))
+    app.config.update(pybel_config)
 
     if 'PYBEL_WEB_CONFIG_JSON' in os.environ:
         env_conf_path = os.path.expanduser(os.environ['PYBEL_WEB_CONFIG_JSON'])
