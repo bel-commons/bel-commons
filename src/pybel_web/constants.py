@@ -56,8 +56,6 @@ CHARLIE_EMAIL = 'charles.hoyt@scai.fraunhofer.de'
 DANIEL_EMAIL = 'daniel.domingo.fernandez@scai.fraunhofer.de'
 ALEX_EMAIL = 'aliaksandr.masny@scai.fraunhofer.de'
 
-BMS_BASE = os.environ.get(pybel_tools.constants.BMS_BASE)
-
 merged_document_folder = os.path.join(PYBEL_DATA_DIR, 'pbw_merged_documents')
 
 if not os.path.exists(merged_document_folder):

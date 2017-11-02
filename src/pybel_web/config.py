@@ -2,6 +2,7 @@
 
 import os
 
+import pybel_tools.constants
 from .constants import CHARLIE_EMAIL
 
 
@@ -20,6 +21,7 @@ class Config:
     TESTING = False
 
     CELERY_BROKER_URL = os.environ.get('PYBEL_CELERY_BROKER_URL', 'amqp://localhost')
+    BMS_BASE = os.environ.get(pybel_tools.constants.BMS_BASE)
 
     SECURITY_REGISTERABLE = True
     SECURITY_CONFIRMABLE = False

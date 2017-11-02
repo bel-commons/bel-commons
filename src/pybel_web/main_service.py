@@ -95,7 +95,7 @@ def build_main_service(app):
             'network_list.html',
             networks=sorted(networks, key=lambda network: network.created, reverse=True),
             current_user=current_user,
-            BMS_BASE=BMS_BASE,
+            BMS_BASE=app.config.get('BMS_BASE'),
         )
 
     @app.route('/query/build', methods=['GET', 'POST'])
