@@ -114,6 +114,6 @@ def ensure_tbi():
 @roles_required('admin')
 def ensure_bel4imocede():
     """Parses and stores the BEL4IMOCEDE resources from the Biological Model Store repository"""
-    folder = os.path.join(current_app.config.get('BMS_BASE'), 'cvbio', 'BEL4IMOCEDE')
+    folder = os.path.join(current_app.config.get('BMS_BASE'), 'BEL4IMOCEDE')
     tasks = make_folder_queue(folder)
     return next_or_jsonify('Queued task to parse the BEL4IMOCEDE folder: {}'.format(tasks))
