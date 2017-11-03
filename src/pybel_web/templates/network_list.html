@@ -94,6 +94,10 @@
                     {% if BMS_BASE %}
                         <h4>Async Parse Folders</h4>
                         <p>
+                            <a class="btn btn-warning" href="{{ url_for('bms.git_pull', next=url_for('home')) }}"
+                               role="button">
+                                Pull BMS
+                            </a>
                             <a class="btn btn-danger" href="{{ url_for('bms.ensure_selventa', next=url_for('home')) }}"
                                role="button">
                                 Selventa
