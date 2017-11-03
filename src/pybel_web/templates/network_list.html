@@ -140,7 +140,7 @@
             <div class="list-group">
                 {% for network in networks %}
                     <div class="list-group-item">
-                        <h4 class="list-group-item-heading">{{ network.name }}
+                        <h4 class="list-group-item-heading">{{ network.name|replace('_', ' ') }}
                             <small class="text-muted">
                                 {{ network.version }}
 
