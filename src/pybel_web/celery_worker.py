@@ -19,28 +19,22 @@ from celery.utils.log import get_task_logger
 from six.moves.cPickle import dumps, loads
 from sqlalchemy.exc import IntegrityError, OperationalError
 
-from pybel import from_url, to_bel_path, to_bytes, from_json
+from pybel import from_json, from_url, to_bel_path, to_bytes
 from pybel.constants import METADATA_CONTACT, METADATA_DESCRIPTION, METADATA_LICENSES
 from pybel.manager.cache_manager import EdgeAddError
 from pybel.manager.citation_utils import enrich_pubmed_citations
 from pybel.manager.models import Network
 from pybel.parser.parse_exceptions import InconsistentDefinitionError
 from pybel.struct import union
-from pybel_tools.constants import BMS_BASE
-from pybel_tools.ioutils import convert_directory
 from pybel_tools.mutation import add_canonical_names, add_identifiers, infer_central_dogma
 from pybel_tools.utils import enable_cool_mode
 from pybel_web.application import create_application
 from pybel_web.celery_utils import create_celery
-from pybel_web.constants import CHARLIE_EMAIL, DANIEL_EMAIL, integrity_message, log_worker_path, merged_document_folder
+from pybel_web.constants import CHARLIE_EMAIL, DANIEL_EMAIL, integrity_message, merged_document_folder
 from pybel_web.models import Experiment, Project, Report, User
 from pybel_web.utils import calculate_scores, fill_out_report, make_graph_summary, manager
 
 log = get_task_logger(__name__)
-
-fh = logging.FileHandler(log_worker_path)
-fh.setLevel(logging.DEBUG)
-log.addHandler(fh)
 
 logging.basicConfig(level=logging.DEBUG)
 enable_cool_mode()  # turn off warnings for compilation
@@ -56,6 +50,7 @@ dumb_belief_stuff = {
 }
 
 pbw_sender = ("PyBEL Web", 'pybel@scai.fraunhofer.de')
+
 
 @celery.task(name='parse-url')
 def parse_by_url(url):
@@ -216,7 +211,7 @@ def async_parser(report_id):
 
     except EdgeAddError as e:
         manager.session.rollback()
-        message = "Error storing in database: {}.\n\nPayload: {}".format(e, json.dumps(e.args[1], indent=2))
+        message = "Error storing in database: {}.\n\nPayload: {}".format(e, json.dumps(e.data, indent=2))
         return finish_parsing(upload_failed_text, message)
 
     except Exception as e:
