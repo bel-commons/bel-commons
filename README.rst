@@ -1,30 +1,54 @@
 PyBEL Web
 =========
-
-Installation
-------------
-
-RDBMS Connectors
-~~~~~~~~~~~~~~~~
-- Suggested to install `pip install mysqlclient` since it enables multithreading
-
-
-Deployment
-----------
-
-Servers
-~~~~~~~
-- Internal Test Server: http://lisa:5000
-- External Test Server: https://dev.pybel.scai.fraunhofer.de:80 points to http://bart:5001
-- External Production Server: https://pybel.scai.fraunhofer.de:80 points to http://bart:5000
-
 Configuration
-~~~~~~~~~~~~~
+-------------
 In ``~/.config/pybel/config.json`` add an entry ``PYBEL_MERGE_SERVER_PREFIX`` for the address of the server. Example:
 ``http://lisa:5000`` with no trailing backslash. This is necessary since celery has a problem with flask's url builder
 function ``flask.url_for``.
 
-Add an entry ``PYBEL_CONNECTION`` with the database connection string.
+Add an entry ``PYBEL_CONNECTION`` with the database connection string. It's suggested to ``pip install mysqlclient``
+since it enables multithreading.
+
+Database
+--------
+Create the database with MySQL-specific SQL:
+
+.. code-block:: sql
+
+    CREATE DATABASE pybel DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_general_ci;
+
+Do it from bash with extreme prejudice:
+
+.. code-block:: sh
+
+    mysql -u root -e "drop database if exists pybel;CREATE DATABASE pybel DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_general_ci;"
+
+Phoenix the Database
+~~~~~~~~~~~~~~~~~~~~
+For the times when you just have to burn it down and start over
+
+1. ``pybel_web manage drop`` will nuke the database and output a user list
+2. ``pybel_web manage load`` will automatically add the most recently exported user list
+
+Testing Deployment
+------------------
+Updating
+~~~~~~~~
+- log on to lisa.scai.fraunhofer.de
+- update repositories in /var/www/pybel/src/. PyBEL, PyBEL Tools, and PyBEL Web are all installed as editable
+  in the virtual environment, venv, stored in /var/www/pybel/.virtualenvs
+- restart services
+    - sudo systemctl restart uwsgi.service
+    - sudo systemctl restart celery.service
+
+Access
+~~~~~~
+This service is accessible at pybel-internal.scai.fraunhofer.de
+
+Production Deployment
+---------------------
+- External Test Server: https://dev.pybel.scai.fraunhofer.de:80 points to http://bart:5001
+- External Production Server: https://pybel.scai.fraunhofer.de:80 points to http://bart:5000
 
 Running from the Command Line
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -32,7 +56,7 @@ To start, type ``tmux ls`` to see the sessions already opened. Inside each sessi
 a virtual machine.
 
 Celery Worker
-*************
+~~~~~~~~~~~~~
 The point of the Celery worker is to take care of running tasks in separate processes, so things like compilation
 and analyses don't cause the server to stall up.
 
@@ -61,27 +85,9 @@ Our development address is http://dev.scai.fraunhofer.de. It is proxied to bart:
 
 Celery can handle both the development and production at the same time, as far as I can tell
 
-Phoenix the Database
+Using Docker Compose
 --------------------
-1. ``pybel_web manage drop`` will nuke the database and output a user list
-2. ``pybel_web manage load`` will automatically add the most recently exported user list
-
-
-Create the database with mysql code:
-
-.. code-block:: sql
-
-    CREATE DATABASE pybel DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_general_ci;
-
-Do it from bash with extreme prejudice:
-
-.. code-block:: sh
-
-    mysql -u root -e "drop database if exists pybel;CREATE DATABASE pybel DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_general_ci;"
-
-Setting up with Docker
-----------------------
-A simple Dockerfile is included at the root-level of the respository. This Dockerfile is inspired by the tutorials from
+A simple Dockerfile is included at the root-level of the repository. This Dockerfile is inspired by the tutorials from
 `Container Tutorials <http://containertutorials.com/docker-compose/flask-simple-app.html>`_ and
 `Digital Ocean <https://www.digitalocean.com/community/tutorials/docker-explained-how-to-containerize-python-web-applications>`_.
 
