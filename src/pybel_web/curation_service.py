@@ -15,7 +15,7 @@ from wtforms import fields
 from wtforms.validators import DataRequired
 
 from pybel.constants import NAMESPACE_DOMAIN_TYPES
-from pybel.utils import parse_bel_resource
+from pybel.resources.definitions import parse_bel_resource
 from pybel_tools.definition_utils import write_namespace
 from pybel_tools.document_utils import write_boilerplate
 
@@ -88,7 +88,7 @@ def get_boilerplate():
     entrez_ids = [int(x.strip()) for x in form.entrez_ids.data.split(',') if x]
 
     write_boilerplate(
-        document_name=form.name.data,
+        name=form.name.data,
         contact=current_user.email,
         description=form.description.data,
         authors=str(current_user),
