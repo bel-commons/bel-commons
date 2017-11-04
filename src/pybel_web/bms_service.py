@@ -52,8 +52,9 @@ def make_folder_queue(folder_path, allow_nested=False, citation_clearing=True, i
             manager.session.commit()
         except:
             manager.session.rollback()
+            log.exception('Unable to upload BEL document')
             flash('Unable to upload BEL document')
-            return redirect(url_for('.view_parser'))
+            return redirect(url_for('home'))
 
         report_id, report_name = report.id, report.source_name
         manager.session.close()
