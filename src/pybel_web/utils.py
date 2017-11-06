@@ -23,7 +23,8 @@ from pybel.constants import GENE, RELATION
 from pybel.manager import Network
 from pybel.parser.canonicalize import node_to_tuple
 from pybel.struct.filters import filter_edges
-from pybel.summary import get_syntax_errors
+from pybel.struct.summary import get_syntax_errors
+from pybel.struct.summary.node_summary import count_functions, count_namespaces, get_unused_namespaces
 from pybel.utils import hash_node
 from pybel_tools.analysis.cmpa import calculate_average_scores_on_subgraphs as calculate_average_cmpa_on_subgraphs
 from pybel_tools.analysis.stability import (
@@ -37,11 +38,10 @@ from pybel_tools.generation import generate_bioprocess_mechanisms
 from pybel_tools.integration import overlay_type_data
 from pybel_tools.mutation import collapse_by_central_dogma_to_genes, rewire_variants_to_genes
 from pybel_tools.summary import (
-    count_error_types, count_functions, count_namespaces, count_pathologies,
-    count_relations, count_unique_authors, count_unique_citations, count_variants, get_annotations, get_citation_years,
-    get_modifications_count, get_most_common_errors, get_naked_names, get_namespaces_with_incorrect_names,
-    get_pubmed_identifiers, get_undefined_annotations, get_undefined_namespaces, get_unused_annotations,
-    get_unused_list_annotation_values, get_unused_namespaces,
+    count_error_types, count_pathologies, count_relations, count_unique_authors, count_unique_citations, count_variants,
+    get_annotations, get_citation_years, get_modifications_count, get_most_common_errors, get_naked_names,
+    get_namespaces_with_incorrect_names, get_pubmed_identifiers, get_undefined_annotations, get_undefined_namespaces,
+    get_unused_annotations, get_unused_list_annotation_values,
 )
 from pybel_tools.utils import min_tanimoto_set_similarity, prepare_c3, prepare_c3_time_series
 from .application_utils import get_manager, get_user_datastore
@@ -886,7 +886,7 @@ def get_node_overlaps(network_id):
     uncached_networks = list(
         other_network
         for other_network in manager.list_recent_networks()
-        if other_network.id != network_id and  other_network.id not in rv
+        if other_network.id != network_id and other_network.id not in rv
     )
 
     if uncached_networks:
@@ -913,7 +913,7 @@ def make_graph_summary(graph):
     :param pybel.BELGraph graph:
     :rtype: dict
     """
-    log.info('summarizing %s',graph)
+    log.info('summarizing %s', graph)
     t = time.time()
 
     number_nodes = graph.number_of_nodes()
