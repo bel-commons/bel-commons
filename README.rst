@@ -1,6 +1,7 @@
 PyBEL Web
 =========
-PyBEL Web is a full-stack web application for users to interact with the tools provided by PyBEL.
+An environment for curating, validating, and exploring knowledge assemblies encoded in Biological Expression Language
+(BEL) to support elucidating disease-specific, mechanistic insight.
 
 This package was originally developed as part of the master's work of
 `Charles Tapley Hoyt <https://github.com/cthoyt>`_ at `Fraunhofer SCAI <https://www.scai.fraunhofer.de/>`_ with
@@ -56,7 +57,7 @@ Configuration
 Default configuration can be found in the module ``pybel_web.config``.
 
 
-By default, PyBEL searches for a configuration file called ``config.json`` in ````~/.config/pybel/``. This directory
+By default, PyBEL searches for a configuration file called ``config.json`` in ``~/.config/pybel/``. This directory
 can be modified with the environment variable ``PYBEL_CONFIG_DIRECTORY``. Additioanlly, the location of another custom
 configuration can be specified by the environment variable ``PYBEL_WEB_CONFIG_JSON``.
 
