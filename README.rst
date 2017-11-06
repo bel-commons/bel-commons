@@ -1,17 +1,32 @@
 PyBEL Web
 =========
-Configuration
--------------
-In ``~/.config/pybel/config.json`` add an entry ``PYBEL_MERGE_SERVER_PREFIX`` for the address of the server. Example:
-``http://lisa:5000`` with no trailing backslash. This is necessary since celery has a problem with flask's url builder
-function ``flask.url_for``.
+PyBEL Web is a full-stack web application for users to interact with the tools provided by PyBEL.
 
-Add an entry ``PYBEL_CONNECTION`` with the database connection string. It's suggested to ``pip install mysqlclient``
-since it enables multithreading.
+This package was originally developed as part of the master's work of
+`Charles Tapley Hoyt <https://github.com/cthoyt>`_ at `Fraunhofer SCAI <https://www.scai.fraunhofer.de/>`_ with
+partial support from the `IMI <https://www.imi.europa.eu/>`_ projects: `AETIONOMY <http://www.aetionomy.eu/>`_ and
+`PHAGO <http://www.phago.eu/>`_.
 
-Database
---------
-Create the database with MySQL-specific SQL:
+System Requirements
+-------------------
+- python3
+- MySQL
+- RabbitMQ (or other message queue supported by `Celery <https://pypi.python.org/pypi/celery>`_)
+- uwsgi
+
+At least 2GB RAM for parsing. Multiple users are expected per day, likely concurrently.
+
+Installation |license|
+----------------------
+Get the latest code on `GitLab <https://gitlab.scai.fraunhofer.de/charles.hoyt/pybel-web>`_ with:
+
+.. code-block:: sh
+
+    $ python3 -m pip install git+https://gitlab.scai.fraunhofer.de/charles.hoyt/pybel-web.git
+
+Create the Database
+-------------------
+As an example with MySQL-specific SQL:
 
 .. code-block:: sql
 
@@ -30,6 +45,19 @@ For the times when you just have to burn it down and start over
 1. ``pybel_web manage drop`` will nuke the database and output a user list
 2. ``pybel_web manage load`` will automatically add the most recently exported user list
 
+Configuration
+-------------
+In ``~/.config/pybel/config.json`` add an entry ``PYBEL_MERGE_SERVER_PREFIX`` for the address of the server. Example:
+``http://lisa:5000`` with no trailing backslash. This is necessary since celery has a problem with flask's url builder
+function ``flask.url_for``.
+
+Add an entry ``PYBEL_CONNECTION`` with the database connection string to either a local SQLite database
+or a proper relational database management system. It's suggested to ``pip install mysqlclient`` in combination with
+MySQL since it enables multithreading.
+
+For a deployment with a local instance of RabbitMQ, the default configuration already contains a setting for
+``amqp://localhost``. Otherwise, an entry ``CELERY_BROKER_URL`` can be set.
+
 Testing Deployment
 ------------------
 Updating
@@ -43,7 +71,12 @@ Updating
 
 Access
 ~~~~~~
-This service is accessible at pybel-internal.scai.fraunhofer.de
+This service is accessible at pybel-internal.scai.fraunhofer.de:80
+
+Input
+~~~~~
+This service accepts BEL Scripts as input through an HTML form. It also has a user registration page that tracks
+email addresses and names of users. Its underlying database is populated accordingly.
 
 Production Deployment
 ---------------------
@@ -93,3 +126,6 @@ A simple Dockerfile is included at the root-level of the repository. This Docker
 
 - The virtual machine needs at least 2GB memory for the worker container
 - The database needs a packet size big enough to accommodate large BEL files (>10 mb)
+
+.. |license| image:: https://img.shields.io/badge/License-Apache%202.0-blue.svg
+    :alt: Apache 2.0 License
