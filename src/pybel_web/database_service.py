@@ -25,11 +25,11 @@ from pybel.constants import (
     NAMESPACE_DOMAIN_OTHER,
 )
 from pybel.manager.models import Annotation, AnnotationEntry, Author, Citation, Edge, Namespace, Network, Node
+from pybel.resources.definitions import write_annotation, write_namespace
 from pybel.struct import union
 from pybel.utils import hash_node
 from pybel_tools import pipeline
 from pybel_tools.analysis.cmpa import RESULT_LABELS
-from pybel_tools.definition_utils import write_annotation, write_namespace
 from pybel_tools.filters.node_filters import exclude_pathology_filter
 from pybel_tools.mutation import add_canonical_names
 from pybel_tools.query import Query

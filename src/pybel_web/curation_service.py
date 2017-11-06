@@ -9,14 +9,13 @@ from flask import Blueprint, make_response, render_template, request
 from flask_security import current_user, login_required
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileAllowed, FileField
-from ols_client import OlsClient
 from six import StringIO
 from wtforms import fields
 from wtforms.validators import DataRequired
 
+from ols_client import OlsClient
 from pybel.constants import NAMESPACE_DOMAIN_TYPES
-from pybel.resources.definitions import parse_bel_resource
-from pybel_tools.definition_utils import write_namespace
+from pybel.resources.definitions import parse_bel_resource, write_namespace
 from pybel_tools.document_utils import write_boilerplate
 
 log = logging.getLogger(__name__)
