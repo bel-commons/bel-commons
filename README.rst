@@ -7,6 +7,12 @@ This package was originally developed as part of the master's work of
 partial support from the `IMI <https://www.imi.europa.eu/>`_ projects: `AETIONOMY <http://www.aetionomy.eu/>`_ and
 `PHAGO <http://www.phago.eu/>`_.
 
+Roles
+-----
+- Code Owner: Charles Tapley Hoyt
+- Project Owner: Alpha Tom Kodamullil
+- Support: Daniel Domingo Fernández
+
 System Requirements
 -------------------
 - python3
@@ -47,13 +53,20 @@ For the times when you just have to burn it down and start over
 
 Configuration
 -------------
-In ``~/.config/pybel/config.json`` add an entry ``PYBEL_MERGE_SERVER_PREFIX`` for the address of the server. Example:
+Default configuration can be found in the module ``pybel_web.config``.
+
+
+By default, PyBEL searches for a configuration file called ``config.json`` in ````~/.config/pybel/``. This directory
+can be modified with the environment variable ``PYBEL_CONFIG_DIRECTORY``. Additioanlly, the location of another custom
+configuration can be specified by the environment variable ``PYBEL_WEB_CONFIG_JSON``.
+
+In ``config.json`` add an entry ``PYBEL_MERGE_SERVER_PREFIX`` for the address of the server. Example:
 ``http://lisa:5000`` with no trailing backslash. This is necessary since celery has a problem with flask's url builder
 function ``flask.url_for``.
 
 Add an entry ``PYBEL_CONNECTION`` with the database connection string to either a local SQLite database
 or a proper relational database management system. It's suggested to ``pip install mysqlclient`` in combination with
-MySQL since it enables multithreading.
+MySQL since it enables multi-threading.
 
 For a deployment with a local instance of RabbitMQ, the default configuration already contains a setting for
 ``amqp://localhost``. Otherwise, an entry ``CELERY_BROKER_URL`` can be set.
@@ -62,16 +75,16 @@ Testing Deployment
 ------------------
 Updating
 ~~~~~~~~
-- log on to lisa.scai.fraunhofer.de
-- update repositories in /var/www/pybel/src/. PyBEL, PyBEL Tools, and PyBEL Web are all installed as editable
-  in the virtual environment, venv, stored in /var/www/pybel/.virtualenvs
-- restart services
-    - sudo systemctl restart uwsgi.service
-    - sudo systemctl restart celery.service
+- log on to ``lisa.scai.fraunhofer.de``
+- update repositories in ``/var/www/pybel/src/``. PyBEL, PyBEL Tools, and PyBEL Web are all installed as editable
+  in the virtual environment, ``venv``, stored in ``/var/www/pybel/.virtualenvs``
+- restart services with the commands:
+    - ``sudo systemctl restart uwsgi.service``
+    - ``sudo systemctl restart celery.service``
 
 Access
 ~~~~~~
-This service is accessible at pybel-internal.scai.fraunhofer.de:80
+This service is accessible at http://pybel-internal.scai.fraunhofer.de:80
 
 Input
 ~~~~~
