@@ -72,65 +72,27 @@ MySQL since it enables multi-threading.
 For a deployment with a local instance of RabbitMQ, the default configuration already contains a setting for
 ``amqp://localhost``. Otherwise, an entry ``CELERY_BROKER_URL`` can be set.
 
-Testing Deployment
-------------------
+Deployment
+----------
+Server
+~~~~~~
+The same configurations and procedures are true for both the testing server, lisa.scai.fraunhofer.de, and the
+production server, bart.scai.fraunhofer.de. The testing deployment is available internally at
+http://pybel-internal.scai.fraunhofer.de and the production deployment is available externally at
+https://pybel.scai.fraunhofer.de.
+
 Updating
 ~~~~~~~~
-- log on to ``lisa.scai.fraunhofer.de``
 - update repositories in ``/var/www/pybel/src/``. PyBEL, PyBEL Tools, and PyBEL Web are all installed as editable
   in the virtual environment, ``venv``, stored in ``/var/www/pybel/.virtualenvs``
 - restart services with the commands:
     - ``sudo systemctl restart uwsgi.service``
     - ``sudo systemctl restart celery.service``
 
-Access
-~~~~~~
-This service is accessible at http://pybel-internal.scai.fraunhofer.de:80
-
 Input
 ~~~~~
 This service accepts BEL Scripts as input through an HTML form. It also has a user registration page that tracks
 email addresses and names of users. Its underlying database is populated accordingly.
-
-Production Deployment
----------------------
-- External Test Server: https://dev.pybel.scai.fraunhofer.de:80 points to http://bart:5001
-- External Production Server: https://pybel.scai.fraunhofer.de:80 points to http://bart:5000
-
-Running from the Command Line
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-To start, type ``tmux ls`` to see the sessions already opened. Inside each session, either create or attach
-a virtual machine.
-
-Celery Worker
-~~~~~~~~~~~~~
-The point of the Celery worker is to take care of running tasks in separate processes, so things like compilation
-and analyses don't cause the server to stall up.
-
-1. Attach the celery worker service with ``tmux attach -t worker``
-2. Rerun with ``pybel-web worker`` which basically calls the same as: ``python3 -m celery -A pybel_web.celery_worker.celery worker``
-3. Quit the ``tmux`` session with ``ctrl-b`` then ``d``
-
-Flask Application
-*****************
-The flask app needs to be run at ``0.0.0.0`` to be exposed to the outside. Otherwise, this defaults to localhost and
-can only be accessed from on bart. Additionally, logging can be shown with ``-v``. More v's, more logging.
-
-1. Attach the Flask session with ``tmux attach -t runner``
-2. Quit with ``ctrl-c``
-3. Rerun with ``pybel_web run -vv``. On production, use the ``--with-gunicorn`` option to enable multithreading.
-4. Quit the ``tmux`` session with ``ctrl-b`` then ``d``
-
-Running the Development Server
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Our development address is http://dev.scai.fraunhofer.de. It is proxied to bart:5001.
-
-1. ``tmux a -t pybel_dev_runner``
-2. If not already working on the development environment, ``source ~/pybel_web_dev_venv/bin/activate``
-3. ``pybel-web run -vv --host "0.0.0.0" --port 5001 --config ~/.config/pybel/pybel_dev_config.json``
-4. Quit the ``tmux`` session with ``ctrl-b`` then ``d``
-
-Celery can handle both the development and production at the same time, as far as I can tell
 
 Using Docker Compose
 --------------------
