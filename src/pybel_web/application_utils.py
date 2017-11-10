@@ -12,7 +12,10 @@ from flask_security import SQLAlchemyUserDatastore, current_user, url_for_securi
 from raven.contrib.flask import Sentry
 from sqlalchemy import or_
 
-from pybel.manager.models import Annotation, Author, Citation, Edge, Evidence, Namespace, Network, Node, AnnotationEntry, NamespaceEntry
+from pybel.manager.models import (
+    Annotation, AnnotationEntry, Author, Citation, Edge, Evidence, Namespace,
+    NamespaceEntry, Network, Node,
+)
 from pybel_tools.mutation import expand_node_neighborhood, expand_nodes_neighborhoods
 from pybel_tools.pipeline import in_place_mutator, uni_in_place_mutator
 from .admin_utils import (
@@ -148,12 +151,13 @@ class FlaskPyBEL:
         :param flask.Flask app: A Flask app
         """
         self.app = app
-        self.sentry = None
-        self.manager = None
+        self.manager = manager
         self.user_datastore = None
 
         if app is not None and manager is not None:
             self.init_app(app, manager)
+
+        self.sentry = None
 
     def init_app(self, app, manager):
         """
@@ -163,10 +167,14 @@ class FlaskPyBEL:
         self.app = app
         self.manager = manager
 
-        self.sentry = Sentry(
-            app,
-            dsn='https://0e311acc3dc7491fb31406f4e90b07d9:7709d72100f04327b8ef3b2ea673b7ee@sentry.io/183619'
-        )
+        sentry_dsn = app.config.get('SENTRY_DSN')
+
+        if sentry_dsn:
+            log.info('initiating Sentry: %s', sentry_dsn)
+            self.sentry = Sentry(
+                app,
+                dsn=sentry_dsn
+            )
 
         Base.metadata.bind = self.manager.engine
         Base.query = self.manager.session.query_property()
@@ -198,10 +206,17 @@ class FlaskPyBEL:
 
             Run a rollback and send some information to Sentry.
             """
+            kwargs = {}
+
+            if sentry_dsn:
+                kwargs.update(dict(
+                    event_id=g.sentry_event_id,
+                    public_dsn=self.sentry.client.get_public_dsn('https')
+                ))
+
             return render_template(
                 '500.html',
-                event_id=g.sentry_event_id,
-                public_dsn=self.sentry.client.get_public_dsn('https')
+                **kwargs
             )
 
         @app.errorhandler(403)
