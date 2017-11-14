@@ -341,6 +341,13 @@ def suggest_annotation():
     ---
     tags:
         - annotation
+    parameters:
+      - name: q
+        in: query
+        description: The annotation search term
+        default: Brain
+        required: true
+        type: string
     """
     q = request.args.get('q')
 
