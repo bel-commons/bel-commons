@@ -266,7 +266,7 @@ def build_main_service(app):
         pending_reports = [
             report
             for report in current_user.reports
-            if report.incomplete
+            if report.incomplete and not report.stalled
         ]
 
         return render_template('user_activity.html', user=current_user, pending_reports=pending_reports)

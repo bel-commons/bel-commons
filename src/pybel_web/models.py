@@ -157,6 +157,14 @@ class Report(Base):
     def failed(self):
         return self.completed is not None and not self.completed
 
+    @property
+    def stalled(self):
+        """Returns true if a job is older than 3 hours
+
+        :rtype: bool
+        """
+        return datetime.datetime.utcnow() - self.created > datetime.timedelta(hours=3)
+
     def as_info_json(self):
         """Returns this object as a JSON summary
 
