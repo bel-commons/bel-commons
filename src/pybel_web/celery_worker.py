@@ -101,9 +101,7 @@ def async_parser(report_id):
                 sender=pbw_sender,
             )
 
-    def finish_parsing(subject, body, log_exception=True):
-        if log_exception:
-            log.exception(body)
+    def finish_parsing(subject, body):
         make_mail(subject, body)
         report.message = body
         manager.session.commit()
@@ -173,7 +171,7 @@ def async_parser(report_id):
         manager.session.commit()
 
         message = 'Granted rights for {} to {} after parsing {}'.format(network, report.user, source_name)
-        return finish_parsing('Granted Rights from {}'.format(source_name), message, log_exception=False)
+        return finish_parsing('Granted Rights from {}'.format(source_name), message)
 
     try:
         log.info('enriching graph')
