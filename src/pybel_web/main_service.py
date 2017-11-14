@@ -9,7 +9,7 @@ import time
 from collections import defaultdict
 
 import flask
-from flask import abort, current_app, flash, redirect, render_template, request, send_file, url_for
+from flask import abort, current_app, flash, redirect, render_template, request, url_for
 from flask_security import current_user, login_required, roles_required
 
 import pybel_tools.query
@@ -290,12 +290,6 @@ def build_main_service(app):
         """Shows the uploading reporting"""
         reports = manager.session.query(Report).order_by(Report.created).all()
         return render_template('reporting.html', reports=reports)
-
-    @app.route('/logging', methods=['GET'])
-    @roles_required('admin')
-    def view_logging():
-        """Shows the logging"""
-        return send_file(log_runner_path)
 
     @app.route('/how_to_use', methods=['GET'])
     def view_how_to_use():

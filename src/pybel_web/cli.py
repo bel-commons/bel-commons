@@ -36,7 +36,7 @@ from pybel_tools.utils import enable_cool_mode, get_version as pybel_tools_get_v
 from .analysis_service import analysis_blueprint
 from .application import create_application
 from .bms_service import bms_blueprint
-from .constants import CHARLIE_EMAIL, log_runner_path
+from .constants import CHARLIE_EMAIL
 from .curation_service import curation_blueprint
 from .database_service import api_blueprint
 from .external_services import belief_blueprint, external_blueprint
@@ -48,27 +48,17 @@ from .utils import iterate_user_strings
 
 log = logging.getLogger('pybel_web')
 
-datefmt = '%H:%M:%S'
-fmt = "%(asctime)s - %(levelname)s - %(name)s - %(message)s"
-
 user_dump_path = os.path.join(PYBEL_DATA_DIR, 'users.tsv')
-
-fh = logging.FileHandler(log_runner_path)
-fh.setLevel(logging.DEBUG)
-fh.setFormatter(logging.Formatter(fmt))
-log.addHandler(fh)
 
 
 def set_debug(level):
-    logging.basicConfig(level=level, format=fmt, datefmt=datefmt)
+    logging.basicConfig(level=level, format="%(asctime)s - %(levelname)s - %(name)s - %(message)s", datefmt='%H:%M:%S')
 
     pybel_log = logging.getLogger('pybel')
     pybel_log.setLevel(level)
-    pybel_log.addHandler(fh)
 
     pbt_log = logging.getLogger('pybel_tools')
     pbt_log.setLevel(level)
-    pbt_log.addHandler(fh)
 
     pbw_log = logging.getLogger('pybel_web')
     pbw_log.setLevel(level)
