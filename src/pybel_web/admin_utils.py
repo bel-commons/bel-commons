@@ -24,7 +24,10 @@ class NetworkView(ModelView):
 
 class ReportView(ModelView):
     """Special view for reports"""
-    column_exclude_list = ['source', 'calculations']
+    column_exclude_list = ['source', 'calculations', 'source_hash']
+    column_display_pk = True
+    page_size = 50
+    can_set_page_size = True
 
 
 class NodeView(ModelView):
