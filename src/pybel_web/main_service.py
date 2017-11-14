@@ -201,6 +201,16 @@ def build_main_service(app):
         manager.session.commit()
         return redirect(url_for('view_explorer_query', query_id=query.id))
 
+    @app.route('/network/<int:network_id>/sample/')
+    def build_subsample_query(network_id):
+        """Induces a random subnetwork"""
+        q = pybel_tools.query.Query([network_id])
+        q.add_seed_sample()
+        query = Query.from_query(manager, q, current_user)
+        manager.session.add(query)
+        manager.session.commit()
+        return redirect(url_for('view_explorer_query', query_id=query.id))
+
     @app.route('/definitions')
     def view_definitions():
         """Displays a page listing the namespaces and annotations."""

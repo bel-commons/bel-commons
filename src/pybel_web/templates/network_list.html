@@ -251,6 +251,14 @@
                                             Analyze
                                         </a>
                                     </li>
+                                    <li>
+                                        <a href="{{ url_for('build_subsample_query', network_id=network.id) }}"
+                                           class="btn btn-warning" data-toggle="popover"
+                                           title="Sample this Network"
+                                           data-content="Take a random subsample of 250 edges from this graph.">
+                                            Sample
+                                        </a>
+                                    </li>
                                 {% endif %}
                                 {% if current_user.is_authenticated %}
                                     {% if network.report and network.report.user == current_user %}
