@@ -56,7 +56,7 @@ LABEL = 'dgxa'
 def get_manager_proxy():
     """Gets a proxy for the manager in the current app
 
-    :rtype: pybel.manager.Manager
+    :rtype: pybel.Manager
     """
     return LocalProxy(lambda: get_manager(current_app))
 
