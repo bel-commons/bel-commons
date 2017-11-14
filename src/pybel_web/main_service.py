@@ -164,27 +164,27 @@ def build_main_service(app):
         manager.session.commit()
         return redirect(url_for('view_explorer_query', query_id=query.id))
 
+    def render_network_summary_safe(network_id, template):
+        if network_id not in get_network_ids_with_permission_helper(current_user, manager):
+            abort(403, 'Insufficient rights for network {}'.format(network_id))
+        return render_network_summary(network_id, template=template)
+
     @app.route('/summary/<int:network_id>')
     def view_summarize_statistics(network_id):
         """Renders a page with the parsing errors for a given BEL script"""
-        if network_id not in get_network_ids_with_permission_helper(current_user, manager):
-            abort(403, 'Insufficient rights for network {}'.format(network_id))
-
-        return render_network_summary(network_id, template='summarize_statistics.html')
+        return render_network_summary_safe(network_id, template='summarize_statistics.html')
 
     @app.route('/summary/<int:network_id>/compilation')
     def view_summarize_compilation(network_id):
-        if network_id not in get_network_ids_with_permission_helper(current_user, manager):
-            abort(403, 'Insufficient rights for network {}'.format(network_id))
+        return render_network_summary_safe(network_id, template='summarize_compilation.html')
 
-        return render_network_summary(network_id, template='summarize_compilation.html')
+    @app.route('/summary/<int:network_id>/warnings')
+    def view_summarize_warnings(network_id):
+        return render_network_summary_safe(network_id, template='summarize_warnings.html')
 
     @app.route('/summary/<int:network_id>/biogrammar')
     def view_summarize_biogrammar(network_id):
-        if network_id not in get_network_ids_with_permission_helper(current_user, manager):
-            abort(403, 'Insufficient rights for network {}'.format(network_id))
-
-        return render_network_summary(network_id, template='summarize_biogrammar.html')
+        return render_network_summary_safe(network_id, template='summarize_biogrammar.html')
 
     @app.route('/network/<int:network_id>/induction-query/')
     def build_summary_link_query(network_id):

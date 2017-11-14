@@ -1,0 +1,62 @@
+{% extends "bootstrap/base.html" %}
+
+{% import "bootstrap/wtf.html" as wtf %}
+{% import "bootstrap/fixes.html" as fixes %}
+{% import "bootstrap/utils.html" as util %}
+
+{% block scripts %}
+    {{ super() }}
+
+    <script type="text/javascript">
+        // Initializes popover
+        $('.warning-filter').on('click', function () {
+            $(this).toggleClass("btn-primary");
+            $(this).toggleClass("btn-default");
+            const cls = $(this).data('target');
+            $('.' + cls).toggle();
+        });
+    </script>
+{% endblock %}
+
+{% block title %}{{ graph }} Warnings{% endblock %}
+
+{% block content %}
+    <div class="container hidden-print">
+        <div class="page-header">
+            <h1>{{ graph }} Warnings ({{ graph.warnings|length }})</h1>
+        </div>
+
+        <div class="panel panel-default ">
+            <div class="panel-body">
+                <ul class="list-inline">
+                    {% for warning_type, count in error_count.items()|sort %}
+                        <li class="list-inline-item">
+                            <a class="btn btn-primary warning-filter" data-target="{{ warning_type }}">
+                                {{ warning_type }} ({{ count }})
+                            </a>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <table class="table table-hover table-responsive table-striped">
+        <thead>
+        <tr>
+            <th>Line</th>
+            <th>BEL</th>
+            <th>Message</th>
+        </tr>
+        </thead>
+        <tbody id="myTable">
+        {% for number, line, exc, _ in graph.warnings %}
+            <tr class="{{ exc.__class__.__name__ }}">
+                <td>{{ number }}</td>
+                <td><code>{{ line }}</code></td>
+                <td>{{ exc }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}
