@@ -344,7 +344,7 @@ def suggest_annotation():
     parameters:
       - name: q
         in: query
-        description: The annotation search term
+        description: The search term
         default: Brain
         required: true
         type: string
@@ -358,6 +358,8 @@ def suggest_annotation():
 
     return jsonify([
         {
+            'id': entry.id,
+            'url': entry.annotation.url,
             'annotation': entry.annotation.keyword,
             'value': entry.name
         }
@@ -1134,6 +1136,12 @@ def get_pubmed_suggestion():
     ---
     tags:
         - citation
+    parameters:
+      - name: q
+        in: query
+        description: The search term
+        required: true
+        type: string
     """
     q = request.args.get('q')
 
@@ -1174,6 +1182,12 @@ def suggest_authors():
     ---
     tags:
         - author
+    parameters:
+      - name: q
+        in: query
+        description: The search term
+        required: true
+        type: string
     """
     q = request.args.get('q')
 
@@ -1514,6 +1528,12 @@ def get_node_suggestion():
     ---
     tags:
         - node
+    parameters:
+      - name: q
+        in: query
+        description: The search term
+        required: true
+        type: string
     """
     q = request.args['q']
 
