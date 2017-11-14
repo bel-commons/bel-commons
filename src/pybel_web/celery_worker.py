@@ -44,7 +44,7 @@ app = create_application()
 celery = create_celery(app)
 
 log.info('created celery worker')
-log.info('using connection: %s', manager.connection)
+log.info('using connection: %s', app.config['PYBEL_CONNECTION'])
 
 dumb_belief_stuff = {
     METADATA_DESCRIPTION: {'Document description'},
@@ -197,7 +197,8 @@ def async_parser(report_id):
     upload_failed_text = 'Upload Failed for {}'.format(source_name)
 
     try:
-        log.info('inserting %s with %s', graph, manager.connection)
+        log.info('inserting %s with %s', graph, manager.engine.url)
+        #logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
         network = manager.insert_graph(graph, store_parts=app.config.get("PYBEL_USE_EDGE_STORE", True))
 
     except IntegrityError:
