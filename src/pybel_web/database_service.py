@@ -1535,7 +1535,7 @@ def get_node_suggestion():
         required: true
         type: string
     """
-    q = request.args['q']
+    q = request.args.get('q')
 
     if not q:
         return jsonify([])
