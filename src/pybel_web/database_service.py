@@ -1698,7 +1698,7 @@ def add_pipeline_entry(query_id, name, *args, **kwargs):
 
     qo = models.Query(
         assembly=query.assembly,
-        seeding=json.dumps(q.seeds),  # TODO replace with q.seeding_to_jsons()?
+        seeding=q.seeding_to_jsons(),
         pipeline_protocol=q.pipeline.to_jsons(),
         dump=q.to_jsons(),
         parent_id=query_id,
@@ -1735,7 +1735,7 @@ def get_query_from_isolated_node(query_id, node_id):
 
     child_query_model = models.Query(
         assembly=parent_query.assembly,
-        seeding=json.dumps(child_query.seeds),
+        seeding=child_query.seeding_to_jsons(),
         pipeline_protocol=child_query.pipeline.to_jsons(),
         dump=child_query.to_jsons(),
         parent_id=parent_query.id,
