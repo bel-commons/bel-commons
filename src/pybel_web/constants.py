@@ -5,7 +5,7 @@ from logging import getLogger
 
 from pybel.constants import PYBEL_DATA_DIR
 
-PYBEL_WEB_VERSION = '0.2.1-dev'
+PYBEL_WEB_VERSION = '0.2.2-dev'
 
 integrity_message = "A graph with the same name ({}) and version ({}) already exists. If there have been changes since the last version, try bumping the version number."
 reporting_log = getLogger('pybelreporting')
