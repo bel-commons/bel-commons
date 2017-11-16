@@ -20,12 +20,11 @@ from pybel_tools.mutation import expand_node_neighborhood, expand_nodes_neighbor
 from pybel_tools.pipeline import in_place_mutator, uni_in_place_mutator
 from .admin_utils import (
     CitationView, EdgeView, EvidenceView, ExperimentView, ModelView, ModelViewBase, NetworkView,
-    NodeView, ReportView, UserView,
+    NodeView, QueryView, ReportView, UserView,
 )
 from .constants import ALEX_EMAIL, CHARLIE_EMAIL, DANIEL_EMAIL
 from .models import (
-    Assembly, Base, EdgeComment, EdgeVote, Experiment, NetworkOverlap, Project, Query, Report, Role,
-    User,
+    Assembly, Base, EdgeComment, EdgeVote, Experiment, NetworkOverlap, Project, Query, Report, Role, User,
 )
 
 log = logging.getLogger(__name__)
@@ -323,7 +322,7 @@ class FlaskPyBEL:
         admin.add_view(ModelView(Author, manager.session))
         admin.add_view(ReportView(Report, manager.session))
         admin.add_view(ExperimentView(Experiment, manager.session))
-        admin.add_view(ModelView(Query, manager.session))
+        admin.add_view(QueryView(Query, manager.session))
         admin.add_view(ModelView(Assembly, manager.session))
         admin.add_view(ModelView(EdgeVote, manager.session))
         admin.add_view(ModelView(EdgeComment, manager.session))

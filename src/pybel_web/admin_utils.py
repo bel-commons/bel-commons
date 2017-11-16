@@ -26,6 +26,7 @@ class ReportView(ModelView):
     """Special view for reports"""
     column_exclude_list = ['source', 'calculations', 'source_hash']
     column_display_pk = True
+    column_default_sort = ('created', True)
     page_size = 50
     can_set_page_size = True
 
@@ -49,9 +50,16 @@ class EvidenceView(ModelView):
 
 
 class ExperimentView(ModelView):
-    column_exclude_list = ['source', 'result', ]
+    column_exclude_list = ['source', 'result']
 
 
 class UserView(ModelView):
     """Special view for PyBEL Web Users"""
-    column_exclude_list = ['password', ]
+    column_exclude_list = ['password']
+
+
+class QueryView(ModelView):
+    """Special view for PyBEL Web Queries"""
+    column_exclude_list = ['dump']
+    column_default_sort = ('created', True)
+    column_display_pk = True
