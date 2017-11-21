@@ -47,14 +47,27 @@
             <th>Line</th>
             <th>BEL</th>
             <th>Message</th>
+            {% if current_user.is_beta_tester %}
+                <th>Annotations</th>
+            {% endif %}
         </tr>
         </thead>
         <tbody id="myTable">
-        {% for number, line, exc, _ in graph.warnings %}
+        {% for number, line, exc, context in graph.warnings %}
             <tr class="{{ exc.__class__.__name__ }}">
                 <td>{{ number }}</td>
                 <td><code>{{ line }}</code></td>
                 <td>{{ exc }}</td>
+                {% if current_user.is_beta_tester %}
+                    <td>
+                        <dl class="dl-horizontal">
+                            {% for k,v in context['annotations'].items()|sort %}
+                                <dt>{{ k }}</dt>
+                                <dd>{{ v }}</dd>
+                            {% endfor %}
+                        </dl>
+                    </td>
+                {% endif %}
             </tr>
         {% endfor %}
         </tbody>
