@@ -9,14 +9,10 @@ from flask import (
     request,
 )
 from flask_cors import cross_origin
-
 from pybel import from_url
 from pybel.struct import union
-from pybel_tools.selection import (
-    get_subgraph_by_annotations, get_subgraph_by_edge_filter,
-    get_subgraph_by_neighborhood, search_node_names,
-)
-from .graph_utils import build_annotation_search_filter
+from pybel_tools.selection import get_subgraph_by_annotations
+
 from .send_utils import serve_network
 from .utils import manager, relabel_nodes_to_hashes
 
@@ -72,29 +68,4 @@ def get_neurommsigs():
 
     network = relabel_nodes_to_hashes(network)
 
-    return serve_network(network)
-
-
-@external_blueprint.route('/api/external/mozg/network/<int:network_id>')
-@cross_origin()
-def get_mozg_query(network_id):
-    """Gets a network matching the induction over nodes and edges that match the given annotations and values
-
-    ---
-    """
-    log.debug('Network id: %s', network_id)
-    annotations = request.args.getlist('annotation[]')
-    log.debug('Annotations: %s', annotations)
-    values = request.args.getlist('value[]')
-    log.debug('Values: %s', values)
-
-    graph = manager.get_graph_by_id(network_id)
-    nodes = search_node_names(graph, values)
-    neighborhoods = get_subgraph_by_neighborhood(graph, nodes)
-
-    filtered_graph = get_subgraph_by_edge_filter(graph, build_annotation_search_filter(annotations, values))
-
-    result = neighborhoods + filtered_graph
-
-    network = relabel_nodes_to_hashes(result)
     return serve_network(network)

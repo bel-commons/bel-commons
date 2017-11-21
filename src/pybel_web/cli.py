@@ -27,12 +27,12 @@ import time
 import click
 import gunicorn.app.base
 from flask_security import SQLAlchemyUserDatastore
-
 from pybel.constants import PYBEL_CONNECTION, PYBEL_DATA_DIR, get_cache_connection
 from pybel.manager import Manager
 from pybel.manager.models import Base, Network
 from pybel.utils import get_version as pybel_version
 from pybel_tools.utils import enable_cool_mode, get_version as pybel_tools_get_version
+
 from .analysis_service import analysis_blueprint
 from .application import create_application
 from .bms_service import bms_blueprint
@@ -149,6 +149,10 @@ def run(host, port, default_config, debug, config, with_gunicorn, workers):
 
     if app.config.get('PYBEL_WEB_PARSER_API'):
         build_parser_service(app)
+
+    if 'BEL4IMOCEDE_DATA_PATH' in os.environ:
+        from . import mozg_service
+        app.register_blueprint(mozg_service.mozg_blueprint)
 
     log.info('Done building %s in %.2f seconds', app, time.time() - t)
 
