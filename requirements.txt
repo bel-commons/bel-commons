@@ -1,6 +1,6 @@
 networkx==1.11
-pybel>=0.9.3
-pybel-tools>=0.4.4
+pybel>=0.9.7
+pybel-tools>=0.4.6
 ols_client>=0.0.8
 sqlalchemy==1.1.14
 requests
@@ -14,7 +14,6 @@ flask-sqlalchemy==2.2
 werkzeug
 flasgger
 click
-pygments
 pandas
 celery
 raven
@@ -22,6 +21,5 @@ matplotlib_venn
 matplotlib
 gitpython
 six
-alembic
 wtforms
 gunicorn
