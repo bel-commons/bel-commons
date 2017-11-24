@@ -60,6 +60,17 @@ class Experiment(Base):
 
     completed = Column(Boolean, default=False)
 
+    def get_data(self):
+        return loads(self.result)
+
+    def get_data_list(self):
+        result = self.get_data()
+        return [
+            (k, v)
+            for k, v in result.items()
+            if v[0]
+        ]
+
     def __repr__(self):
         return '<Experiment on {}>'.format(self.query)
 

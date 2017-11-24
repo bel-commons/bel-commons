@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% import "bootstrap/wtf.html" as wtf %}
+{% import "bootstrap/fixes.html" as fixes %}
+{% import "bootstrap/utils.html" as util %}
+
+{% block title %}Comparison{% endblock %}
+
+{% block styles %}
+    {{ super() }}
+    <link href="{{ url_for('static', filename='css/c3.min.css') }}" rel="stylesheet" type="text/css"/>
+{% endblock %}
+
+{% block head %}
+    {{ super() }}
+    <script src="{{ url_for('static', filename='js/d3.3.5.17.min.js') }}" charset="utf-8"></script>
+    <script src="{{ url_for('static', filename='js/c3.min.js') }}"></script>
+{% endblock %}
+
+{% block scripts %}
+    {{ super() }}
+    <script>
+       {# c3.generate({
+            bindto: '#chart',
+            data: {
+                columns: {{ chart_data|safe}}
+            },
+            title: {
+                text: 'Comparison of analyses'
+            },
+            legend: {
+                show: false
+            },
+            padding: {
+                top: 15,
+                left: 100
+            },
+            size: {
+                height: 550
+            },
+            axis: {
+                x: {
+                    tick: {
+                        values: {{ x_label|safe }}
+                    }
+                }
+            }
+        });#}
+
+        var data = {{ chart_data|safe }};
+        var colorgen = d3.scale.ordinal()
+            .range(["#a6cee3", "#1f78b4", "#b2df8a", "#33a02c",
+                "#fb9a99", "#e31a1c", "#fdbf6f", "#ff7f00",
+                "#cab2d6", "#6a3d9a", "#ffff99", "#b15928"]);
+
+        var color = function (d) {
+            return colors(d.group);
+        };
+
+        var parcoords = d3.parcoords()("#chart")
+            .data(data)
+            .hideAxis(["name"])
+            .color(color)
+            .alpha(0.25)
+            .composite("darken")
+            .margin({top: 24, left: 150, bottom: 12, right: 0})
+            .mode("queue")
+            .render()
+            .brushMode("1D-axes");  // enable brushing
+
+        parcoords.svg.selectAll("text")
+            .style("font", "10px sans-serif");
+    </script>
+{% endblock %}
+
+
+{% block content %}
+    <div class="container">
+        <div class="page-header">
+            <h1>Analyses</h1>
+        </div>
+
+        {{ util.flashed_messages(dismissible=True, container=False) }}
+
+        <div id="chart"></div>
+    </div>
+{% endblock %}

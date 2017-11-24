@@ -300,10 +300,15 @@ def run_cmpa(experiment_id):
 
     :param int experiment_id:
     """
-    log.info('Running experiment %s', experiment_id)
+    log.info('starting experiment %s', experiment_id)
 
     experiment = manager.session.query(Experiment).get(experiment_id)
 
+    query_id = experiment.query_id
+    source_name = experiment.source_name
+    email = experiment.user.email
+
+    log.info('executing query')
     graph = experiment.query.run(manager)
 
     df = loads(experiment.source)
@@ -311,17 +316,21 @@ def run_cmpa(experiment_id):
     gene_column = experiment.gene_column
     data_column = experiment.data_column
 
+    df_cols = [gene_column, data_column]
+
     data = {
-        k: v
-        for _, k, v in df.loc[df[gene_column].notnull(), [gene_column, data_column]].itertuples()
+        gene: value
+        for _, gene, value in df.loc[df[gene_column].notnull(), df_cols].itertuples()
     }
 
+    log.info('calculating scores')
     scores = calculate_scores(graph, data, experiment.permutations)
 
     experiment.result = dumps(scores)
     experiment.completed = True
 
     try:
+        manager.session.add(experiment)
         manager.session.commit()
     except:
         manager.session.rollback()
@@ -331,15 +340,15 @@ def run_cmpa(experiment_id):
 
     message = 'Experiment {} on query {} with {} has completed'.format(
         experiment_id,
-        experiment.query_id,
-        experiment.source_name
+        query_id,
+        source_name
     )
 
     if 'mail' in app.extensions:
         with app.app_context():
             app.extensions['mail'].send_message(
                 subject='CMPA Analysis complete',
-                recipients=[experiment.user.email],
+                recipients=[email],
                 body=message,
                 sender=pbw_sender,
             )

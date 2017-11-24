@@ -356,6 +356,18 @@
                                         <span class="glyphicon glyphicon-remove"></span>
                                     </a>
                                 {% endif %}
+                                {% if current_user.is_beta_tester and query.experiments %}
+                                    <a class="btn btn-warning btn-xs"
+                                       href="{{ url_for('analysis.view_results_comparison_query_csv', query_id=query.id) }}">
+                                        <span class="glyphicon glyphicon-flash"></span>
+                                        <span class="glyphicon glyphicon-download"></span>
+                                    </a>
+                                    <a class="btn btn-warning btn-xs"
+                                       href="{{ url_for('analysis.view_results_comparison_by_query', query_id=query.id) }}">
+                                        <span class="glyphicon glyphicon-flash"></span>
+                                        <span class="glyphicon glyphicon-eye-open"></span>
+                                    </a>
+                                {% endif %}
                             </div>
                         </td>
                     </tr>

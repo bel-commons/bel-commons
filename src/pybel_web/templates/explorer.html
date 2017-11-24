@@ -66,6 +66,10 @@
                 trigger: 'hover'
             })
         });
+
+        $('#analysis-upload-button').click(function () {
+            window.location.href = '/query/' + window.query + '/analysis/upload';
+        })
     </script>
 {% endblock %}
 
@@ -103,10 +107,10 @@
                     <button type="button" class="btn btn-warning" data-toggle="modal" data-target="#network-tools">
                         Tools
                     </button>
-                    <button type="button" id="analyze-button" class="btn btn-warning">
+                    <a class="btn btn-warning" id="analysis-upload-button">
                         <span class="glyphicon glyphicon-flash" aria-hidden="true"></span>
                         Analyze
-                    </button>
+                    </a>
                 {% endif %}
             </div>
         </div>
