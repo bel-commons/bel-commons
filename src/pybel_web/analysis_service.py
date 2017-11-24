@@ -147,12 +147,14 @@ def view_network_analysis_uploader(network_id):
 
 def help_compare(experiments):
     x_label = []
+    xd = {}
     entries = defaultdict(list)
 
     for experiment in experiments:
         if experiment.result is None:
             continue
         x_label.append(experiment.description)
+        xd[experiment.id] = experiment.description
         for entry, values in sorted(experiment.get_data_list()):
             entries[entry].append(values[3])
 
@@ -161,7 +163,12 @@ def help_compare(experiments):
         for entry, values in entries.items()
     ]
 
-    return render_template('analysis_compare.html', x_label=x_label, chart_data=chart_data)
+    return render_template(
+        'analysis_compare.html',
+        x_label=x_label,
+        xd=xd,
+        chart_data=chart_data
+    )
 
 
 @analysis_blueprint.route('/analysis/comparison/<list:experiment_ids>')
