@@ -11,12 +11,13 @@ from operator import itemgetter
 
 import flask
 import networkx as nx
-import pyhgnc
 from flask import Blueprint, abort, current_app, flash, jsonify, make_response, redirect, request
 from flask_security import current_user, login_required, roles_required
 from six import StringIO
 from sqlalchemy import func
 
+import bio2bel_chebi
+import bio2bel_hgnc
 import pybel
 from pybel.constants import METADATA_AUTHORS, METADATA_CONTACT, METADATA_NAME, NAME, NAMESPACE, NAMESPACE_DOMAIN_OTHER
 from pybel.manager.models import (
@@ -1673,22 +1674,37 @@ def get_all_nodes():
     ])
 
 
-pyhgnc_manager = pyhgnc.QueryManager()  # TODO update usage of configuration
+# TODO update usage of configuration
+hgnc_manager = bio2bel_hgnc.Manager()
+chebi_manager = bio2bel_chebi.Manager()
 
 
 def enrich_node_json(node_data):
+    """Enrich the node data with some of the Bio2BEL managers
+
+    :param dict node_data:
+    :rtype: dict
+    """
     if NAMESPACE not in node_data:
         return
 
+    namespace = node_data[NAMESPACE]
+    name = node_data[NAME]
+    node_data['annotations'] = {}
 
-    if node_data[NAMESPACE] == 'HGNC':
-        name = node_data[NAME]
-        model = pyhgnc_manager.hgnc(symbol=name)[0]
+    if namespace == 'HGNC':
+        model = hgnc_manager.get_gene_by_hgnc_symbol(name)
+        node_data['annotations']['HGNC'] = model.to_dict()
 
-        if 'annotations' not in node_data:
-            node_data['annotations'] = {}
+    elif namespace == 'CHEBI':
+        model = chebi_manager.get_chemical_by_chebi_name(name)
+        node_data['annotations']['CHEBI'] = model.to_json()
 
-        node_data['annotations']['hgnc'] = model.to_dict()
+    elif namespace == 'RGD':
+        pass
+
+    elif namespace == 'MGI':
+        pass
 
     return node_data
 

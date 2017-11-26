@@ -23,4 +23,5 @@ gitpython
 six
 wtforms
 gunicorn
-pyhgnc
+bio2bel_hgnc
+bio2bel_chebi

@@ -46,7 +46,8 @@ INSTALL_REQUIRES = [
     'gitpython',
     'six',
     'gunicorn',
-    'pyhgnc',
+    'bio2bel_hgnc',
+    'bio2bel_chebi',
 ]
 EXTRAS_REQUIRE = {}
 TESTS_REQUIRE = []
