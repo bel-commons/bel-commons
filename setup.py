@@ -48,6 +48,7 @@ INSTALL_REQUIRES = [
     'gunicorn',
     'bio2bel_hgnc',
     'bio2bel_chebi',
+    'bio2bel_mirtarbase',
 ]
 EXTRAS_REQUIRE = {}
 TESTS_REQUIRE = []

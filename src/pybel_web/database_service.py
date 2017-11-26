@@ -18,6 +18,7 @@ from sqlalchemy import func
 
 import bio2bel_chebi
 import bio2bel_hgnc
+import bio2bel_mirtarbase
 import pybel
 from pybel.constants import METADATA_AUTHORS, METADATA_CONTACT, METADATA_NAME, NAME, NAMESPACE, NAMESPACE_DOMAIN_OTHER
 from pybel.manager.models import (
@@ -31,6 +32,7 @@ from pybel_tools import pipeline
 from pybel_tools.analysis.cmpa import RESULT_LABELS
 from pybel_tools.filters.node_filters import exclude_pathology_filter
 from pybel_tools.mutation import add_canonical_names
+from pybel_tools.pipeline import in_place_mutator
 from pybel_tools.query import Query
 from pybel_tools.selection import get_subgraph_by_annotations, get_subgraph_by_node_filter
 from pybel_tools.summary import (
@@ -1677,6 +1679,9 @@ def get_all_nodes():
 # TODO update usage of configuration
 hgnc_manager = bio2bel_hgnc.Manager()
 chebi_manager = bio2bel_chebi.Manager()
+mirtarbase_manager = bio2bel_mirtarbase.Manager()
+
+in_place_mutator(mirtarbase_manager.enrich_mirnas)
 
 
 def enrich_node_json(node_data):
