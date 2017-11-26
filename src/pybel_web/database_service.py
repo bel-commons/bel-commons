@@ -11,18 +11,14 @@ from operator import itemgetter
 
 import flask
 import networkx as nx
+import pyhgnc
 from flask import Blueprint, abort, current_app, flash, jsonify, make_response, redirect, request
 from flask_security import current_user, login_required, roles_required
 from six import StringIO
 from sqlalchemy import func
 
 import pybel
-from pybel.constants import (
-    METADATA_AUTHORS,
-    METADATA_CONTACT,
-    METADATA_NAME,
-    NAMESPACE_DOMAIN_OTHER,
-)
+from pybel.constants import METADATA_AUTHORS, METADATA_CONTACT, METADATA_NAME, NAME, NAMESPACE, NAMESPACE_DOMAIN_OTHER
 from pybel.manager.models import (
     Annotation, AnnotationEntry, Author, Citation, Edge, Namespace, Network, Node,
     network_edge,
@@ -37,8 +33,8 @@ from pybel_tools.mutation import add_canonical_names
 from pybel_tools.query import Query
 from pybel_tools.selection import get_subgraph_by_annotations, get_subgraph_by_node_filter
 from pybel_tools.summary import (
-    get_authors, get_incorrect_names_by_namespace, get_naked_names,
-    get_pubmed_identifiers, get_tree_annotations, get_undefined_namespace_names, info_json, info_list,
+    get_authors, get_incorrect_names_by_namespace, get_naked_names, get_pubmed_identifiers, get_tree_annotations,
+    get_undefined_namespace_names, info_json, info_list,
 )
 from . import models
 from .constants import *
@@ -46,10 +42,9 @@ from .main_service import BLACK_LIST, PATHS_METHOD, UNDIRECTED
 from .models import EdgeComment, Experiment, Project, Report, User
 from .send_utils import serve_network, to_json_custom
 from .utils import (
-    current_user_has_query_rights, fill_out_report, get_edge_by_hash_or_404,
-    get_network_ids_with_permission_helper, get_node_by_hash_or_404, get_node_overlaps, get_or_create_vote,
-    get_query_ancestor_id, get_recent_reports, make_graph_summary, manager, next_or_jsonify, safe_get_query,
-    user_datastore, user_owns_network_or_403,
+    current_user_has_query_rights, fill_out_report, get_edge_by_hash_or_404, get_network_ids_with_permission_helper,
+    get_node_by_hash_or_404, get_node_overlaps, get_or_create_vote, get_query_ancestor_id, get_recent_reports,
+    make_graph_summary, manager, next_or_jsonify, safe_get_query, user_datastore, user_owns_network_or_403,
 )
 
 log = logging.getLogger(__name__)
@@ -1678,6 +1673,26 @@ def get_all_nodes():
     ])
 
 
+pyhgnc_manager = pyhgnc.QueryManager()  # TODO update usage of configuration
+
+
+def enrich_node_json(node_data):
+    if NAMESPACE not in node_data:
+        return
+
+
+    if node_data[NAMESPACE] == 'HGNC':
+        name = node_data[NAME]
+        model = pyhgnc_manager.hgnc(symbol=name)[0]
+
+        if 'annotations' not in node_data:
+            node_data['annotations'] = {}
+
+        node_data['annotations']['hgnc'] = model.to_dict()
+
+    return node_data
+
+
 @api_blueprint.route('/api/node/<node_hash>')
 def get_node_hash(node_hash):
     """Gets the pybel node tuple
@@ -1696,7 +1711,11 @@ def get_node_hash(node_hash):
     """
     node = get_node_by_hash_or_404(node_hash)
 
-    return jsonify(node.to_json())
+    rv = node.to_json()
+
+    rv = enrich_node_json(rv)
+
+    return jsonify(rv)
 
 
 @api_blueprint.route('/api/node/suggestion/')
@@ -1903,17 +1922,7 @@ def add_pipeline_entry(query_id, name, *args, **kwargs):
     :param str name: The name of the function to append
     """
     query = safe_get_query(query_id)
-
-    q = query.data
-    q.pipeline.append(name, *args, **kwargs)
-
-    qo = models.Query(
-        assembly=query.assembly,
-        seeding=q.seeding_to_jsons(),
-        pipeline_protocol=q.pipeline.to_jsons(),
-        dump=q.to_jsons(),
-        parent_id=query_id,
-    )
+    qo = query.build_appended(name, *args, **kwargs)
 
     if current_user.is_authenticated:
         qo.user = current_user
@@ -1953,7 +1962,7 @@ def get_query_from_isolated_node(query_id, node_hash):
         network.id
         for network in parent_query.assembly.networks
     ])
-    child_query.add_seed_induction([node])
+    child_query.append_seeding_induction([node])
 
     child_query_model = models.Query(
         assembly=parent_query.assembly,

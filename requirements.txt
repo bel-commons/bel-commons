@@ -23,3 +23,4 @@ gitpython
 six
 wtforms
 gunicorn
+pyhgnc

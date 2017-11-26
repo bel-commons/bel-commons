@@ -67,7 +67,6 @@ function getSelectedNodesFromTree(tree) {
 
         selectionHashMap[key] = nodeObject.children.map(function (child) {
             return child.text
-
         });
     });
 
@@ -88,11 +87,10 @@ function displayNodeInfo(node) {
 
     var nodeObject = {};
 
+    nodeObject["Function"] = node.function;
+
     if (node.name) {
         nodeObject["Name"] = node.cname;
-    }
-    if (node.function) {
-        nodeObject["Function"] = node.function;
     }
     if (node.namespace) {
         nodeObject["Namespace"] = node.namespace;
@@ -104,7 +102,7 @@ function displayNodeInfo(node) {
         nodeObject["Description"] = node.description
     }
     if (node.id) {
-        nodeObject["Identifier"] = '<a href="/node/' + node.id + '"><code>' + node.id.slice(0, 10) + "</code></a>";
+        nodeObject["Hash"] = '<a href="/node/' + node.id + '"><code>' + node.id.slice(0, 10) + "</code></a>";
     }
 
     var row = 0;
@@ -122,45 +120,9 @@ function displayEdgeInfo(edge) {
 
     var edgeObject = {};
 
-    if (edge.evidence) {
-        edgeObject["Evidence"] = edge.evidence;
-    }
-    if (edge.citation) {
-        if (edge.citation.type === "PubMed") {
-            edgeObject["Citation"] = "<a href=https://www.ncbi.nlm.nih.gov/pubmed/" + edge.citation.reference + " target='_blank' " +
-                "style='text-decoration: underline'>" + edge.citation.reference + "</a>";
-        } else if (edge.citation.type === "URL") {
-            edgeObject["Citation"] = "<a href=" + edge.citation.reference + " target='_blank' " +
-                "style='text-decoration: underline'>" + edge.citation.reference + "</a>";
-        } else {
-            // TODO handle DOIs?
-            edgeObject["Citation"] = edge.citation.reference;
-        }
-    }
-    if (edge.source.cname) {
-        edgeObject["Subject"] = '<a href="/node/' + edge.source.id + '">' + edge.source.cname + "</a> ";
-
-        if (edge.subject) {
-            edgeObject["Subject"] += ('<span> with ' + JSON.stringify(edge.subject) + '</span>');
-        }
-    }
-    if (edge.target.cname) {
-        edgeObject["Object"] = '<a href="/node/' + edge.target.id + '">' + edge.target.cname + "</a> ";
-
-        if (edge.object) {
-            edgeObject["Object"] += ('<span>with ' + JSON.stringify(edge.object) + '</span>');
-        }
-    }
-    if (edge.annotations && Object.keys(edge.annotations).length > 0) {
-        edgeObject["Annotations"] = JSON.stringify(edge.annotations);
-    }
-    if (edge.source.id && edge.target.id) {
-        edgeObject["Tools"] = '<a class="btn btn-primary btn-xs" target="_blank" href="/node/' +
-            edge.source.id + '/edges/' + edge.target.id + '">View All Evidences</a>';
-    }
-    if (edge.id) {
-        edgeObject["Identifier"] = '<a href="/api/edge/' + edge.id + '"><code>' + edge.id.slice(0, 10) + "</code></a>";
-    }
+    edgeObject["Links"] = '<a href="/node/' + edge.source.id + '">' + edge.source.cname + ' <span class="glyphicon glyphicon-new-window"></span></a>';
+    edgeObject["Links"] += '<br /><a href="/node/' + edge.target.id + '">' + edge.target.cname + ' <span class="glyphicon glyphicon-new-window"></span></a>';
+    edgeObject["Links"] += '<br /><a href="/node/' + edge.source.id + '/edges/' + edge.target.id + '">All Evidences <span class="glyphicon glyphicon-new-window"></span></a>';
 
     if (edge.contexts) {
         $.each(edge.contexts, function (key, context) {
@@ -189,7 +151,11 @@ function displayEdgeInfo(edge) {
                 }
 
                 if (context.annotations && Object.keys(context.annotations).length > 0) {
-                    edgeObject[sk] += '<dt>Annotations</dt><dd>' + JSON.stringify(context.annotations) + '</dd>';
+
+                    $.each(context.annotations, function (annotation_key, annotation_value) {
+                        edgeObject[sk] += '<dt>' + annotation_key + '</dt><dd>' + annotation_value + '</dd>';
+                    });
+                    //edgeObject[sk] += '<dt>Annotations</dt><dd>' + JSON.stringify(context.annotations) + '</dd>';
                 }
 
 
@@ -263,11 +229,11 @@ function displayQueryInfo(query) {
     }
 
     if (query.pipeline.length !== 0) {
-        var queryPipeline = query.pipeline.map(function (object) {
-            return object.function;
+        queryObject["Pipeline"] = '<ol>';
+        $.each(query.pipeline, function (query_index, query_value) {
+            queryObject["Pipeline"] += '<li>' + query_value.function + '</li>';
         });
-
-        queryObject["Pipeline"] = queryPipeline.join(", ");
+        queryObject["Pipeline"] += '</ol>';
     }
 
     var row = 0;
@@ -1032,9 +998,7 @@ function initD3Force(graph, tree) {
         // Next two lines -> Pin down functionality
         .on("dblclick", releaseNode)
         // Box info
-        .on("click", function (node) {
-            displayNodeInfo(node);
-        })
+        .on("click", displayNodeInfo)
         // context-menu on right click
         .on("contextmenu", d3.contextMenu(nodeMenu)) // Attach context menu to node"s circle
         // Dragging
@@ -1425,7 +1389,7 @@ function initD3Force(graph, tree) {
             var path = link.filter(function (el) {
                 // Source and target should be present in the edge and the distance in the array should be one
                 return ((data[x].indexOf(el.source.id) >= 0 && data[x].indexOf(el.target.id) >= 0)
-                && (Math.abs(data[x].indexOf(el.source.id) - data[x].indexOf(el.target.id)) === 1));
+                    && (Math.abs(data[x].indexOf(el.source.id) - data[x].indexOf(el.target.id)) === 1));
             });
 
             edgesInPaths.push(path);
@@ -1441,7 +1405,7 @@ function initD3Force(graph, tree) {
             var edgesInPath = link.filter(function (el) {
                 // Source and target should be present in the edge and the distance in the array should be one
                 return ((data[i].indexOf(el.source.id) >= 0 && data[i].indexOf(el.target.id) >= 0)
-                && (Math.abs(data[i].indexOf(el.source.id) - data[i].indexOf(el.target.id)) === 1));
+                    && (Math.abs(data[i].indexOf(el.source.id) - data[i].indexOf(el.target.id)) === 1));
             });
 
             // Select randomly a color and apply to this path
@@ -1477,7 +1441,7 @@ function initD3Force(graph, tree) {
             var edgesNotInPath = g.selectAll(".link").filter(function (el) {
                 // Source and target should be present in the edge and the distance in the array should be one
                 return !((paths.indexOf(el.source.id) >= 0 && paths.indexOf(el.target.id) >= 0)
-                && (Math.abs(paths.indexOf(el.source.id) - paths.indexOf(el.target.id)) === 1));
+                    && (Math.abs(paths.indexOf(el.source.id) - paths.indexOf(el.target.id)) === 1));
             });
 
             // If checkbox is True -> Hide all, Else -> Opacity 0.1

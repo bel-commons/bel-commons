@@ -46,6 +46,7 @@ INSTALL_REQUIRES = [
     'gitpython',
     'six',
     'gunicorn',
+    'pyhgnc',
 ]
 EXTRAS_REQUIRE = {}
 TESTS_REQUIRE = []

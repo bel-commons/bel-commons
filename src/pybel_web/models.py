@@ -515,9 +515,6 @@ class Query(Base):
     parent_id = Column(Integer, ForeignKey('{}.id'.format(QUERY_TABLE_NAME)), nullable=True)
     parent = relationship('Query', remote_side=[id], backref=backref('children', lazy='dynamic'))
 
-    # TODO remove dump completely and have it reconstruct from parts
-    dump = Column(Text, doc="The stringified JSON representing this query")
-
     def __repr__(self):
         return '<Query {}>'.format(self.id)
 
@@ -528,7 +525,13 @@ class Query(Base):
         :rtype: pybel_tools.query.Query
         """
         if not hasattr(self, '_query'):
-            self._query = pybel_tools.query.Query.from_jsons(self.dump)
+            self._query = pybel_tools.query.Query(network_ids=[network.id for network in self.networks])
+
+            if self.seeding:
+                self._query.seeding = self.seeding_as_json()
+
+            if self.pipeline_protocol:
+                self._query.pipeline.protocol = self.protocol_as_json()
 
         return self._query
 
@@ -580,7 +583,6 @@ class Query(Base):
             assembly=assembly,
             seeding=query.seeding_to_jsons(),
             pipeline_protocol=query.pipeline.to_jsons(),
-            dump=query.to_jsons()
         )
 
         if user is not None and user.is_authenticated:
@@ -600,8 +602,19 @@ class Query(Base):
         :param Pipeline pipeline: Instance of a pipeline
         :rtype: Query
         """
-        q = pybel_tools.query.Query(network_ids, seed_list=seed_list, pipeline=pipeline)
+        q = pybel_tools.query.Query(network_ids, seeding=seed_list, pipeline=pipeline)
         return Query.from_query(manager, q, user=user)
+
+    def build_appended(self, name, *args, **kwargs):
+        _query = self.data
+        _query.pipeline.append(name, *args, **kwargs)
+
+        return Query(
+            parent_id=self.id,
+            assembly=self.assembly,
+            seeding=self.seeding,
+            pipeline_protocol=_query.pipeline.to_jsons(),
+        )
 
 
 class EdgeVote(Base):
