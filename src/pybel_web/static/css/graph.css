@@ -183,3 +183,7 @@ body.loading .loading_modal {
 }
 
 /* Modal end loading */
+
+ol.query-box-pipeline li {
+    text-transform: capitalize;
+}

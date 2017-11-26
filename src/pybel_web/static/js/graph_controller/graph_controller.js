@@ -208,7 +208,6 @@ function displayQueryInfo(query) {
     if (query.seeding.length !== 0) {
         queryObject["Seeding"] = query.seeding.map(function (object) {
             if (object.type === "annotation") {
-
                 var arr = [];
 
                 if (object.data.or === true) {
@@ -224,14 +223,18 @@ function displayQueryInfo(query) {
                 }
                 return object.type + ": [" + arr.join(',') + "] " + queryType;
             }
+            else if (object.type === 'sample') {
+                return object.type + ': [seed=' + object.data.seed + ']';
+            }
+
             return object.type + ": [" + object.data + "]";
         });
     }
 
     if (query.pipeline.length !== 0) {
-        queryObject["Pipeline"] = '<ol>';
+        queryObject["Pipeline"] = '<ol class="query-box-pipeline">';
         $.each(query.pipeline, function (query_index, query_value) {
-            queryObject["Pipeline"] += '<li>' + query_value.function + '</li>';
+            queryObject["Pipeline"] += '<li>' + query_value.function.replace(/_/g, ' ') + '</li>';
         });
         queryObject["Pipeline"] += '</ol>';
     }
