@@ -596,7 +596,7 @@ class Query(Base):
 
         :param pybel.manager.Manager manager:
         :param pybel_web.models.User user:
-        :param int or list[int] network_ids:
+        :param list[int] network_ids:
         :param list[dict] seed_list:
         :param Pipeline pipeline: Instance of a pipeline
         :rtype: Query

@@ -1984,7 +1984,6 @@ def get_query_from_isolated_node(query_id, node_hash):
         assembly=parent_query.assembly,
         seeding=child_query.seeding_to_jsons(),
         pipeline_protocol=child_query.pipeline.to_jsons(),
-        dump=child_query.to_jsons(),
         parent_id=parent_query.id,
     )
 

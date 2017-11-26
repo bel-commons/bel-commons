@@ -482,7 +482,7 @@ def query_form_to_dict(form):
     ]
 
     if form.getlist("network_ids[]"):
-        query_dict["network_ids"] = form.getlist("network_ids[]")
+        query_dict["network_ids"] = form.getlist("network_ids[]", type=int)
 
     return query_dict
 

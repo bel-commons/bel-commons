@@ -159,7 +159,7 @@ def build_main_service(app):
         if network_id not in get_network_ids_with_permission_helper(current_user, manager):
             abort(403, 'Insufficient rights for network {}'.format(network_id))
 
-        query = Query.from_query_args(manager, network_id, current_user)
+        query = Query.from_query_args(manager, [network_id], current_user)
         manager.session.add(query)
         manager.session.commit()
         return redirect(url_for('view_explorer_query', query_id=query.id))
