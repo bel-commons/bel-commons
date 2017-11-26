@@ -288,7 +288,6 @@ class Project(Base):
         :rtype: pybel.BELGraph
         """
         return union(network.as_bel() for network in self.networks)
-        # return self.assembly.as_bel()
 
     def __str__(self):
         return self.name
@@ -525,7 +524,7 @@ class Query(Base):
         :rtype: pybel_tools.query.Query
         """
         if not hasattr(self, '_query'):
-            self._query = pybel_tools.query.Query(network_ids=[network.id for network in self.networks])
+            self._query = pybel_tools.query.Query(network_ids=[network.id for network in self.assembly.networks])
 
             if self.seeding:
                 self._query.seeding = self.seeding_as_json()
