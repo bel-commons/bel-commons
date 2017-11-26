@@ -233,7 +233,10 @@ function displayQueryInfo(query) {
     var queryObject = {};
 
     queryObject["Identifier"] = query.id;
-    queryObject["Creator"] = query.creator;
+
+    if (query.creator) {
+        queryObject["Creator"] = query.creator;
+    }
     queryObject["Assembly"] = query.networks.join(", ");
 
     if (query.seeding.length !== 0) {

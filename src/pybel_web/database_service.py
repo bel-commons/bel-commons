@@ -1831,7 +1831,9 @@ def query_to_network(query_id):
 
     rv = query.data.to_json()
     rv['id'] = query.id
-    rv['creator'] = str(query.user)
+
+    if query.user:
+        rv['creator'] = str(query.user)
 
     network_ids = rv['network_ids']
     rv['networks'] = [
