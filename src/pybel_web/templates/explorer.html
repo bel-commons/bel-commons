@@ -49,7 +49,7 @@
     <script type="text/javascript"
             src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.16.0/jquery.validate.min.js"></script>
     <script type="text/javascript"
-            src="{{ url_for('static', filename='js/graph_controller/graph_controller.js', version='20171126') }}"></script>
+            src="{{ url_for('static', filename='js/graph_controller/graph_controller.js', version='20171127') }}"></script>
     <script type="text/javascript"
             src="{{ url_for('static', filename='js/d3-context-menu/js/d3-context-menu.js') }}"></script>
     <script type="text/javascript"
@@ -871,144 +871,19 @@
                         </tr>
                         </thead>
                         <tbody>
+                        {% for toolbox_function, toolbox_button, toolbox_description in explorer_toolbox %}
                         <tr>
                             <td>
-                                <button type="button" value="collapse_by_central_dogma_to_genes"
-                                        class="btn btn-info explorer-tool"
+                                <button type="button" value="{{ toolbox_function }}" class="btn btn-info explorer-tool"
                                         data-dismiss="modal">
-                                    Central Dogma To Genes
+                                    {{ toolbox_button }}
                                 </button>
                             </td>
-                            <td>Collapse Protein/RNA/Gene nodes to genes</td>
-                        </tr>
-                        <tr>
                             <td>
-                                <button type="button" value="collapse_all_variants"
-                                        class="btn btn-info explorer-tool"
-                                        data-dismiss="modal">
-                                    Collapse Variants
-                                </button>
-                            </td>
-                            <td>Collapse Variants to their Parent Nodes</td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <button type="button" value="collapse_to_protein_interactions"
-                                        class="btn btn-info explorer-tool"
-                                        data-dismiss="modal">
-                                    Protein Interaction Network
-                                </button>
-                            </td>
-                            <td>Reduce the Network to Interactions between Proteins</td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <button type="button" value="infer_central_dogma" data-dismiss="modal"
-                                        class="btn btn-info explorer-tool">Infer
-                                    Central Dogma
-                                </button>
-                            </td>
-                            <td>Adds RNAs corresponding to Proteins, then adds Genes corresponding to RNAs and
-                                miRNAs
+                                {{ toolbox_description }}
                             </td>
                         </tr>
-                        <tr>
-                            <td>
-                                <button type="button" value="prune_central_dogma" data-dismiss="modal"
-                                        class="btn btn-info explorer-tool">Prune
-                                    Central Dogma
-                                </button>
-                            </td>
-                            <td>Prunes genes, then RNA</td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <button type="button" value="expand_periphery" data-dismiss="modal"
-                                        class="btn btn-info explorer-tool">Expand
-                                    Periphery
-                                </button>
-                            </td>
-                            <td>Expand the periphery of the network</td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <button type="button" value="expand_internal" data-dismiss="modal"
-                                        class="btn btn-info explorer-tool">Expand Internal
-                                    Edges
-                                </button>
-                            </td>
-                            <td>Expand edges between nodes in the network</td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <button type="button" value="remove_isolated_nodes" data-dismiss="modal"
-                                        class="btn btn-info explorer-tool">Remove Isolated Nodes
-                                </button>
-                            </td>
-                            <td>Remove from the network all isolated nodes</td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <button type="button" value="get_largest_component" data-dismiss="modal"
-                                        class="btn btn-info explorer-tool">Get Largest Component
-                                </button>
-                            </td>
-                            <td>Reduce the network to the larger component and removes all others</td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <button type="button" value="enrich_unqualified" data-dismiss="modal"
-                                        class="btn btn-info explorer-tool">Enrich
-                                    Unqualified Edges
-                                </button>
-                            </td>
-                            <td>Enriches the subgraph with the unqualified edges from the graph</td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <button type="button" value="enrich_variants" data-dismiss="modal"
-                                        class="btn btn-info explorer-tool">Enrich Variants
-                                </button>
-                            </td>
-                            <td>Adds the reference nodes for all variants of genes, RNAs, miRNAs, and proteins
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <button type="button" value="enrich_reactions" data-dismiss="modal"
-                                        class="btn btn-info explorer-tool">Enrich
-                                    Reactions
-                                </button>
-                            </td>
-                            <td>Adds all of the reactants and products of reactions</td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <button type="button" value="enrich_composites" data-dismiss="modal"
-                                        class="btn btn-info explorer-tool">Enrich
-                                    Composites
-                                </button>
-                            </td>
-                            <td>Adds all of the members of the composite abundances</td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <button type="button" value="enrich_complexes" data-dismiss="modal"
-                                        class="btn btn-info explorer-tool">Enrich
-                                    Complexes
-                                </button>
-                            </td>
-                            <td>Adds all of the members of the complexes</td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <button type="button" value="enrich_mirnas" data-dismiss="modal"
-                                        class="btn btn-info explorer-tool">
-                                    Enrich miRNAs
-                                </button>
-                            </td>
-                            <td>Adds the miRNA controllers of RNAs</td>
-                        </tr>
+                        {% endfor %}
                         </tbody>
                     </table>
                 </div><!-- /.Modal body -->

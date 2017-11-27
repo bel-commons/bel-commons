@@ -30,6 +30,9 @@ from .utils import (
 log = logging.getLogger(__name__)
 
 
+def redirect_explorer(query_id):
+    return redirect(url_for('view_explorer_query', query_id=query_id))
+
 def build_dictionary_service_admin(app):
     """Dictionary Service Admin Functions"""
     manager = get_manager(app)
@@ -120,13 +123,13 @@ def build_main_service(app):
         manager.session.add(query)
         manager.session.commit()
 
-        return redirect(url_for('view_explorer_query', query_id=query.id))
+        return redirect_explorer(query.id)
 
     @app.route('/explore/<int:query_id>', methods=['GET'])
     def view_explorer_query(query_id):
         """Renders a page for the user to explore a network"""
         query = safe_get_query(query_id)
-        return render_template('explorer.html', query=query)
+        return render_template('explorer.html', query=query, explorer_toolbox=explorer_toolbox)
 
     @app.route('/project/<int:project_id>/explore', methods=['GET'])
     @login_required
@@ -144,7 +147,8 @@ def build_main_service(app):
 
         manager.session.add(query)
         manager.session.commit()
-        return redirect(url_for('view_explorer_query', query_id=query.id))
+
+        return redirect_explorer(query.id)
 
     @app.route('/project/<int:project_id>/merge/<int:user_id>')
     def send_async_project_merge(user_id, project_id):
@@ -162,7 +166,8 @@ def build_main_service(app):
         query = Query.from_query_args(manager, [network_id], current_user)
         manager.session.add(query)
         manager.session.commit()
-        return redirect(url_for('view_explorer_query', query_id=query.id))
+
+        return redirect_explorer(query.id)
 
     def render_network_summary_safe(network_id, template):
         if network_id not in get_network_ids_with_permission_helper(current_user, manager):
@@ -199,7 +204,8 @@ def build_main_service(app):
         query = Query.from_query(manager, q, current_user)
         manager.session.add(query)
         manager.session.commit()
-        return redirect(url_for('view_explorer_query', query_id=query.id))
+
+        return redirect_explorer(query.id)
 
     @app.route('/network/<int:network_id>/sample/')
     def build_subsample_query(network_id):
@@ -209,7 +215,8 @@ def build_main_service(app):
         query = Query.from_query(manager, q, current_user)
         manager.session.add(query)
         manager.session.commit()
-        return redirect(url_for('view_explorer_query', query_id=query.id))
+
+        return redirect_explorer(query.id)
 
     @app.route('/definitions')
     def view_definitions():

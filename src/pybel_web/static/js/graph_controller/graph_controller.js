@@ -89,8 +89,15 @@ function displayNodeInfo(node) {
 
     nodeObject["Function"] = node.function;
 
+    if (node.bel) {
+        nodeObject["BEL"] = node.bel;
+    }
+
     if (node.name) {
-        nodeObject["Name"] = node.cname;
+        nodeObject["Name"] = node.name;
+    }
+    if (node.identifier) {
+        nodeObject["Identifier"] = node.identifier;
     }
     if (node.namespace) {
         nodeObject["Namespace"] = node.namespace;
@@ -1028,7 +1035,13 @@ function initD3Force(graph, tree) {
         .attr("dx", 16)
         .attr("dy", ".35em")
         .text(function (d) {
-            return d.cname
+            if (d.cname) {
+                return d.cname;
+            } else if (d.name) {
+                return d.name;
+            } else {
+                return 'UNDEFINED'
+            }
         });
 
     // Highlight on mouseenter and back to normal on mouseout

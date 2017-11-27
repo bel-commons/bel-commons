@@ -10,7 +10,6 @@ from flask_security import current_user, login_required
 
 from pybel.constants import PYBEL_CONNECTION
 from .celery_utils import create_celery
-from .constants import reporting_log
 from .forms import ParseUrlForm, ParserForm
 from .models import Report
 from .utils import manager
@@ -62,7 +61,7 @@ def view_parser():
 
     task = current_app.celery.send_task('pybelparser', args=[report_id])
 
-    reporting_log.info('Parse task from %s: %s', current_user, task.id)
+    log.info('Parse task from %s: %s', current_user, task.id)
     flash('Queued parsing task {} for {}.'.format(report_id, report_name))
 
     return redirect(url_for('view_current_user_activity'))
@@ -88,7 +87,7 @@ def view_url_parser():
         form.url.data
     ])
 
-    reporting_log.info('Parse URL task from %s: %s', current_user, task.id)
+    log.info('Parse URL task from %s: %s', current_user, task.id)
     flash('Queued parsing task {} for {}.'.format(task.id, form.url.data))
 
     return redirect(url_for('view_current_user_activity'))

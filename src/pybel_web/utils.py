@@ -45,7 +45,7 @@ from pybel_tools.summary import (
 )
 from pybel_tools.utils import min_tanimoto_set_similarity, prepare_c3, prepare_c3_time_series
 from .application_utils import get_manager, get_user_datastore
-from .constants import AND, reporting_log
+from .constants import AND
 from .models import EdgeVote, Experiment, NetworkOverlap, Query, Report, User
 
 log = logging.getLogger(__name__)
@@ -334,26 +334,6 @@ def run_experiment(manager_, file, filename, description, gene_column, data_colu
     return experiment
 
 
-def log_graph(graph, user, preparsed=False, failed=False):
-    """
-
-    :param pybel.BELGraph graph:
-    :param User user:
-    :param bool preparsed:
-    :param bool failed:
-    """
-    reporting_log.info(
-        '%s%s %s %s v%s with %d nodes, %d edges, and %d warnings', 'FAILED ' if failed else '',
-        user,
-        'uploaded' if preparsed else 'compiled',
-        graph.name,
-        graph.version,
-        graph.number_of_nodes(),
-        graph.number_of_edges(),
-        len(graph.warnings)
-    )
-
-
 def get_recent_reports(manager_, weeks=2):
     """Gets reports from the last two weeks
 
@@ -441,16 +421,20 @@ def convert_seed_value(key, form, value):
     :return: Normalized data depending on the seeding method
     """
     if key == 'annotation':
-        query_type = not form.get(AND)
-        return {'annotations': sanitize_annotation(form.getlist(value)), 'or': query_type}
-    elif key in {'pubmed', 'authors'}:
+        return {
+            'annotations': sanitize_annotation(form.getlist(value)),
+            'or': not form.get(AND)
+        }
+
+    if key in {'pubmed', 'authors'}:
         return form.getlist(value)
-    else:
-        node_hashes = form.getlist(value)
-        return [
-            manager.get_node_tuple_by_hash(node_hash)
-            for node_hash in node_hashes
-        ]
+
+    node_hashes = form.getlist(value)
+
+    return [
+        manager.get_node_tuple_by_hash(node_hash)
+        for node_hash in node_hashes
+    ]
 
 
 def query_form_to_dict(form):
@@ -470,19 +454,25 @@ def query_form_to_dict(form):
     ]
 
     query_dict['seeding'] = [
-        {"type": key, 'data': convert_seed_value(key, form, value)}
-        for key, value in pairs
-        if form.getlist(value)
+        {
+            "type": seed_method,
+            'data': convert_seed_value(seed_method, form, seed_data_argument)
+        }
+        for seed_method, seed_data_argument in pairs
+        if form.getlist(seed_data_argument)
     ]
 
     query_dict["pipeline"] = [
-        {'function': to_snake_case(function_name)}
+        {
+            'function': to_snake_case(function_name)
+        }
         for function_name in form.getlist("pipeline[]")
         if function_name
     ]
 
-    if form.getlist("network_ids[]"):
-        query_dict["network_ids"] = form.getlist("network_ids[]", type=int)
+    network_ids = form.getlist("network_ids[]", type=int)
+    if network_ids:
+        query_dict["network_ids"] = network_ids
 
     return query_dict
 

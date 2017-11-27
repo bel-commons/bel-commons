@@ -1682,6 +1682,7 @@ chebi_manager = bio2bel_chebi.Manager()
 mirtarbase_manager = bio2bel_mirtarbase.Manager()
 
 in_place_mutator(mirtarbase_manager.enrich_mirnas)
+in_place_mutator(mirtarbase_manager.enrich_rnas)
 
 
 def enrich_node_json(node_data):

@@ -18,6 +18,7 @@ from pybel import from_lines
 from pybel.manager import Base
 from pybel.manager.models import EDGE_TABLE_NAME, LONGBLOB, NETWORK_TABLE_NAME, Network
 from pybel.struct import union
+from pybel.utils import list2tuple
 
 EXPERIMENT_TABLE_NAME = 'pybel_experiment'
 REPORT_TABLE_NAME = 'pybel_report'
@@ -527,7 +528,7 @@ class Query(Base):
             self._query = pybel_tools.query.Query(network_ids=[network.id for network in self.assembly.networks])
 
             if self.seeding:
-                self._query.seeding = self.seeding_as_json()
+                self._query.seeding = self._process_seeding()
 
             if self.pipeline_protocol:
                 self._query.pipeline.protocol = self.protocol_as_json()
@@ -543,12 +544,24 @@ class Query(Base):
         result.update(self.data.to_json())
         return result
 
-    def seeding_as_json(self):
+    def _process_seeding(self):
         """Returns seeding json. It's also possible to get Query.data.seeding as well.
 
         :rtype: dict
         """
-        return json.loads(self.seeding)
+        seeding = json.loads(self.seeding)
+
+        from pybel_tools.query import SEED_TYPE_KEY, SEED_DATA_KEY
+
+        result = []
+        for seed in seeding:
+            seed_method, seed_data = seed[SEED_TYPE_KEY], seed[SEED_DATA_KEY]
+
+            if seed_method not in {'pubmed', 'authors', 'annotation'}:
+                seed[SEED_DATA_KEY] = list2tuple(seed_data)
+            result.append(seed)
+
+        return result
 
     def protocol_as_json(self):
         """Returns the pipeline as json

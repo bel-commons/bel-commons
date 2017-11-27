@@ -63,12 +63,16 @@ def set_debug(level):
     pbw_log = logging.getLogger('pybel_web')
     pbw_log.setLevel(level)
 
+    logging.getLogger('bio2bel_hgnc').setLevel(level)
+    logging.getLogger('bio2bel_mirtarbase').setLevel(level)
+    logging.getLogger('bio2bel_chebi').setLevel(level)
+
 
 def set_debug_param(debug):
     if debug == 1:
-        set_debug(20)
+        set_debug(logging.INFO)
     elif debug == 2:
-        set_debug(10)
+        set_debug(logging.DEBUG)
 
 
 def number_of_workers():
