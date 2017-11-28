@@ -3,7 +3,7 @@
 import os
 
 from pybel.constants import PYBEL_DATA_DIR
-from pybel_tools.pipeline import Pipeline
+from pybel_tools.pipeline import function_is_registered
 
 PYBEL_WEB_VERSION = '0.2.2-dev'
 
@@ -66,14 +66,14 @@ def get_explorer_toolbox():
     """
     explorer_toolbox = list(_explorer_toolbox)
 
-    if Pipeline.has_function('enrich_rnas'):
+    if function_is_registered('enrich_rnas'):
         explorer_toolbox.append((
             'enrich_rnas',
             'Enrich RNA controllers',
             'Adds the miRNA controllers of RNA nodes from miRTarBase'
         ))
 
-    if Pipeline.has_function('enrich_mirnas'):
+    if function_is_registered('enrich_mirnas'):
         explorer_toolbox.append((
             'enrich_mirnas',
             'Enrich miRNA targets',
