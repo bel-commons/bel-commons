@@ -286,7 +286,7 @@
                         </td>
                         <td>
                             <ul>
-                                {% for seed in query.seeding_as_json() %}
+                                {% for seed in query.seeding_to_json() %}
                                     <li>
                                         <span>{{ seed['type']|title }}</span>
                                         <ul>
@@ -319,7 +319,7 @@
                         </td>
                         <td>
                             <ul>
-                                {% for protocol_entry in query.protocol_as_json() %}
+                                {% for protocol_entry in query.protocol_to_json() %}
                                     <li>
                                         <code>{{ protocol_entry['function'] }}</code>
                                         {% if protocol_entry['args'] or protocol_entry['kwargs'] %}

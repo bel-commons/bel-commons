@@ -19,6 +19,7 @@ from pybel.manager import Base
 from pybel.manager.models import EDGE_TABLE_NAME, LONGBLOB, NETWORK_TABLE_NAME, Network
 from pybel.struct import union
 from pybel.utils import list2tuple
+from pybel_tools.query import SEED_DATA_KEY, SEED_TYPE_KEY
 
 EXPERIMENT_TABLE_NAME = 'pybel_experiment'
 REPORT_TABLE_NAME = 'pybel_report'
@@ -528,10 +529,10 @@ class Query(Base):
             self._query = pybel_tools.query.Query(network_ids=[network.id for network in self.assembly.networks])
 
             if self.seeding:
-                self._query.seeding = self._process_seeding()
+                self._query.seeding = self.seeding_to_json()
 
             if self.pipeline_protocol:
-                self._query.pipeline.protocol = self.protocol_as_json()
+                self._query.pipeline.protocol = self.protocol_to_json()
 
         return self._query
 
@@ -544,14 +545,12 @@ class Query(Base):
         result.update(self.data.to_json())
         return result
 
-    def _process_seeding(self):
+    def seeding_to_json(self):
         """Returns seeding json. It's also possible to get Query.data.seeding as well.
 
-        :rtype: dict
+        :rtype: list[dict]
         """
         seeding = json.loads(self.seeding)
-
-        from pybel_tools.query import SEED_TYPE_KEY, SEED_DATA_KEY
 
         result = []
         for seed in seeding:
@@ -563,7 +562,7 @@ class Query(Base):
 
         return result
 
-    def protocol_as_json(self):
+    def protocol_to_json(self):
         """Returns the pipeline as json
 
         :rtype: list[dict]
