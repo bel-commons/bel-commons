@@ -55,8 +55,8 @@ _explorer_toolbox = (
     ('remove_isolated_nodes', 'Remove Isolated Nodes', 'Remove from the network all isolated nodes'),
     ('get_largest_component', 'Get Largest Component', 'Retain only the largest component and removes all others'),
     ('enrich_unqualified', 'Enrich unqualified edges', 'Adds unqualified edges from the universe'),
-    ('remove_pathologies', 'Remove Aathologies', 'Removes all pathology nodes'),
-    ('remove_associative', 'Remove Associative Edges', 'Removes all associative edges'),
+    #('remove_pathologies', 'Remove Pathologies', 'Removes all pathology nodes'), # TODO
+    #('remove_associative', 'Remove Associative Edges', 'Removes all associative edges'), # TODO
 )
 
 
