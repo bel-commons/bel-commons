@@ -129,7 +129,7 @@ def build_main_service(app):
     def view_explorer_query(query_id):
         """Renders a page for the user to explore a network"""
         query = safe_get_query(query_id)
-        return render_template('explorer.html', query=query, explorer_toolbox=explorer_toolbox)
+        return render_template('explorer.html', query=query, explorer_toolbox=get_explorer_toolbox())
 
     @app.route('/project/<int:project_id>/explore', methods=['GET'])
     @login_required

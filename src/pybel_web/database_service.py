@@ -16,9 +16,6 @@ from flask_security import current_user, login_required, roles_required
 from six import StringIO
 from sqlalchemy import func
 
-import bio2bel_chebi
-import bio2bel_hgnc
-import bio2bel_mirtarbase
 import pybel
 from pybel.constants import METADATA_AUTHORS, METADATA_CONTACT, METADATA_NAME, NAME, NAMESPACE, NAMESPACE_DOMAIN_OTHER
 from pybel.manager.models import (
@@ -49,6 +46,30 @@ from .utils import (
     get_node_by_hash_or_404, get_node_overlaps, get_or_create_vote, get_query_ancestor_id, get_recent_reports,
     make_graph_summary, manager, next_or_jsonify, safe_get_query, user_datastore, user_owns_network_or_403,
 )
+
+try:
+    import bio2bel_chebi
+except ImportError:
+    chebi_manager = None
+else:
+    chebi_manager = bio2bel_chebi.Manager()
+
+try:
+    import bio2bel_hgnc
+except ImportError:
+    hgnc_manager = None
+else:
+    hgnc_manager = bio2bel_hgnc.Manager()
+
+try:
+    import bio2bel_mirtarbase
+except ImportError:
+    mirtarbase_manager = None
+else:
+    mirtarbase_manager = bio2bel_mirtarbase.Manager()
+    in_place_mutator(mirtarbase_manager.enrich_mirnas)
+    in_place_mutator(mirtarbase_manager.enrich_rnas)
+
 
 log = logging.getLogger(__name__)
 
@@ -1676,13 +1697,7 @@ def get_all_nodes():
     ])
 
 
-# TODO update usage of configuration
-hgnc_manager = bio2bel_hgnc.Manager()
-chebi_manager = bio2bel_chebi.Manager()
-mirtarbase_manager = bio2bel_mirtarbase.Manager()
 
-in_place_mutator(mirtarbase_manager.enrich_mirnas)
-in_place_mutator(mirtarbase_manager.enrich_rnas)
 
 
 def enrich_node_json(node_data):
@@ -1698,11 +1713,11 @@ def enrich_node_json(node_data):
     name = node_data[NAME]
     node_data['annotations'] = {}
 
-    if namespace == 'HGNC':
+    if namespace == 'HGNC' and hgnc_manager:
         model = hgnc_manager.get_gene_by_hgnc_symbol(name)
         node_data['annotations']['HGNC'] = model.to_dict()
 
-    elif namespace == 'CHEBI':
+    elif namespace == 'CHEBI' and chebi_manager:
         model = chebi_manager.get_chemical_by_chebi_name(name)
         node_data['annotations']['CHEBI'] = model.to_json()
 

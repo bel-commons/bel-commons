@@ -3,6 +3,7 @@
 import os
 
 from pybel.constants import PYBEL_DATA_DIR
+from pybel_tools.pipeline import Pipeline
 
 PYBEL_WEB_VERSION = '0.2.2-dev'
 
@@ -40,7 +41,8 @@ merged_document_folder = os.path.join(PYBEL_DATA_DIR, 'pbw_merged_documents')
 if not os.path.exists(merged_document_folder):
     os.mkdir(merged_document_folder)
 
-explorer_toolbox = [
+# Default networkx explorer toolbox functions (name, button text, description)
+_explorer_toolbox = (
     ('collapse_by_central_dogma_to_genes', 'Central Dogma to Genes', 'Collapse Protein/RNA/Gene nodes to genes'),
     ('collapse_all_variants', 'Collapse Variants', 'Collapse Variants to their Parent Nodes'),
     ('collapse_to_protein_interactions', 'Protein Interaction Network',
@@ -51,9 +53,31 @@ explorer_toolbox = [
     ('expand_periphery', 'Expand Periphery', 'Expand the periphery of the network'),
     ('expand_internal', 'Expand Internal', 'Adds missing edges between nodes in the network'),
     ('remove_isolated_nodes', 'Remove Isolated Nodes', 'Remove from the network all isolated nodes'),
-    ('enrich_rnas', 'Enrich RNA controllers', 'Adds the miRNA controllers of RNA nodes from miRTarBase'),
-    ('enrich_mirnas', 'Enrich miRNA targets', 'Adds the RNA targets of miRNA nodes from miRTarBase'),
     ('get_largest_component', 'Get Largest Component', 'Retain only the largest component and removes all others'),
     ('enrich_unqualified', 'Enrich unqualified edges',
      'Enriches the subgraph with the unqualified edges from the graph'),
-]
+)
+
+
+def get_explorer_toolbox():
+    """Gets the explorer toolbox list
+
+    :rtype: list[tuple[str,str,str]]
+    """
+    explorer_toolbox = list(_explorer_toolbox)
+
+    if Pipeline.has_function('enrich_rnas'):
+        explorer_toolbox.append((
+            'enrich_rnas',
+            'Enrich RNA controllers',
+            'Adds the miRNA controllers of RNA nodes from miRTarBase'
+        ))
+
+    if Pipeline.has_function('enrich_mirnas'):
+        explorer_toolbox.append((
+            'enrich_mirnas',
+            'Enrich miRNA targets',
+            'Adds the RNA targets of miRNA nodes from miRTarBase'
+        ))
+
+    return explorer_toolbox
