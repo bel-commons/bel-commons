@@ -63,7 +63,7 @@ def list_neurommsig_ad_subgraph_names():
       - neurommsig
     """
     alzheimers_network = manager.get_most_recent_network_by_name("Alzheimer's Disease Knowledge Assembly")
-    values = get_annotation_values(alzheimers_network, 'Subgraph')
+    values = get_annotation_values(alzheimers_network.as_bel(), 'Subgraph')
     return jsonify(sorted(values))
 
 
@@ -88,7 +88,7 @@ def get_neurommsig_ad_subgraph():
 
     alzheimers_network = manager.get_most_recent_network_by_name("Alzheimer's Disease Knowledge Assembly")
 
-    network = get_subgraph_by_annotations(alzheimers_network, {'Subgraph': subgraph_annotations})
+    network = get_subgraph_by_annotations(alzheimers_network.as_bel(), {'Subgraph': subgraph_annotations})
 
     network = relabel_nodes_to_hashes(network)
 
