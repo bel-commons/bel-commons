@@ -23,6 +23,3 @@ gitpython
 six
 wtforms
 gunicorn
-bio2bel_hgnc
-bio2bel_chebi
-bio2bel_mirtarbase

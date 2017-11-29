@@ -46,11 +46,10 @@ INSTALL_REQUIRES = [
     'gitpython',
     'six',
     'gunicorn',
-    'bio2bel_hgnc',
-    'bio2bel_chebi',
-    'bio2bel_mirtarbase',
 ]
-EXTRAS_REQUIRE = {}
+EXTRAS_REQUIRE = {
+    'bio2bel': ['bio2bel_hgnc', 'bio2bel_chebi', 'bio2bel_mirtarbase'],
+}
 TESTS_REQUIRE = []
 ENTRY_POINTS = {
     'console_scripts': [
