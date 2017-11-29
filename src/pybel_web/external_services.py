@@ -88,7 +88,7 @@ def get_neurommsig_ad_subgraph():
 
     alzheimers_network = manager.get_most_recent_network_by_name("Alzheimer's Disease Knowledge Assembly")
 
-    network = get_subgraph_by_annotations(alzheimers_network.as_bel(), {'Subgraph': subgraph_annotations})
+    network = get_subgraph_by_annotations(alzheimers_network.as_bel(), {'Subgraph': subgraph_annotations}, or_=True)
 
     network = relabel_nodes_to_hashes(network)
 
