@@ -16,6 +16,7 @@ import os
 from flask import (
     Blueprint, request,
 )
+from flask_cors import cross_origin
 
 from pybel import from_pickle
 from pybel_tools.mutation import add_canonical_names
@@ -47,6 +48,7 @@ MAPPING = {
 
 
 @mozg_blueprint.route('/api/external/mozg/network/<network_name>')
+@cross_origin()
 def get_mozg_query(network_name):
     """
     This endpoint receives a network name, annotation(s) and a related query term(s), prepares a network
