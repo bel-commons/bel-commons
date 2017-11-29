@@ -9,10 +9,10 @@ from flask import (
     request,
 )
 from flask_cors import cross_origin
+
 from pybel import from_url
 from pybel.struct import union
 from pybel_tools.selection import get_subgraph_by_annotations
-
 from .send_utils import serve_network
 from .utils import manager, relabel_nodes_to_hashes
 
@@ -58,13 +58,25 @@ def semantic_merge():
 @external_blueprint.route('/api/external/neurommsig/get_alzheimers_subgraphs/')
 @cross_origin()
 def get_neurommsigs():
-    """Returns AD NeuroMMSigs"""
+    """Returns Alzheimer's Disease NeuroMMSigs
 
+    ---
+    tags:
+      - neurommsig
+    parameters:
+      - name: subgraphs[]
+        in: query
+        description: Names of NeuroMMSig subgraphs
+        required: true
+        allowMultiple: true
+        type: string
+        minimum: 1
+    """
     subgraph_annotations = request.args.getlist('subgraphs[]')
 
     alzheimers_network = manager.get_most_recent_network_by_name("Alzheimer's Disease Knowledge Assembly")
 
-    network = get_subgraph_by_annotations(alzheimers_network, {'Subgraph': subgraph_annotations}, True)
+    network = get_subgraph_by_annotations(alzheimers_network, {'Subgraph': subgraph_annotations})
 
     network = relabel_nodes_to_hashes(network)
 
