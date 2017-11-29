@@ -4,15 +4,13 @@
 
 import logging
 
-from flask import (
-    Blueprint,
-    request,
-)
+from flask import Blueprint, jsonify, request
 from flask_cors import cross_origin
 
 from pybel import from_url
 from pybel.struct import union
 from pybel_tools.selection import get_subgraph_by_annotations
+from pybel_tools.summary import get_annotation_values
 from .send_utils import serve_network
 from .utils import manager, relabel_nodes_to_hashes
 
@@ -55,9 +53,23 @@ def semantic_merge():
     return serve_network(super_graph, serve_format='bel')
 
 
+@external_blueprint.route('/api/external/neurommsig/list_alzheimers_subgraphs/')
+@cross_origin()
+def list_neurommsig_ad_subgraph_names():
+    """Returns a list of Alzheimer's Disease NeuroMMSigs
+
+    ---
+    tags:
+      - neurommsig
+    """
+    alzheimers_network = manager.get_most_recent_network_by_name("Alzheimer's Disease Knowledge Assembly")
+    values = get_annotation_values(alzheimers_network, 'Subgraph')
+    return jsonify(sorted(values))
+
+
 @external_blueprint.route('/api/external/neurommsig/get_alzheimers_subgraphs/')
 @cross_origin()
-def get_neurommsigs():
+def get_neurommsig_ad_subgraph():
     """Returns Alzheimer's Disease NeuroMMSigs
 
     ---
