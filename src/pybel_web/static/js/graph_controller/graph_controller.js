@@ -7,6 +7,14 @@
  *
  */
 
+
+var defaultLinkColor = "#888";
+
+const nominalBaseNodeSize = 10; // Default node radius
+
+var edgeStroke = 3.5;  // Edge width
+var minZoom = 0.1, maxZoom = 10; // Zoom variables
+
 /**
  * Spinner on Ajax call
  */
@@ -704,6 +712,39 @@ function downloadText(response, name) {
     document.body.removeChild(element);
 }
 
+/**
+ * Gets edge types as a dictionary
+ * @param {object} edge json data
+ * @return {object}
+ */
+function getEdgeTypes(edge) {
+    edge_types = {};
+
+    $(edge.contexts).each(function (index, context) {
+        edge_types[context.relation] = true;
+    });
+
+    return edge_types;
+}
+
+/**
+ * Checks if there are any causal edges
+ * @param {object} edge json data
+ * @return {boolean}
+ */
+function doesEdgeHaveCausal(edge) {
+
+    edge_types = getEdgeTypes(edge);
+
+    const causal_edge_types = ["decreases", "directlyDecreases", "increases", "directlyIncreases"];
+    for (var i in causal_edge_types) {
+        if (causal_edge_types[i] in edge_types) {
+            return true;
+        }
+    }
+    return false;
+}
+
 
 /**
  * Initialize d3 Force to plot network from json
@@ -797,11 +838,8 @@ function initD3Force(graph, tree) {
 
     // Highlight color variables
 
-    var highlightNodeBoundering = "#4EB2D4"; // Highlight color of the node boundering
 
-    var highlightedLinkColor = "#4EB2D4"; // Highlight color of the edge
-
-    var highlightText = "#4EB2D4"; // Text highlight color
+    var highlightColor = "#4EB2D4"; // Highlight color of the edge
 
     // Size when zooming scale
     var size = d3.scalePow().exponent(1)
@@ -858,14 +896,7 @@ function initD3Force(graph, tree) {
 
     //END Pin down functionality
 
-    var circleColor = "black";
-    var defaultLinkColor = "#888";
 
-    const nominalBaseNodeSize = 10; // Default node radius
-
-    var edgeStroke = 3.5;  // Edge width
-    var circleStroke = 2.5;  // Circle width
-    var minZoom = 0.1, maxZoom = 10; // Zoom variables
 
     var svg = d3.select("#graph-chart").append("svg")
         .attr("class", "svg-border")
@@ -925,8 +956,8 @@ function initD3Force(graph, tree) {
         linkedByIndex[d.source + "," + d.target] = true;
     });
 
-    function isConnected(a, b) {
-        return linkedByIndex[a.index + "," + b.index] || linkedByIndex[b.index + "," + a.index] || a.index === b.index;
+    function isConnected(source, target) {
+        return linkedByIndex[source.index + "," + target.index] || linkedByIndex[target.index + "," + source.index] || source.index === target.index;
     }
 
     function ticked() {
@@ -963,38 +994,31 @@ function initD3Force(graph, tree) {
     var link = g.selectAll(".link")
         .data(graph.links)
         .enter().append("line")
-        .style("stroke", function (edge) {
-            if ('pybel_highlight' in edge) {
-                return edge['pybel_highlight']
-            } else {
-                return defaultLinkColor
-            }
-        })
         .style("stroke-width", edgeStroke)
         .style("stroke-opacity", 0.4)
         .on("click", displayEdgeInfo)
         .on("contextmenu", d3.contextMenu(edgeMenu)) // Attach context menu to edge link
         .attr("class", function (edge) {
-            if (["decreases", "directlyDecreases", "increases", "directlyIncreases", "negativeCorrelation",
-                    "positiveCorrelation"].indexOf(edge.relation) >= 0) {
-                return "link link_continuous"
-            } else {
-                return "link link_dashed"
+            if (doesEdgeHaveCausal(edge)) {
+                return "link link_continuous";
             }
-        })
-        .attr("marker-start", function (edge) {
-            if ("positiveCorrelation" === edge.relation) {
-                return "url(#arrowhead)"
-            } else if ("negativeCorrelation" === edge.relation) {
-                return "url(#stub)"
-            } else {
-                return ""
+
+            edge_types = getEdgeTypes(edge);
+
+            if ('negativeCorrelation' in edge_types) {
+                return 'link link_dashed link_red';
             }
+
+            if ('positiveCorrelation' in edge_types) {
+                return 'link link_dashed link_blue';
+            }
+
+            return "link link_dashed"
         })
         .attr("marker-end", function (edge) {
-            if (["increases", "directlyIncreases", "positiveCorrelation"].indexOf(edge.relation) >= 0) {
+            if (["increases", "directlyIncreases"].indexOf(edge.relation) >= 0) {
                 return "url(#arrowhead)"
-            } else if (["decreases", "directlyDecreases", "negativeCorrelation"].indexOf(edge.relation) >= 0) {
+            } else if (["decreases", "directlyDecreases"].indexOf(edge.relation) >= 0) {
                 return "url(#stub)"
             } else {
                 return ""
@@ -1012,102 +1036,67 @@ function initD3Force(graph, tree) {
         // context-menu on right click
         .on("contextmenu", d3.contextMenu(nodeMenu)) // Attach context menu to node"s circle
         // Dragging
-        .call(nodeDrag);
+        .call(nodeDrag)
+        .classed('new_node_highlight', function (data) {
+            return 'pybel_highlight' in data;
+        });
 
     var circle = node.append("circle")
         .attr("r", nominalBaseNodeSize)
-        .attr("class", function (node) {
-            return node.function
-        })
-        .style("stroke-width", circleStroke)
-        .style("stroke", function (node) {
-            if ('pybel_highlight' in node) {
-                return node['pybel_highlight']
-            } else {
-                return circleColor
-            }
+        .attr("class", function (data) {
+            return data.function
         });
+
 
     var text = node.append("text")
         .attr("class", "node-name")
-        // .attr("id", nodehashes[d])
         .attr("fill", "black")
         .attr("dx", 16)
         .attr("dy", ".35em")
-        .text(function (d) {
-            if (d.cname) {
-                return d.cname;
-            } else if (d.name) {
-                return d.name;
+        .text(function (data) {
+            if (data.cname) {
+                return data.cname;
+            } else if (data.name) {
+                return data.name;
             } else {
                 return 'UNDEFINED'
             }
         });
 
-    // Highlight on mouseenter and back to normal on mouseout
-    node.on("mouseenter", function (node) {
-        setHighlight(node);
-    })
+    // Highlight on mouse-enter and back to normal on mouseout
+    node
+        .on("mouseenter", function (data, index) {
+            d3.select(this).classed('node_highlighted', true);
+
+
+            link.classed("link_highlighted", function (o) {
+                return o.source.index === index || o.target.index === index;
+            });
+
+            node.classed('node_highlighted', function (o) {
+                return isConnected(data, o);
+            });
+        })
         .on("mousedown", function () {
             d3.event.stopPropagation();
-        }).on("mouseout", function () {
-        exitHighlight();
-    });
+        })
+        .on("mouseout", function () {
+            link.classed("link_highlighted", false);
+            node.classed("node_highlighted", false);
+        });
 
-    function exitHighlight() {
-        highlightNode = null;
-        if (focusNode === null) {
-            if (highlightNodeBoundering !== circleColor) {
-                circle.style("stroke", function (node) {
-                    if ("pybel_highlight" in node) {
-                        return node["pybel_highlight"]
-                    } else {
-                        return circleColor
-                    }
-                });
-                text.style("fill", "black");
-                link.style("stroke", function (node) {
-                    if ("pybel_highlight" in node) {
-                        return node["pybel_highlight"]
-                    } else {
-                        return defaultLinkColor
-                    }
-                })
-
-            }
-        }
-    }
-
-    function setHighlight(d) {
-        if (focusNode !== null) d = focusNode;
-        highlightNode = d;
-
-        if (highlightNodeBoundering !== circleColor) {
-            circle.style("stroke", function (o) {
-                return isConnected(d, o) ? highlightNodeBoundering : circleColor;
-            });
-            text.style("fill", function (o) {
-                return isConnected(d, o) ? highlightText : "black";
-            });
-            link.style("stroke", function (o) {
-                // All links connected to the node you hover on
-                return o.source.index === d.index || o.target.index === d.index ? highlightedLinkColor : defaultLinkColor;
-            });
-        }
-    }
 
     // Highlight links on mouseenter and back to normal on mouseout
-    link.on("mouseenter", function (d) {
-        link.style("stroke", function (o) {
-            // Specifically the link you hover on
-            return o.source.index === d.source.index && o.target.index === d.target.index ? highlightedLinkColor : defaultLinkColor;
-        });
-    })
+    link
+        .on("mouseenter", function (data) {
+            d3.select(this).classed('link_highlighted', true);
+        })
         .on("mousedown", function () {
             d3.event.stopPropagation();
-        }).on("mouseout", function () {
-        link.style("stroke", defaultLinkColor);
-    });
+        })
+        .on("mouseout", function () {
+            d3.select(this).classed('link_highlighted', false);
+        });
 
     /**
      * Freeze the graph when space is pressed

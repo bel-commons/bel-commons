@@ -108,12 +108,51 @@
 .link_continuous {
     fill: none;
     stroke-width: 1px;
+    stroke: #888;
 }
 
 .link_dashed {
     fill: none;
     stroke-width: 1px;
     stroke-dasharray: 4, 4;
+    stroke: #888;
+}
+
+.link_red {
+    stroke: red;
+}
+
+.link_blue {
+    stroke: blue;
+}
+
+.link_highlighted {
+    stroke: #4EB2D4;
+!important;
+}
+
+circle {
+    stroke-width: 2.5px;
+    stroke: black;
+}
+
+.node_highlighted > circle {
+    stroke: #4EB2D4;
+!important;
+}
+
+.node_highlighted > text {
+    fill: #4EB2D4;
+!important;
+}
+
+.new_node_highlight {
+    stroke: red;
+}
+
+.new_node_highlight > circle {
+    stroke: red;
+    fill: red;
 }
 
 /* Add text shadow to nodes*/
