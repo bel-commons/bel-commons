@@ -2,7 +2,7 @@ networkx==1.11
 pybel>=0.9.7
 pybel-tools>=0.4.6
 ols_client>=0.0.8
-sqlalchemy==1.1.14
+sqlalchemy==1.1.15
 requests
 flask==0.12.2
 flask-bootstrap==3.3.7.1
