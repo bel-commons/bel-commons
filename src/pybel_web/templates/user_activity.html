@@ -170,7 +170,7 @@
                                         <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
                                     </a>
                                     <a class="btn btn-default btn-xs"
-                                       href="{{ url_for('dbs.drop_network', network_id=report.network.id) }}">
+                                       href="{{ url_for('dbs.drop_network', network_id=report.network.id, next=url_for('view_current_user_activity')) }}">
                                         <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
                                     </a>
                                 </div>
@@ -326,7 +326,13 @@
                                             <ul>
                                                 {% if protocol_entry['args'] %}
                                                     {% for arg in protocol_entry['args'] %}
-                                                        <li><code>{{ arg }}</code></li>
+                                                        <li><code>
+                                                            {% if protocol_entry['function'] in ['delete_node_by_id', 'expand_node_neighborhood_by_id'] %}
+                                                                {{ arg[:10] }}
+                                                            {% else %}
+                                                                {{ arg }}
+                                                            {% endif %}
+                                                        </code></li>
                                                     {% endfor %}
                                                 {% endif %}
                                                 {% if protocol_entry['kwargs'] %}
