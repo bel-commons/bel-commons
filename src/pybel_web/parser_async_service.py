@@ -57,11 +57,12 @@ def view_parser():
         return redirect(url_for('.view_parser'))
 
     report_id, report_name = report.id, report.source_name
+    current_user_str = str(current_user)
     manager.session.close()
 
     task = current_app.celery.send_task('pybelparser', args=[report_id])
 
-    log.info('Parse task from %s: %s', current_user, task.id)
+    log.info('Parse task from %s: %s', current_user_str, task.id)
     flash('Queued parsing task {} for {}.'.format(report_id, report_name))
 
     return redirect(url_for('view_current_user_activity'))
