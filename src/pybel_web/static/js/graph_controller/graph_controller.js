@@ -886,7 +886,6 @@ function initD3Force(graph, tree) {
     //END Pin down functionality
 
 
-
     var svg = d3.select("#graph-chart").append("svg")
         .attr("class", "svg-border")
         .attr("id", "graph-svg")
@@ -920,6 +919,21 @@ function initD3Force(graph, tree) {
         .attr("opacity", 0.3)
         .append("path")
         .attr("d", "M 0,0 m -1,-5 L 1,-5 L 1,5 L -1,5 Z");
+
+    // // Create definition for cross.
+    svg.append("defs").append("marker")
+        .attr("id", "cross")
+        .attr("viewBox", "-1 -5 2 10")
+        .attr("refX", 15)
+        .attr("refY", 0)
+        .attr("markerUnits", "strokeWidth")
+        .attr("markerWidth", 2)
+        .attr("markerHeight", 6)
+        .attr("orient", "auto")
+        .attr("opacity", 0.3)
+        .append("path")
+        .attr("d", "M 3,3 L 7,7 M 3,7 L 7,3");
+
 
     // Background
     svg.append("rect")
@@ -1009,6 +1023,13 @@ function initD3Force(graph, tree) {
                 return "url(#arrowhead)"
             } else if (["decreases", "directlyDecreases"].indexOf(edge.relation) >= 0) {
                 return "url(#stub)"
+            } else {
+                return ""
+            }
+        })
+        .attr("marker-end", function (edge) {
+            if ("causeNoChange" === edge.relation) {
+                return "url(#cross)"
             } else {
                 return ""
             }
