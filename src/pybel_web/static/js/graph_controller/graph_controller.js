@@ -757,6 +757,10 @@ function initD3Force(graph, tree) {
      * Defines d3-context menu on right click
      */
 
+    function updateQueryResponseTree(response) {
+        updateQueryResponse(response, tree);
+    }
+
     var nodeMenu = [
         {
             title: "Expand node neighbors from networks used in the query",
@@ -766,9 +770,7 @@ function initD3Force(graph, tree) {
                 $.ajax({
                     url: "/api/query/" + window.query + "/add_node_applier/expand_node_neighborhood_by_id/" + node.id,
                     dataType: "json"
-                }).done(function (response) {
-                    updateQueryResponse(response, tree);
-                });
+                }).done(updateQueryResponseTree);
             },
             disabled: false // optional, defaults to false
         },
@@ -778,9 +780,7 @@ function initD3Force(graph, tree) {
                 $.ajax({
                     url: "/api/query/" + window.query + "/add_node_applier/delete_node_by_id/" + node.id,
                     dataType: "json"
-                }).done(function (response) {
-                    updateQueryResponse(response, tree);
-                });
+                }).done(updateQueryResponseTree);
             }
         },
         {
@@ -789,9 +789,7 @@ function initD3Force(graph, tree) {
                 $.ajax({
                     url: "/api/query/" + window.query + "/isolated_node/" + node.id,
                     dataType: "json"
-                }).done(function (response) {
-                    updateQueryResponse(response, tree);
-                });
+                }).done(updateQueryResponseTree);
             }
         }
     ];
