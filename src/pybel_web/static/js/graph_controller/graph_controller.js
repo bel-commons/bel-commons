@@ -723,6 +723,7 @@ function doesEdgeHaveCausal(edge) {
 }
 
 
+
 /**
  * Initialize d3 Force to plot network from json
  * @param {object} graph json data
@@ -1005,16 +1006,22 @@ function initD3Force(graph, tree) {
             return "link link_dashed"
         })
         .attr("marker-end", function (edge) {
-            if (["increases", "directlyIncreases"].indexOf(edge.relation) >= 0) {
+
+            edge_types = getEdgeTypes(edge);
+
+            if ("increases" in edge_types || "directlyIncreases" in edge_types) {
                 return "url(#arrowhead)"
-            } else if (["decreases", "directlyDecreases"].indexOf(edge.relation) >= 0) {
+            } else if ("decreases" in edge_types || "directlyDecreases" in edge_types) {
                 return "url(#stub)"
             } else {
                 return ""
             }
         })
-        .attr("marker-end", function (edge) {
-            if ("causeNoChange" === edge.relation) {
+        .attr("marker-mid", function (edge) {
+
+            edge_types = getEdgeTypes(edge);
+
+            if ("causeNoChange" in edge_types) {
                 return "url(#cross)"
             } else {
                 return ""
