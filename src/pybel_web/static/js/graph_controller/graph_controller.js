@@ -95,20 +95,11 @@ function displayNodeInfo(node) {
 
     var nodeObject = {};
 
-    nodeObject["Function"] = node.function;
-
     if (node.bel) {
-        nodeObject["BEL"] = node.bel;
-    }
-
-    if (node.name) {
-        nodeObject["Name"] = node.name;
+        nodeObject["BEL"] = '<a href="/node/' + node.id + '"><code>' + node.bel + "</code> <span class=\"glyphicon glyphicon-new-window\"></span></a>";
     }
     if (node.identifier) {
         nodeObject["Identifier"] = node.identifier;
-    }
-    if (node.namespace) {
-        nodeObject["Namespace"] = node.namespace;
     }
     if (node.label) {
         nodeObject["Label"] = node.label
