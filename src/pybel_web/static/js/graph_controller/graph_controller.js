@@ -34,20 +34,6 @@ $(document).on({
 });
 
 /**
- * Object from which the random property will be returned
- * @param {object} obj
- * @return {str} random property of the object
- */
-function pickRandomProperty(obj) {
-    var result;
-    var count = 0;
-    for (var prop in obj)
-        if (Math.random() < 1 / ++count)
-            result = prop;
-    return result;
-}
-
-/**
  * Returns a random integer between min (inclusive) and max (inclusive)
  * Using Math.round() will give you a non-uniform distribution!
  * @param {int} min
@@ -1165,8 +1151,9 @@ function initD3Force(graph, tree) {
     function resetAttributesDoubleClick() {
         // On double click reset attributes (Important disabling the zoom behavior of dbl click because it interferes with this)
         svg.on("dblclick", function () {
-            // SET default color
-            svg.selectAll(".link").style("stroke", defaultLinkColor);
+            // Remove the overriding stroke so the links default back to the CSS definitions
+            link.style("stroke", null);
+
             // SET default attributes //
             svg.selectAll(".link, .node").style("visibility", "visible")
                 .style("opacity", "1");
@@ -1431,7 +1418,7 @@ function initD3Force(graph, tree) {
     /**
      * Process the response of shortest/all paths and highlight nodes/edges in them
      * @param {array} paths array containing path or paths
-     * @param {string} checkbox boolean (hide other nodes if true)
+     * @param {boolean} checkbox boolean (hide other nodes if true)
      * @param {string} pathMethods if "all" -> all paths else-> shortests
      * @example colorPaths([[1,34,5,56],[123,234,3,4]], ,false)
      */
@@ -1659,36 +1646,11 @@ function initD3Force(graph, tree) {
     randomPaths.off("click"); // It will unbind the previous click if multiple graphs has been rendered
 
     randomPaths.on("click", function () {
-            var checkbox = pathForm.find("input[name='visualization-options']").is(":checked");
-
-            var args = {"paths_method": $("input[name=paths_method]:checked", pathForm).val(), "random": true};
-
-            var undirected = pathForm.find("input[name='undirectionalize']").is(":checked");
-
-            if (undirected) {
-                args["undirected"] = undirected;
-            }
-
-            var randomSource = nodeNamesToId[pickRandomProperty(nodeNamesToId)];
-
-            var randomTarget = randomSource;
-
-            if (Object.keys(nodeNamesToId).length < 2) { // One of no nodes in the query
-                alert("There is only one node present in your query.");
-                return
-            } else { // 2 or more nodes in the graph
-                while (randomSource === randomTarget) { // Guarantees that the source and target node is not the same
-                    var randomTarget = nodeNamesToId[pickRandomProperty(nodeNamesToId)];
-                }
-            }
-
             $.ajax({
-                url: "/api/query/" + window.query + "/paths/" + randomSource + "/" + randomTarget + "/",
-                type: pathForm.attr("method"),
+                url: "/api/query/" + window.query + "/paths/random",
                 dataType: "json",
-                data: $.param(args, true),
                 success: function (paths) {
-                    handlePathResponse(paths, checkbox, args["paths_method"]);
+                    handlePathResponse(paths, false, null);
                 },
                 error: function (request) {
                     alert(request.responseText);

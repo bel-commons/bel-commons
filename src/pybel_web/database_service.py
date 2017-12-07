@@ -5,6 +5,7 @@
 import csv
 import logging
 import pickle
+import random
 import time
 from functools import lru_cache
 from operator import itemgetter
@@ -1064,20 +1065,21 @@ def get_paths(query_id, source_id, target_id):
               - all
               - shortest
     """
+    source = manager.get_node_by_hash(source_id)
+    if source is None:
+        raise IndexError('Source missing from cache: %s', source_id)
+    source = source.to_tuple()
+
+    target = manager.get_node_by_hash(target_id)
+    if target is None:
+        raise IndexError('target is missing from cache: %s', target_id)
+    target = target.to_tuple()
+
     network = get_graph_from_request(query_id)
-
     method = request.args.get(PATHS_METHOD)
-
     undirected = UNDIRECTED in request.args
-
     remove_pathologies = PATHOLOGY_FILTER in request.args
-
     cutoff = request.args.get('cutoff', default=7, type=int)
-
-    source = source_id
-    target = target_id
-
-    log.info('Source: %s, target: %s', source, target)
 
     if source not in network or target not in network:
         log.info('Source/target node not in network')
@@ -1094,7 +1096,7 @@ def get_paths(query_id, source_id, target_id):
         paths = nx.all_simple_paths(network, source=source, target=target, cutoff=cutoff)
         return jsonify([
             [
-                node
+                hash_node(node)
                 for node in path
             ]
             for path in paths
@@ -1116,7 +1118,49 @@ def get_paths(query_id, source_id, target_id):
         shortest_path = nx.shortest_path(network, source=source, target=network.neighbors(source)[0])
 
     return jsonify([
-        node
+        hash_node(node)
+        for node in shortest_path
+    ])
+
+
+@api_blueprint.route('/api/query/<int:query_id>/paths/random')
+def get_random_paths(query_id):
+    """Gets random paths given the query identifier
+
+    ---
+    tags:
+        - query
+    parameters:
+      - name: query_id
+        in: path
+        description: The database query identifier
+        required: true
+        type: integer
+    """
+    network = get_graph_from_request(query_id)
+
+    network = network.to_undirected()
+
+    nodes = network.nodes()
+
+    def pick_random_pair():
+        return random.choices(nodes, k=2)
+
+    source, target = pick_random_pair()
+
+    tries = 0
+    sentinel_tries = 5
+    while not nx.has_path(network, source, target) and tries < sentinel_tries:
+        tries += 1
+        source, target = pick_random_pair()
+
+    if tries == sentinel_tries:
+        return source
+
+    shortest_path = nx.shortest_path(network, source=source, target=target)
+
+    return jsonify([
+        hash_node(node)
         for node in shortest_path
     ])
 
