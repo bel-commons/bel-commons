@@ -211,7 +211,7 @@ function displayQueryInfo(query) {
     }
     queryObject["Assembly"] = query.networks.join(", ");
 
-    if (query.seeding.length !== 0) {
+    if (query.seeding && query.seeding.length !== 0) {
         queryObject["Seeding"] = query.seeding.map(function (object) {
             if (object.type === "annotation") {
                 var arr = [];
