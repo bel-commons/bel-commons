@@ -6,7 +6,7 @@ from flask import Response, jsonify, send_file
 from six import BytesIO, StringIO
 
 from pybel import to_bel_lines, to_bytes, to_csv, to_cx, to_graphml, to_gsea, to_jgif, to_sif
-from pybel.canonicalize import edge_to_bel
+from pybel.canonicalize import edge_to_bel, node_to_bel
 from pybel.constants import (
     CAUSAL_DECREASE_RELATIONS, CAUSAL_INCREASE_RELATIONS, DECREASES, INCREASES, RELATION,
     TWO_WAY_RELATIONS,
@@ -31,6 +31,7 @@ def to_json_custom(graph, _id='id', source='source', target='target', key='key')
     for i, node in enumerate(sorted(graph.nodes_iter(), key=hash_node)):
         nd = graph.node[node].copy()
         nd[_id] = hash_node(node)
+        nd['bel'] = node_to_bel(graph, node)
         result['nodes'].append(nd)
         mapping[node] = i
 
