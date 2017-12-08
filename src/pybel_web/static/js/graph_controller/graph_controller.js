@@ -8,10 +8,8 @@
  */
 
 
-var defaultLinkColor = "#888";
-
+// Constants used in the graph controller
 const nominalBaseNodeSize = 10; // Default node radius
-
 var edgeStroke = 3.5;  // Edge width
 var minZoom = 0.1, maxZoom = 10; // Zoom variables
 
@@ -1322,8 +1320,6 @@ function initD3Force(graph, tree) {
         var edgeToHighlight = svg.selectAll(".link").filter(function (edge) {
             return relation in getEdgeTypes(edge)
         });
-
-        console.log(edgeToHighlight)
 
         // Set opacity of these edges to 1
         $.each(edgeToHighlight._groups[0], function (index, edge) {
