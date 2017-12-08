@@ -198,7 +198,6 @@ def async_parser(report_id):
 
     try:
         log.info('inserting %s with %s', graph, manager.engine.url)
-        #logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
         network = manager.insert_graph(graph, store_parts=app.config.get("PYBEL_USE_EDGE_STORE", True))
 
     except IntegrityError:

@@ -416,4 +416,7 @@ def build_main_service(app):
         if not os.path.exists(path):
             abort(404, 'BEL file does not exist')
 
-        return flask.send_file(path)  # TODO delete as cleanup
+        rv = flask.send_file(path)
+
+        # TODO delete as cleanup
+        return rv
