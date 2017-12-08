@@ -915,6 +915,13 @@ def get_tree_from_query(query_id):
     return get_tree_annotations(graph)
 
 
+@api_blueprint.route('/api/query/<int:query_id>.json')
+def download_query_json(query_id):
+    """Downloads the query"""
+    query = safe_get_query(query_id)
+    query_json = query.to_json()
+    return jsonify(query_json)
+
 @api_blueprint.route('/api/query/<int:query_id>/tree/')
 def get_tree_api(query_id):
     """Builds the annotation tree data structure for a given graph
