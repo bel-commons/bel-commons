@@ -286,7 +286,8 @@ def build_main_service(app):
             if report.incomplete and not report.stalled
         ]
 
-        return render_template('user_activity.html', user=current_user, pending_reports=pending_reports)
+        return render_template('user_activity.html', user=current_user, pending_reports=pending_reports,
+                               manager=manager)
 
     @app.route('/user/<int:user_id>')
     @roles_required('admin')
@@ -300,7 +301,7 @@ def build_main_service(app):
             if report.incomplete
         ]
 
-        return render_template('user_activity.html', user=user, pending_reports=pending_reports)
+        return render_template('user_activity.html', user=user, pending_reports=pending_reports, manager=manager)
 
     @app.route('/reporting', methods=['GET'])
     def view_reports():

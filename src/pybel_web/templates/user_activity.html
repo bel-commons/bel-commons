@@ -305,6 +305,12 @@
                                                         {{ annotation }}: {{ value }}
                                                     </li>
                                                 {% endfor %}
+                                            {% elif seed['type'] in ['induction'] %}
+                                                {% for node_tuple in seed['data'] %}
+                                                    <li>
+                                                        <code>{{ manager.get_node_by_tuple(node_tuple) }}</code>
+                                                    </li>
+                                                {% endfor %}
                                             {% else %}
                                                 {% for seed_data in seed['data'] %}
                                                     <li>
@@ -321,14 +327,14 @@
                             <ul>
                                 {% for protocol_entry in query.protocol_to_json() %}
                                     <li>
-                                        <code>{{ protocol_entry['function'] }}</code>
+                                        {{ protocol_entry['function']|replace('_', ' ')|title }}
                                         {% if protocol_entry['args'] or protocol_entry['kwargs'] %}
                                             <ul>
                                                 {% if protocol_entry['args'] %}
                                                     {% for arg in protocol_entry['args'] %}
                                                         <li><code>
                                                             {% if protocol_entry['function'] in ['delete_node_by_id', 'expand_node_neighborhood_by_id'] %}
-                                                                {{ arg[:10] }}
+                                                                {{ manager.get_node_by_hash(arg) }}
                                                             {% else %}
                                                                 {{ arg }}
                                                             {% endif %}
