@@ -1314,15 +1314,16 @@ function initD3Force(graph, tree) {
 
     /**
      * Highlights edges which property is equal to condition
-     * @param {string} property of the edge that is going to checked
-     * @param {string} condition property to be asserted
+     * @param {string} relation relationship to filter
      */
-    function highlightEdgesByProperty(property, condition) {
+    function highlightEdgesByRelationship(relation) {
 
         // Filter not mapped nodes to change opacity
         var edgeToHighlight = svg.selectAll(".link").filter(function (edge) {
-            return edge[property] === condition;
+            return relation in getEdgeTypes(edge)
         });
+
+        console.log(edgeToHighlight)
 
         // Set opacity of these edges to 1
         $.each(edgeToHighlight._groups[0], function (index, edge) {
@@ -1581,7 +1582,7 @@ function initD3Force(graph, tree) {
             if (spanClass[0] === "node") {
                 highlightNodesByProperty(spanClass[1], highlightSpan.id);
             } else {
-                highlightEdgesByProperty(spanClass[1], highlightSpan.id);
+                highlightEdgesByRelationship(highlightSpan.id);
             }
         });
 
