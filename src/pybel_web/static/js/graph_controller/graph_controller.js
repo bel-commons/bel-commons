@@ -82,7 +82,7 @@ function displayNodeInfo(node) {
     var nodeObject = {};
 
     if (node.bel) {
-        nodeObject["BEL"] = '<a href="/node/' + node.id + '"><code>' + node.bel + "</code> <span class=\"glyphicon glyphicon-new-window\"></span></a>";
+        nodeObject["BEL"] = '<a target="_blank" href="/node/' + node.id + '"><code>' + node.bel + "</code> <span class=\"glyphicon glyphicon-new-window\"></span></a>";
     }
     if (node.identifier) {
         nodeObject["Identifier"] = node.identifier;
@@ -94,7 +94,7 @@ function displayNodeInfo(node) {
         nodeObject["Description"] = node.description
     }
     if (node.id) {
-        nodeObject["Hash"] = '<a href="/node/' + node.id + '"><code>' + node.id.slice(0, 10) + "</code></a>";
+        nodeObject["Hash"] = '<a target="_blank" href="/node/' + node.id + '"><code>' + node.id.slice(0, 10) + "</code></a>";
     }
 
     var row = 0;
@@ -112,9 +112,9 @@ function displayEdgeInfo(edge) {
 
     var edgeObject = {};
 
-    edgeObject["Links"] = '<a href="/node/' + edge.source.id + '">' + edge.source.cname + ' <span class="glyphicon glyphicon-new-window"></span></a>';
-    edgeObject["Links"] += '<br /><a href="/node/' + edge.target.id + '">' + edge.target.cname + ' <span class="glyphicon glyphicon-new-window"></span></a>';
-    edgeObject["Links"] += '<br /><a href="/node/' + edge.source.id + '/edges/' + edge.target.id + '">All Evidences <span class="glyphicon glyphicon-new-window"></span></a>';
+    edgeObject["Links"] = '<a target="_blank" href="/node/' + edge.source.id + '">' + edge.source.cname + ' <span class="glyphicon glyphicon-new-window"></span></a>';
+    edgeObject["Links"] += '<br /><a target="_blank" href="/node/' + edge.target.id + '">' + edge.target.cname + ' <span class="glyphicon glyphicon-new-window"></span></a>';
+    edgeObject["Links"] += '<br /><a target="_blank" href="/node/' + edge.source.id + '/edges/' + edge.target.id + '">All Evidences <span class="glyphicon glyphicon-new-window"></span></a>';
 
     if (edge.contexts) {
         $.each(edge.contexts, function (key, context) {
@@ -126,10 +126,10 @@ function displayEdgeInfo(edge) {
                 if (context.citation) {
                     edgeObject[sk] += '<dt>Citation</dt><dd>';
                     if (context.citation.type === "PubMed") {
-                        edgeObject[sk] += "<a href=https://www.ncbi.nlm.nih.gov/pubmed/" + context.citation.reference + " target='_blank' " +
+                        edgeObject[sk] += '<a target="_blank" href=https://www.ncbi.nlm.nih.gov/pubmed/' + context.citation.reference + " target='_blank' " +
                             "style='text-decoration: underline'>PMID:" + context.citation.reference + "</a>";
                     } else if (context.citation.type === "URL") {
-                        edgeObject[sk] += "<a href=" + context.citation.reference + " target='_blank' " +
+                        edgeObject[sk] += '<a target="_blank" href=' + context.citation.reference + " target='_blank' " +
                             "style='text-decoration: underline'>" + context.citation.reference + "</a>";
                     } else {
                         // TODO handle DOIs?
@@ -152,7 +152,7 @@ function displayEdgeInfo(edge) {
 
 
                 if (window.allow_voting === true) {
-                    edgeObject[sk] += '<dt>Links</dt><dd><a href="/api/edge/' + context.id + '">' + 'More Information</a> ';
+                    edgeObject[sk] += '<dt>Links</dt><dd><a target="_blank" href="/api/edge/' + context.id + '">' + 'More Information</a> ';
                     edgeObject[sk] += 'or <a href="#" data-toggle="modal" data-target="#edge-feedback" data-edge="' +
                         context.id + '">Give Feedback</a>';
                     edgeObject[sk] += '</dd>';
