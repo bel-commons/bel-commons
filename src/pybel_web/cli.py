@@ -27,12 +27,13 @@ import time
 import click
 import gunicorn.app.base
 from flask_security import SQLAlchemyUserDatastore
+
+import pybel
 from pybel.constants import PYBEL_CONNECTION, PYBEL_DATA_DIR, get_cache_connection
 from pybel.manager import Manager
 from pybel.manager.models import Base, Network
 from pybel.utils import get_version as pybel_version
 from pybel_tools.utils import enable_cool_mode, get_version as pybel_tools_get_version
-
 from .analysis_service import analysis_blueprint
 from .application import create_application
 from .bms_service import bms_blueprint
@@ -44,7 +45,7 @@ from .main_service import build_main_service
 from .models import Experiment, Project, Report, Role, User
 from .parser_async_service import parser_async_blueprint
 from .parser_endpoint import build_parser_service
-from .utils import iterate_user_strings
+from .utils import insert_graph, iterate_user_strings
 
 log = logging.getLogger('pybel_web')
 
@@ -291,6 +292,28 @@ def sanitize_reports(manager):
 
 
 @manage.group()
+def network():
+    """Manage networks"""
+
+
+@network.command()
+@click.option('--path')
+@click.pass_obj
+def parse(manager, path):
+    """Parses a BEL script and uploads"""
+    graph = pybel.from_path(path, manager=manager)
+    insert_graph(manager, graph)
+
+
+@network.command()
+@click.option('--path')
+@click.pass_obj
+def upload_gpickle(manager, path):
+    """Uploads a precompiled gpickle"""
+    graph = pybel.from_pickle(path)
+    insert_graph(manager, graph)
+
+@manage.group()
 def user():
     """Manage users"""
 
@@ -435,10 +458,15 @@ def experiments():
 
 
 @experiments.command()
+@click.option('--experiment-id', type=int)
+@click.option('-y', '--yes', is_flag=True)
 @click.pass_obj
-def dropall(manager):
+def drop(manager, experiment_id, yes):
     """Drops all experiments"""
-    if click.confirm('Drop all experiments at {}?'.format(manager.connection)):
+    if experiment_id:
+        manager.session.query(Experiment).get(experiment_id).delete()
+
+    if yes or click.confirm('Drop all experiments at {}?'.format(manager.connection)):
         manager.session.query(Experiment).delete()
 
 

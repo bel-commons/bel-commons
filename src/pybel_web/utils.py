@@ -950,3 +950,24 @@ def fill_out_report(network, report, graph_summary):
     report.average_degree = graph_summary['average_degree']
     report.dump_calculations(graph_summary['summary_dict'])
     report.completed = True
+
+
+def insert_graph(m, graph, user_id=1):
+    """insert a graph and also make a report
+    
+    :param pybel.Manager m:
+    :param pybel.BELGraph graph:
+    :param int user_id:
+    """
+    network = m.insert_graph(graph)
+
+    report = Report(
+        user_id=user_id
+    )
+
+    graph_summary = make_graph_summary(graph)
+
+    fill_out_report(network, report, graph_summary)
+
+    m.session.add(report)
+    m.session.commit()
