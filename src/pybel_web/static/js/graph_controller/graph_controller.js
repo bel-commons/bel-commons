@@ -695,13 +695,13 @@ function downloadText(response, name) {
  * @return {object}
  */
 function getEdgeTypes(edge) {
-    edge_types = {};
+    var edgeTypes = {};
 
     $(edge.contexts).each(function (index, context) {
-        edge_types[context.relation] = true;
+        edgeTypes[context.relation] = true;
     });
 
-    return edge_types;
+    return edgeTypes;
 }
 
 /**
@@ -711,11 +711,11 @@ function getEdgeTypes(edge) {
  */
 function doesEdgeHaveCausal(edge) {
 
-    edge_types = getEdgeTypes(edge);
+    var edgeTypes = getEdgeTypes(edge);
 
     const causal_edge_types = ["decreases", "directlyDecreases", "increases", "directlyIncreases"];
     for (var i in causal_edge_types) {
-        if (causal_edge_types[i] in edge_types) {
+        if (causal_edge_types[i] in edgeTypes) {
             return true;
         }
     }
@@ -993,13 +993,13 @@ function initD3Force(graph, tree) {
                 return "link link_continuous";
             }
 
-            edge_types = getEdgeTypes(edge);
+            edgeTypes = getEdgeTypes(edge);
 
-            if ('negativeCorrelation' in edge_types) {
+            if ('negativeCorrelation' in edgeTypes) {
                 return 'link link_dashed link_red';
             }
 
-            if ('positiveCorrelation' in edge_types) {
+            if ('positiveCorrelation' in edgeTypes) {
                 return 'link link_dashed link_blue';
             }
 
@@ -1007,11 +1007,11 @@ function initD3Force(graph, tree) {
         })
         .attr("marker-end", function (edge) {
 
-            edge_types = getEdgeTypes(edge);
+            edgeTypes = getEdgeTypes(edge);
 
-            if ("increases" in edge_types || "directlyIncreases" in edge_types) {
+            if ("increases" in edgeTypes || "directlyIncreases" in edgeTypes) {
                 return "url(#arrowhead)"
-            } else if ("decreases" in edge_types || "directlyDecreases" in edge_types) {
+            } else if ("decreases" in edgeTypes || "directlyDecreases" in edgeTypes) {
                 return "url(#stub)"
             } else {
                 return ""
@@ -1019,9 +1019,9 @@ function initD3Force(graph, tree) {
         })
         .attr("marker-mid", function (edge) {
 
-            edge_types = getEdgeTypes(edge);
+            edgeTypes = getEdgeTypes(edge);
 
-            if ("causeNoChange" in edge_types) {
+            if ("causeNoChange" in edgeTypes) {
                 return "url(#cross)"
             } else {
                 return ""
@@ -1531,12 +1531,15 @@ function initD3Force(graph, tree) {
     edgePanel.append("<ul id='edge-list-ul' class='list-group checked-list-box not-rounded'></ul>");
 
 
-    $.each(graph.links, function (key, value) {
+    $.each(graph.links, function (key, edge) {
 
-        $("#edge-list-ul").append("<li class='list-group-item'><input class='edge-checkbox' type='checkbox'><span id="
-            + value.source.id + '-' + value.target.id + ">" + value.source.cname + ' <strong><i>' + value.relation +
-            '</i></strong> ' + value.target.cname + "</span></li>");
+        edgeTypes = getEdgeTypes(edge);
 
+        for (edgeType in edgeTypes){
+            $("#edge-list-ul").append("<li class='list-group-item'><input class='edge-checkbox' type='checkbox'><span id="
+            + edge.source.id + '-' + edge.target.id + ">" + edge.source.cname + ' <strong><i>' + edgeType +
+            '</i></strong> ' + edge.target.cname + "</span></li>");
+        }
     });
 
     var checkNodesButton = $("#get-checked-edges");
