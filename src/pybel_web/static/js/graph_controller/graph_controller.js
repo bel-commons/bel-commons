@@ -977,6 +977,15 @@ function initD3Force(graph, tree) {
     simulation.force("link")
         .links(graph.links);
 
+    // Modify the simulation
+
+    function inputted() {
+        simulation.force("link").strength(+this.value);
+        simulation.alpha(1).restart();
+    }
+
+    d3.select("#link-slider").on("input", inputted);
+
     // Definition of links nodes text...
 
     var link = g.selectAll(".link")

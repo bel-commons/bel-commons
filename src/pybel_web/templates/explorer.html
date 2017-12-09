@@ -18,7 +18,6 @@
     <script type="text/javascript"
             src="https://cdnjs.cloudflare.com/ajax/libs/inspire-tree/1.12.1/inspire-tree-bundled.js"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='js/svg_to_png/saveSvgAsPng.js') }}"></script>
-
     <script type="text/javascript">
         {% if current_user.is_beta_tester %}
             window.allow_voting = true;
@@ -37,6 +36,8 @@
     <link rel="stylesheet" type="text/css"
           href='https://cdnjs.cloudflare.com/ajax/libs/bootstrap-toggle/2.2.2/css/bootstrap-toggle.min.css'/>
     <link rel="stylesheet" href="{{ url_for('static', filename='js/d3-context-menu/css/d3-context-menu.css') }}">
+    <link rel="stylesheet"
+          href='https://cdnjs.cloudflare.com/ajax/libs/bootstrap-slider/9.8.0/css/bootstrap-slider.min.css'/>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/graph.css', version='20171206') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/legend.css', version='20171206') }}">
 {% endblock %}
@@ -52,8 +53,6 @@
             src="{{ url_for('static', filename='js/graph_controller/graph_controller.js', version='20171207') }}"></script>
     <script type="text/javascript"
             src="{{ url_for('static', filename='js/d3-context-menu/js/d3-context-menu.js') }}"></script>
-    <script type="text/javascript"
-            src='https://cdnjs.cloudflare.com/ajax/libs/bootstrap-toggle/2.2.2/js/bootstrap-toggle.min.js'></script>
 
     <script type="text/javascript">
         // Arrays with selected nodes to expand/delete
@@ -180,6 +179,11 @@
                              style="max-height: 450px;height: 450px; overflow:auto;"></div>
                     </div>
                     <div class="tab-pane not-rounded" id="edges-panel" role="tabpanel">
+                        <p class="text-center" style="margin-top: 10px;"><b> Modify Links Length</b></p>
+                        <input id="link-slider" style="width: 80%; margin-bottom: 10px; margin-top: 10px;
+                         margin-left: 10%; margin-right: 10%;"
+                               class="text-center" type="range" min="0" max="1" step="any"
+                               value="0.7">
                         <button class='btn btn-primary not-rounded full-width' id='get-checked-edges'>Show
                             Selected Edges
                         </button>
@@ -341,6 +345,10 @@
                         </tr>
                         </thead>
                         <tbody>
+                        <tr>
+                            <td>Modify Link (edges) Length</td>
+                            <td>Slider on Edge tab</td>
+                        </tr>
                         <tr>
                             <td>Open node contextual menu</td>
                             <td>Right click on node</td>
@@ -873,17 +881,18 @@
                         </thead>
                         <tbody>
                         {% for toolbox_function, toolbox_button, toolbox_description in explorer_toolbox %}
-                        <tr>
-                            <td>
-                                <button type="button" value="{{ toolbox_function }}" class="btn btn-info explorer-tool"
-                                        data-dismiss="modal">
-                                    {{ toolbox_button }}
-                                </button>
-                            </td>
-                            <td>
-                                {{ toolbox_description }}
-                            </td>
-                        </tr>
+                            <tr>
+                                <td>
+                                    <button type="button" value="{{ toolbox_function }}"
+                                            class="btn btn-info explorer-tool"
+                                            data-dismiss="modal">
+                                        {{ toolbox_button }}
+                                    </button>
+                                </td>
+                                <td>
+                                    {{ toolbox_description }}
+                                </td>
+                            </tr>
                         {% endfor %}
                         </tbody>
                     </table>
