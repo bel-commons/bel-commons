@@ -5,7 +5,7 @@ import logging
 from flask import Response, jsonify, send_file
 from six import BytesIO, StringIO
 
-from pybel import to_bel_lines, to_bytes, to_csv, to_cx, to_graphml, to_gsea, to_jgif, to_sif
+from pybel import to_bel_lines, to_bytes, to_csv, to_cx, to_graphml, to_gsea, to_jgif, to_json, to_sif
 from pybel.canonicalize import edge_to_bel, node_to_bel
 from pybel.constants import (
     CAUSAL_DECREASE_RELATIONS, CAUSAL_INCREASE_RELATIONS, DECREASES, INCREASES, RELATION,
@@ -83,8 +83,11 @@ def serve_network(graph, serve_format=None):
     :param str serve_format: The format to serve the network
     :rtype: flask.Response
     """
-    if serve_format is None or serve_format == 'json':
+    if serve_format is None:
         return jsonify(to_json_custom(graph))
+
+    elif serve_format in {'nl', 'nodelink'}:
+        return jsonify(to_json(graph))
 
     elif serve_format == 'cx':
         return jsonify(to_cx(graph))
