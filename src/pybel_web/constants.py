@@ -43,7 +43,7 @@ if not os.path.exists(merged_document_folder):
 
 # Default networkx explorer toolbox functions (name, button text, description)
 _explorer_toolbox = (
-    ('collapse_by_central_dogma_to_genes', 'Central Dogma to Genes', 'Collapse Protein/RNA/Gene nodes to genes'),
+    ('collapse_by_central_dogma_to_genes', 'Central Dogma to Genes', 'Collapse proteins and RNAs to genes'),
     ('collapse_all_variants', 'Collapse Variants', 'Collapse Variants to their Parent Nodes'),
     ('collapse_to_protein_interactions', 'Protein Interaction Network',
      'Reduce the Network to Interactions between Proteins'),
