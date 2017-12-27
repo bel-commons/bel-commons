@@ -1865,7 +1865,7 @@ function initD3Force(graph, tree) {
 
     toolButtonClass.on("click", function () {
         $.ajax({
-            url: "/api/query/" + window.query + "/add_applier/" + $(this).val(),
+            url: "/api/query/" + window.query + "/add_applier/" + $(this).data('value'),
             dataType: "json"
         }).done(function (response) {
             updateQueryResponse(response, tree);

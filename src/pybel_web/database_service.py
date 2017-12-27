@@ -20,11 +20,11 @@ from sqlalchemy import func
 import pybel
 from pybel.constants import METADATA_AUTHORS, METADATA_CONTACT, METADATA_NAME, NAME, NAMESPACE, NAMESPACE_DOMAIN_OTHER
 from pybel.manager.models import (
-    Annotation, AnnotationEntry, Author, Citation, Edge, Namespace, Network, Node,
-    network_edge,
+    Annotation, AnnotationEntry, Author, Citation, Edge, Namespace, Network, Node, network_edge,
 )
 from pybel.resources.definitions import write_annotation, write_namespace
 from pybel.struct import union
+from pybel.struct.summary import get_pubmed_identifiers
 from pybel.utils import hash_node
 from pybel_tools import pipeline
 from pybel_tools.analysis.cmpa import RESULT_LABELS
@@ -34,8 +34,8 @@ from pybel_tools.pipeline import in_place_mutator
 from pybel_tools.query import Query
 from pybel_tools.selection import get_subgraph_by_annotations, get_subgraph_by_node_filter
 from pybel_tools.summary import (
-    get_authors, get_incorrect_names_by_namespace, get_naked_names, get_pubmed_identifiers, get_tree_annotations,
-    get_undefined_namespace_names, info_json, info_list,
+    get_authors, get_incorrect_names_by_namespace, get_naked_names, get_tree_annotations, get_undefined_namespace_names,
+    info_json, info_list,
 )
 from . import models
 from .constants import *
@@ -91,6 +91,7 @@ def get_graph_from_request(query_id):
 @api_blueprint.route('/api/receive', methods=['POST'])
 def receive():
     """Receives a JSON serialized BEL graph"""
+    # TODO assume https authentication and use this to assign user to receive network function
     payload = request.get_json()
     task = current_app.celery.send_task('receive-network', args=[payload])
     return next_or_jsonify('Sent async receive task', network_id=task.id)
@@ -1443,8 +1444,8 @@ def edges_by_bel_target(target_bel):
     return jsonify(edges)
 
 
-@api_blueprint.route('/api/citation/pubmed/<int:pmid>/edges')
-def edges_by_pmid(pmid):
+@api_blueprint.route('/api/citation/pubmed/<pubmed_identifier>/edges')
+def edges_by_pmid(pubmed_identifier):
     """Gets edges that have a given PubMed identifier
 
     ---
@@ -1457,7 +1458,7 @@ def edges_by_pmid(pmid):
         required: true
         type: integer
     """
-    edges = manager.query_edges(citation=pmid)
+    edges = manager.query_edges(citation=pubmed_identifier)
     return jsonify(edges)
 
 
@@ -1475,8 +1476,8 @@ def edges_by_author(author):
         required: true
         type: string
     """
-    citation = manager.query_citations(author=author)
-    edges = manager.query_edges(citation=citation)
+    citations = manager.query_citations(author=author)
+    edges = manager.query_edges(citation=citations)
     return jsonify(edges)
 
 

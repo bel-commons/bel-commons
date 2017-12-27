@@ -21,27 +21,27 @@ import pybel
 from pybel.canonicalize import calculate_canonical_name, node_to_bel
 from pybel.constants import GENE, RELATION
 from pybel.manager import Network
-from pybel.parser.canonicalize import node_to_tuple
 from pybel.struct.filters import filter_edges
-from pybel.struct.summary import get_syntax_errors
-from pybel.struct.summary.node_summary import count_functions, count_namespaces, get_unused_namespaces
+from pybel.struct.summary import (
+    count_functions, count_namespaces, get_pubmed_identifiers, get_syntax_errors, get_unused_namespaces,
+)
+from pybel.tokens import node_to_tuple
 from pybel.utils import hash_node
 from pybel_tools.analysis.cmpa import calculate_average_scores_on_subgraphs as calculate_average_cmpa_on_subgraphs
 from pybel_tools.analysis.stability import (
-    get_chaotic_pairs, get_chaotic_triplets, get_contradiction_summary,
-    get_dampened_pairs, get_dampened_triplets, get_decrease_mismatch_triplets, get_increase_mismatch_triplets,
-    get_jens_unstable, get_mutually_unstable_correlation_triples, get_regulatory_pairs,
-    get_separate_unstable_correlation_triples,
+    get_chaotic_pairs, get_chaotic_triplets, get_contradiction_summary, get_dampened_pairs, get_dampened_triplets,
+    get_decrease_mismatch_triplets, get_increase_mismatch_triplets, get_jens_unstable,
+    get_mutually_unstable_correlation_triples, get_regulatory_pairs, get_separate_unstable_correlation_triples,
 )
-from pybel_tools.filters import edge_has_pathology_causal, iter_undefined_families, remove_nodes_by_namespace
+from pybel_tools.filters import has_pathology_causal, iter_undefined_families, remove_nodes_by_namespace
 from pybel_tools.generation import generate_bioprocess_mechanisms
 from pybel_tools.integration import overlay_type_data
 from pybel_tools.mutation import collapse_by_central_dogma_to_genes, rewire_variants_to_genes
 from pybel_tools.summary import (
     count_error_types, count_pathologies, count_relations, count_unique_authors, count_unique_citations, count_variants,
     get_annotations, get_citation_years, get_modifications_count, get_most_common_errors, get_naked_names,
-    get_namespaces_with_incorrect_names, get_pubmed_identifiers, get_undefined_annotations, get_undefined_namespaces,
-    get_unused_annotations, get_unused_list_annotation_values,
+    get_namespaces_with_incorrect_names, get_undefined_annotations, get_undefined_namespaces, get_unused_annotations,
+    get_unused_list_annotation_values,
 )
 from pybel_tools.utils import min_tanimoto_set_similarity, prepare_c3, prepare_c3_time_series
 from .application_utils import get_manager, get_user_datastore
@@ -94,6 +94,12 @@ def get_top_overlaps(network_id, number=10):
 
 
 def canonical_hash(graph, node):
+    """Hashes the node
+
+    :param pybel.BELGraph graph:
+    :param tuple node:
+    :rtype: str
+    """
     data = graph.node[node]
     canonical_node_tuple = node_to_tuple(data)
     return hash_node(canonical_node_tuple)
@@ -124,7 +130,7 @@ def get_network_summary_dict(graph):
         if node in node_bel_cache:
             return node_bel_cache[node]
 
-        node_bel_cache[node] = node_to_bel(graph, node)
+        node_bel_cache[node] = node_to_bel(graph.node[node])
         return node_bel_cache[node]
 
     def get_pair_tuple(source_tuple, target_tuple):
@@ -190,7 +196,7 @@ def get_network_summary_dict(graph):
 
         causal_pathologies=sorted({
             get_pair_tuple(u, v) + (d[RELATION],)
-            for u, v, _, d in filter_edges(graph, edge_has_pathology_causal)
+            for u, v, _, d in filter_edges(graph, has_pathology_causal)
         }),
 
         undefined_families=[

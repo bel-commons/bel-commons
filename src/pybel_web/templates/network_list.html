@@ -36,7 +36,13 @@
                     placement: 'top',
                     trigger: 'hover'
                 })
-            })
+            });
+            $(function () {
+                $('[data-toggle="popright"]').popover({
+                    placement: 'right',
+                    trigger: 'hover'
+                })
+            });
         </script>
     {% endif %}
 
@@ -171,42 +177,44 @@
                                     <li>
                                         <a class="btn btn-info" target="_blank"
                                            href="{{ url_for('dbs.get_network_metadata', network_id=network.id) }}">
-                                            {{ network.id }}
+                                            {{ "%02d"|format(network.id) }}
                                         </a>
                                     </li>
 
                                 {% endif %}
                                 <li>
-                                    <a href="{{ url_for('view_summarize_statistics', network_id=network.id) }}"
-                                       class="btn btn-default"
-                                       data-toggle="popover"
-                                       title="Summary of the Network"
-                                       data-content="Access the statisics summary of the network.">
-                                        <span class="glyphicon glyphicon-signal" aria-hidden="true"></span>
-                                        Statistics
-                                    </a>
-                                </li>
-
-                                <li>
-                                    <a href="{{ url_for('view_summarize_compilation', network_id=network.id) }}"
-                                       class="btn btn-default"
-                                       data-toggle="popover"
-                                       title="Summary of the Network"
-                                       data-content="Access the compilation summary of the network.">
-                                        <span class="glyphicon glyphicon-warning-sign" aria-hidden="true"></span>
-                                        Compilation
-                                    </a>
-                                </li>
-
-                                <li>
-                                    <a href="{{ url_for('view_summarize_biogrammar', network_id=network.id) }}"
-                                       class="btn btn-default"
-                                       data-toggle="popover"
-                                       title="Summary of the Network"
-                                       data-content="Access the biogrammar summary of the network.">
-                                        <span class="glyphicon glyphicon-apple" aria-hidden="true"></span>
-                                        Biogrammar
-                                    </a>
+                                    <div class="btn-group">
+                                        <a href="{{ url_for('view_summarize_statistics', network_id=network.id) }}"
+                                           class="btn btn-default"
+                                           title="Summary of the Network"
+                                           data-content="Access the statisics summary of the network.">
+                                            <span class="glyphicon glyphicon-signal" aria-hidden="true"></span>
+                                            Statistics
+                                        </a>
+                                        <button type="button" class="btn btn-default dropdown-toggle"
+                                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                            <span class="caret"></span>
+                                            <span class="sr-only">Toggle Dropdown</span>
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li>
+                                                <a href="{{ url_for('view_summarize_compilation', network_id=network.id) }}"
+                                                   data-toggle="popright" title="Summary of the Network"
+                                                   data-content="Access the compilation summary of the network.">
+                                                    <span class="glyphicon glyphicon-warning-sign"
+                                                          aria-hidden="true"></span> Compilation
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a href="{{ url_for('view_summarize_biogrammar', network_id=network.id) }}"
+                                                   data-toggle="popright" title="Summary of the Network"
+                                                   data-content="Access the biogrammar summary of the network.">
+                                                    <span class="glyphicon glyphicon-apple" aria-hidden="true">
+                                                    </span> Biogrammar
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
                                 </li>
 
                                 <li>
@@ -221,12 +229,13 @@
                                             Explore
                                         </a>
                                     {% else %}
-                                        <button class="btn btn-default" data-toggle="popover"
-                                                title="Explore this Network" disabled
-                                                data-content="This network is too large to explore directly, so build a query first.">
-                                            <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
-                                            Explore
-                                        </button>
+                                        <a href="{{ url_for('build_subsample_query', network_id=network.id) }}"
+                                           class="btn btn-default" data-toggle="popover"
+                                           title="Sample this Network"
+                                           data-content="This network is too large to explore directly, so view a random sample of 250 edges.">
+                                            <span class="glyphicon glyphicon-filter" aria-hidden="true"></span>
+                                            Explore Sample
+                                        </a>
                                     {% endif %}
                                 </li>
 
@@ -251,14 +260,6 @@
                                             Analyze
                                         </a>
                                     </li>
-                                    <li>
-                                        <a href="{{ url_for('build_subsample_query', network_id=network.id) }}"
-                                           class="btn btn-warning" data-toggle="popover"
-                                           title="Sample this Network"
-                                           data-content="Take a random subsample of 250 edges from this graph.">
-                                            Sample
-                                        </a>
-                                    </li>
                                 {% endif %}
 
                                 {% if current_user.is_authenticated %}
@@ -266,7 +267,7 @@
                                         <div class="btn-group">
                                             <button type="button" class="btn btn-default dropdown-toggle"
                                                     data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                                Utilities <span class="caret"></span>
+                                                Actions <span class="caret"></span>
                                             </button>
                                             <ul class="dropdown-menu">
                                                 {% if network.report and network.report.user == current_user %}
@@ -295,8 +296,7 @@
                                                     </li>
                                                 {% elif current_user.is_admin %}
                                                     <li>
-                                                        <a class="btn btn-danger" role="button"
-                                                           href="{{ url_for('dbs.drop_network', network_id=network.id, next=url_for('view_networks')) }}">
+                                                        <a href="{{ url_for('dbs.drop_network', network_id=network.id, next=url_for('view_networks')) }}">
                                                             <span class="glyphicon glyphicon-remove"
                                                                   aria-hidden="true"></span>
                                                             Sudo Drop
@@ -325,9 +325,8 @@
                                                 {% if (current_user.is_scai or current_user.is_admin) and not network.report %}
                                                     <li role="separator" class="divider"></li>
                                                     <li>
-                                                        <a class="btn btn-danger" role="button"
-                                                           href="{{ url_for('dbs.claim_network', network_id=network.id, next=url_for('view_networks')) }}">
-                                                            Claim
+                                                        <a href="{{ url_for('dbs.claim_network', network_id=network.id, next=url_for('view_networks')) }}">
+                                                            Sudo Claim
                                                         </a>
                                                     </li>
                                                 {% endif %}

@@ -68,6 +68,13 @@
             })
         });
 
+        $(function () {
+            $('[data-toggle="popright"]').popover({
+                placement: 'right',
+                trigger: 'hover'
+            })
+        });
+
         $('#analysis-upload-button').click(function () {
             window.location.href = '/query/' + window.query + '/analysis/upload';
         })
@@ -102,11 +109,28 @@
                     <button type="button" class="btn btn-warning" data-toggle="modal" data-target="#paths">
                         Path Mining
                     </button>
+
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-warning dropdown-toggle"
+                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            Tools <span class="caret"></span>
+                        </button>
+                        <ul class="dropdown-menu">
+                            {% for toolbox_function, toolbox_button, toolbox_description in explorer_toolbox %}
+                                <li>
+                                    <a href="#" class="explorer-tool" type="button" value="{{ toolbox_function }}"
+                                       data-value="{{ toolbox_function }}" data-toggle="popright"
+                                       data-dismiss="modal" data-content="{{ toolbox_description }}">
+                                        <span class="glyphicon glyphicon-tasks"
+                                              aria-hidden="true"></span> {{ toolbox_button }}
+                                    </a>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+
                     <button type="button" class="btn btn-warning" data-toggle="modal" data-target="#algorithms">
                         Algorithms
-                    </button>
-                    <button type="button" class="btn btn-warning" data-toggle="modal" data-target="#network-tools">
-                        Tools
                     </button>
                     <a class="btn btn-warning" id="analysis-upload-button">
                         <span class="glyphicon glyphicon-flash" aria-hidden="true"></span>
@@ -863,50 +887,6 @@
             </div><!-- /.Modal content -->
         </div><!-- /.Modal dialog -->
     </div><!-- /.controls-graph Modal -->
-
-    <div id="network-tools" class="modal fade"><!-- /.tools-graph Modal -->
-        <div class="modal-dialog"><!-- /.Modal dialog -->
-            <div class="modal-content"><!-- /.Modal content -->
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                    <h4 class="modal-title">Tools</h4>
-                </div>
-                <div class="modal-body text-left"><!-- /.Modal body -->
-                    <table class="table table-responsive">
-                        <thead>
-                        <tr>
-                            <th><b>Button</b></th>
-                            <th><b>Function</b></th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        {% for toolbox_function, toolbox_button, toolbox_description in explorer_toolbox %}
-                            <tr>
-                                <td>
-                                    <button type="button" value="{{ toolbox_function }}"
-                                            class="btn btn-info explorer-tool"
-                                            data-dismiss="modal">
-                                        {{ toolbox_button }}
-                                    </button>
-                                </td>
-                                <td>
-                                    {{ toolbox_description }}
-                                </td>
-                            </tr>
-                        {% endfor %}
-                        </tbody>
-                    </table>
-                </div><!-- /.Modal body -->
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">
-                        Close
-                    </button>
-                </div>
-            </div><!-- /.Modal content -->
-        </div><!-- /.Modal dialog -->
-    </div><!-- /.Network-tools Modal -->
 
     <div id="edge-feedback" class="modal fade">
         <div class="modal-dialog">
