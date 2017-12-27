@@ -156,8 +156,12 @@ def run(host, port, default_config, debug, config, with_gunicorn, workers):
         build_parser_service(app)
 
     if 'BEL4IMOCEDE_DATA_PATH' in os.environ:
-        from . import mozg_service
-        app.register_blueprint(mozg_service.mozg_blueprint)
+        try:
+            from . import mozg_service
+        except:
+            log.exception('problem loading mozg service')
+        else:
+            app.register_blueprint(mozg_service.mozg_blueprint)
 
     log.info('Done building %s in %.2f seconds', app, time.time() - t)
 
