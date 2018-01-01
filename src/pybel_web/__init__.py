@@ -19,4 +19,4 @@ __author__ = 'Charles Tapley Hoyt'
 __email__ = 'cthoyt@gmail.com'
 
 __license__ = 'Apache License 2.0'
-__copyright__ = 'Copyright (c) 2016 Charles Tapley Hoyt'
+__copyright__ = 'Copyright (c) 2016-2018 Charles Tapley Hoyt'
