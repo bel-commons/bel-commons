@@ -15,7 +15,6 @@ from flask_security import current_user, login_required, roles_required
 import pybel_tools.query
 from pybel.manager.models import Annotation, Namespace
 from pybel.utils import get_version as get_pybel_version
-from pybel_tools.constants import GENE_FAMILIES
 from pybel_tools.pipeline import no_arguments_map
 from pybel_tools.utils import get_version as get_pybel_tools_version
 from . import models
@@ -31,11 +30,25 @@ log = logging.getLogger(__name__)
 
 
 def redirect_explorer(query_id):
+    """Returns the response for the biological network explorer in a given query
+
+    :param int query_id: A query identifier
+    :rtype: flask.Response
+    """
     return redirect(url_for('view_explorer_query', query_id=query_id))
 
-def build_dictionary_service_admin(app):
-    """Dictionary Service Admin Functions"""
+
+def build_main_service(app):
+    """Builds the PyBEL main service
+
+    :param flask.Flask app: A Flask App
+    """
     manager = get_manager(app)
+
+    @app.route('/', methods=['GET', 'POST'])
+    def home():
+        """Renders the home page"""
+        return render_template('index.html', current_user=current_user)
 
     @app.route('/admin/rollback')
     @roles_required('admin')
@@ -53,41 +66,11 @@ def build_dictionary_service_admin(app):
         log.info('   the dust settles')
         return next_or_jsonify('nuked the database')
 
-    @app.route('/admin/ensure/simple')
-    @roles_required('admin')
-    def ensure_simple():
-        """Parses and stores the PyBEL Test BEL Script"""
-        url = 'https://raw.githubusercontent.com/pybel/pybel/develop/tests/bel/test_bel.bel'
-        task = current_app.celery.send_task('parse-url', args=[url])
-        return next_or_jsonify('Queued task to parse PyBEL Test 1: {}'.format(task))
-
-    @app.route('/admin/ensure/gfam')
-    @roles_required('admin')
-    def ensure_gfam():
-        """Parses and stores the HGNC Gene Family Definitions"""
-        task = current_app.celery.send_task('parse-url', args=[GENE_FAMILIES])
-        return next_or_jsonify('Queued task to parse HGNC Gene Families: {}'.format(task))
-
     @app.route('/admin/configuration')
     @roles_required('admin')
     def view_config():
         """Render the configuration"""
         return render_template('deployment.html', config=current_app.config)
-
-
-def build_main_service(app):
-    """Builds the PyBEL main service
-
-    :param flask.Flask app: A Flask App
-    """
-    build_dictionary_service_admin(app)
-
-    manager = get_manager(app)
-
-    @app.route('/', methods=['GET', 'POST'])
-    def home():
-        """Renders the home page"""
-        return render_template('index.html', current_user=current_user)
 
     @app.route('/networks', methods=['GET', 'POST'])
     def view_networks():
