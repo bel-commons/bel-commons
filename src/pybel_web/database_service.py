@@ -1527,7 +1527,7 @@ def get_edge_entry(edge):
     ]
 
     if current_user.is_authenticated:
-        vote = get_or_create_vote(edge, current_user)
+        vote = get_or_create_vote(manager, edge, current_user)
         data['vote'] = 0 if (vote is None or vote.agreed is None) else 1 if vote.agreed else -1
 
     return data
@@ -1612,7 +1612,7 @@ def store_up_vote(edge_hash):
         type: string
     """
     edge = get_edge_by_hash_or_404(edge_hash)
-    vote = get_or_create_vote(edge, current_user, True)
+    vote = get_or_create_vote(manager, edge, current_user, True)
     return jsonify(vote.to_json())
 
 
@@ -1632,7 +1632,7 @@ def store_down_vote(edge_hash):
         type: string
     """
     edge = get_edge_by_hash_or_404(edge_hash)
-    vote = get_or_create_vote(edge, current_user, False)
+    vote = get_or_create_vote(manager, edge, current_user, False)
     return jsonify(vote.to_json())
 
 

@@ -14,7 +14,7 @@ import pandas
 from flask import abort, current_app, flash, jsonify, redirect, render_template, request
 from flask_security import current_user
 from six import BytesIO
-from sqlalchemy import func
+from sqlalchemy import and_, func
 from werkzeug.local import LocalProxy
 
 import pybel
@@ -483,7 +483,7 @@ def query_form_to_dict(form):
     return query_dict
 
 
-def get_query_ancestor_id(query_id):
+def get_query_ancestor_id(query_id):  # TODO refactor this to be part of Query class
     """Gets the oldest ancestor of the given query
 
     :param int query_id: The original query database identifier
@@ -497,7 +497,7 @@ def get_query_ancestor_id(query_id):
     return get_query_ancestor_id(query.parent_id)
 
 
-def get_query_descendants(query_id):
+def get_query_descendants(query_id):  # TODO refactor this to be part of Query class
     """Gets all ancestors to the root query as a list of queries. In this formulation, the original query comes first
     in the list, with its parent next, its grandparent third, and so-on.
 
@@ -714,6 +714,11 @@ def current_user_has_query_rights(query_id):
 
 
 def get_query_or_404(query_id):
+    """
+
+    :param int query_id:
+    :rtype: Query
+    """
     query = manager.session.query(Query).get(query_id)
 
     if query is None:
@@ -736,15 +741,29 @@ def safe_get_query(query_id):
     return query
 
 
-def get_or_create_vote(edge, user, agreed=None):
+def get_edge_vote_by_user(manager_, edge, user):
+    """Looks up a vote by the edge and user
+
+    :param pybel.manager.Manager manager_: The database service
+    :param Edge edge: The edge that is being evaluated
+    :param User user: The user making the vote
+    :rtype: Optional[EdgeVote]
+    """
+    vote_filter = and_(EdgeVote.edge == edge, EdgeVote.user == user)
+    return manager_.session.query(EdgeVote).filter(vote_filter).one_or_none()
+
+
+def get_or_create_vote(manager_, edge, user,
+                       agreed=None):  # TODO refactor this to take manager somewhere else and not be bound
     """Gets a vote for the given edge and user
 
+    :param pybel.manager.Manager manager_: The database service
     :param Edge edge: The edge that is being evaluated
     :param User user: The user making the vote
     :param bool agreed: Optional value of agreement to put into vote
     :rtype: EdgeVote
     """
-    vote = manager.session.query(EdgeVote).filter(EdgeVote.edge == edge, EdgeVote.user == user).one_or_none()
+    vote = get_edge_vote_by_user(manager_, edge, user)
 
     if vote is None:
         vote = EdgeVote(
@@ -752,14 +771,14 @@ def get_or_create_vote(edge, user, agreed=None):
             user=user,
             agreed=agreed
         )
-        manager.session.add(vote)
-        manager.session.commit()
+        manager_.session.add(vote)
+        manager_.session.commit()
 
     # If there was already a vote, and it's being changed
     elif agreed is not None:
         vote.agreed = agreed
         vote.changed = datetime.datetime.utcnow()
-        manager.session.commit()
+        manager_.session.commit()
 
     return vote
 
@@ -787,13 +806,22 @@ def next_or_jsonify(message, *args, status=200, category='message', **kwargs):
     )
 
 
+def _user_owns_network(network, user):
+    """
+    :param Network network: A network
+    :param User user: A user
+    :rtype: bool
+    """
+    return not user.is_authenticated or not network.report or user != network.report.user
+
+
 def user_owns_network_or_403(network, user):
     """Check that the user is the owner of the the network. Sends a Flask abort 403 signal if not.
 
     :param Network network: A network
     :param User user: A user
     """
-    if not user.is_authenticated or not network.report or user != network.report.user:
+    if _user_owns_network(network, user):
         abort(403, 'You do not own this network')
 
 
@@ -837,8 +865,6 @@ def get_edge_by_hash_or_404(edge_hash):
         abort(404, 'Edge {} not found'.format(edge_hash))
 
     return edge
-
-
 
 
 def relabel_nodes_to_hashes(graph, copy=False):
@@ -958,7 +984,7 @@ def fill_out_report(network, report, graph_summary):
     report.completed = True
 
 
-def insert_graph(m, graph, user_id=1):
+def insert_graph(m, graph, user_id=1):  # TODO put this in extended manager for PyBEL Web
     """insert a graph and also make a report
     
     :param pybel.Manager m:
