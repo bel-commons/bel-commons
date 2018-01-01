@@ -133,6 +133,9 @@ function displayEdgeInfo(edge) {
                         // TODO handle DOIs?
                         edgeObject[sk] += context.citation.reference;
                     }
+
+                    // TODO add link to all edges from that citation
+
                     edgeObject[sk] += '</dd>';
                 }
 
