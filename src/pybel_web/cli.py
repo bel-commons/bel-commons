@@ -312,6 +312,15 @@ def parse(manager, path):
 @network.command()
 @click.option('--path')
 @click.pass_obj
+def upload(manager, path):
+    """Upload a gpickle"""
+    graph = pybel.from_pickle(path)
+    insert_graph(manager, graph)
+
+
+@network.command()
+@click.option('--path')
+@click.pass_obj
 def upload_gpickle(manager, path):
     """Uploads a precompiled gpickle"""
     graph = pybel.from_pickle(path)
