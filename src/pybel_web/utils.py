@@ -195,8 +195,8 @@ def get_network_summary_dict(graph):
         )),
 
         causal_pathologies=sorted({
-            get_pair_tuple(u, v) + (d[RELATION],)
-            for u, v, _, d in filter_edges(graph, has_pathology_causal)
+            get_pair_tuple(u, v) + (graph.edge[u][v][k][RELATION],)
+            for u, v, k in filter_edges(graph, has_pathology_causal)
         }),
 
         undefined_families=[
