@@ -22,6 +22,11 @@ class NetworkView(ModelView):
     column_exclude_list = ['blob', 'sha512', 'authors', 'description', 'copyright', 'disclaimer', 'licenses']
 
 
+class AnnotationView(ModelView):
+    """Special view for PyBEL annotations"""
+    column_exclude_list = ['type', 'usage', 'author', 'license', 'citation_description']
+
+
 class ReportView(ModelView):
     """Special view for reports"""
     column_exclude_list = ['source', 'calculations', 'source_hash']
