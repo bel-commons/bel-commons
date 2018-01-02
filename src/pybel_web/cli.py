@@ -297,7 +297,7 @@ def sanitize_reports(manager):
 
 @manage.group()
 def network():
-    """Manage networks"""
+    """Parse, upload, and manage networks"""
 
 
 @network.command()
@@ -320,7 +320,7 @@ def upload(manager, path):
 
 @manage.group()
 def user():
-    """Manage users"""
+    """Create and manage users"""
 
 
 @user.command()
