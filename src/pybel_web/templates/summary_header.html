@@ -99,6 +99,11 @@
                             <span class="glyphicon glyphicon-download" aria-hidden="true"></span> GSEA
                         </a>
                     </li>
+                    <li>
+                        <a href="{{ url_for('dbs.export_network', network_id=network_id, serve_format='citations') }}">
+                            <span class="glyphicon glyphicon-download" aria-hidden="true"></span> Citations
+                        </a>
+                    </li>
                 </ul>
             </div>
         {% endif %}

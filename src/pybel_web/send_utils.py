@@ -8,9 +8,9 @@ from six import BytesIO, StringIO
 from pybel import to_bel_lines, to_bytes, to_csv, to_cx, to_graphml, to_gsea, to_jgif, to_json, to_sif
 from pybel.canonicalize import node_to_bel
 from pybel.constants import (
-    CAUSAL_DECREASE_RELATIONS, CAUSAL_INCREASE_RELATIONS, DECREASES, INCREASES, RELATION,
-    TWO_WAY_RELATIONS,
+    CAUSAL_DECREASE_RELATIONS, CAUSAL_INCREASE_RELATIONS, DECREASES, INCREASES, RELATION, TWO_WAY_RELATIONS,
 )
+from pybel.struct.summary import get_pubmed_identifiers
 from pybel.utils import hash_edge, hash_node
 from pybel_tools.mutation.metadata import serialize_authors
 
@@ -151,6 +151,21 @@ def serve_network(graph, serve_format=None):
         return send_file(
             data,
             attachment_filename="graph.grp",
+            as_attachment=True
+        )
+
+    elif serve_format == 'citations':
+        bio = StringIO()
+
+        for pubmed_identifier in get_pubmed_identifiers(graph):
+            print(pubmed_identifier, file=bio)
+
+        bio.seek(0)
+        data = BytesIO(bio.read().encode('utf-8'))
+        return send_file(
+            data,
+            mimetype="text/tab-separated-values",
+            attachment_filename="citations.txt",
             as_attachment=True
         )
 
