@@ -10,7 +10,7 @@ from pybel import Manager
 from pybel.constants import INCREASES, PROTEIN
 from pybel.examples import sialic_acid_graph
 from pybel.manager.models import Edge, Node
-from pybel_web.models import EdgeComment, EdgeVote, Query, User
+from pybel_web.models import EdgeComment, EdgeVote, Query, User, Assembly
 from pybel_web.utils import get_or_create_vote
 
 log = logging.getLogger(__name__)
@@ -161,3 +161,24 @@ class TestDropInstance(TemporaryCacheInstanceMixin):
         self.assertIsNone(self.manager.session.query(Query).get(q2.id))
         self.assertIsNone(self.manager.session.query(Query).get(q3.id))
         self.assertIsNotNone(self.manager.session.query(Query).get(q4.id))
+
+    def test_drop_assembly_cascade_query(self):
+        a1 = Assembly()
+        a2 = Assembly()
+        q1 = Query(assembly=a1)
+        q2 = Query(assembly=a2)
+        q3 = Query(assembly=a1)
+
+        self.manager.session.add_all([a1, a2, q1, q2, q3])
+        self.manager.session.commit()
+
+        self.assertEqual(2, self.manager.session.query(Assembly).count())
+        self.assertEqual(3, self.manager.session.query(Query).count())
+
+        self.manager.session.delete(a1)
+        self.manager.session.commit()
+
+        self.assertEqual(1, self.manager.session.query(Assembly).count())
+        self.assertEqual(1, self.manager.session.query(Query).count(), msg='Cascade to queries did not work')
+
+
