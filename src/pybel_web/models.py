@@ -514,7 +514,8 @@ class Query(Base):
     pipeline_protocol = Column(Text, doc="Protocol list")
 
     parent_id = Column(Integer, ForeignKey('{}.id'.format(QUERY_TABLE_NAME)), nullable=True)
-    parent = relationship('Query', remote_side=[id], backref=backref('children', lazy='dynamic'))
+    parent = relationship('Query', remote_side=[id],
+                          backref=backref('children', lazy='dynamic', cascade="all, delete-orphan"))
 
     def __repr__(self):
         return '<Query {}>'.format(self.id)
