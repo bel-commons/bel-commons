@@ -636,7 +636,7 @@ class EdgeVote(Base):
     id = Column(Integer, primary_key=True)
 
     edge_id = Column(Integer, ForeignKey('{}.id'.format(EDGE_TABLE_NAME)), nullable=False)
-    edge = relationship('Edge', backref=backref('votes', lazy='dynamic'))
+    edge = relationship('Edge', backref=backref('votes', lazy='dynamic', cascade="all, delete-orphan"))
 
     user_id = Column(Integer, ForeignKey('{}.id'.format(USER_TABLE_NAME)), nullable=False,
                      doc='The user who made this vote')
@@ -677,7 +677,7 @@ class EdgeComment(Base):
     id = Column(Integer, primary_key=True)
 
     edge_id = Column(Integer, ForeignKey('{}.id'.format(EDGE_TABLE_NAME)))
-    edge = relationship('Edge', backref=backref('comments', lazy='dynamic'))
+    edge = relationship('Edge', backref=backref('comments', lazy='dynamic', cascade="all, delete-orphan"))
 
     user_id = Column(Integer, ForeignKey('{}.id'.format(USER_TABLE_NAME)), nullable=False,
                      doc='The user who made this comment')
