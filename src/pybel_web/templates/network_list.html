@@ -4,7 +4,7 @@
 {% import "bootstrap/fixes.html" as fixes %}
 {% import "bootstrap/utils.html" as util %}
 
-{% block title %}Network Store{% endblock %}
+{% block title %}Networks{% endblock %}
 
 {% block head %}
     {{ super() }}
@@ -124,7 +124,7 @@
 
         <div class="panel panel-default">
             <div class="panel-heading">
-                <h3 class="panel-title">Curated Networks</h3>
+                <h3 class="panel-title">Networks</h3>
             </div>
             <div class="panel-body">
                 <p>Each curated network is backed by a BEL script. Below are options to summarize the networks'
@@ -132,6 +132,13 @@
                     differential gene expression data. Upload more networks
                     <a href="{{ url_for('parser.view_parser') }}">here</a>.
                 </p>
+
+                <div class="input-group">
+                    <input type="text" class="form-control" placeholder="Search for...">
+                    <span class="input-group-btn">
+                    <button class="btn btn-default" type="button">Go!</button>
+                </span>
+                </div>
             </div>
         </div>
 
