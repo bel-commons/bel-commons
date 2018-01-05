@@ -239,39 +239,14 @@ def build_main_service(app):
     @app.route('/about')
     def view_about():
         """Sends the about page"""
-        return render_template('about.html')
-
-    @app.route("/sitemap")
-    @roles_required('admin')
-    def view_site_map():
-        """Displays a page with the site map"""
-        api_links = []
-        page_links = []
-        for rule in current_app.url_map.iter_rules():
-            try:
-                url = url_for(rule.endpoint)
-                item = url, rule.endpoint
-                if not current_user.admin and (url.startswith('/admin') or url.startswith('/api/admin')):
-                    continue
-                elif url.startswith('/api'):
-                    api_links.append(item)
-                else:
-                    page_links.append((url, rule.endpoint))
-            except:
-                pass
-
         metadata = [
             ('Python Version', sys.version),
             ('PyBEL Version', get_pybel_version()),
             ('PyBEL Tools Version', get_pybel_tools_version()),
             ('PyBEL Web version', PYBEL_WEB_VERSION)
         ]
-        return render_template(
-            'sitemap.html',
-            metadata=metadata,
-            links=sorted(set(page_links)),
-            api_links=sorted(set(api_links))
-        )
+
+        return render_template('about.html', metadata=metadata)
 
     @app.route('/users')
     @roles_required('admin')
