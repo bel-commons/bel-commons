@@ -13,7 +13,7 @@ from flask import abort, current_app, flash, redirect, render_template, request,
 from flask_security import current_user, login_required, roles_required
 
 import pybel_tools.query
-from pybel.manager.models import Annotation, Namespace
+from pybel.manager.models import Annotation, Edge, Namespace, Node
 from pybel.utils import get_version as get_pybel_version
 from pybel_tools.pipeline import no_arguments_map
 from pybel_tools.utils import get_version as get_pybel_tools_version
@@ -83,6 +83,18 @@ def build_main_service(app):
             current_user=current_user,
             BMS_BASE=app.config.get('BMS_BASE'),
         )
+
+    @app.route('/edges')
+    @roles_required('admin')
+    def view_edges():
+        """Renders a page viewing all edges"""
+        return render_template('edges.html', edges=manager.session.query(Edge), current_user=current_user)
+
+    @app.route('/nodes')
+    @roles_required('admin')
+    def view_nodes():
+        """Renders a page viewing all edges"""
+        return render_template('nodes.html', nodes=manager.session.query(Node), current_user=current_user)
 
     @app.route('/query/build', methods=['GET', 'POST'])
     def view_query_builder():

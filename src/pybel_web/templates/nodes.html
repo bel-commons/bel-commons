@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% import "bootstrap/wtf.html" as wtf %}
+{% import "bootstrap/fixes.html" as fixes %}
+{% import "bootstrap/utils.html" as util %}
+
+{% block title %}Edge Store{% endblock %}
+
+{% block content %}
+    <div class="container">
+        {{ util.flashed_messages(dismissible=True, container=False) }}
+
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Search</h3>
+            </div>
+            <div class="panel-body">
+                <div class="input-group">
+                    <input type="text" class="form-control" placeholder="Search for...">
+                    <span class="input-group-btn">
+                    <button class="btn btn-default" type="button">Go!</button>
+                </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel panel-default">
+            <div class="list-group" id="edge-list">
+                {% for node in nodes[:15] %}
+                    <div class="list-group-item">
+                        <h4 class="list-group-item-heading">
+                            {{ node.bel }}
+                        </h4>
+                        <div class="list-group-item-text">
+                            In Edges: {{ node.in_edges.count() }} |
+                            Out Edges: {{ node.out_edges.count() }}
+
+                            <ul>{% for network in node.networks %}
+                                <li>{{ network }}</li>
+                            {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    {% include "footer.html" %}
+{% endblock %}
