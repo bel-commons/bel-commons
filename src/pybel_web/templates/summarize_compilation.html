@@ -452,10 +452,12 @@
                     </thead>
                     <tbody>
                     {% for k, v in error_groups %}
-                        <tr>
-                            <td><code>{{ k }}</code></td>
-                            <td>{{ v }}</td>
-                        </tr>
+                        {% if v > 1 %}
+                            <tr>
+                                <td><code>{{ k }}</code></td>
+                                <td>{{ v }}</td>
+                            </tr>
+                        {% endif %}
                     {% endfor %}
                     </tbody>
                 </table>
