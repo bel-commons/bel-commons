@@ -81,4 +81,18 @@ def get_explorer_toolbox():
             'Adds the RNA targets of miRNA nodes from miRTarBase'
         ))
 
+    if function_is_registered('enrich_genes_with_families'):
+        explorer_toolbox.append((
+            'enrich_genes_with_families',
+            'Enrich Genes with Gene Family Membership',
+            'Adds the HGNC Gene Families to Gene Nodes'
+        ))
+
+    if function_is_registered('enrich_families_with_genes'):
+        explorer_toolbox.append((
+            'enrich_families_with_genes',
+            'Enrich Gene Family Membership',
+            'Adds the HGNC Genes to HGNC Gene Family Nodes'
+        ))
+
     return explorer_toolbox

@@ -48,11 +48,14 @@ from .utils import (
     make_graph_summary, manager, next_or_jsonify, safe_get_query, user_datastore, user_owns_network_or_403,
 )
 
+log = logging.getLogger(__name__)
+
 try:
     import bio2bel_chebi
 except ImportError:
     chebi_manager = None
 else:
+    log.info('Using Bio2BEL ChEBI')
     chebi_manager = bio2bel_chebi.Manager()
 
 try:
@@ -60,19 +63,30 @@ try:
 except ImportError:
     hgnc_manager = None
 else:
+    log.info('Using Bio2BEL HGNC')
     hgnc_manager = bio2bel_hgnc.Manager()
+    in_place_mutator(hgnc_manager.enrich_genes_with_families)
+    in_place_mutator(hgnc_manager.enrich_families_with_genes)
 
 try:
     import bio2bel_mirtarbase
 except ImportError:
     mirtarbase_manager = None
 else:
+    log.info('Using Bio2BEL miRTarBase')
     mirtarbase_manager = bio2bel_mirtarbase.Manager()
     in_place_mutator(mirtarbase_manager.enrich_mirnas)
     in_place_mutator(mirtarbase_manager.enrich_rnas)
 
-
-log = logging.getLogger(__name__)
+try:
+    import bio2bel_expasy
+except ImportError:
+    expasy_manager = None
+else:
+    log.info('Using Bio2BEL ExPASy')
+    expasy_manager = bio2bel_expasy.Manager()
+    in_place_mutator(expasy_manager.enrich_proteins)
+    in_place_mutator(expasy_manager.enrich_enzymes)
 
 api_blueprint = Blueprint('dbs', __name__)
 
@@ -923,6 +937,7 @@ def download_query_json(query_id):
     query_json = query.to_json()
     return jsonify(query_json)
 
+
 @api_blueprint.route('/api/query/<int:query_id>/tree/')
 def get_tree_api(query_id):
     """Builds the annotation tree data structure for a given graph
@@ -1747,9 +1762,6 @@ def get_all_nodes():
         node.to_json(include_id=True)
         for node in manager.session.query(Node).all()
     ])
-
-
-
 
 
 def enrich_node_json(node_data):
