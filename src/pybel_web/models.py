@@ -395,6 +395,17 @@ class User(Base, UserMixin):
         """
         return sorted(self.queries, key=attrgetter('created'), reverse=True)
 
+    def pending_reports(self):
+        """Gets a list of pending reports for this user
+
+        :rtype: list[Report]
+        """
+        return [
+            report
+            for report in self.reports
+            if report.incomplete
+        ]
+
     def __str__(self):
         return self.email
 
