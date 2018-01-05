@@ -20,7 +20,7 @@ from pybel_tools.mutation import expand_node_neighborhood, expand_nodes_neighbor
 from pybel_tools.pipeline import in_place_mutator, uni_in_place_mutator
 from .admin_utils import (
     AnnotationView, CitationView, EdgeView, EvidenceView, ExperimentView, ModelView, ModelViewBase,
-    NetworkView, NodeView, QueryView, ReportView, UserView,
+    NetworkView, NodeView, QueryView, ReportView, UserView, NamespaceView
 )
 from .constants import ALEX_EMAIL, CHARLIE_EMAIL, DANIEL_EMAIL
 from .models import (
@@ -310,7 +310,7 @@ class FlaskPyBEL:
 
         admin.add_view(UserView(User, manager.session))
         admin.add_view(ModelView(Role, manager.session))
-        admin.add_view(ModelView(Namespace, manager.session))
+        admin.add_view(NamespaceView(Namespace, manager.session))
         admin.add_view(ModelView(NamespaceEntry, manager.session))
         admin.add_view(AnnotationView(Annotation, manager.session))
         admin.add_view(ModelView(AnnotationEntry, manager.session))

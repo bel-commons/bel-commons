@@ -26,6 +26,10 @@ class AnnotationView(ModelView):
     """Special view for PyBEL annotations"""
     column_exclude_list = ['type', 'usage', 'author', 'license', 'citation_description']
 
+class NamespaceView(ModelView):
+    """Special view for PyBEL namespaces"""
+    column_exclude_list = ['query_url', 'description', 'author', 'license', 'citation_description']
+
 
 class ReportView(ModelView):
     """Special view for reports"""
