@@ -54,10 +54,6 @@
 
 {% block content %}
     <div class="container">
-        <div class="page-header">
-            <h1>Network Store</h1>
-        </div>
-
         {{ util.flashed_messages(dismissible=True, container=False) }}
 
         {% if current_user.is_authenticated and current_user.is_admin %}
@@ -137,6 +133,9 @@
                     <a href="{{ url_for('parser.view_parser') }}">here</a>.
                 </p>
             </div>
+        </div>
+
+        <div class="panel panel-default">
             <div class="list-group">
                 {% for network in networks %}
                     <div class="list-group-item">
