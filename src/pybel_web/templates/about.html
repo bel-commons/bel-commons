@@ -20,11 +20,38 @@
 
 {% block content %}
     <div class="container">
-        <div class="page-header">
-            <h1>About</h1>
-        </div>
-
         {{ util.flashed_messages(dismissible=True, container=False) }}
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">About</h3>
+            </div>
+            <div class="panel-body">
+                <p>PyBEL Web is developed and maintained by <a href="https://github.com/cthoyt">Charles Tapley Hoyt</a>
+                    and
+                    <a href="https://github.com/ddomingof">Daniel Domingo-Fernandez</a> at <a
+                            href="https://www.scai.fraunhofer.de/en/business-research-areas/bioinformatics.html">Fraunhofer
+                        SCAI</a> with partial support from the <a href="https://www.imi.europa.eu/">IMI</a> projects, <a
+                            href="http://www.aetionomy.eu/">AETIONOMY</a> and <a href="http://www.phago.eu/">PHAGO</a>.
+
+                    It is built on top of the open source project, <a href="https://github.com/pybel/pybel">PyBEL</a>.
+                    Please feel free to contact us
+                    <a href="mailto:charles.hoyt@scai.fraunhofer.de">here</a> to give us feedback or report any issues.
+                </p>
+                <p>
+                    If you use PyBEL Web, please cite us:
+                </p>
+                <ul>
+                    <li>
+                        Hoyt, <i>et al.</i>; <a href="https://doi.org/10.1093/bioinformatics/btx660">PyBEL: a
+                        Computational
+                        Framework for Biological Expression Language</a>, Bioinformatics, btx660.
+                    </li>
+                </ul>
+                <p style="color:#d9534f">
+                    This is the a pre-release, meaning some features aren't yet complete.
+                </p>
+            </div>
+        </div>
 
         <div class="panel panel-default">
             <div class="panel-heading">
@@ -35,11 +62,12 @@
                     <div class="col-sm-6 col-md-3">
                         <div class="thumbnail">
                             <div class="caption">
-                                <h3>Programmatic Access</h3>
-                                <p>Our RESTful service is documented with the
+                                <h3>API</h3>
+                                <p>
+                                    Our RESTful service is documented with the
                                     <a href="https://www.openapis.org/">OpenAPI</a> specification. In the future, we
                                     will also provide a <a href="http://graphql.org/learn/">GraphQL</a>
-                                    API using <a href="https://github.com/graphql-python/graphene">graphene</a>.</p>
+                                    API using <a href="https://github.com/graphql-python/graphene">graphene</a>.
                                 </p>
                                 <p>
                                     <a href="{{ url_for('flasgger.apidocs') }}" class="btn btn-primary">
@@ -57,7 +85,8 @@
                         <div class="thumbnail">
                             <div class="caption">
                                 <h3>Cookbook</h3>
-                                <p>PyBEL Web is built on PyBEL and PyBEL Tools. We have created a repository of Jupyter
+                                <p>
+                                    PyBEL Web is built on PyBEL and PyBEL Tools. We have created a repository of Jupyter
                                     notebooks to demonstrate their programmatic capabilities.
                                 </p>
                                 <p>
@@ -72,75 +101,31 @@
                     <div class="col-sm-6 col-md-3">
                         <div class="thumbnail">
                             <div class="caption">
-                                <h3>Python Dependencies</h3>
-                                <ul>
-                                    <li><a href="http://flask.pocoo.org/">Flask</a></li>
-                                    <li><a href="http://docs.python-requests.org/">Requests</a></li>
-                                    <li><a href="https://networkx.github.io/">NetworkX</a></li>
-                                    <li><a href="http://pandas.pydata.org/">Pandas</a></li>
-                                    <li><a href="https://www.sqlalchemy.org/">SQLAlchemy</a></li>
-                                </ul>
+                                <h3>Legal</h3>
+                                <p>
+                                    PyBEL Web is hosted in Germany, and has an imprint dictating disclaimers, etc.
+                                </p>
+                                <p>
+                                    <a href="{{ url_for('view_imprint') }}" class="btn btn-primary">Imprint</a>
+                                </p>
                             </div>
                         </div>
                     </div>
-
-                    <div class="col-sm-6 col-md-3">
-                        <div class="thumbnail">
-                            <div class="caption">
-                                <h3>Javascript Dependencies</h3>
-                                <ul>
-                                    <li><a href="https://getbootstrap.com/">Bootstrap</a></li>
-                                    <li><a href="https://d3js.org/">D3.js</a></li>
-                                    <li><a href="https://jquery.com/">jQuery</a></li>
-                                    <li><a href="https://select2.github.io/">Select2</a></li>
-                                    <li><a href="https://github.com/helion3/inspire-tree">InspireTree</a></li>
-                                    <li><a href="https://github.com/patorjk/d3-context-menu">D3-context-menu</a></li>
-                                    <li><a href="https://github.com/minhur/bootstrap-toggle">Bootstrap Toggle</a></li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-sm-6 col-md-3">
-                        <div class="thumbnail">
-                            <div class="caption">
-                                <h3>Database Dependencies</h3>
-                                <ul>
-                                    <li><a href="https://www.mysql.com/">MySQL</a></li>
-                                    <li><a href="https://www.sqlite.org/">SQLite</a></li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-sm-6 col-md-6">
-                        <div class="thumbnail">
-                            <div class="caption">
-                                <h3>Citations</h3>
-                                <ul>
-                                    <li>
-                                        Charles Tapley Hoyt, et al.; PyBEL: a Computational
-                                        Framework for Biological Expression Language, Bioinformatics, btx660, <a
-                                            href="https://doi.org/10.1093/bioinformatics/btx660">https://doi.org/10.1093/bioinformatics/btx660</a>
-                                    </li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-
 
                     <div class="col-sm-6 col-md-3">
                         <div class="thumbnail">
                             <div class="caption">
                                 <h3>Artwork</h3>
-                                <p>The PyBEL logos are derivatives of <a
+                                <p>
+                                    The PyBEL logos are derivatives of <a
                                         href="http://game-icons.net/lorc/originals/ringing-bell.html">Ringing bell</a>
                                     by <a href="https://lorcblog.blogspot.com/">Lorc</a>, used under <a
-                                            href="http://creativecommons.org/licenses/by/3.0/">CC BY 3.0</a>. The PyBEL
+                                        href="http://creativecommons.org/licenses/by/3.0/">CC BY 3.0</a>. The PyBEL
                                     logos are licensed under <a href="http://creativecommons.org/licenses/by/3.0/">CC BY
-                                        3.0</a> by <a href="https://github.com/scolby33">Scott Colby</a>.</p>
+                                    3.0</a> by <a href="https://github.com/scolby33">Scott Colby</a>.</p>
                                 <p>
-                                    <a href="https://github.com/pybel/pybel-art" class="btn btn-primary">
+                                    <a href="https://github.com/pybel/pybel-art#usage-guidelines-and-information"
+                                       class="btn btn-primary">
                                         Usage Guidelines
                                     </a>
                                 </p>
@@ -150,7 +135,98 @@
                 </div>
             </div>
         </div>
-    </div>
 
-    {% include "footer.html" %}
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Support</h3>
+            </div>
+            <div class="panel-body">
+                <div class="row">
+                    <div class="col-lg-2">
+                        <a href="https://www.scai.fraunhofer.de/en/business-research-areas/bioinformatics.html">
+                            <img class="img-responsive" src="{{ url_for('static', filename='img/scai_logo.svg') }}"/>
+                        </a>
+                    </div>
+                    <div>
+                        This application was developed at the Fraunhofer SCAI Department of Bioinformatics.
+                    </div>
+                </div>
+                <hr>
+                <div class="row">
+                    <div class="col-lg-2">
+                        <a href="https://www.imi.europa.eu/">
+                            <img class="img-responsive" src="{{ url_for('static', filename='img/imi_logo.png') }}"/>
+                        </a>
+                    </div>
+                    <div>
+                        The IMI is an EU public-private partnership funding health research and innovation.
+                    </div>
+                </div>
+                <hr>
+                <div class="row">
+                    <div class="col-lg-2">
+                        <a href="http://www.aetionomy.eu/">
+                            <img class="img-responsive"
+                                 src="{{ url_for('static', filename='img/aetionomy_logo.png') }}"/>
+                        </a>
+                    </div>
+                    <div>
+                        AETIONOMY is a project aimed to develop a mechanism-base taxonomy of Alzheimer's disease and
+                        Parkinson's disease in order to support stratifying patients.
+                    </div>
+                </div>
+                <hr>
+                <div class="row">
+                    <div class="col-lg-2">
+                        <a href="http://www.phago.eu/">
+                            <img class="img-responsive" src="{{ url_for('static', filename='img/phago_logo.jpg') }}"/>
+                        </a>
+                    </div>
+                    <div>
+                        PhAGO is a project aimed to understand the relation between TREM2, CD33, and microglial
+                        activation in the context of Alzheimer's disease.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Dependencies</h3>
+            </div>
+            <div class="panel-body">
+                <h3>Server</h3>
+                <ul>
+                    <li><a href="https://www.mysql.com/">MySQL</a></li>
+                    <li><a href="https://www.rabbitmq.com/">RabbitMQ</a></li>
+                    <li><a href="https://uwsgi-docs.readthedocs.io/">uWSGI</a></li>
+                    <li><a href="http://www.celeryproject.org/">Celery</a></li>
+                </ul>
+                <h3>Python</h3>
+                <ul>
+                    <li><a href="http://flask.pocoo.org/">Flask</a></li>
+                    <li><a href="http://click.pocoo.org/">Click</a></li>
+                    <li><a href="http://docs.python-requests.org/">Requests</a></li>
+                    <li><a href="https://networkx.github.io/">NetworkX</a></li>
+                    <li><a href="http://pandas.pydata.org/">Pandas</a></li>
+                    <li><a href="https://www.sqlalchemy.org/">SQLAlchemy</a></li>
+                    <li><a href="https://pybel.readthedocs.org/">PyBEL</a></li>
+                    <li><a href="https://pybel-tools.readthedocs.org/">PyBEL Tools</a></li>
+                    <li><a href="https://github.com/rochacbruno/flasgger">Flasgger</a></li>
+                </ul>
+                <h3>Client</h3>
+                <ul>
+                    <li><a href="https://getbootstrap.com/">Bootstrap</a></li>
+                    <li><a href="https://d3js.org/">D3.js</a></li>
+                    <li><a href="https://jquery.com/">jQuery</a></li>
+                    <li><a href="https://select2.github.io/">Select2</a></li>
+                    <li><a href="https://github.com/helion3/inspire-tree">InspireTree</a></li>
+                    <li><a href="https://github.com/patorjk/d3-context-menu">D3-context-menu</a></li>
+                    <li><a href="https://github.com/minhur/bootstrap-toggle">Bootstrap Toggle</a></li>
+                </ul>
+            </div>
+        </div>
+
+
+    </div>
 {% endblock %}
