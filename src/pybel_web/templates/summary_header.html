@@ -1,6 +1,42 @@
 <div class="panel panel-default">
     <div class="panel-body">
-        <a class="btn btn-primary" href="{{ url_for('view_networks') }}" role="button">List Networks</a>
+        <div class="btn-group">
+            <a href="{{ url_for('view_networks') }}" class="btn btn-default">
+                List Networks
+            </a>
+            <button type="button" class="btn btn-default dropdown-toggle"
+                    data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <span class="caret"></span>
+                <span class="sr-only">Toggle Dropdown</span>
+            </button>
+            <ul class="dropdown-menu">
+                <li>
+                    <a href="{{ url_for('view_summarize_statistics', network_id=network.id) }}"
+                       title="Summary of the Network"
+                       data-content="Access the statisics summary of the network.">
+                        <span class="glyphicon glyphicon-signal" aria-hidden="true"></span>
+                        Statistics
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('view_summarize_compilation', network_id=network.id) }}"
+                       data-toggle="popright" title="Summary of the Network"
+                       data-content="Access the compilation summary of the network.">
+                                                    <span class="glyphicon glyphicon-warning-sign"
+                                                          aria-hidden="true"></span> Compilation
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('view_summarize_biogrammar', network_id=network.id) }}"
+                       data-toggle="popright" title="Summary of the Network"
+                       data-content="Access the biogrammar summary of the network.">
+                                                    <span class="glyphicon glyphicon-apple" aria-hidden="true">
+                                                    </span> Biogrammar
+                    </a>
+                </li>
+            </ul>
+        </div>
+
 
         {% if network.report and network.report.is_displayable %}
             <a href="{{ url_for('view_explore_network', network_id=network.id) }}"
