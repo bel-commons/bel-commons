@@ -191,10 +191,16 @@
                                     View the ontologies and terminologies used in the knowledge base as namespaces and
                                     annotations. Each contains provenance information including a uniform resource
                                     locator and version number.
+
                                 </p>
-                                <a href="{{ url_for('view_definitions') }}" class="btn btn-primary btn-block"
-                                   role="button">
-                                    View Terminology List</a>
+
+                                <a href="{{ url_for('view_namespaces') }}" class="btn btn-primary">
+                                    Namespaces
+                                </a>
+
+                                <a href="{{ url_for('view_annotations') }}" class="btn btn-primary">
+                                    Annotations
+                                </a>
                             </div>
                         </div>
                     </div>

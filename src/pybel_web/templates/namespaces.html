@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% import "bootstrap/wtf.html" as wtf %}
+{% import "bootstrap/fixes.html" as fixes %}
+{% import "bootstrap/utils.html" as util %}
+
+{% block title %}Namespaces{% endblock %}
+
+{% block content %}
+    <div class="container">
+        {{ util.flashed_messages(dismissible=True, container=False) }}
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Namespaces</h3>
+            </div>
+            <div class="panel-body">
+                <p>
+                    BEL borrows some ideas from the semantic web that resources at a given location should be
+                    persistent. However, the BEL namespace file format contains a flag to signify namespaces that
+                    might change over time that is only very narrowly appropriate for custom terminologies as they are
+                    under development. These namespaces are not cached and are not listed.
+                </p>
+                <p>
+                    Public namespaces are distributed by Fraunhofer SCAI on the <a
+                        href="http://arty.scai.fraunhofer.de/artifactory/bel/">Artifactory server</a>.
+                </p>
+                {% if current_user.is_admin %}
+                    <a class="btn btn-danger" href="{{ url_for('dbs.drop_namespaces') }}" role="button">Drop All</a>
+                {% endif %}
+            </div>
+        </div>
+        <div class="panel panel-default">
+            <div class="list-group">
+                {% for namespace in namespaces %}
+                    <div class="list-group-item">
+                        <h4 class="list-group-item-heading">{{ namespace.name }}
+                            <small class="text-muted">{{ namespace.version }}</small>
+                            {% if current_user.is_admin %}
+                                <a class="btn btn-danger pull-right"
+                                   href="{{ url_for('dbs.drop_namespace_by_id', namespace_id=namespace.id) }}"
+                                   role="button">Drop</a>
+                            {% endif %}
+                        </h4>
+                        <div class="list-group-item-text">
+                            <dl class="dl-horizontal">
+                                <dt>Keyword</dt>
+                                <dd>{{ namespace.keyword }}</dd>
+                                <dt>URL</dt>
+                                <dd><a href="{{ namespace.url }}">{{ namespace.url }}</a></dd>
+                                {% if namespace.description is not none %}
+                                    <dt>Description</dt>
+                                    <dd>{{ namespace.description }}</dd>
+                                {% endif %}
+                                <dt>Uploaded</dt>
+                                <dd>{{ namespace.uploaded }}</dd>
+                            </dl>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    {% include "footer.html" %}
+{% endblock %}
+
+

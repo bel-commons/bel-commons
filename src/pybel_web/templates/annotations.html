@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% import "bootstrap/wtf.html" as wtf %}
+{% import "bootstrap/fixes.html" as fixes %}
+{% import "bootstrap/utils.html" as util %}
+
+{% block title %}Annotations{% endblock %}
+
+{% block content %}
+    <div class="container">
+        {{ util.flashed_messages(dismissible=True, container=False) }}
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Annotations</h3>
+            </div>
+            <div class="panel-body">
+                <p>The list below enumerates the cached annotations.</p>
+                {% if current_user.is_admin %}
+                    <a class="btn btn-danger" href="{{ url_for('dbs.drop_annotations') }}" role="button">Drop All</a>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="panel panel-default">
+            <div class="list-group">
+                {% for annotation in annotations %}
+                    <div class="list-group-item">
+                        <h4 class="list-group-item-heading">{{ annotation.name }}
+                            <small class="text-muted">{{ annotation.version }}</small>
+                            {% if current_user.is_admin %}
+                                <a class="btn btn-danger pull-right"
+                                   href="{{ url_for('dbs.drop_annotation_by_id', annotation_id=annotation.id) }}"
+                                   role="button">Drop</a>
+                            {% endif %}
+                        </h4>
+                        <div class="list-group-item-text">
+                            <dl class="dl-horizontal">
+                                <dt>Keyword</dt>
+                                <dd>{{ annotation.keyword }}</dd>
+                                <dt>URL</dt>
+                                <dd><a href="{{ annotation.url }}">{{ annotation.url }}</a></dd>
+                                {% if annotation.description is not none %}
+                                    <dt>Description</dt>
+                                    <dd>{{ annotation.description }}</dd>
+                                {% endif %}
+                                {% if annotation.usage is not none %}
+                                    <dt>Usage</dt>
+                                    <dd>{{ annotation.usage }}</dd>
+                                {% endif %}
+                                <dt>Uploaded</dt>
+                                <dd>{{ annotation.uploaded }}</dd>
+                            </dl>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    {% include "footer.html" %}
+{% endblock %}
+
+

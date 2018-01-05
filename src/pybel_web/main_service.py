@@ -213,12 +213,20 @@ def build_main_service(app):
 
         return redirect_explorer(query.id)
 
-    @app.route('/definitions')
-    def view_definitions():
-        """Displays a page listing the namespaces and annotations."""
+    @app.route('/namespaces')
+    def view_namespaces():
+        """Displays a page listing the namespaces."""
         return render_template(
-            'definitions_list.html',
+            'namespaces.html',
             namespaces=manager.session.query(Namespace).order_by(Namespace.keyword).all(),
+            current_user=current_user,
+        )
+
+    @app.route('/annotations')
+    def view_annotations():
+        """Displays a page listing the annotations."""
+        return render_template(
+            'annotations.html',
             annotations=manager.session.query(Annotation).order_by(Annotation.keyword).all(),
             current_user=current_user,
         )
