@@ -47,7 +47,7 @@
                 </div>
                 <div class="panel-body">
                     <a class="btn btn-info" href="{{ url_for('admin.index') }}" role="button">
-                        Admin
+                        Flask Admin
                     </a>
                     <a class="btn btn-info" href="{{ url_for('view_overview') }}" role="button">
                         Overview
@@ -57,6 +57,9 @@
                     </a>
                     <a class="btn btn-info" href="{{ url_for('view_users') }}" role="button">
                         View Users
+                    </a>
+                    <a class="btn btn-info" href="{{ url_for('view_reports') }}" role="button">
+                        View Pretty Reporting
                     </a>
                     <a class="btn btn-warning" href="{{ url_for('dbs.drop_queries', next=url_for('home')) }}"
                        role="button">
