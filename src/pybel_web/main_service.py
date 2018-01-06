@@ -285,10 +285,14 @@ def build_main_service(app):
     def view_pipeline_help():
         """View the help info for the functions"""
 
-        data = [
-            (fname.replace('_', ' ').title(), f.__doc__.split('\n\n')[0])
-            for fname, f in no_arguments_map.items()
-        ]
+        data = []
+        for fname, f in no_arguments_map.items():
+
+            if f.__doc__ is None:
+                log.warning('No documentation for %s', fname)
+                continue
+
+            data.append((fname.replace('_', ' ').title(), f.__doc__.split('\n\n')[0]))
 
         return render_template(
             'pipeline_help.html',

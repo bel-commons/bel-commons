@@ -8,24 +8,17 @@
 
 {% block content %}
     <div class="container">
-
-        <div class="page-header">
-            <h1>Pipeline Help</h1>
-        </div>
-
         <div class="panel panel-default">
             <div class="panel-heading">
-                <h3 class="panel-title">Pipeline </h3>
+                <h3 class="panel-title">Pipeline Help</h3>
             </div>
-            <div class="panel-body">
-                <div class="list-group">
-                    {% for fname, f in function_dict %}
-                        <div class="list-group-item">
-                            <h4 class="list-group-item-heading">{{ fname }}</h4>
-                            <p class="list-group-item-text">{{ f }}</p>
-                        </div>
-                    {% endfor %}
-                </div>
+            <div class="list-group">
+                {% for fname, f in function_dict %}
+                    <div class="list-group-item">
+                        <h4 class="list-group-item-heading">{{ fname }}</h4>
+                        <p class="list-group-item-text">{{ f }}</p>
+                    </div>
+                {% endfor %}
             </div>
         </div>
     </div>
