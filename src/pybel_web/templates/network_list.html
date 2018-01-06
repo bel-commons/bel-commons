@@ -56,88 +56,81 @@
     <div class="container">
         {{ util.flashed_messages(dismissible=True, container=False) }}
 
-        {% if current_user.is_authenticated and current_user.is_admin %}
+        {% if current_user.is_authenticated and current_user.is_admin and BMS_BASE %}
             <div class="panel panel-info" id="admin-panel">
                 <div class="panel-heading">
-                    <h3 class="panel-title">Admin
+                    <h3 class="panel-title">Async Parse Folders
                         <button type="button" class="close" data-target="#admin-panel" data-dismiss="alert">
                             <span aria-hidden="true">&times;</span><span class="sr-only">Close</span>
                         </button>
                     </h3>
                 </div>
                 <div class="panel-body">
-                    <h4>Actions</h4>
                     <p>
-                        <a class="btn btn-info" href="{{ url_for('view_reports') }}" role="button">
-                            View Pretty Reporting
-                        </a>
-                        <a class="btn btn-info" href="{{ url_for('dbs.pillage', next=url_for('view_networks')) }}"
+                        <a class="btn btn-warning" href="{{ url_for('bms.git_pull', next=url_for('home')) }}"
                            role="button">
-                            Pillage
+                            Pull BMS
                         </a>
-                        <a class="btn btn-danger" href="{{ url_for('dbs.drop_networks', next=url_for('home')) }}"
-                           role="button" data-toggle="confirmation" data-btn-ok-icon="glyphicon glyphicon-share-alt"
-                           data-btn-ok-class="btn-success" data-btn-cancel-icon="glyphicon glyphicon-ban-circle"
-                           data-btn-cancel-class="btn-danger">
-                            Drop All Networks
+                        <a class="btn btn-danger" href="{{ url_for('bms.ensure_selventa', next=url_for('home')) }}"
+                           role="button">
+                            Selventa
+                        </a>
+                        <a class="btn btn-danger" href="{{ url_for('bms.ensure_aetionomy', next=url_for('home')) }}"
+                           role="button">
+                            AETIONOMY
+                        </a>
+                        <a class="btn btn-danger" href="{{ url_for('bms.ensure_ptsd', next=url_for('home')) }}"
+                           role="button">
+                            PTSD
+                        </a>
+
+                        <a class="btn btn-danger" href="{{ url_for('bms.ensure_tbi', next=url_for('home')) }}"
+                           role="button">
+                            TBI
+                        </a>
+                        <a class="btn btn-danger"
+                           href="{{ url_for('bms.ensure_bel4imocede', next=url_for('home')) }}"
+                           role="button">
+                            BEL4IMOCEDE
+                        </a>
+                        <a class="btn btn-danger" href="{{ url_for('bms.ensure_bms', next=url_for('home')) }}"
+                           role="button">
+                            BMS
                         </a>
                     </p>
-
-                    {% if BMS_BASE %}
-                        <h4>Async Parse Folders</h4>
-                        <p>
-                            <a class="btn btn-warning" href="{{ url_for('bms.git_pull', next=url_for('home')) }}"
-                               role="button">
-                                Pull BMS
-                            </a>
-                            <a class="btn btn-danger" href="{{ url_for('bms.ensure_selventa', next=url_for('home')) }}"
-                               role="button">
-                                Selventa
-                            </a>
-                            <a class="btn btn-danger" href="{{ url_for('bms.ensure_aetionomy', next=url_for('home')) }}"
-                               role="button">
-                                AETIONOMY
-                            </a>
-                            <a class="btn btn-danger" href="{{ url_for('bms.ensure_ptsd', next=url_for('home')) }}"
-                               role="button">
-                                PTSD
-                            </a>
-
-                            <a class="btn btn-danger" href="{{ url_for('bms.ensure_tbi', next=url_for('home')) }}"
-                               role="button">
-                                TBI
-                            </a>
-                            <a class="btn btn-danger"
-                               href="{{ url_for('bms.ensure_bel4imocede', next=url_for('home')) }}"
-                               role="button">
-                                BEL4IMOCEDE
-                            </a>
-                            <a class="btn btn-danger" href="{{ url_for('bms.ensure_bms', next=url_for('home')) }}"
-                               role="button">
-                                BMS
-                            </a>
-                        </p>
-                    {% endif %}
                 </div>
             </div>
         {% endif %}
 
         <div class="panel panel-default">
             <div class="panel-heading">
+                <div class="btn-group pull-right">
+                    <a class="btn btn-warning btn-xs"
+                       href="{{ url_for('dbs.pillage', next=url_for('view_networks')) }}">
+                        Pillage
+                    </a>
+                    <a class="btn btn-danger btn-xs" href="{{ url_for('dbs.drop_networks', next=url_for('home')) }}"
+                       role="button" data-toggle="confirmation" data-btn-ok-icon="glyphicon glyphicon-share-alt"
+                       data-btn-ok-class="btn-success" data-btn-cancel-icon="glyphicon glyphicon-ban-circle"
+                       data-btn-cancel-class="btn-danger">
+                        Drop All
+                    </a>
+                </div>
                 <h3 class="panel-title">Networks</h3>
             </div>
             <div class="panel-body">
-                <p>Each curated network is backed by a BEL script. Below are options to summarize the networks'
+                <p>
+                    Each curated network is backed by a BEL script. Below are options to summarize the networks'
                     contents, explore them with an in-browser navigator, or run analyses with data sets such as
                     differential gene expression data. Upload more networks
                     <a href="{{ url_for('parser.view_parser') }}">here</a>.
                 </p>
 
                 <div class="input-group">
-                    <input type="text" class="form-control" placeholder="Search for...">
+                    <input type="text" class="form-control" placeholder="Search networks...">
                     <span class="input-group-btn">
-                    <button class="btn btn-default" type="button">Go!</button>
-                </span>
+                        <button class="btn btn-default" type="button">Go!</button>
+                    </span>
                 </div>
             </div>
         </div>
