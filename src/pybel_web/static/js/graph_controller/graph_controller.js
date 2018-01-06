@@ -124,8 +124,8 @@ function displayEdgeInfo(edge) {
                 if (context.citation) {
                     edgeObject[sk] += '<dt>Citation</dt><dd>';
                     if (context.citation.type === "PubMed") {
-                        edgeObject[sk] += '<a target="_blank" href=https://www.ncbi.nlm.nih.gov/pubmed/' + context.citation.reference + " target='_blank' " +
-                            "style='text-decoration: underline'>PMID:" + context.citation.reference + "</a>";
+                        edgeObject[sk] += '<a target="_blank" href="https://www.ncbi.nlm.nih.gov/pubmed/' + context.citation.reference + '" style="text-decoration: underline">PMID:' + context.citation.reference + ' <span class="glyphicon glyphicon-new-window"></a> <a target="_blank" href="/citation/pubmed/' +
+                            context.citation.reference + '">See More Statements <span class="glyphicon glyphicon-search" aria-hidden="true"></span></a>';
                     } else if (context.citation.type === "URL") {
                         edgeObject[sk] += '<a target="_blank" href=' + context.citation.reference + " target='_blank' " +
                             "style='text-decoration: underline'>" + context.citation.reference + "</a>";
@@ -722,7 +722,6 @@ function doesEdgeHaveCausal(edge) {
     }
     return false;
 }
-
 
 
 /**
@@ -1544,10 +1543,10 @@ function initD3Force(graph, tree) {
 
         edgeTypes = getEdgeTypes(edge);
 
-        for (edgeType in edgeTypes){
+        for (edgeType in edgeTypes) {
             $("#edge-list-ul").append("<li class='list-group-item'><input class='edge-checkbox' type='checkbox'><span id="
-            + edge.source.id + '-' + edge.target.id + ">" + edge.source.cname + ' <strong><i>' + edgeType +
-            '</i></strong> ' + edge.target.cname + "</span></li>");
+                + edge.source.id + '-' + edge.target.id + ">" + edge.source.cname + ' <strong><i>' + edgeType +
+                '</i></strong> ' + edge.target.cname + "</span></li>");
         }
     });
 

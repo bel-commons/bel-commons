@@ -13,6 +13,7 @@ from flask import abort, current_app, flash, redirect, render_template, request,
 from flask_security import current_user, login_required, roles_required
 
 import pybel_tools.query
+from pybel.constants import CITATION_TYPE_PUBMED
 from pybel.manager.models import Annotation, Edge, Namespace, Node
 from pybel.utils import get_version as get_pybel_version
 from pybel_tools.pipeline import no_arguments_map
@@ -79,7 +80,7 @@ def build_main_service(app):
         networks = get_networks_with_permission(manager)
 
         return render_template(
-            'network_list.html',
+            'networks.html',
             networks=sorted(networks, key=lambda network: network.created, reverse=True),
             current_user=current_user,
             BMS_BASE=app.config.get('BMS_BASE'),
@@ -353,6 +354,13 @@ def build_main_service(app):
             source_bel=source.bel,
             target_bel=target.bel if target else None,
         )
+
+    @app.route('/citation/pubmed/<pmid>')
+    def view_pubmed(pmid):
+        """View all evidences and relations extracted from a given PubMed article"""
+        citation = manager.get_citation_by_reference(CITATION_TYPE_PUBMED, pmid)
+
+        return render_template('citation.html', citation=citation)
 
     @app.route('/node/<source_id>/edges/<target_id>')
     def view_relations(source_id, target_id):

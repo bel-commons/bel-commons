@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% import "bootstrap/wtf.html" as wtf %}
+{% import "bootstrap/fixes.html" as fixes %}
+{% import "bootstrap/utils.html" as util %}
+
+{% block title %}Citation{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">
+                    {{ citation.type }}: {{ citation.reference }}
+                </h3>
+            </div>
+            <div class="panel-body">
+                <dl class="dl-horizontal">
+                    <dt>Title</dt>
+                    <dd>{{ citation.title }}</dd>
+                    <dt>Journal</dt>
+                    <dd>{{ citation.name }} {{ citation.volume }} {{ citation.issue }} {{ citation.pages }}</dd>
+                    <dt>Date</dt>
+                    <dd>{{ citation.date }}</dd>
+                    <dt>Authors</dt>
+                    <dd>{{ citation.authors|join(' | ') }}</dd>
+                </dl>
+            </div>
+        </div>
+
+        {{ util.flashed_messages(dismissible=True, container=False) }}
+
+        {% for evidence in citation.evidences %}
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <p>{{ evidence.text }}</p>
+                </div>
+                <div class="list-group">
+                    {% for edge in evidence.edges %}
+                        <div class="list-group-item">
+                            <h4 class="list-group-item-heading">{{ edge.bel }}</h4>
+                            <p class="list-group-item-text">{{ edge.sha512 }}</p>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    {% include "footer.html" %}
+{% endblock %}
