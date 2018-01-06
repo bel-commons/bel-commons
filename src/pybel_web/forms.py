@@ -60,7 +60,7 @@ class ParserForm(FlaskForm):
     # suggest_naked_name = BooleanField('My document contains unqualified names - suggest appropriate namespaces')
     allow_nested = BooleanField(
         'My document contains <a href="http://pybel.readthedocs.io/en/latest/io.html#allow-nested">nested statements</a>')
-    citation_clearing = BooleanField(
+    disable_citation_clearing = BooleanField(
         'My document sometimes has evidences before citations - disable <a href="http://pybel.readthedocs.io/en/latest/io.html#citation-clearing">citation clearing</a>')
     public = BooleanField('Make my knowledge assembly publicly available', default=True)
     infer_origin = BooleanField(

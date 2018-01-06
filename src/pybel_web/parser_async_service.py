@@ -43,7 +43,7 @@ def view_parser():
         encoding=form.encoding.data,
         public=form.public.data,
         allow_nested=form.allow_nested.data,
-        citation_clearing=form.citation_clearing.data,
+        citation_clearing=(not form.disable_citation_clearing.data),
         infer_origin=form.infer_origin.data,
     )
 
