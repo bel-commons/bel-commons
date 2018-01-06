@@ -6,13 +6,13 @@ import logging
 import pickle
 import time
 from collections import defaultdict
+from io import StringIO
 from operator import itemgetter
 
 import flask
 import pandas as pd
-from flask import Blueprint, abort, current_app, make_response, redirect, render_template, request, url_for
+from flask import Blueprint, abort, current_app, make_response, redirect, render_template, url_for
 from flask_security import current_user, login_required
-from six import StringIO
 
 from pybel_tools.analysis.cmpa import RESULT_LABELS
 from .celery_utils import create_celery

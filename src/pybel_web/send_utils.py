@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
 import logging
+from io import BytesIO, StringIO
 
 from flask import Response, jsonify, send_file
-from six import BytesIO, StringIO
 
 from pybel import to_bel_lines, to_bytes, to_csv, to_cx, to_graphml, to_gsea, to_jgif, to_json, to_sif
 from pybel.canonicalize import node_to_bel

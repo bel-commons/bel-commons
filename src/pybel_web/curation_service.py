@@ -4,12 +4,12 @@ import codecs
 import logging
 import re
 import time
+from io import StringIO
 
 from flask import Blueprint, make_response, render_template, request
 from flask_security import current_user, login_required
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileAllowed, FileField
-from six import StringIO
 from wtforms import fields
 from wtforms.validators import DataRequired
 

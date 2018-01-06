@@ -8,12 +8,12 @@ import pickle
 import time
 import warnings
 from collections import Counter, defaultdict
+from io import BytesIO
 
 import networkx as nx
 import pandas
 from flask import abort, current_app, flash, jsonify, redirect, render_template, request
 from flask_security import current_user
-from six import BytesIO
 from sqlalchemy import and_, func
 from werkzeug.local import LocalProxy
 

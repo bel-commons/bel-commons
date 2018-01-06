@@ -20,6 +20,5 @@ raven
 matplotlib_venn
 matplotlib
 gitpython
-six
 wtforms
 gunicorn

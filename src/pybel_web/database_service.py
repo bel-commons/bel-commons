@@ -8,13 +8,13 @@ import pickle
 import random
 import time
 from functools import lru_cache
+from io import StringIO
 from operator import itemgetter
 
 import flask
 import networkx as nx
 from flask import Blueprint, abort, current_app, flash, jsonify, make_response, redirect, request
 from flask_security import current_user, login_required, roles_required
-from six import StringIO
 from sqlalchemy import func
 
 import pybel

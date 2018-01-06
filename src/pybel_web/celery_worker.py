@@ -13,10 +13,10 @@ import json
 import logging
 import os
 import time
+from pickle import dumps, loads
 
 import requests.exceptions
 from celery.utils.log import get_task_logger
-from six.moves.cPickle import dumps, loads
 from sqlalchemy.exc import IntegrityError, OperationalError
 
 from pybel import from_json, from_url, to_bel_path, to_bytes

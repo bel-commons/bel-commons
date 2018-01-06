@@ -4,9 +4,9 @@ import codecs
 import datetime
 import json
 from operator import attrgetter
+from pickle import dumps, loads
 
 from flask_security import RoleMixin, UserMixin
-from six.moves.cPickle import dumps, loads
 from sqlalchemy import (
     Boolean, Column, DateTime, Float, ForeignKey, Index, Integer, LargeBinary, String, Table, Text,
     UniqueConstraint,

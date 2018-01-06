@@ -44,7 +44,6 @@ INSTALL_REQUIRES = [
     'matplotlib_venn',
     'matplotlib',
     'gitpython',
-    'six',
     'gunicorn',
 ]
 EXTRAS_REQUIRE = {
