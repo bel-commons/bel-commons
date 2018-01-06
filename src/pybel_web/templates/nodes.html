@@ -13,11 +13,19 @@
 
         <div class="panel panel-default">
             <div class="panel-heading">
+                <div class="btn-group pull-right">
+                    <a class="btn btn-danger btn-xs" href="{{ url_for('dbs.drop_nodes', next=url_for('home')) }}"
+                       role="button" data-toggle="confirmation" data-btn-ok-icon="glyphicon glyphicon-share-alt"
+                       data-btn-ok-class="btn-success" data-btn-cancel-icon="glyphicon glyphicon-ban-circle"
+                       data-btn-cancel-class="btn-danger">
+                        Drop All
+                    </a>
+                </div>
                 <h3 class="panel-title">Nodes</h3>
             </div>
             <div class="panel-body">
                 <div class="input-group">
-                    <input type="text" class="form-control" placeholder="Search for...">
+                    <input type="text" class="form-control" placeholder="Search for nodes...">
                     <span class="input-group-btn">
                     <button class="btn btn-default" type="button">Go!</button>
                 </span>
@@ -27,20 +35,84 @@
 
         <div class="panel panel-default">
             <div class="list-group" id="edge-list">
-                {% for node in nodes[:15] %}
+                {% for node in nodes.limit(15) %}
                     <div class="list-group-item">
                         <h4 class="list-group-item-heading">
                             {{ node.bel }}
+
+                            {% if current_user.is_admin %}
+                                <a href="{{ url_for('dbs.drop_node', node_hash=node.sha512, next=url_for('view_nodes')) }}"
+                                   class="btn btn-danger pull-right">Drop</a>
+                            {% endif %}
                         </h4>
                         <div class="list-group-item-text">
                             In-Edges: {{ node.in_edges.count() }} |
                             Out-Edges: {{ node.out_edges.count() }} |
                             Classes: {{ node.out_edges.filter_by(relation='isA').count() }}
 
-                            <ul>{% for network in node.networks %}
-                                <li>{{ network }}</li>
-                            {% endfor %}
+                            <h4>Networks</h4>
+                            <ul>
+                                {% for network in node.networks %}
+                                    <li>{{ network }}</li>
+                                {% endfor %}
                             </ul>
+
+                            {% if node.namespace_entry %}
+                                <h4>Namespace Information</h4>
+                                <dl class="dl-horizontal">
+                                    {% if node.namespace_entry.namespace.url %}
+                                        <dt>URL</dt>
+                                        <dd>
+                                            <a href="{{ node.namespace_entry.namespace.url }}">{{ node.namespace_entry.namespace.url }}</a>
+                                        </dd>
+                                        <dt>Name</dt>
+                                        <dd>{{ node.namespace_entry.namespace.name }}</dd>
+                                    {% else %}
+                                        <dt>Pattern</dt>
+                                        <dd>{{ node.namespace_entry.namespace.pattern }}</dd>
+                                    {% endif %}
+                                </dl>
+
+                                {% if hgnc_manager and node.namespace_entry.namespace.keyword == 'HGNC' %}
+                                    {% set gene =  hgnc_manager.get_gene_by_hgnc_symbol(node.namespace_entry.name) %}
+
+                                    <h4>HGNC Information</h4>
+                                    <dl class="dl-horizontal">
+                                        <dt>Identifier</dt>
+                                        <dd>{{ gene.identifier }}</dd>
+                                        <dt>Name</dt>
+                                        <dd>{{ gene.name }}</dd>
+                                        <dt>Locus Group</dt>
+                                        <dd>{{ gene.locus_group }}</dd>
+                                        <dt>Locus Type</dt>
+                                        <dd>{{ gene.locus_type }}</dd>
+                                        <dt>Synonyms Type</dt>
+                                        <dd>{{ gene.alias_names|join(' | ') }}</dd>
+                                    </dl>
+                                {% elif chebi_manager and node.namespace_entry.namespace.keyword in ['CHEBI', 'CHEBIID'] %}
+                                    {% if node.namespace_entry.namespace.keyword == 'CHEBI' %}
+                                        {% set chemical= chebi_manager.get_chemical_by_chebi_name(node.namespace_entry.name) %}
+                                    {% else %}
+                                        {% set chemical= chebi_manager.get_chemical_by_chebi_id(node.namespace_entry.name) %}
+                                    {% endif %}
+
+                                    <h4>ChEBI Information</h4>
+                                    <dl class="dl-horizontal">
+                                        <dt>Identifier</dt>
+                                        <dd>{{ chemical.chebi_id }}</dd>
+                                        <dt>Name</dt>
+                                        <dd>{{ chemical.name }}</dd>
+                                        <dt>InChI</dt>
+                                        <dd>{{ chemical.inchi }}</dd>
+                                        {% if chemical.definition %}
+                                            <dt>Description</dt>
+                                            <dd>{{ chemical.definition }}</dd>
+                                        {% endif %}
+                                        <dt>Synonyms</dt>
+                                        <dd>{{ chemical.synonyms|join(' | ') }}</dd>
+                                    </dl>
+                                {% endif %}
+                            {% endif %}
                         </div>
                     </div>
                 {% endfor %}

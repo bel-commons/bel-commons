@@ -46,7 +46,7 @@ from pybel_tools.summary import (
 from pybel_tools.utils import min_tanimoto_set_similarity, prepare_c3, prepare_c3_time_series
 from .application_utils import get_manager, get_user_datastore
 from .constants import AND
-from .models import EdgeVote, Experiment, NetworkOverlap, Query, Report, User
+from .models import EdgeComment, EdgeVote, Experiment, NetworkOverlap, Query, Report, User
 
 log = logging.getLogger(__name__)
 
@@ -806,25 +806,6 @@ def next_or_jsonify(message, *args, status=200, category='message', **kwargs):
     )
 
 
-def _user_owns_network(network, user):
-    """
-    :param Network network: A network
-    :param User user: A user
-    :rtype: bool
-    """
-    return not user.is_authenticated or not network.report or user != network.report.user
-
-
-def user_owns_network_or_403(network, user):
-    """Check that the user is the owner of the the network. Sends a Flask abort 403 signal if not.
-
-    :param Network network: A network
-    :param User user: A user
-    """
-    if _user_owns_network(network, user):
-        abort(403, 'You do not own this network')
-
-
 def calculate_scores(graph, data, runs):
     """Calculates CMPA scores"""
     remove_nodes_by_namespace(graph, {'MGI', 'RGD'})
@@ -1003,3 +984,32 @@ def insert_graph(m, graph, user_id=1):  # TODO put this in extended manager for 
 
     m.session.add(report)
     m.session.commit()
+
+
+def help_get_edge_entry(manager_, edge):
+    """Gets edge information by edge identifier
+
+    :type manager_: pybel.Manager
+    :param Edge edge: The  given edge
+    :return: A dictionary representing the information about the given edge
+    :rtype: dict
+    """
+    data = edge.to_json()
+
+    data['comments'] = [
+        {
+            'user': {
+                'id': ec.user_id,
+                'email': ec.user.email
+            },
+            'comment': ec.comment,
+            'created': ec.created,
+        }
+        for ec in manager_.session.query(EdgeComment).filter(EdgeComment.edge == edge)
+    ]
+
+    if current_user.is_authenticated:
+        vote = get_or_create_vote(manager_, edge, current_user)
+        data['vote'] = 0 if (vote is None or vote.agreed is None) else 1 if vote.agreed else -1
+
+    return data

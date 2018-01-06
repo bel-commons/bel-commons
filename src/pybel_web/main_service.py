@@ -20,7 +20,8 @@ from pybel_tools.utils import get_version as get_pybel_tools_version
 from . import models
 from .application_utils import get_manager
 from .constants import *
-from .models import Base, Project, Query, Report, User
+from .manager import *
+from .models import Project, Query, Report, User
 from .utils import (
     calculate_overlap_dict, get_network_ids_with_permission_helper, get_networks_with_permission,
     next_or_jsonify, query_form_to_dict, render_network_summary, safe_get_query,
@@ -62,7 +63,7 @@ def build_main_service(app):
     def nuke():
         """Destroys the database and recreates it"""
         log.info('nuking database')
-        Base.metadata.drop_all(manager.engine, checkfirst=True)
+        manager.drop_all(checkfirst=True)
         log.info('   the dust settles')
         return next_or_jsonify('nuked the database')
 
@@ -94,7 +95,13 @@ def build_main_service(app):
     @roles_required('admin')
     def view_nodes():
         """Renders a page viewing all edges"""
-        return render_template('nodes.html', nodes=manager.session.query(Node), current_user=current_user)
+        return render_template(
+            'nodes.html',
+            nodes=manager.session.query(Node),
+            current_user=current_user,
+            hgnc_manager=hgnc_manager,
+            chebi_manager=chebi_manager
+        )
 
     @app.route('/query/build', methods=['GET', 'POST'])
     def view_query_builder():

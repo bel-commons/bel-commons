@@ -30,7 +30,6 @@ from pybel_tools import pipeline
 from pybel_tools.analysis.cmpa import RESULT_LABELS
 from pybel_tools.filters.node_filters import exclude_pathology_filter
 from pybel_tools.mutation import add_canonical_names
-from pybel_tools.pipeline import in_place_mutator
 from pybel_tools.query import Query
 from pybel_tools.selection import get_subgraph_by_annotations, get_subgraph_by_node_filter
 from pybel_tools.summary import (
@@ -40,53 +39,17 @@ from pybel_tools.summary import (
 from . import models
 from .constants import *
 from .main_service import BLACK_LIST, PATHS_METHOD, UNDIRECTED
+from .manager import *
 from .models import EdgeComment, Experiment, Project, Report, User
 from .send_utils import serve_network, to_json_custom
 from .utils import (
-    current_user_has_query_rights, fill_out_report, get_edge_by_hash_or_404, get_network_ids_with_permission_helper,
-    get_node_by_hash_or_404, get_node_overlaps, get_or_create_vote, get_query_ancestor_id, get_recent_reports,
-    make_graph_summary, manager, next_or_jsonify, safe_get_query, user_datastore, user_owns_network_or_403,
+    current_user_has_query_rights, fill_out_report, get_edge_by_hash_or_404,
+    get_network_ids_with_permission_helper, get_node_by_hash_or_404, get_node_overlaps, get_or_create_vote,
+    get_query_ancestor_id, get_recent_reports, help_get_edge_entry, make_graph_summary, manager, next_or_jsonify,
+    safe_get_query, user_datastore,
 )
 
 log = logging.getLogger(__name__)
-
-try:
-    import bio2bel_chebi
-except ImportError:
-    chebi_manager = None
-else:
-    log.info('Using Bio2BEL ChEBI')
-    chebi_manager = bio2bel_chebi.Manager()
-
-try:
-    import bio2bel_hgnc
-except ImportError:
-    hgnc_manager = None
-else:
-    log.info('Using Bio2BEL HGNC')
-    hgnc_manager = bio2bel_hgnc.Manager()
-    in_place_mutator(hgnc_manager.enrich_genes_with_families)
-    in_place_mutator(hgnc_manager.enrich_families_with_genes)
-
-try:
-    import bio2bel_mirtarbase
-except ImportError:
-    mirtarbase_manager = None
-else:
-    log.info('Using Bio2BEL miRTarBase')
-    mirtarbase_manager = bio2bel_mirtarbase.Manager()
-    in_place_mutator(mirtarbase_manager.enrich_mirnas)
-    in_place_mutator(mirtarbase_manager.enrich_rnas)
-
-try:
-    import bio2bel_expasy
-except ImportError:
-    expasy_manager = None
-else:
-    log.info('Using Bio2BEL ExPASy')
-    expasy_manager = bio2bel_expasy.Manager()
-    in_place_mutator(expasy_manager.enrich_proteins)
-    in_place_mutator(expasy_manager.enrich_enzymes)
 
 api_blueprint = Blueprint('dbs', __name__)
 
@@ -444,10 +407,7 @@ def get_network_metadata(network_id):
       200:
         description: The metadata describing the network
     """
-    network = manager.session.query(Network).get(network_id)
-
-    if network is None:
-        abort(404)
+    network = get_network_or_404(network_id)
 
     return jsonify(**network.to_json(include_id=True))
 
@@ -582,19 +542,12 @@ def nodes_by_network(network_id):
 
 
 def drop_network_helper(network_id):
-    network = manager.session.query(Network).get(network_id)
-
-    if network is None:
-        abort(404, 'Network {} does not exist'.format(network_id))
-
-    if not current_user.is_admin:
-        user_owns_network_or_403(network, current_user)
+    network = safe_get_network(network_id)
 
     log.info('dropping network %s', network_id)
 
     try:
-        manager.session.delete(network)
-        manager.session.commit()
+        manager.drop_network(network)
 
     except Exception as e:
         manager.session.rollback()
@@ -612,7 +565,8 @@ def drop_network_helper(network_id):
             'exception': str(e),
         })
 
-    return next_or_jsonify('Dropped network #{}'.format(network_id), network_id=network_id, action='drop network')
+    else:
+        return next_or_jsonify('Dropped network #{}'.format(network_id), network_id=network_id, action='drop network')
 
 
 @api_blueprint.route('/api/network/<int:network_id>/drop')
@@ -667,10 +621,7 @@ def _help_claim_network(network_id, user_id):
     :param int network_id: A network to claim
     :rtype: Optional[Report]
     """
-    network = manager.session.query(Network).get(network_id)
-
-    if network is None:
-        abort(404)
+    network = get_network_or_404(network_id)
 
     if network.report:
         return
@@ -715,10 +666,7 @@ def claim_network(network_id):
         required: true
         type: integer
     """
-    network = manager.session.query(Network).get(network_id)
-
-    if network is None:
-        abort(404)
+    network = get_network_or_404(network_id)
 
     res = _help_claim_network(network, current_user.id)
 
@@ -854,10 +802,7 @@ def update_network_status(network_id, public):
     :param int network_id: 
     :param bool public:
     """
-    network = manager.session.query(Network).get(network_id)
-
-    if network is None:
-        abort(404)
+    network = get_network_or_404(network_id)
 
     if network.report is None:
         abort(400)
@@ -1395,18 +1340,59 @@ def suggest_authors():
 # EDGES
 ####################################
 
-@api_blueprint.route('/api/edge/drop_all')
+@api_blueprint.route('/api/edge')
+@roles_required('admin')
+def get_edges():
+    """Gets all edges
+
+    ---
+    tags:
+        - edge
+    parameters:
+      - name: limit
+        in: query
+        description: The number of edges to return
+        required: false
+        type: integer
+      - name: offset
+        in: query
+        description: The number of edges to return
+        required: false
+        type: integer
+    """
+    limit = request.args.get('limit', type=int)
+    offset = request.args.get('offset', type=int)
+
+    bq = manager.session.query(Edge)
+
+    if limit:
+        bq = bq.limit(limit)
+
+    if offset:
+        bq = bq.offset(offset)
+
+    return jsonify([
+        help_get_edge_entry(manager, edge)
+        for edge in bq.all()
+    ])
+
+
+@api_blueprint.route('/api/edge/drop')
 @roles_required('admin')
 def drop_edges():
-    """Drops all edges"""
+    """Drops all edges
+
+    ---
+    tags:
+        - edge
+    """
     log.warning('dropping all edges')
-    manager.session.query(Edge).delete()
-    manager.session.commit()
-    return next_or_jsonify('dropped all nodes')
+    manager.drop_edges()
+    return next_or_jsonify('dropped all edges')
 
 
 @api_blueprint.route('/api/edge/by_bel/statement/<bel>')
-def edges_by_bel_statement(bel):
+def get_edges_by_bel(bel):
     """Get edges that match the given BEL
 
     ---
@@ -1424,7 +1410,7 @@ def edges_by_bel_statement(bel):
 
 
 @api_blueprint.route('/api/edge/by_bel/source/<source_bel>')
-def edges_by_bel_source(source_bel):
+def get_edges_by_source_bel(source_bel):
     """Get edges whose sources match the given BEL
 
     ---
@@ -1442,7 +1428,7 @@ def edges_by_bel_source(source_bel):
 
 
 @api_blueprint.route('/api/edge/by_bel/target/<target_bel>')
-def edges_by_bel_target(target_bel):
+def get_edges_by_target_bel(target_bel):
     """Gets edges whose targets match the given BEL
 
     ---
@@ -1460,25 +1446,25 @@ def edges_by_bel_target(target_bel):
 
 
 @api_blueprint.route('/api/citation/pubmed/<pubmed_identifier>/edges')
-def edges_by_pmid(pubmed_identifier):
+def get_edges_by_pubmed(pubmed_identifier):
     """Gets edges that have a given PubMed identifier
 
     ---
     tags:
       - citation
     parameters:
-      - name: pmid
+      - name: pubmed_identifier
         in: path
         description: A NCBI PubMed identifier
         required: true
-        type: integer
+        type: string
     """
     edges = manager.query_edges(citation=pubmed_identifier)
     return jsonify(edges)
 
 
 @api_blueprint.route('/api/author/<author>/edges')
-def edges_by_author(author):
+def get_edges_by_author(author):
     """Gets edges with a given author
 
     ---
@@ -1497,7 +1483,7 @@ def edges_by_author(author):
 
 
 @api_blueprint.route('/api/annotation/<annotation>/value/<value>/edges')
-def edges_by_annotation(annotation, value):
+def get_edges_by_annotation(annotation, value):
     """Gets edges with the given annotation/value combination
 
     ---
@@ -1520,56 +1506,6 @@ def edges_by_annotation(annotation, value):
     return jsonify(edges)
 
 
-def get_edge_entry(edge):
-    """Gets edge information by edge identifier
-
-    :param Edge edge: The  given edge
-    :return: A dictionary representing the information about the given edge
-    :rtype: dict
-    """
-    data = edge.to_json()
-
-    data['comments'] = [
-        {
-            'user': {
-                'id': ec.user_id,
-                'email': ec.user.email
-            },
-            'comment': ec.comment,
-            'created': ec.created,
-        }
-        for ec in manager.session.query(EdgeComment).filter(EdgeComment.edge == edge)
-    ]
-
-    if current_user.is_authenticated:
-        vote = get_or_create_vote(manager, edge, current_user)
-        data['vote'] = 0 if (vote is None or vote.agreed is None) else 1 if vote.agreed else -1
-
-    return data
-
-
-@api_blueprint.route('/api/edge')
-@roles_required('admin')
-def get_all_edges():
-    """Gets all edges
-
-    ---
-    tags:
-        - edge
-    """
-    limit = request.args.get('limit', type=int)
-
-    bq = manager.session.query(Edge)
-
-    if limit:
-        bq = bq.limit(limit)
-
-    return jsonify([
-        get_edge_entry(edge)
-        for edge in bq.all()
-    ])
-
-
 @api_blueprint.route('/api/edge/<edge_hash>')
 def get_edge_by_hash(edge_hash):
     """Gets an edge data dictionary by hash
@@ -1585,12 +1521,12 @@ def get_edge_by_hash(edge_hash):
         type: string
     """
     edge = get_edge_by_hash_or_404(edge_hash)
-    return jsonify(get_edge_entry(edge))
+    return jsonify(help_get_edge_entry(manager, edge))
 
 
 @api_blueprint.route('/api/edge/hash_starts/<edge_hash>')
 @roles_required('admin')
-def get_edge_by_hash_start(edge_hash):
+def search_edge_by_hash(edge_hash):
     """Gets an edge data dictionary by the beginning of its hash
 
     ---
@@ -1668,13 +1604,15 @@ def store_comment(edge_hash):
     """
     edge = get_edge_by_hash_or_404(edge_hash)
 
-    if 'comment' not in request.args:
-        abort(403, 'Comment not found')
+    comment = request.args.get('comment')
+
+    if comment is None:
+        abort(403, 'Comment not found')  # FIXME put correct code
 
     comment = EdgeComment(
         user=current_user,
         edge=edge,
-        comment=request.args['comment']
+        comment=comment
     )
 
     manager.session.add(comment)
@@ -1687,18 +1625,107 @@ def store_comment(edge_hash):
 # NODES
 ####################################
 
+def jsonify_nodes(nodes):
+    return jsonify([
+        node.to_json(include_id=True)
+        for node in nodes
+    ])
+
+
+@api_blueprint.route('/api/node/')
+@roles_required('admin')
+def get_nodes():
+    """Gets all nodes
+
+    ---
+    tags:
+        - node
+    parameters:
+      - name: limit
+        in: query
+        description: The number of edges to return
+        required: false
+        type: integer
+      - name: offset
+        in: query
+        description: The number of edges to return
+        required: false
+        type: integer
+    """
+    limit = request.args.get('limit', type=int)
+    offset = request.args.get('offset', type=int)
+
+    bq = manager.session.query(Node)
+
+    if limit:
+        bq = bq.limit(limit)
+
+    if offset:
+        bq = bq.offset(offset)
+
+    return jsonify_nodes(bq)
+
+
 @api_blueprint.route('/api/node/drop')
 @roles_required('admin')
 def drop_nodes():
-    """Drops all edges"""
+    """Drops all nodes
+
+    ---
+    tags:
+        - node
+    """
     log.warning('dropping all nodes')
     manager.session.query(Node).delete()
     manager.session.commit()
-    return next_or_jsonify('dropped all nodes')
+    return next_or_jsonify('Dropped all nodes')
 
 
-def jsonify_nodes(nodes):
-    return jsonify(node.to_json(include_id=True) for node in nodes)
+@api_blueprint.route('/api/node/<node_hash>')
+def get_node_by_hash(node_hash):
+    """Gets a node
+
+    :param node_hash: A PyBEL node hash
+
+    ---
+    tags:
+        - node
+    parameters:
+      - name: node_hash
+        in: path
+        description: The PyBEL hash of a node
+        required: true
+        type: string
+    """
+    node = get_node_by_hash_or_404(node_hash)
+
+    rv = node.to_json()
+
+    rv = enrich_node_json(rv)
+
+    return jsonify(rv)
+
+
+@api_blueprint.route('/api/node/<node_hash>/drop')
+def drop_node(node_hash):
+    """Drops a node
+
+    :param node_hash: A PyBEL node hash
+
+    ---
+    tags:
+        - node
+    parameters:
+      - name: node_hash
+        in: path
+        description: The PyBEL hash of a node
+        required: true
+        type: string
+    """
+    node = get_node_by_hash_or_404(node_hash)
+    manager.session.delete(node)
+    manager.session.commit()
+    return next_or_jsonify('Dropped node: {}'.format(node.bel))
 
 
 @api_blueprint.route('/api/node/by_bel/<bel>')
@@ -1794,31 +1821,6 @@ def enrich_node_json(node_data):
     return node_data
 
 
-@api_blueprint.route('/api/node/<node_hash>')
-def get_node_hash(node_hash):
-    """Gets the pybel node tuple
-
-    :param node_hash: A PyBEL node hash
-
-    ---
-    tags:
-        - node
-    parameters:
-      - name: node_hash
-        in: path
-        description: The PyBEL hash of a node
-        required: true
-        type: string
-    """
-    node = get_node_by_hash_or_404(node_hash)
-
-    rv = node.to_json()
-
-    rv = enrich_node_json(rv)
-
-    return jsonify(rv)
-
-
 @api_blueprint.route('/api/node/suggestion/')
 def get_node_suggestion():
     """Suggests a node
@@ -1908,7 +1910,7 @@ def drop_queries():
     return next_or_jsonify('Dropped all queries')
 
 
-@api_blueprint.route('/api/query/dropall/<int:user_id>')
+@api_blueprint.route('/api/user/<int:user_id>/drop-queries/')
 @login_required
 def drop_user_queries(user_id):
     """Drops all queries associated with the user
@@ -1930,7 +1932,7 @@ def drop_user_queries(user_id):
     manager.session.query(models.Query).filter(models.Query.user_id == user_id).delete()
     manager.session.commit()
 
-    return next_or_jsonify('Dropped all queries associated with your account')
+    return next_or_jsonify('Dropped all queries associated with {}'.format(current_user))
 
 
 @api_blueprint.route('/api/query/<int:query_id>/info')
@@ -2401,7 +2403,7 @@ def drop_experiment_by_id(experiment_id):
     experiment = get_experiment_or_404(experiment_id)
 
     if not current_user.is_admin and (current_user != experiment.user):
-        abort(403, 'You do not have rights to drop this experiment')
+        abort(403)
 
     manager.session.delete(experiment)
     manager.session.commit()
@@ -2437,7 +2439,7 @@ def download_analysis(experiment_id):
     experiment = get_experiment_or_404(experiment_id)
 
     if not current_user.is_admin and (current_user != experiment.user):
-        abort(403, 'You do not have rights to this experiment')
+        abort(403)
 
     si = StringIO()
     cw = csv.writer(si)
@@ -2482,13 +2484,8 @@ def grant_network_to_project(network_id, project_id):
         type: integer
         format: int32
     """
-    network = manager.session.query(Network).get(network_id)
-
-    if network is None:
-        abort(404)
-
-    user_owns_network_or_403(network, current_user)
-
+    network = safe_get_network(network_id)
+    project = safe_get_project(project_id)
     project = manager.session.query(Project).get(project_id)
     project.networks.append(network)
 
@@ -2525,12 +2522,7 @@ def grant_network_to_user(network_id, user_id):
         type: integer
         format: int32
     """
-    network = manager.session.query(Network).get(network_id)
-
-    if network is None:
-        abort(404)
-
-    user_owns_network_or_403(network, current_user)
+    network = safe_get_network(network_id)
 
     user = manager.session.query(User).get(user_id)
     user.networks.append(network)
@@ -2555,30 +2547,55 @@ def get_project_or_404(project_id):
 
 
 def user_has_project_rights(user, project):
-    """Does this user have rights to this project
+    """Returns if the given user has rights to the given project
 
-    :param user:
-    :param project:
+    :type user: User
+    :type project: Project
     :rtype: bool
     """
-    return user.is_admin or project.has_user(current_user)
+    return user.is_authenticated and (user.is_admin or project.has_user(current_user))
 
 
 def safe_get_project(project_id):
     """Gets a project by identifier, aborts 404 if doesn't exist and aborts 403 if current user does not have rights
 
     :param project_id:
-    :return:
+    :rtype: Project
     """
     project = get_project_or_404(project_id)
 
-    if not current_user.is_authenticated:
-        abort(403, 'Not logged in')
-
     if not user_has_project_rights(current_user, project):
-        abort(403, 'User does not have permission to access this Project')
+        abort(403, 'User {} does not have permission to access Project {}'.format(current_user, project))
 
     return project
+
+
+def get_network_or_404(network_id):
+    """Gets a network or aborts 404 if it doesn't exist
+
+    :param int network_id:
+    :rtype: Network
+    """
+    network = manager.session.query(Network).get(network_id)
+
+    if network is None:
+        abort(404, 'Network {} does not exist'.format(network_id))
+
+    return network
+
+
+def safe_get_network(network_id):
+    """Aborts if the current user is not the owner of the network
+
+    :param int network_id:
+    :rtype: Network
+    """
+    network = get_network_or_404(network_id)
+
+    if not current_user.owns_network(network):
+        abort(403, 'User {} does not have permission to access Network {}'.format(current_user, network))
+
+    return network_id
 
 
 @api_blueprint.route('/api/project')
@@ -2809,8 +2826,8 @@ def universe_summary():
 
     chart_data = {
         'networks': manager.count_networks(),
-        'entities': manager.count_nodes(),
-        'relations': manager.count_edges(),
+        'nodes': manager.count_nodes(),
+        'edges': manager.count_edges(),
         'namespaces': manager.count_namespaces(),
         'annotations': manager.count_annotations(),
         # TODO count variants, transformations, modifications, degradation, etc
