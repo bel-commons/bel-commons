@@ -63,9 +63,17 @@ class Experiment(Base):
     completed = Column(Boolean, default=False)
 
     def get_data(self):
+        """Loads the pickled pandas dataframe back into an object
+
+        :rtype: pandas.DataFrame
+        """
         return loads(self.result)
 
     def get_data_list(self):
+        """Loads the data into a usable list
+
+        :rtype: list[tuple]
+        """
         result = self.get_data()
         return [
             (k, v)
@@ -156,7 +164,7 @@ class Report(Base):
 
     @property
     def is_displayable(self):
-        """Is this network small enough to confidently display
+        """Is this network small enough to confidently display?
 
         :rtype: bool
         """
@@ -164,10 +172,18 @@ class Report(Base):
 
     @property
     def incomplete(self):
+        """Is this still running?
+
+        :rtype: bool
+        """
         return self.completed is None and not self.message
 
     @property
     def failed(self):
+        """Did this fail?
+
+        :rtype: bool
+        """
         return self.completed is not None and not self.completed
 
     @property
@@ -430,6 +446,14 @@ class User(Base, UserMixin):
 
         return result
 
+    def owns_network(self, network):
+        """Returns if this user owns this network
+
+        :type network: Network
+        :rtype: bool
+        """
+        return self.is_authenticated and network.report and self == network.report.user
+
 
 assembly_network = Table(
     ASSEMBLY_NETWORK_TABLE_NAME,
@@ -629,6 +653,13 @@ class Query(Base):
         return Query.from_query(manager, q, user=user)
 
     def build_appended(self, name, *args, **kwargs):
+        """Builds a new query with the given function appended to the current query's pipeline
+
+        :param str name: Append function name
+        :param args: Append function positional arguments
+        :param kwargs: Append function keyword arguments
+        :rtype: Query
+        """
         _query = self.data
         _query.pipeline.append(name, *args, **kwargs)
 
