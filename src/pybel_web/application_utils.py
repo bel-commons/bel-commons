@@ -170,10 +170,7 @@ class FlaskPyBEL:
 
         if sentry_dsn:
             log.info('initiating Sentry: %s', sentry_dsn)
-            self.sentry = Sentry(
-                app,
-                dsn=sentry_dsn
-            )
+            self.sentry = Sentry(app, dsn=sentry_dsn)
 
         Base.metadata.bind = self.manager.engine
         Base.query = self.manager.session.query_property()
