@@ -11,6 +11,7 @@ __all__ = [
     'hgnc_manager',
     'mirtarbase_manager',
     'expasy_manager',
+    'go_manager',
 ]
 
 log = logging.getLogger(__name__)

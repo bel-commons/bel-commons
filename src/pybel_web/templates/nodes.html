@@ -111,6 +111,36 @@
                                         <dt>Synonyms</dt>
                                         <dd>{{ chemical.synonyms|join(' | ') }}</dd>
                                     </dl>
+                                {% elif go_manager and node.namespace_entry.namespace.keyword in ['GO', 'GOBP', 'GOBPID'] %}
+                                    {% if node.namespace_entry.namespace.keyword in ['GO', 'GOBP'] %}
+                                        {% set go = go_manager.get_go_by_name(node.namespace_entry.name) %}
+                                    {% else %}
+                                        {% set go = go_manager.get_go_by_id(node.namespace_entry.name) %}
+                                    {% endif %}
+
+                                    <h4>GO Information</h4>
+                                    <dl class="dl-horizontal">
+                                        <dt>Identifier</dt>
+                                        <dd>{{ go['id'] }}</dd>
+                                        <dt>Name</dt>
+                                        <dd>{{ go['name'] }}</dd>
+                                        <dt>Definition</dt>
+                                        <dd>{{ go['def'] }}</dd>
+                                        {% if go['xref'] %}
+                                            <dt>Cross References</dt>
+                                            <dd>
+                                                <ul>
+                                                    {% for go_xref in go['xref'] %}
+                                                        <li>{{ go_xref }}</li>
+                                                    {% endfor %}
+                                                </ul>
+                                            </dd>
+                                        {% endif %}
+                                        {% if go['synonym'] %}
+                                            <dt>Synonyms</dt>
+                                            <dd>{{ go['synonym']|join(' | ') }}</dd>
+                                        {% endif %}
+                                    </dl>
                                 {% endif %}
                             {% endif %}
                         </div>

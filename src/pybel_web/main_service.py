@@ -101,7 +101,8 @@ def build_main_service(app):
             nodes=manager.session.query(Node),
             current_user=current_user,
             hgnc_manager=hgnc_manager,
-            chebi_manager=chebi_manager
+            chebi_manager=chebi_manager,
+            go_manager=go_manager,
         )
 
     @app.route('/query/build', methods=['GET', 'POST'])
