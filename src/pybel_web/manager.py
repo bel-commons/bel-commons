@@ -52,3 +52,12 @@ else:
     expasy_manager = bio2bel_expasy.Manager()
     in_place_mutator(expasy_manager.enrich_proteins)
     in_place_mutator(expasy_manager.enrich_enzymes)
+
+try:
+    import bio2bel_go
+except ImportError:
+    bio2bel_go = None
+else:
+    log.info('Using Bio2BEL GO')
+    go_manager = bio2bel_go.Manager()
+    in_place_mutator(go_manager.enrich_bioprocesses)
