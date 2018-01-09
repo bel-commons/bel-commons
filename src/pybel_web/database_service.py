@@ -2587,7 +2587,7 @@ def get_network_or_404(network_id):
 def safe_get_network(network_id):
     """Aborts if the current user is not the owner of the network
 
-    :param int network_id:
+    :type network_id: int
     :rtype: Network
     """
     network = get_network_or_404(network_id)
@@ -2595,7 +2595,7 @@ def safe_get_network(network_id):
     if not current_user.owns_network(network):
         abort(403, 'User {} does not have permission to access Network {}'.format(current_user, network))
 
-    return network_id
+    return network
 
 
 @api_blueprint.route('/api/project')
