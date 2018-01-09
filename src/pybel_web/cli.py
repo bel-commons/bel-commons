@@ -31,7 +31,7 @@ from flask_security import SQLAlchemyUserDatastore
 import pybel
 from pybel.constants import PYBEL_CONNECTION, PYBEL_DATA_DIR, get_cache_connection
 from pybel.manager import Manager
-from pybel.manager.models import Base, Network
+from pybel.manager.models import Network
 from pybel.utils import get_version as pybel_version
 from pybel_tools.utils import enable_cool_mode, get_version as pybel_tools_get_version
 from .analysis_service import analysis_blueprint
@@ -42,7 +42,7 @@ from .curation_service import curation_blueprint
 from .database_service import api_blueprint
 from .external_services import belief_blueprint, external_blueprint
 from .main_service import build_main_service
-from .models import Experiment, Project, Report, Role, User
+from .models import Base, Experiment, Project, Report, Role, User
 from .parser_async_service import parser_async_blueprint
 from .parser_endpoint import build_parser_service
 from .utils import insert_graph, iterate_user_strings
