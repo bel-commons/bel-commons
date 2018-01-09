@@ -180,7 +180,7 @@ class FlaskPyBEL:
 
         try:
             Base.metadata.create_all()
-        except:
+        except Exception:
             log.exception('Failed to create all')
 
         self.user_datastore = SQLAlchemyUserDatastore(self.manager, User, Role)
