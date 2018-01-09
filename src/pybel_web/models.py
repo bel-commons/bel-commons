@@ -452,7 +452,7 @@ class User(Base, UserMixin):
         :type network: Network
         :rtype: bool
         """
-        return self.is_authenticated and network.report and self == network.report.user
+        return self.is_admin or (self.is_authenticated and network.report and self == network.report.user)
 
 
 assembly_network = Table(
