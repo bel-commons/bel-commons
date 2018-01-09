@@ -143,12 +143,14 @@
                             <small class="text-muted">
                                 {{ network.version }}
 
-                                {% set authors_split = network.authors.split(',') %}
-                                by
-                                {% if authors_split|length > 1 %}
-                                    {{ authors_split[0] }}, <i>et. al</i>
-                                {% else %}
-                                    {{ network.authors }}
+                                {% if network.authors %}
+                                    {% set authors_split = network.authors.split(',') %}
+                                    by
+                                    {% if authors_split|length > 1 %}
+                                        {{ authors_split[0] }}, <i>et. al</i>
+                                    {% else %}
+                                        {{ network.authors }}
+                                    {% endif %}
                                 {% endif %}
                             </small>
 
