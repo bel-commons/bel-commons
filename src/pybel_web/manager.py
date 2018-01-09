@@ -22,6 +22,7 @@ except ImportError:
 else:
     log.info('Using Bio2BEL ChEBI')
     chebi_manager = bio2bel_chebi.Manager()
+    in_place_mutator(chebi_manager.enrich_chemical_hierarchy)
 
 try:
     import bio2bel_hgnc

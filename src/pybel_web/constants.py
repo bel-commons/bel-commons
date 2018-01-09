@@ -102,4 +102,11 @@ def get_explorer_toolbox():
             'Adds the parent biological processes to existing biological processes'
         ))
 
+    if function_is_registered('enrich_chemical_hierarchy'):
+        explorer_toolbox.append((
+            'enrich_chemical_hierarchy',
+            'Enrich Chemical Hierarchy',
+            'Adds parent chemical entries'
+        ))
+
     return explorer_toolbox
