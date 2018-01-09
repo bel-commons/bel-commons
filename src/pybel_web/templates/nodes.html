@@ -58,7 +58,7 @@
                             </ul>
 
                             {% if node.namespace_entry %}
-                                <h4>Namespace Information</h4>
+                                <h4>Entity</h4>
                                 <dl class="dl-horizontal">
                                     {% if node.namespace_entry.namespace.url %}
                                         <dt>URL</dt>
@@ -102,8 +102,10 @@
                                         <dd>{{ chemical.chebi_id }}</dd>
                                         <dt>Name</dt>
                                         <dd>{{ chemical.name }}</dd>
-                                        <dt>InChI</dt>
-                                        <dd>{{ chemical.inchi }}</dd>
+                                        {% if chemical.inchi %}
+                                            <dt>InChI</dt>
+                                            <dd>{{ chemical.inchi }}</dd>
+                                        {% endif %}
                                         {% if chemical.definition %}
                                             <dt>Description</dt>
                                             <dd>{{ chemical.definition }}</dd>

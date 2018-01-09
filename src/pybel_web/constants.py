@@ -85,21 +85,21 @@ def get_explorer_toolbox():
         explorer_toolbox.append((
             'enrich_genes_with_families',
             'Enrich Genes with Gene Family Membership',
-            'Adds the HGNC Gene Families to Gene Nodes'
+            'Adds the parents of HGNC Gene Families'
         ))
 
     if function_is_registered('enrich_families_with_genes'):
         explorer_toolbox.append((
             'enrich_families_with_genes',
             'Enrich Gene Family Membership',
-            'Adds the HGNC Genes to HGNC Gene Family Nodes'
+            'Adds the children to HGNC gene familes'
         ))
 
     if function_is_registered('enrich_bioprocesses'):
         explorer_toolbox.append((
             'enrich_bioprocesses',
             'Enrich Biological Process Hierarchy',
-            'Adds the parent biological processes to existing biological processes'
+            'Adds parent biological processes'
         ))
 
     if function_is_registered('enrich_chemical_hierarchy'):
