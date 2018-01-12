@@ -58,7 +58,7 @@ else:
 try:
     import bio2bel_go
 except ImportError:
-    bio2bel_go = None
+    go_manager = None
 else:
     log.info('Using Bio2BEL GO')
     go_manager = bio2bel_go.Manager()
