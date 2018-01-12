@@ -41,7 +41,7 @@ from .constants import CHARLIE_EMAIL
 from .curation_service import curation_blueprint
 from .database_service import api_blueprint
 from .external_services import belief_blueprint, external_blueprint
-from .main_service import build_main_service
+from .main_service import ui_blueprint
 from .models import Base, Experiment, Project, Report, Role, User
 from .parser_async_service import parser_async_blueprint
 from .parser_endpoint import build_parser_service
@@ -141,7 +141,7 @@ def run(host, port, default_config, debug, config, with_gunicorn, workers):
         **config_dict
     )
 
-    build_main_service(app)
+    app.register_blueprint(ui_blueprint)
     app.register_blueprint(curation_blueprint)
     app.register_blueprint(parser_async_blueprint)
     app.register_blueprint(api_blueprint)

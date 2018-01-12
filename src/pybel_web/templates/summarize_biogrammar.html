@@ -59,12 +59,12 @@
                             {% if network_version.id == network_id %}
                                 <li>
                                     <a class="btn btn-info" role="button"
-                                       href="{{ url_for('view_summarize_biogrammar', network_id=network_version.id) }}">{{ network_version.version }}</a>
+                                       href="{{ url_for('ui.view_summarize_biogrammar', network_id=network_version.id) }}">{{ network_version.version }}</a>
                                 </li>
                             {% else %}
                                 <li>
                                     <a class="btn btn-default" role="button"
-                                       href="{{ url_for('view_summarize_biogrammar', network_id=network_version.id) }}">{{ network_version.version }}</a>
+                                       href="{{ url_for('ui.view_summarize_biogrammar', network_id=network_version.id) }}">{{ network_version.version }}</a>
                                 </li>
                             {% endif %}
                         {% endfor %}
@@ -178,12 +178,12 @@
                     {% for source, source_id, target, target_id in regulatory_pairs %}
                         <tr>
                             <td>
-                                <a href="{{ url_for('build_summary_link_query', network_id=network_id, nodes=[source_id, target_id]) }}"
+                                <a href="{{ url_for('ui.build_summary_link_query', network_id=network_id, nodes=[source_id, target_id]) }}"
                                    data-toggle="tooltip" data-placement="top"
                                    title="Explore BEL network induced over these nodes">
                                     <span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span>
                                 </a>
-                                <a href="{{ url_for('view_relations', source_id=source_id, target_id=target_id, undirected='yes') }}"
+                                <a href="{{ url_for('ui.view_relations', source_id=source_id, target_id=target_id, undirected='yes') }}"
                                    data-toggle="tooltip" data-placement="top" title="List all evidences">
                                     <span class="glyphicon glyphicon-th-list" aria-hidden="true"></span>
                                 </a>
@@ -228,12 +228,12 @@
                     {% for source, source_id, target, target_id, relations in contradictory_pairs %}
                         <tr>
                             <td>
-                                <a href="{{ url_for('build_summary_link_query', network_id=network_id, nodes=[source_id, target_id]) }}"
+                                <a href="{{ url_for('ui.build_summary_link_query', network_id=network_id, nodes=[source_id, target_id]) }}"
                                    data-toggle="tooltip" data-placement="top"
                                    title="Explore BEL network induced over these nodes">
                                     <span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span>
                                 </a>
-                                <a href="{{ url_for('view_relations', source_id=source_id, target_id=target_id) }}"
+                                <a href="{{ url_for('ui.view_relations', source_id=source_id, target_id=target_id) }}"
                                    data-toggle="tooltip" data-placement="top" title="List evidences">
                                     <span class="glyphicon glyphicon-th-list" aria-hidden="true"></span>
                                 </a>
@@ -288,12 +288,12 @@
                     {% for source, source_id, target, target_id, label in unstable_pairs %}
                         <tr>
                             <td>
-                                <a href="{{ url_for('build_summary_link_query', network_id=network_id, nodes=[source_id, target_id]) }}"
+                                <a href="{{ url_for('ui.build_summary_link_query', network_id=network_id, nodes=[source_id, target_id]) }}"
                                    data-toggle="tooltip" data-placement="top"
                                    title="Explore BEL network induced over these nodes">
                                     <span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span>
                                 </a>
-                                <a href="{{ url_for('view_relations', source_id=source_id, target_id=target_id, undirected='yes') }}"
+                                <a href="{{ url_for('ui.view_relations', source_id=source_id, target_id=target_id, undirected='yes') }}"
                                    data-toggle="tooltip" data-placement="top" title="List all evidences">
                                     <span class="glyphicon glyphicon-th-list" aria-hidden="true"></span>
                                 </a>
@@ -359,7 +359,7 @@
                     {% for a, aid, b, bid, c, cid, label in contradictory_triplets %}
                         <tr>
                             <td>
-                                <a href="{{ url_for('build_summary_link_query', network_id=network_id, nodes=[aid, bid, cid]) }}"
+                                <a href="{{ url_for('ui.build_summary_link_query', network_id=network_id, nodes=[aid, bid, cid]) }}"
                                    data-toggle="tooltip" data-placement="top"
                                    title="Explore BEL network induced over these nodes">
                                     <span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span>
@@ -417,7 +417,7 @@
                     {% for a, aid, b, bid, c, cid, label in unstable_triplets %}
                         <tr>
                             <td>
-                                <a href="{{ url_for('build_summary_link_query', network_id=network_id, nodes=[aid, bid, cid]) }}"
+                                <a href="{{ url_for('ui.build_summary_link_query', network_id=network_id, nodes=[aid, bid, cid]) }}"
                                    data-toggle="tooltip" data-placement="top"
                                    title="Explore BEL network induced over these nodes">
                                     <span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span>
@@ -463,7 +463,7 @@
                     {% for source, source_id, target, target_id, relation in causal_pathologies %}
                         <tr>
                             <td>
-                                <a href="{{ url_for('build_summary_link_query', network_id=network_id, nodes=[source_id, target_id]) }}"
+                                <a href="{{ url_for('ui.build_summary_link_query', network_id=network_id, nodes=[source_id, target_id]) }}"
                                    data-toggle="tooltip" data-placement="top"
                                    title="Explore BEL network induced over these nodes">
                                     <span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span>
@@ -506,7 +506,7 @@
                     {% for source, source_id in undefined_families %}
                         <tr>
                             <td>
-                                <a href="{{ url_for('build_summary_link_query', network_id=network_id, seed_method='neighbors', nodes=[source_id]) }}"
+                                <a href="{{ url_for('ui.build_summary_link_query', network_id=network_id, seed_method='neighbors', nodes=[source_id]) }}"
                                    data-toggle="tooltip" data-placement="top"
                                    title="Explore BEL network induced over these nodes">
                                     <span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span>

@@ -16,7 +16,7 @@ from pybel_web.bms_service import bms_blueprint
 from pybel_web.curation_service import curation_blueprint
 from pybel_web.database_service import api_blueprint
 from pybel_web.external_services import external_blueprint
-from pybel_web.main_service import build_main_service
+from pybel_web.main_service import ui_blueprint
 from pybel_web.parser_async_service import parser_async_blueprint
 from pybel_web.parser_endpoint import build_parser_service
 
@@ -37,7 +37,7 @@ pbw_log.setLevel(level)
 
 app = create_application()
 
-build_main_service(app)
+app.register_blueprint(ui_blueprint)
 app.register_blueprint(curation_blueprint)
 app.register_blueprint(parser_async_blueprint)
 app.register_blueprint(api_blueprint)

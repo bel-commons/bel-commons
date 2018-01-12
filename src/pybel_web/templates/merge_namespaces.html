@@ -8,13 +8,12 @@
 
 {% block content %}
     <div class="container">
-        <div class="page-header">
-            <h1>BEL Namespace Merge Tool</h1>
-        </div>
-
         {{ util.flashed_messages(dismissible=True, container=False) }}
 
         <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">BEL Namespace Merge Tool</h3>
+            </div>
             <div class="panel-body">
                 <p>The namespace merge tool takes all of the unique names from multiple namespaces and combines them
                     in a single namespace.

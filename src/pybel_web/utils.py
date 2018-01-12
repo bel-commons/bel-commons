@@ -12,7 +12,7 @@ from io import BytesIO
 
 import networkx as nx
 import pandas
-from flask import abort, current_app, flash, jsonify, redirect, render_template, request
+from flask import abort, current_app, flash, jsonify, redirect, render_template, request, url_for
 from flask_security import current_user
 from sqlalchemy import and_, func
 from werkzeug.local import LocalProxy
@@ -784,7 +784,7 @@ def get_or_create_vote(manager_, edge, user,
 
 
 def next_or_jsonify(message, *args, status=200, category='message', **kwargs):
-    """Neatly wraps a redirect to a new URL if the ``next`` argument is set in the request otherwise sends JSON
+    """Neatly wraps a redirect if the ``next`` argument is set in the request otherwise sends JSON
     feedback.
 
     :param str message: The message to send
@@ -1013,3 +1013,12 @@ def help_get_edge_entry(manager_, edge):
         data['vote'] = 0 if (vote is None or vote.agreed is None) else 1 if vote.agreed else -1
 
     return data
+
+
+def redirect_explorer(query_id):
+    """Returns the response for the biological network explorer in a given query
+
+    :param int query_id: A query identifier
+    :rtype: flask.Response
+    """
+    return redirect(url_for('ui.view_explorer_query', query_id=query_id))

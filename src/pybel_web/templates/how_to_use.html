@@ -26,7 +26,7 @@
                 </p>
 
                 <h3>Upload and Parse</h3>
-                <p>On the <a href="{{ url_for('home') }}">home page</a>, click <a
+                <p>On the <a href="{{ url_for('ui.home') }}">home page</a>, click <a
                         href="{{ url_for('parser.view_parser') }}">Parse BEL</a>. In the form, choose a file, then click
                     "upload".</p>
 
@@ -38,7 +38,7 @@
                 </p>
 
                 <h3>Share</h3>
-                <p>Users can <a href="{{ url_for('project.create_view', url=url_for('home')) }}">create projects</a>
+                <p>Users can <a href="{{ url_for('project.create_view', url=url_for('ui.home')) }}">create projects</a>
                     that allow them to easily share networks with groups of other users. This is useful when multiple
                     curators are uploading related BEL Scripts. Later, they can be assembled and queried.
                 </p>
@@ -58,7 +58,7 @@
                 <h3 class="panel-title">2. Summarize a Knowledge Assembly</h3>
             </div>
             <div class="panel-body">
-                <p>From the home page, click <a href="{{ url_for('view_networks') }}">List Networks</a>, find your
+                <p>From the home page, click <a href="{{ url_for('ui.view_networks') }}">List Networks</a>, find your
                     network, and select "Summarize".
                 </p>
                 <p>This web application organizes high level statistical information about a network, such as the

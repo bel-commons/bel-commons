@@ -1,7 +1,7 @@
 <div class="panel panel-default">
     <div class="panel-body">
         <div class="btn-group">
-            <a href="{{ url_for('view_networks') }}" class="btn btn-default">
+            <a href="{{ url_for('ui.view_networks') }}" class="btn btn-default">
                 List Networks
             </a>
             <button type="button" class="btn btn-default dropdown-toggle"
@@ -11,7 +11,7 @@
             </button>
             <ul class="dropdown-menu">
                 <li>
-                    <a href="{{ url_for('view_summarize_statistics', network_id=network.id) }}"
+                    <a href="{{ url_for('ui.view_summarize_statistics', network_id=network.id) }}"
                        title="Summary of the Network"
                        data-content="Access the statisics summary of the network.">
                         <span class="glyphicon glyphicon-signal" aria-hidden="true"></span>
@@ -19,7 +19,7 @@
                     </a>
                 </li>
                 <li>
-                    <a href="{{ url_for('view_summarize_compilation', network_id=network.id) }}"
+                    <a href="{{ url_for('ui.view_summarize_compilation', network_id=network.id) }}"
                        data-toggle="popright" title="Summary of the Network"
                        data-content="Access the compilation summary of the network.">
                                                     <span class="glyphicon glyphicon-warning-sign"
@@ -27,7 +27,7 @@
                     </a>
                 </li>
                 <li>
-                    <a href="{{ url_for('view_summarize_biogrammar', network_id=network.id) }}"
+                    <a href="{{ url_for('ui.view_summarize_biogrammar', network_id=network.id) }}"
                        data-toggle="popright" title="Summary of the Network"
                        data-content="Access the biogrammar summary of the network.">
                                                     <span class="glyphicon glyphicon-apple" aria-hidden="true">
@@ -39,7 +39,7 @@
 
 
         {% if network.report and network.report.is_displayable %}
-            <a href="{{ url_for('view_explore_network', network_id=network.id) }}"
+            <a href="{{ url_for('ui.view_explore_network', network_id=network.id) }}"
                class="btn btn-default" data-toggle="popover"
                title="Explore this Network"
                data-content="Visualize this Network in the Biological Network Explorer.
@@ -57,7 +57,7 @@
             </button>
         {% endif %}
 
-        <a href="{{ url_for('view_query_builder', start=network.id) }}"
+        <a href="{{ url_for('ui.view_query_builder', start=network.id) }}"
            class="btn btn-default" data-toggle="popover"
            title="Perform a Query on this Network"
            data-content="You can ask specific questions to your network using the
@@ -146,7 +146,7 @@
 
         {% if current_user.is_admin %}
             <a class="btn btn-danger" role="button"
-               href="{{ url_for('dbs.drop_network', network_id=network_id, next=url_for('home')) }}">
+               href="{{ url_for('dbs.drop_network', network_id=network_id, next=url_for('ui.home')) }}">
                 <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
                 Drop
             </a>

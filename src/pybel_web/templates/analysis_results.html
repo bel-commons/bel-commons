@@ -102,7 +102,7 @@
         <div class="panel panel-default">
             <div class="panel-body">
                 <a class="btn btn-default"
-                   href="{{ url_for('view_explorer_query', query_id=experiment.query.id) }}">
+                   href="{{ url_for('ui.view_explorer_query', query_id=experiment.query.id) }}">
                     <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
                     Explore
                 </a>
@@ -111,7 +111,7 @@
                     Download Results
                 </a>
                 <a class="btn btn-danger"
-                   href="{{ url_for('dbs.drop_experiment_by_id', experiment_id=experiment.id, next=url_for('home')) }}">
+                   href="{{ url_for('dbs.drop_experiment_by_id', experiment_id=experiment.id, next=url_for('ui.home')) }}">
                     <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
                     Delete Analysis
                 </a>

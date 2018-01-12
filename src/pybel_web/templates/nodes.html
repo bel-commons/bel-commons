@@ -14,7 +14,7 @@
         <div class="panel panel-default">
             <div class="panel-heading">
                 <div class="btn-group pull-right">
-                    <a class="btn btn-danger btn-xs" href="{{ url_for('dbs.drop_nodes', next=url_for('home')) }}"
+                    <a class="btn btn-danger btn-xs" href="{{ url_for('dbs.drop_nodes', next=url_for('ui.home')) }}"
                        role="button" data-toggle="confirmation" data-btn-ok-icon="glyphicon glyphicon-share-alt"
                        data-btn-ok-class="btn-success" data-btn-cancel-icon="glyphicon glyphicon-ban-circle"
                        data-btn-cancel-class="btn-danger">
@@ -41,7 +41,7 @@
                             {{ node.bel }}
 
                             {% if current_user.is_admin %}
-                                <a href="{{ url_for('dbs.drop_node', node_hash=node.sha512, next=url_for('view_nodes')) }}"
+                                <a href="{{ url_for('dbs.drop_node', node_hash=node.sha512, next=url_for('ui.view_nodes')) }}"
                                    class="btn btn-danger pull-right">Drop</a>
                             {% endif %}
                         </h4>

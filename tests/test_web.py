@@ -10,16 +10,19 @@ Reference for testing Flask
 import datetime
 import json
 import logging
-import unittest
-
 import os
 import tempfile
+import unittest
+
+from flask import url_for
 from flask_security import current_user
 
 from pybel.constants import PYBEL_CONNECTION
 from pybel_web.application import FlaskPyBEL, create_application
+from pybel_web.curation_service import curation_blueprint
 from pybel_web.database_service import api_blueprint
-from pybel_web.main_service import build_main_service
+from pybel_web.main_service import ui_blueprint
+from pybel_web.parser_async_service import parser_async_blueprint
 
 log = logging.getLogger(__name__)
 log.setLevel(10)
@@ -28,6 +31,11 @@ TEST_USER_EMAIL = 'test@example.com'
 TEST_USER_PASSWORD = 'password'
 TEST_SECRET_KEY = 'pybel_web_tests'
 
+
+def has_no_empty_params(rule):
+    defaults = rule.defaults if rule.defaults is not None else ()
+    arguments = rule.arguments if rule.arguments is not None else ()
+    return len(defaults) >= len(arguments)
 
 class WebTest(unittest.TestCase):
     def setUp(self):
@@ -56,10 +64,16 @@ class WebTest(unittest.TestCase):
 
         self.app_instance = create_application(**config)
 
-        self.app_instance.config['LOGIN_DISABLED'] = False
+        self.app_instance.config.update({
+            'LOGIN_DISABLED': False,
+            'SERVER_NAME': 'localhost'
 
-        build_main_service(self.app_instance)
+        })
+
+        self.app_instance.register_blueprint(ui_blueprint)
         self.app_instance.register_blueprint(api_blueprint)
+        self.app_instance.register_blueprint(parser_async_blueprint)
+        self.app_instance.register_blueprint(curation_blueprint)
 
         self.pybel = FlaskPyBEL.get_state(self.app_instance)
 
@@ -82,6 +96,11 @@ class WebTest(unittest.TestCase):
         os.unlink(self.db_file)
 
     def login(self, email, password):
+        """Logs a user in to the test application
+
+        :type email: str
+        :type password: str
+        """
         with self.app_instance.app_context():
             return self.app.post(
                 '/login',
@@ -93,8 +112,12 @@ class WebTest(unittest.TestCase):
             )
 
     def logout(self):
+        """Logs a user out of the test application"""
         with self.app_instance.app_context():
-            return self.app.get('/logout', follow_redirects=True)
+            return self.app.get(
+                '/logout',
+                follow_redirects=True
+            )
 
     @unittest.skip
     def test_login(self):
@@ -109,6 +132,29 @@ class WebTest(unittest.TestCase):
 
             self.logout()
             self.assertFalse(current_user.authenticated)
+
+    def test_ui_pages(self):
+        """This test should visit each UI page and minimally, not error"""
+
+        with self.app_instance.app_context():
+            for rule in self.app_instance.url_map.iter_rules():
+                # Filter out rules we can't navigate to in a browser
+                # and rules that require parameters
+                if "GET" in rule.methods and has_no_empty_params(rule):
+                    # log.warning('getting rule %s: ', rule.endpoint)
+
+                    if not rule.endpoint.startswith('ui'):
+                        # log.warning('skipping %s', rule)
+                        continue
+
+                    url = url_for(rule.endpoint, **(rule.defaults or {}))
+
+                    response = self.app.get(url, follow_redirects=True)
+
+                    self.assertEqual(200, response.status_code)
+
+
+
 
     def test_api_count_users(self):
         with self.app_instance.app_context():

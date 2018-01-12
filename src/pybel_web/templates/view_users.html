@@ -9,10 +9,6 @@
 
 {% block content %}
     <div class="container">
-        <div class="page-header">
-            <h1>Users</h1>
-        </div>
-
         {{ util.flashed_messages(dismissible=True, container=False) }}
 
         <div class="panel panel-default">
@@ -35,7 +31,7 @@
                     <tr>
                         <td>{{ user.id }}</td>
                         <td>
-                            <a href="{{ url_for('view_user_activity', user_id=user.id) }}">
+                            <a href="{{ url_for('ui.view_user_activity', user_id=user.id) }}">
                                 <span class="glyphicon glyphicon-eye-open"></span>
                             </a>
                         </td>
@@ -52,7 +48,7 @@
                                 {% for report in user.reports %}
                                     {% if report.network is not none %}
                                         <li>
-                                            <a href="{{ url_for('view_summarize_statistics', network_id=report.network.id) }}">{{ report.network }}</a>
+                                            <a href="{{ url_for('ui.view_summarize_statistics', network_id=report.network.id) }}">{{ report.network }}</a>
                                         </li>
                                     {% endif %}
                                 {% endfor %}
@@ -78,7 +74,7 @@
                                     Admin</a>
                             {% endif %}
                             <a class="btn btn-info btn-xs" role="button"
-                               href="{{ url_for('dbs.drop_user', user_id=user.id, next=url_for('view_users')) }}">Remove</a>
+                               href="{{ url_for('dbs.drop_user', user_id=user.id, next=url_for('ui.view_users')) }}">Remove</a>
                         </td>
                     </tr>
                 {% endfor %}

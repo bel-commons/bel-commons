@@ -77,7 +77,7 @@
                                         </a>
                                     </li>
                                     <li>
-                                        <a href="{{ url_for('view_explore_project', project_id=project.id) }}"
+                                        <a href="{{ url_for('ui.view_explore_project', project_id=project.id) }}"
                                            class="btn btn-default" data-toggle="tooltip"
                                            data-placement="top" title="Merge all networks and explore">
                                             <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
@@ -85,7 +85,7 @@
                                         </a>
                                     </li>
                                     <li>
-                                        <a href="{{ url_for('send_async_project_merge', user_id=current_user.id, project_id=project.id) }}"
+                                        <a href="{{ url_for('ui.send_async_project_merge', user_id=current_user.id, project_id=project.id) }}"
                                            class="btn btn-default" data-toggle="tooltip" data-placement="top"
                                            title="Merge all networks into a single BEL document and email as a single BEL script">
                                             <span class="glyphicon glyphicon-download" aria-hidden="true"></span>
@@ -94,14 +94,14 @@
                                     </li>
                                 {% endif %}
                                 <li>
-                                    <a href="{{ url_for('project.edit_view', id=project.id, url=url_for('view_current_user_activity')) }}"
+                                    <a href="{{ url_for('project.edit_view', id=project.id, url=url_for('ui.view_current_user_activity')) }}"
                                        title="Edit" class="btn btn-default">
                                         <span class="glyphicon glyphicon-pencil" aria-hidden="true"></span>
                                         Edit
                                     </a>
                                 </li>
                                 <li>
-                                    <a href="{{ url_for('dbs.drop_project_by_id', project_id=project.id, next=url_for('view_current_user_activity')) }}"
+                                    <a href="{{ url_for('dbs.drop_project_by_id', project_id=project.id, next=url_for('ui.view_current_user_activity')) }}"
                                        title="Drop" class="btn btn-default">
                                         <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
                                         Drop
@@ -115,7 +115,7 @@
                                     <ul>
                                         {% for project_network in project.networks %}
                                             <li>
-                                                <a href="{{ url_for('view_summarize_statistics', network_id=project_network.id) }}">
+                                                <a href="{{ url_for('ui.view_summarize_statistics', network_id=project_network.id) }}">
                                                     {{ project_network }}
                                                 </a>
                                             </li>
@@ -162,15 +162,15 @@
                             <td>
                                 <div class="pull-right">
                                     <a class="btn btn-default btn-xs"
-                                       href="{{ url_for('view_summarize_statistics', network_id=report.network.id) }}">
+                                       href="{{ url_for('ui.view_summarize_statistics', network_id=report.network.id) }}">
                                         <span class="glyphicon glyphicon-signal" aria-hidden="true"></span>
                                     </a>
                                     <a class="btn btn-default btn-xs"
-                                       href="{{ url_for('view_explore_network', network_id=report.network.id) }}">
+                                       href="{{ url_for('ui.view_explore_network', network_id=report.network.id) }}">
                                         <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
                                     </a>
                                     <a class="btn btn-default btn-xs"
-                                       href="{{ url_for('dbs.drop_network', network_id=report.network.id, next=url_for('view_current_user_activity')) }}">
+                                       href="{{ url_for('dbs.drop_network', network_id=report.network.id, next=url_for('ui.view_current_user_activity')) }}">
                                         <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
                                     </a>
                                 </div>
@@ -214,7 +214,7 @@
                                 </a>
                             </td>
                             <td>
-                                <a href="{{ url_for('view_explorer_query', query_id=experiment.query.id) }}">
+                                <a href="{{ url_for('ui.view_explorer_query', query_id=experiment.query.id) }}">
                                     {{ experiment.query.id }}
                                 </a>
                             </td>
@@ -240,11 +240,11 @@
                                             <span class="glyphicon glyphicon-download" aria-hidden="true"></span>
                                         </a>
                                         <a class="btn btn-default btn-xs"
-                                           href="{{ url_for('view_explorer_query', query_id=experiment.query.id) }}">
+                                           href="{{ url_for('ui.view_explorer_query', query_id=experiment.query.id) }}">
                                             <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
                                         </a>
                                         <a class="btn btn-default btn-xs"
-                                           href="{{ url_for('dbs.drop_experiment_by_id', experiment_id=experiment.id, next=url_for('view_current_user_activity')) }}">
+                                           href="{{ url_for('dbs.drop_experiment_by_id', experiment_id=experiment.id, next=url_for('ui.view_current_user_activity')) }}">
                                             <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
                                         </a>
                                     </div>
@@ -279,7 +279,7 @@
                             <ul>
                                 {% for network in query.assembly.networks %}
                                     <li>
-                                        <a href="{{ url_for('view_summarize_statistics', network_id=network.id) }}">{{ network }}</a>
+                                        <a href="{{ url_for('ui.view_summarize_statistics', network_id=network.id) }}">{{ network }}</a>
                                     </li>
                                 {% endfor %}
                             </ul>
@@ -355,7 +355,7 @@
                         <td>
                             <div class="pull-right">
                                 <a class="btn btn-default btn-xs"
-                                   href="{{ url_for('view_explorer_query', query_id=query.id) }}">
+                                   href="{{ url_for('ui.view_explorer_query', query_id=query.id) }}">
                                     <span class="glyphicon glyphicon-search"></span>
                                 </a>
                                 <a class="btn btn-default btn-xs"
@@ -365,7 +365,7 @@
                                 </a>
                                 {% if current_user.is_admin %}
                                     <a class="btn btn-warning btn-xs"
-                                       href="{{ url_for('dbs.drop_query_by_id', query_id=query.id, next=url_for('view_current_user_activity')) }}">
+                                       href="{{ url_for('dbs.drop_query_by_id', query_id=query.id, next=url_for('ui.view_current_user_activity')) }}">
                                         <span class="glyphicon glyphicon-remove"></span>
                                     </a>
                                 {% endif %}

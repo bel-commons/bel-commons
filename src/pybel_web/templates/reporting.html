@@ -8,13 +8,9 @@
 
 {% block content %}
     <div class="container">
-        <div class="page-header">
-            <h1>Reporting</h1>
-        </div>
-
         <div class="panel panel-default">
             <div class="panel-heading">
-                <h3 class="panel-title">Upload Reports</h3>
+                <h3 class="panel-title">Reporting</h3>
             </div>
             <div class="panel-body">
                 <p>The history of parsing and uploads provides insight to curation activities.</p>
@@ -39,8 +35,9 @@
                         <tr>
                             <td>{{ report.network.id }}</td>
                             <td>
-                                <a href="{{ url_for('view_summarize_statistics', network_id=report.network.id) }}"><span
-                                        class="glyphicon glyphicon-eye-open" aria-hidden="true"></span></a>
+                                <a href="{{ url_for('ui.view_summarize_statistics', network_id=report.network.id) }}">
+                                    <span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span>
+                                </a>
                             </td>
                             <td>{{ report.network.name }}</td>
                             <td>{{ report.network.version }}</td>

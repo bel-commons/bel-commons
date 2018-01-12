@@ -59,12 +59,12 @@
                             {% if network_version.id == network_id %}
                                 <li>
                                     <a class="btn btn-info" role="button"
-                                       href="{{ url_for('view_summarize_compilation', network_id=network_version.id) }}">{{ network_version.version }}</a>
+                                       href="{{ url_for('ui.view_summarize_compilation', network_id=network_version.id) }}">{{ network_version.version }}</a>
                                 </li>
                             {% else %}
                                 <li>
                                     <a class="btn btn-default" role="button"
-                                       href="{{ url_for('view_summarize_compilation', network_id=network_version.id) }}">{{ network_version.version }}</a>
+                                       href="{{ url_for('ui.view_summarize_compilation', network_id=network_version.id) }}">{{ network_version.version }}</a>
                                 </li>
                             {% endif %}
                         {% endfor %}
@@ -406,7 +406,7 @@
                 </div>
                 <div class="panel-body">
                     <p>A faceted table view of all parser warnings can be viewed and exported
-                        from <a href="{{ url_for('view_summarize_warnings', network_id=network.id) }}">here.</a>
+                        from <a href="{{ url_for('ui.view_summarize_warnings', network_id=network.id) }}">here.</a>
                     </p>
                 </div>
                 <table class="table table-hover table-responsive table-striped">

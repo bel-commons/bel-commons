@@ -67,33 +67,33 @@
                 </div>
                 <div class="panel-body">
                     <p>
-                        <a class="btn btn-warning" href="{{ url_for('bms.git_pull', next=url_for('home')) }}"
+                        <a class="btn btn-warning" href="{{ url_for('bms.git_pull', next=url_for('ui.home')) }}"
                            role="button">
                             Pull BMS
                         </a>
-                        <a class="btn btn-danger" href="{{ url_for('bms.ensure_selventa', next=url_for('home')) }}"
+                        <a class="btn btn-danger" href="{{ url_for('bms.ensure_selventa', next=url_for('ui.home')) }}"
                            role="button">
                             Selventa
                         </a>
-                        <a class="btn btn-danger" href="{{ url_for('bms.ensure_aetionomy', next=url_for('home')) }}"
+                        <a class="btn btn-danger" href="{{ url_for('bms.ensure_aetionomy', next=url_for('ui.home')) }}"
                            role="button">
                             AETIONOMY
                         </a>
-                        <a class="btn btn-danger" href="{{ url_for('bms.ensure_ptsd', next=url_for('home')) }}"
+                        <a class="btn btn-danger" href="{{ url_for('bms.ensure_ptsd', next=url_for('ui.home')) }}"
                            role="button">
                             PTSD
                         </a>
 
-                        <a class="btn btn-danger" href="{{ url_for('bms.ensure_tbi', next=url_for('home')) }}"
+                        <a class="btn btn-danger" href="{{ url_for('bms.ensure_tbi', next=url_for('ui.home')) }}"
                            role="button">
                             TBI
                         </a>
                         <a class="btn btn-danger"
-                           href="{{ url_for('bms.ensure_bel4imocede', next=url_for('home')) }}"
+                           href="{{ url_for('bms.ensure_bel4imocede', next=url_for('ui.home')) }}"
                            role="button">
                             BEL4IMOCEDE
                         </a>
-                        <a class="btn btn-danger" href="{{ url_for('bms.ensure_bms', next=url_for('home')) }}"
+                        <a class="btn btn-danger" href="{{ url_for('bms.ensure_bms', next=url_for('ui.home')) }}"
                            role="button">
                             BMS
                         </a>
@@ -106,10 +106,10 @@
             <div class="panel-heading">
                 <div class="btn-group pull-right">
                     <a class="btn btn-warning btn-xs"
-                       href="{{ url_for('dbs.pillage', next=url_for('view_networks')) }}">
+                       href="{{ url_for('dbs.pillage', next=url_for('ui.view_networks')) }}">
                         Pillage
                     </a>
-                    <a class="btn btn-danger btn-xs" href="{{ url_for('dbs.drop_networks', next=url_for('home')) }}"
+                    <a class="btn btn-danger btn-xs" href="{{ url_for('dbs.drop_networks', next=url_for('ui.home')) }}"
                        role="button" data-toggle="confirmation" data-btn-ok-icon="glyphicon glyphicon-share-alt"
                        data-btn-ok-class="btn-success" data-btn-cancel-icon="glyphicon glyphicon-ban-circle"
                        data-btn-cancel-class="btn-danger">
@@ -179,7 +179,7 @@
                                 {% endif %}
                                 <li>
                                     <div class="btn-group">
-                                        <a href="{{ url_for('view_summarize_statistics', network_id=network.id) }}"
+                                        <a href="{{ url_for('ui.view_summarize_statistics', network_id=network.id) }}"
                                            class="btn btn-default"
                                            title="Summary of the Network"
                                            data-content="Access the statisics summary of the network.">
@@ -193,7 +193,7 @@
                                         </button>
                                         <ul class="dropdown-menu">
                                             <li>
-                                                <a href="{{ url_for('view_summarize_compilation', network_id=network.id) }}"
+                                                <a href="{{ url_for('ui.view_summarize_compilation', network_id=network.id) }}"
                                                    data-toggle="popright" title="Summary of the Network"
                                                    data-content="Access the compilation summary of the network.">
                                                     <span class="glyphicon glyphicon-warning-sign"
@@ -201,7 +201,7 @@
                                                 </a>
                                             </li>
                                             <li>
-                                                <a href="{{ url_for('view_summarize_biogrammar', network_id=network.id) }}"
+                                                <a href="{{ url_for('ui.view_summarize_biogrammar', network_id=network.id) }}"
                                                    data-toggle="popright" title="Summary of the Network"
                                                    data-content="Access the biogrammar summary of the network.">
                                                     <span class="glyphicon glyphicon-apple" aria-hidden="true">
@@ -214,7 +214,7 @@
 
                                 <li>
                                     {% if network.report and network.report.is_displayable %}
-                                        <a href="{{ url_for('view_explore_network', network_id=network.id) }}"
+                                        <a href="{{ url_for('ui.view_explore_network', network_id=network.id) }}"
                                            class="btn btn-default" data-toggle="popover"
                                            title="Explore this Network"
                                            data-content="Visualize this Network in the Biological Network Explorer.
@@ -224,7 +224,7 @@
                                             Explore
                                         </a>
                                     {% else %}
-                                        <a href="{{ url_for('build_subsample_query', network_id=network.id) }}"
+                                        <a href="{{ url_for('ui.build_subsample_query', network_id=network.id) }}"
                                            class="btn btn-default" data-toggle="popover"
                                            title="Sample this Network"
                                            data-content="This network is too large to explore directly, so view a random sample of 250 edges.">
@@ -235,7 +235,7 @@
                                 </li>
 
                                 <li>
-                                    <a href="{{ url_for('view_query_builder', start=network.id ) }}"
+                                    <a href="{{ url_for('ui.view_query_builder', start=network.id ) }}"
                                        class="btn btn-default" data-toggle="popover"
                                        title="Perform a Query on this Network"
                                        data-content="You can ask specific questions to your network using the
@@ -267,7 +267,7 @@
                                             <ul class="dropdown-menu">
                                                 {% if network.report and network.report.user == current_user %}
                                                     <li>
-                                                        <a href="{{ url_for('dbs.drop_network', network_id=network.id, next=url_for('view_networks')) }}">
+                                                        <a href="{{ url_for('dbs.drop_network', network_id=network.id, next=url_for('ui.view_networks')) }}">
                                                             <span class="glyphicon glyphicon-remove"
                                                                   aria-hidden="true"></span>
                                                             Drop
@@ -276,13 +276,13 @@
 
                                                     <li>
                                                         {% if not network.report.public %}
-                                                            <a href="{{ url_for('dbs.make_network_public', network_id=network.id, next=url_for('view_networks')) }}">
+                                                            <a href="{{ url_for('dbs.make_network_public', network_id=network.id, next=url_for('ui.view_networks')) }}">
                                                                 <span class="glyphicon glyphicon-globe"
                                                                       aria-hidden="true"></span>
                                                                 Make Public
                                                             </a>
                                                         {% else %}
-                                                            <a href="{{ url_for('dbs.make_network_private', network_id=network.id, next=url_for('view_networks')) }}">
+                                                            <a href="{{ url_for('dbs.make_network_private', network_id=network.id, next=url_for('ui.view_networks')) }}">
                                                                 <span class="glyphicon glyphicon-ban-circle"
                                                                       aria-hidden="true"></span>
                                                                 Make Private
@@ -291,7 +291,7 @@
                                                     </li>
                                                 {% elif current_user.is_admin %}
                                                     <li>
-                                                        <a href="{{ url_for('dbs.drop_network', network_id=network.id, next=url_for('view_networks')) }}">
+                                                        <a href="{{ url_for('dbs.drop_network', network_id=network.id, next=url_for('ui.view_networks')) }}">
                                                             <span class="glyphicon glyphicon-remove"
                                                                   aria-hidden="true"></span>
                                                             Sudo Drop
@@ -300,7 +300,7 @@
 
                                                     {% if network.report and not network.report.public %}
                                                         <li>
-                                                            <a href="{{ url_for('dbs.make_network_public', network_id=network.id, next=url_for('view_networks')) }}">
+                                                            <a href="{{ url_for('dbs.make_network_public', network_id=network.id, next=url_for('ui.view_networks')) }}">
                                                         <span class="glyphicon glyphicon-globe"
                                                               aria-hidden="true"></span>
                                                                 Sudo Make Public
@@ -308,7 +308,7 @@
                                                         </li>
                                                     {% elif network.report and network.report.public %}
                                                         <li>
-                                                            <a href="{{ url_for('dbs.make_network_private', network_id=network.id, next=url_for('view_networks')) }}">
+                                                            <a href="{{ url_for('dbs.make_network_private', network_id=network.id, next=url_for('ui.view_networks')) }}">
                                                 <span class="glyphicon glyphicon-ban-circle "
                                                       aria-hidden="true"></span>
                                                                 Sudo Make Private
@@ -320,7 +320,7 @@
                                                 {% if (current_user.is_scai or current_user.is_admin) and not network.report %}
                                                     <li role="separator" class="divider"></li>
                                                     <li>
-                                                        <a href="{{ url_for('dbs.claim_network', network_id=network.id, next=url_for('view_networks')) }}">
+                                                        <a href="{{ url_for('dbs.claim_network', network_id=network.id, next=url_for('ui.view_networks')) }}">
                                                             Sudo Claim
                                                         </a>
                                                     </li>
