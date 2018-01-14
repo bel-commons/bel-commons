@@ -83,13 +83,12 @@
 
 {% block content %}
     <div class="container">
-        <div class="page-header">
-            <h1 id="network-name">Biological Network Explorer</h1>
-        </div>
-
         {{ util.flashed_messages(dismissible=True, container=False) }}
 
         <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Biological Network Explorer</h3>
+            </div>
             <div class="panel-body">
                 <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#info-graph">
                     Help
