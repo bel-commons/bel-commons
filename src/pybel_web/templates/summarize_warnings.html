@@ -63,7 +63,18 @@
                         <dl class="dl-horizontal">
                             {% for k,v in context['annotations'].items()|sort %}
                                 <dt>{{ k }}</dt>
-                                <dd>{{ v }}</dd>
+
+                                <dd>
+                                    {% if v is string %}
+                                        {{ v }}
+                                    {% else %}
+                                        <ul>
+                                            {% for vi in v %}
+                                                <li>{{ vi }}</li>
+                                            {% endfor %}
+                                        </ul>
+                                    {% endif %}
+                                </dd>
                             {% endfor %}
                         </dl>
                     </td>
