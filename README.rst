@@ -56,7 +56,6 @@ Configuration
 -------------
 Default configuration can be found in the module ``pybel_web.config``.
 
-
 By default, PyBEL searches for a configuration file called ``config.json`` in ``~/.config/pybel/``. This directory
 can be modified with the environment variable ``PYBEL_CONFIG_DIRECTORY``. Additioanlly, the location of another custom
 configuration can be specified by the environment variable ``PYBEL_WEB_CONFIG_JSON``.
@@ -93,15 +92,6 @@ Input
 ~~~~~
 This service accepts BEL Scripts as input through an HTML form. It also has a user registration page that tracks
 email addresses and names of users. Its underlying database is populated accordingly.
-
-Using Docker Compose
---------------------
-A simple Dockerfile is included at the root-level of the repository. This Dockerfile is inspired by the tutorials from
-`Container Tutorials <http://containertutorials.com/docker-compose/flask-simple-app.html>`_ and
-`Digital Ocean <https://www.digitalocean.com/community/tutorials/docker-explained-how-to-containerize-python-web-applications>`_.
-
-- The virtual machine needs at least 2GB memory for the worker container
-- The database needs a packet size big enough to accommodate large BEL files (>10 mb)
 
 .. |license| image:: https://img.shields.io/badge/License-Apache%202.0-blue.svg
     :alt: Apache 2.0 License

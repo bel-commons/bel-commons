@@ -4,8 +4,10 @@ PyBEL Web Documentation
 .. toctree::
    :maxdepth: 2
 
-   web
+   installation
+   docker
    pages
+   configuration
 
 Indices and tables
 ==================
