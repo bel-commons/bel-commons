@@ -184,7 +184,7 @@ def download_undefined_namespace(network_id, namespace):
         required: true
         type: string
     """
-    graph = manager.get_graph_by_id(network_id)
+    graph = safe_get_graph(network_id)
     names = get_undefined_namespace_names(graph, namespace)  # TODO put into report data
     return _build_namespace_helper(graph, namespace, names)
 
@@ -209,7 +209,7 @@ def download_missing_namespace(network_id, namespace):
         required: true
         type: string
     """
-    graph = manager.get_graph_by_id(network_id)
+    graph = safe_get_graph(network_id)
     names = get_incorrect_names_by_namespace(graph, namespace)  # TODO put into report data
     return _build_namespace_helper(graph, namespace, names)
 
@@ -228,7 +228,7 @@ def download_naked_names(network_id):
         required: true
         type: integer
     """
-    graph = manager.get_graph_by_id(network_id)
+    graph = safe_get_graph(network_id)
     names = get_naked_names(graph)  # TODO put into report data
     return _build_namespace_helper(graph, 'NAKED', names)
 
@@ -278,7 +278,7 @@ def download_list_annotation(network_id, annotation):
         required: true
         type: string
     """
-    graph = manager.get_graph_by_id(network_id)
+    graph = safe_get_graph(network_id)
 
     if annotation not in graph.annotation_list:
         abort(400, 'Graph does not contain this list annotation')
@@ -2596,6 +2596,16 @@ def safe_get_network(network_id):
         abort(403, 'User {} does not have permission to access Network {}'.format(current_user, network))
 
     return network
+
+
+def safe_get_graph(network_id):
+    """Gets the network as a BEL graph or aborts if the user is not the owner
+
+    :type network_id: int
+    :rtype: pybel.BELGraph
+    """
+    network = safe_get_network(network_id)
+    return network.as_bel()
 
 
 @api_blueprint.route('/api/project')
