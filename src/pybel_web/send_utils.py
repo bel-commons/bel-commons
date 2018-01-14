@@ -8,7 +8,8 @@ from flask import Response, jsonify, send_file
 from pybel import to_bel_lines, to_bytes, to_csv, to_cx, to_graphml, to_gsea, to_jgif, to_json, to_sif
 from pybel.canonicalize import node_to_bel
 from pybel.constants import (
-    CAUSAL_DECREASE_RELATIONS, CAUSAL_INCREASE_RELATIONS, DECREASES, INCREASES, RELATION, TWO_WAY_RELATIONS,
+    CAUSAL_DECREASE_RELATIONS, CAUSAL_INCREASE_RELATIONS, DECREASES, HASH, INCREASES, RELATION,
+    TWO_WAY_RELATIONS,
 )
 from pybel.struct.summary import get_pubmed_identifiers
 from pybel.utils import hash_edge, hash_node
@@ -22,7 +23,15 @@ __all__ = [
 log = logging.getLogger(__name__)
 
 
-def to_json_custom(graph, _id='id', source='source', target='target', key='key'):
+def to_json_custom(graph, _id='id', source='source', target='target'):
+    """Prepares JSON for PyBEL Web's biological network explorer
+
+    :type graph: pybel.BELGraph
+    :param str _id: The key to use for the identifier of a node, which is calculated with an enumeration
+    :param str source: The key to use for the source node
+    :param str target: The key to use for the target node
+    :rtype: dict
+    """
     result = {}
 
     mapping = {}
@@ -39,14 +48,12 @@ def to_json_custom(graph, _id='id', source='source', target='target', key='key')
 
     rr = {}
 
-    for u, v, k, d in graph.edges_iter(keys=True, data=True):
+    for u, v, data in graph.edges_iter(data=True):
 
-        if d[RELATION] in TWO_WAY_RELATIONS and (u, v) != tuple(sorted((u, v))):
+        if data[RELATION] in TWO_WAY_RELATIONS and (u, v) != tuple(sorted((u, v))):
             continue  # don't keep two way edges twice
 
         entry_code = u, v
-
-        edge_hash = hash_edge(u, v, k, d)
 
         if entry_code not in edge_set:  # Avoids duplicate sending multiple edges between nodes with same relation
             rr[entry_code] = {
@@ -58,15 +65,15 @@ def to_json_custom(graph, _id='id', source='source', target='target', key='key')
             edge_set.add(entry_code)
 
         payload = {
-            'id': edge_hash,
-            'bel': graph.edge_to_bel(u, v, data=d)
+            'id': data.get(HASH, hash_edge(u, v, data)),
+            'bel': graph.edge_to_bel(u, v, data=data)
         }
-        payload.update(d)
+        payload.update(data)
 
-        if d[RELATION] in CAUSAL_INCREASE_RELATIONS:
+        if data[RELATION] in CAUSAL_INCREASE_RELATIONS:
             rr[entry_code][RELATION] = INCREASES
 
-        elif d[RELATION] in CAUSAL_DECREASE_RELATIONS:
+        elif data[RELATION] in CAUSAL_DECREASE_RELATIONS:
             rr[entry_code][RELATION] = DECREASES
 
         rr[entry_code]['contexts'].append(payload)
