@@ -110,9 +110,12 @@ function displayEdgeInfo(edge) {
 
     var edgeObject = {};
 
-    edgeObject["Links"] = '<a target="_blank" href="/node/' + edge.source.id + '">' + edge.source.cname + ' <span class="glyphicon glyphicon-new-window"></span></a>';
-    edgeObject["Links"] += '<br /><a target="_blank" href="/node/' + edge.target.id + '">' + edge.target.cname + ' <span class="glyphicon glyphicon-new-window"></span></a>';
-    edgeObject["Links"] += '<br /><a target="_blank" href="/node/' + edge.source.id + '/edges/' + edge.target.id + '">All Evidences <span class="glyphicon glyphicon-new-window"></span></a>';
+    edgeObject["Links"] = '<ul class="list-inline">';
+    edgeObject["Links"] += '<li><a target="_blank" href="/node/' + edge.source.id + '">' + edge.source.cname + ' <span class="glyphicon glyphicon-new-window"></span></a></li>';
+    edgeObject["Links"] += '<li><a target="_blank" href="/node/' + edge.target.id + '">' + edge.target.cname + ' <span class="glyphicon glyphicon-new-window"></span></a></li>';
+    edgeObject["Links"] += '<li><a target="_blank" href="/node/' + edge.source.id + '/edges/' + edge.target.id + '">All Evidences <span class="glyphicon glyphicon-new-window"></span></a></li>';
+    edgeObject["Links"] += '</ul>';
+
 
     if (edge.contexts) {
         $.each(edge.contexts, function (key, context) {
