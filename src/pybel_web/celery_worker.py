@@ -61,13 +61,13 @@ def parse_by_url(url):
     # FIXME add proper exception handling and feedback
     try:
         graph = from_url(url, manager=manager)
-    except:
+    except Exception:
         return 'Parsing failed for {}. '.format(url)
 
     try:
         network = manager.insert_graph(graph, store_parts=app.config.get("PYBEL_USE_EDGE_STORE""", True))
         return network.id
-    except:
+    except Exception:
         manager.session.rollback()
         return 'Inserting failed for {}'.format(url)
     finally:
@@ -187,11 +187,11 @@ def async_parser(report_id):
 
         enrich_pubmed_citations(graph, manager=manager)
 
-    except (IntegrityError, OperationalError):
+    except (IntegrityError, OperationalError):  # just skip this if there's a problem
         manager.session.rollback()
         log.exception('problem with database while fixing citations')
 
-    except:
+    except Exception:
         log.exception('problem fixing citations')
 
     upload_failed_text = 'Upload Failed for {}'.format(source_name)
@@ -331,7 +331,7 @@ def run_cmpa(experiment_id):
     try:
         manager.session.add(experiment)
         manager.session.commit()
-    except:
+    except Exception:
         manager.session.rollback()
         return -1
     finally:
@@ -360,7 +360,7 @@ def async_recieve(payload):
     """Receives a JSON serialized BEL graph"""
     try:
         graph = from_json(payload)
-    except:
+    except Exception:
         return -1
 
     try:
@@ -368,7 +368,7 @@ def async_recieve(payload):
     except IntegrityError:
         manager.session.rollback()
         return -1
-    except:
+    except Exception:
         log.exception('Upload error')
         manager.session.rollback()
         return -1
