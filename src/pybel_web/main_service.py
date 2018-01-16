@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""This module runs the dictionary-backed PyBEL API"""
+"""This module contains the user interface to PyBEL Web"""
 
 import itertools as itt
 import logging
@@ -23,8 +23,8 @@ from .constants import *
 from .manager import *
 from .models import Project, Query, Report, User
 from .utils import (
-    calculate_overlap_dict, get_network_ids_with_permission_helper, get_networks_with_permission,
-    manager, next_or_jsonify, query_form_to_dict, redirect_explorer, render_network_summary, safe_get_query,
+    calculate_overlap_dict, get_network_ids_with_permission_helper, get_networks_with_permission, manager,
+    next_or_jsonify, query_form_to_dict, redirect_explorer, render_network_summary_safe, safe_get_query,
 )
 
 log = logging.getLogger(__name__)
@@ -32,40 +32,62 @@ log = logging.getLogger(__name__)
 ui_blueprint = Blueprint('ui', __name__)
 
 
+def _serve_relations(edges, source, target=None):
+    """Serves a list of edges
+
+    :param iter[pybel.manager.models.Edge] edges:
+    :param Node source:
+    :param Node target:
+    :rtype: flask.Response
+    """
+    data = defaultdict(list)
+    ev2cit = {}
+    for edge in edges:
+        if not edge.evidence:
+            continue
+        ev = edge.evidence.text
+        data[ev].append((edge, edge.to_json()))
+        ev2cit[ev] = edge.evidence.citation.to_json()
+
+    return render_template(
+        'evidence_list.html',
+        data=data,
+        ev2cit=ev2cit,
+        source_bel=source.bel,
+        target_bel=target.bel if target else None,
+    )
+
+
 @ui_blueprint.route('/', methods=['GET', 'POST'])
 def home():
-    """Renders the home page"""
+    """The home page has links to the main features of PyBEL Web:
+
+    1. BEL Parser
+    2. Curation Tools
+    3. Namespace and Annotation Store
+    4. Network/Edge/NanoPub Store Navigator
+    5. Query Builder
+    """
     return render_template('index.html', current_user=current_user)
-
-
-@ui_blueprint.route('/admin/rollback')
-@roles_required('admin')
-def rollback():
-    """Rolls back the transaction for when something bad happens"""
-    manager.session.rollback()
-    return next_or_jsonify('rolled back')
-
-
-@ui_blueprint.route('/admin/nuke/')
-@roles_required('admin')
-def nuke():
-    """Destroys the database and recreates it"""
-    log.info('nuking database')
-    manager.drop_all(checkfirst=True)
-    log.info('   the dust settles')
-    return next_or_jsonify('nuked the database')
-
-
-@ui_blueprint.route('/admin/configuration')
-@roles_required('admin')
-def view_config():
-    """Render the configuration"""
-    return render_template('deployment.html', config=current_app.config)
 
 
 @ui_blueprint.route('/networks', methods=['GET', 'POST'])
 def view_networks():
-    """Renders a page for the user to choose a network"""
+    """The networks page has two components: a search box, and a list of networks. Each network is shown by name,
+    with the version number and the first author. Each has several actions:
+
+    1. View one of the following summaries:
+      - Statistical summary
+      - Compilation summary
+      - Biological grammar summary
+
+    2. Explore the full network, or a random subgraph if it is too big.
+    3. Create a biological query starting with this network
+    4. Analyze the network with one of the procedures (CMPA, etc.)
+    5. Execute one of the following actions if the current user is the owner:
+      - Drop
+      - Make public/private
+    """
     networks = get_networks_with_permission(manager)
 
     return render_template(
@@ -97,26 +119,16 @@ def view_nodes():
     )
 
 
-@ui_blueprint.route('/query/build', methods=['GET', 'POST'])
-def view_query_builder():
-    """Renders the query builder page"""
-    networks = get_networks_with_permission(manager)
+@ui_blueprint.route('/network/<int:network_id>/explore', methods=['GET'])
+def view_explore_network(network_id):
+    """Renders a page for the user to explore a network
 
-    return render_template(
-        'query_builder.html',
-        networks=networks,
-        current_user=current_user,
-        preselected=request.args.get('start', type=int)
-    )
+    :param int network_id: The identifier of the network to explore
+    """
+    if network_id not in get_network_ids_with_permission_helper(current_user, manager):
+        abort(403, 'Insufficient rights for network {}'.format(network_id))
 
-
-@ui_blueprint.route('/query/compile', methods=['POST'])
-def get_pipeline():
-    """Executes a pipeline"""
-    d = query_form_to_dict(request.form)
-    q = pybel_tools.query.Query.from_json(d)
-    query = models.Query.from_query(manager, q, current_user)
-
+    query = Query.from_query_args(manager, [network_id], current_user)
     manager.session.add(query)
     manager.session.commit()
 
@@ -156,105 +168,26 @@ def view_explore_project(project_id):
     return redirect_explorer(query.id)
 
 
-@ui_blueprint.route('/project/<int:project_id>/merge/<int:user_id>')
-def send_async_project_merge(user_id, project_id):
-    """Sends async merge task
+@ui_blueprint.route('/query/build', methods=['GET', 'POST'])
+def view_query_builder():
+    """Renders the query builder page"""
+    networks = get_networks_with_permission(manager)
 
-    :param int user_id: The identifier of the user sending the task
-    :param int project_id: The identifier of the project to merge
-    """
-    task = current_app.celery.send_task('merge-project', args=[user_id, project_id])
-    flash('Merge task sent: {}'.format(task))
-    return redirect(url_for('view_current_user_activity'))
-
-
-@ui_blueprint.route('/network/<int:network_id>/explore', methods=['GET'])
-def view_explore_network(network_id):
-    """Renders a page for the user to explore a network
-
-    :param int network_id: The identifier of the network to explore
-    """
-    if network_id not in get_network_ids_with_permission_helper(current_user, manager):
-        abort(403, 'Insufficient rights for network {}'.format(network_id))
-
-    query = Query.from_query_args(manager, [network_id], current_user)
-    manager.session.add(query)
-    manager.session.commit()
-
-    return redirect_explorer(query.id)
+    return render_template(
+        'query_builder.html',
+        networks=networks,
+        current_user=current_user,
+        preselected=request.args.get('start', type=int)
+    )
 
 
-def render_network_summary_safe(network_id, template):
-    if network_id not in get_network_ids_with_permission_helper(current_user, manager):
-        abort(403, 'Insufficient rights for network {}'.format(network_id))
-    return render_network_summary(network_id, template=template)
+@ui_blueprint.route('/query/compile', methods=['POST'])
+def get_pipeline():
+    """Executes a pipeline"""
+    d = query_form_to_dict(request.form)
+    q = pybel_tools.query.Query.from_json(d)
+    query = models.Query.from_query(manager, q, current_user)
 
-
-@ui_blueprint.route('/summary/<int:network_id>')
-def view_summarize_statistics(network_id):
-    """Renders a page with the statistics of the contents of a BEL script
-
-    :param int network_id: The identifier of the network to summarize
-    """
-    return render_network_summary_safe(network_id, template='summarize_statistics.html')
-
-
-@ui_blueprint.route('/summary/<int:network_id>/compilation')
-def view_summarize_compilation(network_id):
-    """Renders a page with the compilation summary of the contents of a BEL script
-
-    :param int network_id: The identifier of the network to summarize
-    """
-    return render_network_summary_safe(network_id, template='summarize_compilation.html')
-
-
-@ui_blueprint.route('/summary/<int:network_id>/warnings')
-def view_summarize_warnings(network_id):
-    """Renders a page with the parsing errors from a BEL script
-
-    :param int network_id: The identifier of the network to summarize
-    """
-    return render_network_summary_safe(network_id, template='summarize_warnings.html')
-
-
-@ui_blueprint.route('/summary/<int:network_id>/biogrammar')
-def view_summarize_biogrammar(network_id):
-    """Renders a page with the summary of the biogrammar analysis of a BEL script
-
-    :param int network_id: The identifier of the network to summarize
-    """
-    return render_network_summary_safe(network_id, template='summarize_biogrammar.html')
-
-
-@ui_blueprint.route('/network/<int:network_id>/induction-query/')
-def build_summary_link_query(network_id):
-    """Builds a query with the given network by inducing a subgraph over the nodes included in the request
-
-    :param int network_id: The identifier of the network
-    """
-    nodes = [
-        manager.get_node_tuple_by_hash(node_hash)
-        for node_hash in request.args.getlist('nodes')
-    ]
-
-    q = pybel_tools.query.Query([network_id])
-    q.append_seeding_induction(nodes)
-    query = Query.from_query(manager, q, current_user)
-    manager.session.add(query)
-    manager.session.commit()
-
-    return redirect_explorer(query.id)
-
-
-@ui_blueprint.route('/network/<int:network_id>/sample/')
-def build_subsample_query(network_id):
-    """Builds and executes a query that induces a random subnetwork over the given network
-
-    :param int network_id: The identifier of the network
-    """
-    q = pybel_tools.query.Query([network_id])
-    q.append_seeding_sample()
-    query = Query.from_query(manager, q, current_user)
     manager.session.add(query)
     manager.session.commit()
 
@@ -300,13 +233,6 @@ def view_about():
     return render_template('about.html', metadata=metadata)
 
 
-@ui_blueprint.route('/users')
-@roles_required('admin')
-def view_users():
-    """Renders a list of users"""
-    return render_template('view_users.html', users=manager.session.query(User))
-
-
 @ui_blueprint.route('/user')
 @login_required
 def view_current_user_activity():
@@ -316,23 +242,40 @@ def view_current_user_activity():
                            manager=manager)
 
 
-@ui_blueprint.route('/user/<int:user_id>')
-@roles_required('admin')
-def view_user_activity(user_id):
-    """Returns the given user's history
+@ui_blueprint.route('/summary/<int:network_id>')
+def view_summarize_statistics(network_id):
+    """Renders a page with the statistics of the contents of a BEL script
 
-    :param int user_id: The identifier of the user to summarize
+    :param int network_id: The identifier of the network to summarize
     """
-    user = manager.session.query(User).get(user_id)
-    pending_reports = user.pending_reports()
-    return render_template('user_activity.html', user=user, pending_reports=pending_reports, manager=manager)
+    return render_network_summary_safe(manager, network_id, template='summarize_statistics.html')
 
 
-@ui_blueprint.route('/reporting', methods=['GET'])
-def view_reports():
-    """Shows the uploading reporting"""
-    reports = manager.session.query(Report).order_by(Report.created).all()
-    return render_template('reporting.html', reports=reports)
+@ui_blueprint.route('/summary/<int:network_id>/compilation')
+def view_summarize_compilation(network_id):
+    """Renders a page with the compilation summary of the contents of a BEL script
+
+    :param int network_id: The identifier of the network to summarize
+    """
+    return render_network_summary_safe(manager, network_id, template='summarize_compilation.html')
+
+
+@ui_blueprint.route('/summary/<int:network_id>/warnings')
+def view_summarize_warnings(network_id):
+    """Renders a page with the parsing errors from a BEL script
+
+    :param int network_id: The identifier of the network to summarize
+    """
+    return render_network_summary_safe(manager, network_id, template='summarize_warnings.html')
+
+
+@ui_blueprint.route('/summary/<int:network_id>/biogrammar')
+def view_summarize_biogrammar(network_id):
+    """Renders a page with the summary of the biogrammar analysis of a BEL script
+
+    :param int network_id: The identifier of the network to summarize
+    """
+    return render_network_summary_safe(manager, network_id, template='summarize_biogrammar.html')
 
 
 @ui_blueprint.route('/how_to_use', methods=['GET'])
@@ -389,31 +332,6 @@ def view_query_comparison(query_1_id, query_2_id):
     )
 
 
-def serve_relations(edges, source, target=None):
-    """Serves a list of edges
-
-    :param list[Edge] edges:
-    :param Node source:
-    :param Node target:
-    """
-    data = defaultdict(list)
-    ev2cit = {}
-    for edge in edges:
-        if not edge.evidence:
-            continue
-        ev = edge.evidence.text
-        data[ev].append((edge, edge.to_json()))
-        ev2cit[ev] = edge.evidence.citation.to_json()
-
-    return render_template(
-        'evidence_list.html',
-        data=data,
-        ev2cit=ev2cit,
-        source_bel=source.bel,
-        target_bel=target.bel if target else None,
-    )
-
-
 @ui_blueprint.route('/citation/pubmed/<pmid>')
 def view_pubmed(pmid):
     """View all evidences and relations extracted from the article with the given PubMed identifier
@@ -439,7 +357,7 @@ def view_relations(source_id, target_id):
     if 'undirected' in request.args:
         relations.extend(manager.query_edges(source=target, target=source))
 
-    return serve_relations(relations, source, target)
+    return _serve_relations(relations, source, target)
 
 
 @ui_blueprint.route('/node/<node_id>')
@@ -457,14 +375,7 @@ def view_node(node_id):
         manager.query_edges(source=node),
         manager.query_edges(target=node)
     ))
-    return serve_relations(relations, node)
-
-
-@ui_blueprint.route('/overview')
-@roles_required('admin')
-def view_overview():
-    """Views the overview"""
-    return render_template('overview.html')
+    return _serve_relations(relations, node)
 
 
 @ui_blueprint.route('/download/bel/<fid>')
@@ -483,3 +394,116 @@ def download_saved_file(fid):
 
     # TODO delete as cleanup
     return rv
+
+
+##########################################
+# The following endpoints are admin only #
+##########################################
+
+@ui_blueprint.route('/users')
+@roles_required('admin')
+def view_users():
+    """Renders a list of users"""
+    return render_template('view_users.html', users=manager.session.query(User))
+
+
+@ui_blueprint.route('/user/<int:user_id>')
+@roles_required('admin')
+def view_user_activity(user_id):
+    """Returns the given user's history
+
+    :param int user_id: The identifier of the user to summarize
+    """
+    user = manager.session.query(User).get(user_id)
+    pending_reports = user.pending_reports()
+    return render_template('user_activity.html', user=user, pending_reports=pending_reports, manager=manager)
+
+
+@ui_blueprint.route('/reporting', methods=['GET'])
+@roles_required('admin')
+def view_reports():
+    """Shows the uploading reporting"""
+    return render_template('reporting.html', reports=manager.session.query(Report).order_by(Report.created).all())
+
+
+@ui_blueprint.route('/overview')
+@roles_required('admin')
+def view_overview():
+    """Views the overview"""
+    return render_template('overview.html')
+
+
+@ui_blueprint.route('/admin/rollback')
+@roles_required('admin')
+def rollback():
+    """Rolls back the transaction for when something bad happens"""
+    manager.session.rollback()
+    return next_or_jsonify('rolled back')
+
+
+@ui_blueprint.route('/admin/nuke/')
+@roles_required('admin')
+def nuke():
+    """Destroys the database and recreates it"""
+    log.info('nuking database')
+    manager.drop_all(checkfirst=True)
+    log.info('   the dust settles')
+    return next_or_jsonify('nuked the database')
+
+
+@ui_blueprint.route('/admin/configuration')
+@roles_required('admin')
+def view_config():
+    """Render the configuration"""
+    return render_template('deployment.html', config=current_app.config)
+
+
+#######################################
+# The following endpoints are helpers #
+#######################################
+
+@ui_blueprint.route('/project/<int:project_id>/merge/<int:user_id>')
+def send_async_project_merge(user_id, project_id):
+    """A helper endpoint to submit a project to the asynchronous task queue to merge its associated networks.
+
+    :param int user_id: The identifier of the user sending the task
+    :param int project_id: The identifier of the project to merge
+    """
+    task = current_app.celery.send_task('merge-project', args=[user_id, project_id])
+    flash('Merge task sent: {}'.format(task))
+    return redirect(url_for('ui.view_current_user_activity'))
+
+
+@ui_blueprint.route('/network/<int:network_id>/induction-query/')
+def build_summary_link_query(network_id):
+    """Builds a query with the given network by inducing a subgraph over the nodes included in the request
+
+    :param int network_id: The identifier of the network
+    """
+    nodes = [
+        manager.get_node_tuple_by_hash(node_hash)
+        for node_hash in request.args.getlist('nodes')
+    ]
+
+    q = pybel_tools.query.Query([network_id])
+    q.append_seeding_induction(nodes)
+    query = Query.from_query(manager, q, current_user)
+    manager.session.add(query)
+    manager.session.commit()
+
+    return redirect_explorer(query.id)
+
+
+@ui_blueprint.route('/network/<int:network_id>/sample/')
+def build_subsample_query(network_id):
+    """Builds and executes a query that induces a random subnetwork over the given network
+
+    :param int network_id: The identifier of the network
+    """
+    q = pybel_tools.query.Query([network_id])
+    q.append_seeding_sample()
+    query = Query.from_query(manager, q, current_user)
+    manager.session.add(query)
+    manager.session.commit()
+
+    return redirect_explorer(query.id)

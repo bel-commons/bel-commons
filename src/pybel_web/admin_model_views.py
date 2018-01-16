@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+"""This module contains model views for the Flask-admin interface"""
+
 from flask import redirect, request
 from flask_admin.contrib.sqla import ModelView as ModelViewBase
 from flask_security import current_user, url_for_security

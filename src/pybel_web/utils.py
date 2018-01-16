@@ -1022,3 +1022,17 @@ def redirect_explorer(query_id):
     :rtype: flask.Response
     """
     return redirect(url_for('ui.view_explorer_query', query_id=query_id))
+
+
+def render_network_summary_safe(manager_, network_id, template):
+    """Renders a network if the current user has the necessary rights
+
+    :param manager_: The manager
+    :param int network_id: The network to render
+    :param str template: The name of the template to render
+    :rtype: flask.Response
+    """
+    if network_id not in get_network_ids_with_permission_helper(current_user, manager_):
+        abort(403, 'Insufficient rights for network {}'.format(network_id))
+
+    return render_network_summary(network_id, template=template)

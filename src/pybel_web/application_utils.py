@@ -18,9 +18,9 @@ from pybel.manager.models import (
 )
 from pybel_tools.mutation import expand_node_neighborhood, expand_nodes_neighborhoods
 from pybel_tools.pipeline import in_place_mutator, uni_in_place_mutator
-from .admin_utils import (
-    AnnotationView, CitationView, EdgeView, EvidenceView, ExperimentView, ModelView, ModelViewBase,
-    NetworkView, NodeView, QueryView, ReportView, UserView, NamespaceView
+from .admin_model_views import (
+    AnnotationView, CitationView, EdgeView, EvidenceView, ExperimentView, ModelView,
+    ModelViewBase, NamespaceView, NetworkView, NodeView, QueryView, ReportView, UserView,
 )
 from .constants import ALEX_EMAIL, CHARLIE_EMAIL, DANIEL_EMAIL
 from .models import (
@@ -270,6 +270,7 @@ class FlaskPyBEL:
         self._build_admin_service()
 
     def _prepare_service(self):
+        """Adds the default users to the user datastore"""
         if self.app is None or self.manager is None:
             raise ValueError('not initialized')
 
@@ -301,7 +302,10 @@ class FlaskPyBEL:
         self.manager.session.commit()
 
     def _build_admin_service(self):
-        """Adds Flask-Admin database front-end"""
+        """Adds Flask-Admin database front-end
+
+        :rtype: flask_admin.Admin
+        """
         admin = Admin(self.app, template_mode='bootstrap3')
         manager = self.manager
 
