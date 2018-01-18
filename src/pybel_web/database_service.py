@@ -542,6 +542,11 @@ def nodes_by_network(network_id):
 
 
 def drop_network_helper(network_id):
+    """Drops a network
+
+    :type network_id: int
+    :rtype: flask.Response
+    """
     network = safe_get_network(network_id)
 
     log.info('dropping network %s', network_id)
@@ -551,8 +556,6 @@ def drop_network_helper(network_id):
 
     except Exception as e:
         manager.session.rollback()
-
-        log.exception('Failed to drop network %d (%s)', network.id, network)
 
         if 'next' in request.args:
             flash('Dropped network #{} failed: {}'.format(network_id, e), category='error')
