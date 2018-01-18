@@ -65,7 +65,7 @@ def view_parser():
     log.info('Parse task from %s: %s', current_user_str, task.id)
     flash('Queued parsing task {} for {}.'.format(report_id, report_name))
 
-    return redirect(url_for('view_current_user_activity'))
+    return redirect(url_for('ui.view_current_user_activity'))
 
 
 @parser_async_blueprint.route('/parse/url', methods=('GET', 'POST'))
