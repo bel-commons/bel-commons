@@ -50,10 +50,25 @@
                             Out-Edges: {{ node.out_edges.count() }} |
                             Classes: {{ node.out_edges.filter_by(relation='isA').count() }}
 
-                            <h4>Networks</h4>
+                            <h4>Appears in Networks:</h4>
                             <ul>
                                 {% for network in node.networks %}
-                                    <li>{{ network }}</li>
+                                    <li>
+                                        <a href="{{ url_for('ui.view_summarize_statistics', network_id=network.id) }}">
+                                            {{ network }}
+                                        </a>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+
+                            <h4>Example Edges:</h4>
+                            <ul>
+                                {% for edge in node.out_edges.limit(3) %}
+                                    <li>
+                                        <a href="{{ url_for('ui.view_edge', edge_hash=edge.sha512) }}">
+                                            {{ edge.bel }}
+                                        </a>
+                                    </li>
                                 {% endfor %}
                             </ul>
 
@@ -76,7 +91,7 @@
                                 {% if hgnc_manager and node.namespace_entry.namespace.keyword == 'HGNC' %}
                                     {% set gene =  hgnc_manager.get_gene_by_hgnc_symbol(node.namespace_entry.name) %}
 
-                                    <h4>HGNC Information</h4>
+                                    <h4>HGNC</h4>
                                     <dl class="dl-horizontal">
                                         <dt>Identifier</dt>
                                         <dd>{{ gene.identifier }}</dd>
@@ -96,7 +111,7 @@
                                         {% set chemical= chebi_manager.get_chemical_by_chebi_id(node.namespace_entry.name) %}
                                     {% endif %}
 
-                                    <h4>ChEBI Information</h4>
+                                    <h4>ChEBI</h4>
                                     <dl class="dl-horizontal">
                                         <dt>Identifier</dt>
                                         <dd>{{ chemical.chebi_id }}</dd>
@@ -120,7 +135,7 @@
                                         {% set go = go_manager.get_go_by_id(node.namespace_entry.name) %}
                                     {% endif %}
 
-                                    <h4>GO Information</h4>
+                                    <h4>Gene Ontology</h4>
                                     <dl class="dl-horizontal">
                                         <dt>Identifier</dt>
                                         <dd>{{ go['id'] }}</dd>

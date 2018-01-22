@@ -102,8 +102,17 @@ def view_networks():
 @roles_required('admin')
 def view_edges():
     """Renders a page viewing all edges"""
-    return render_template('edges.html', edges=manager.session.query(Edge), current_user=current_user)
+    return render_template('edges.html', edges=manager.session.query(Edge).limit(15), current_user=current_user)
 
+
+@ui_blueprint.route('/edge/<edge_hash>')
+@roles_required('admin')
+def view_edge(edge_hash):
+    """Renders a page viewing a single edges
+
+    :param str edge_hash: The identifier of the edge to display
+    """
+    return render_template('edges.html', edges=[manager.get_edge_by_hash(edge_hash)], current_user=current_user)
 
 @ui_blueprint.route('/nodes')
 @roles_required('admin')
