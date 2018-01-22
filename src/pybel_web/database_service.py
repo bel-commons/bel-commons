@@ -615,14 +615,13 @@ def drop_networks():
     return next_or_jsonify('Dropped all networks')
 
 
-def _help_claim_network(network_id, user_id):
+def _help_claim_network(network, user):
     """Claims a network and fills out its report
 
-    :param int network_id: A network to claim
+    :param Network network: A network to claim
+    :param User user: The user who will claim it
     :rtype: Optional[Report]
     """
-    network = get_network_or_404(network_id)
-
     if network.report:
         return
 
@@ -636,7 +635,7 @@ def _help_claim_network(network_id, user_id):
     graph_summary = make_graph_summary(graph)
 
     report = Report(
-        user_id=user_id,
+        user=user,
         public=False,
         time=0.0,
     )
@@ -668,7 +667,7 @@ def claim_network(network_id):
     """
     network = get_network_or_404(network_id)
 
-    res = _help_claim_network(network, current_user.id)
+    res = _help_claim_network(network, current_user)
 
     if not res:
         return next_or_jsonify(
@@ -694,7 +693,7 @@ def pillage():
         if network.report is not None:
             continue
 
-        res = _help_claim_network(network, current_user.id)
+        res = _help_claim_network(network, current_user)
 
         if res:
             counter += 1
@@ -2535,8 +2534,9 @@ def grant_network_to_user(network_id, user_id):
 def get_project_or_404(project_id):
     """Get a project by id and aborts 404 if doesn't exist
 
-    :param int project_id:
+    :param int project_id: The identifier of the project
     :rtype: Project
+    :raises: HTTPException
     """
     project = manager.session.query(Project).get(project_id)
 
@@ -2559,8 +2559,9 @@ def user_has_project_rights(user, project):
 def safe_get_project(project_id):
     """Gets a project by identifier, aborts 404 if doesn't exist and aborts 403 if current user does not have rights
 
-    :param project_id:
+    :param int project_id: The identifier of the project
     :rtype: Project
+    :raises: HTTPException
     """
     project = get_project_or_404(project_id)
 
@@ -2575,6 +2576,7 @@ def get_network_or_404(network_id):
 
     :param int network_id:
     :rtype: Network
+    :raises: HTTPException
     """
     network = manager.session.query(Network).get(network_id)
 
@@ -2589,6 +2591,7 @@ def safe_get_network(network_id):
 
     :type network_id: int
     :rtype: Network
+    :raises: HTTPException
     """
     network = get_network_or_404(network_id)
 
