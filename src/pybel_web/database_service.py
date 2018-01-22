@@ -691,6 +691,7 @@ def claim_network(network_id):
 def pillage():
     """Claims all unclaimed networks"""
     counter = 0
+    t = time.time()
 
     for network in manager.session.query(Network):
         if network.report is not None:
@@ -701,7 +702,7 @@ def pillage():
         if res:
             counter += 1
 
-    return next_or_jsonify('Claimed {} networks'.format(counter))
+    return next_or_jsonify('Claimed {} networks in {:.2f} seconds'.format(counter, time.time() - t))
 
 
 @api_blueprint.route('/api/network')
