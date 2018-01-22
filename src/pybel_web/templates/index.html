@@ -120,8 +120,9 @@
                                 <h3>Summarize</h3>
                                 <p>
                                     View summaries and statistics over curated networks and as a first step towards
-                                    exploration, visualization{% if current_user.is_beta_tester %}, and
-                                    <a href="{{ url_for('analysis.view_analyses') }}">analysis</a>{% endif %}.
+                                    exploration{% if current_user.is_beta_tester %}, visualization, and
+                                        <a href="{{ url_for('analysis.view_analyses') }}">analysis</a>{% else %}
+                                        and visualization{% endif %}.
                                 </p>
                                 <p>
                                     {% if current_user.is_admin %}
