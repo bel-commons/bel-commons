@@ -2489,7 +2489,6 @@ def grant_network_to_project(network_id, project_id):
     """
     network = safe_get_network(network_id)
     project = safe_get_project(project_id)
-    project = manager.session.query(Project).get(project_id)
     project.networks.append(network)
 
     manager.session.commit()
