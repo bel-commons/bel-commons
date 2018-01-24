@@ -61,16 +61,29 @@
                                 {% endfor %}
                             </ul>
 
-                            <h4>Example Edges:</h4>
-                            <ul>
-                                {% for edge in node.out_edges.limit(3) %}
-                                    <li>
-                                        <a href="{{ url_for('ui.view_edge', edge_hash=edge.sha512) }}">
-                                            {{ edge.bel }}
-                                        </a>
-                                    </li>
-                                {% endfor %}
-                            </ul>
+
+                            {% set node_in_edges = node.in_edges.limit(3) %}
+                            {% set node_out_edges = node.out_edges.limit(2) %}
+
+                            {% if node_in_edges or node_out_edges %}
+                                <h4>Example Edges:</h4>
+                                <ul>
+                                    {% for edge in node_in_edges %}
+                                        <li>
+                                            <a href="{{ url_for('ui.view_edge', edge_hash=edge.sha512) }}">
+                                                {{ edge.bel }}
+                                            </a>
+                                        </li>
+                                    {% endfor %}
+                                    {% for edge in node_out_edges %}
+                                        <li>
+                                            <a href="{{ url_for('ui.view_edge', edge_hash=edge.sha512) }}">
+                                                {{ edge.bel }}
+                                            </a>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            {% endif %}
 
                             {% if node.namespace_entry %}
                                 <h4>Entity</h4>

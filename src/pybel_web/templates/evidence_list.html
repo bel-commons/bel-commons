@@ -55,10 +55,12 @@
                                     </a>
                                 </dd>
 
-                                {% for k, v in edge['data']['annotations'].items()|sort %}
-                                    <dt>{{ k }}</dt>
-                                    <dd>{{ v }}</dd>
-                                {% endfor %}
+                                {% if 'annotations' in edge['data'] %}
+                                    {% for k, v in edge['data']['annotations'].items()|sort %}
+                                        <dt>{{ k }}</dt>
+                                        <dd>{{ v|join(', ') }}</dd>
+                                    {% endfor %}
+                                {% endif %}
 
                                 <dt>Networks</dt>
                                 <dd>
