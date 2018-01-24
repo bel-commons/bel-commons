@@ -19,13 +19,13 @@ import requests.exceptions
 from celery.utils.log import get_task_logger
 from sqlalchemy.exc import IntegrityError, OperationalError
 
-from pybel import from_json, from_url, to_bel_path, to_bytes
+from pybel import from_cbn_jgif, from_json, from_url, to_bel_path, to_bytes, to_database
 from pybel.constants import METADATA_CONTACT, METADATA_DESCRIPTION, METADATA_LICENSES
 from pybel.manager.cache_manager import EdgeAddError
 from pybel.manager.citation_utils import enrich_pubmed_citations
 from pybel.manager.models import Network
 from pybel.parser.parse_exceptions import InconsistentDefinitionError
-from pybel.struct import union
+from pybel.struct import strip_annotations, union
 from pybel_tools.mutation import add_canonical_names, add_identifiers, infer_central_dogma
 from pybel_tools.utils import enable_cool_mode
 from pybel_web.application import create_application
@@ -372,5 +372,32 @@ def async_recieve(payload):
         log.exception('Upload error')
         manager.session.rollback()
         return -1
+
+    return 0
+
+
+@celery.task(name='upload-cbn')
+def upload_cbn(dir_path):
+    """Uploads CBN data to edge store
+
+    :param str dir_path: Directory full of CBN JGIF files
+    :param pybel.Manager manager:
+    """
+    t = time.time()
+
+    for jfg_path in os.listdir(dir_path):
+        path = os.path.join(dir_path, jfg_path)
+
+        log.info('opening %s', path)
+
+        with open(path) as f:
+            cbn_jgif_dict = json.load(f)
+            graph = from_cbn_jgif(cbn_jgif_dict)
+
+            strip_annotations(graph)
+            enrich_pubmed_citations(graph, manager=manager)
+            to_database(graph, connection=manager)
+
+    log.info('done in %.2f', time.time() - t)
 
     return 0
