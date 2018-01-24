@@ -124,6 +124,11 @@
                            role="button">
                             BEL4IMOCEDE
                         </a>
+                        <a class="btn btn-danger"
+                           href="{{ url_for('bms.send_async_upload_cbn', next=url_for('ui.home')) }}"
+                           role="button">
+                            CBN
+                        </a>
                         <a class="btn btn-danger" href="{{ url_for('bms.ensure_bms', next=url_for('ui.home')) }}"
                            role="button">
                             BMS

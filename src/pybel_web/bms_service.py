@@ -130,6 +130,7 @@ def ensure_bel4imocede():
 @bms_blueprint.route('/admin/bms/parse/cbn')
 def send_async_upload_cbn():
     """A helper endpoint to submit the parsing job for the CBN"""
-    task = current_app.celery.send_task('upload-cbn')
+    folder = os.path.join(current_app.config.get('BMS_BASE'), 'cbn')
+    task = current_app.celery.send_task('upload-cbn', args=[folder])
     flash('Uploading CBN: {}'.format(task))
     return redirect(url_for('ui.view_current_user_activity'))
