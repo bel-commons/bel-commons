@@ -44,9 +44,9 @@ from .models import EdgeComment, Experiment, Project, Report, User
 from .send_utils import serve_network, to_json_custom
 from .utils import (
     current_user_has_query_rights, fill_out_report, get_edge_by_hash_or_404,
-    get_network_ids_with_permission_helper, get_node_by_hash_or_404, get_node_overlaps, get_or_create_vote,
-    get_query_ancestor_id, get_recent_reports, help_get_edge_entry, make_graph_summary, manager, next_or_jsonify,
-    safe_get_query, user_datastore,
+    get_network_ids_with_permission_helper, get_network_or_404, get_node_by_hash_or_404, get_node_overlaps,
+    get_or_create_vote, get_query_ancestor_id, get_recent_reports, help_get_edge_entry, make_graph_summary, manager,
+    next_or_jsonify, safe_get_network, safe_get_project, safe_get_query, user_datastore,
 )
 
 log = logging.getLogger(__name__)
@@ -2533,76 +2533,6 @@ def grant_network_to_user(network_id, user_id):
     manager.session.commit()
 
     return next_or_jsonify('Added rights for {} to {}'.format(network, user))
-
-
-def get_project_or_404(project_id):
-    """Get a project by id and aborts 404 if doesn't exist
-
-    :param int project_id: The identifier of the project
-    :rtype: Project
-    :raises: HTTPException
-    """
-    project = manager.session.query(Project).get(project_id)
-
-    if project is None:
-        abort(404, 'Project {} does not exist'.format(project_id))
-
-    return project
-
-
-def user_has_project_rights(user, project):
-    """Returns if the given user has rights to the given project
-
-    :type user: User
-    :type project: Project
-    :rtype: bool
-    """
-    return user.is_authenticated and (user.is_admin or project.has_user(current_user))
-
-
-def safe_get_project(project_id):
-    """Gets a project by identifier, aborts 404 if doesn't exist and aborts 403 if current user does not have rights
-
-    :param int project_id: The identifier of the project
-    :rtype: Project
-    :raises: HTTPException
-    """
-    project = get_project_or_404(project_id)
-
-    if not user_has_project_rights(current_user, project):
-        abort(403, 'User {} does not have permission to access Project {}'.format(current_user, project))
-
-    return project
-
-
-def get_network_or_404(network_id):
-    """Gets a network or aborts 404 if it doesn't exist
-
-    :param int network_id:
-    :rtype: Network
-    :raises: HTTPException
-    """
-    network = manager.session.query(Network).get(network_id)
-
-    if network is None:
-        abort(404, 'Network {} does not exist'.format(network_id))
-
-    return network
-
-
-def safe_get_network(network_id):
-    """Aborts if the current user is not the owner of the network
-
-    :type network_id: int
-    :rtype: Network
-    :raises: HTTPException
-    """
-    network = get_network_or_404(network_id)
-
-    if not current_user.owns_network(network):
-        abort(403, 'User {} does not have permission to access Network {}'.format(current_user, network))
-
-    return network
 
 
 def safe_get_graph(network_id):

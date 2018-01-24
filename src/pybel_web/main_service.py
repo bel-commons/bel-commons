@@ -23,8 +23,9 @@ from .constants import *
 from .manager import *
 from .models import Project, Query, Report, User
 from .utils import (
-    calculate_overlap_dict, get_network_ids_with_permission_helper, get_networks_with_permission, manager,
-    next_or_jsonify, query_form_to_dict, redirect_explorer, render_network_summary_safe, safe_get_query,
+    calculate_overlap_dict, get_network_ids_with_permission_helper, get_networks_with_permission,
+    manager, next_or_jsonify, query_form_to_dict, query_from_network, redirect_explorer, render_network_summary_safe,
+    safe_get_network, safe_get_query,
 )
 
 log = logging.getLogger(__name__)
@@ -137,9 +138,8 @@ def view_explore_network(network_id):
     if network_id not in get_network_ids_with_permission_helper(current_user, manager):
         abort(403, 'Insufficient rights for network {}'.format(network_id))
 
-    query = Query.from_query_args(manager, [network_id], current_user)
-    manager.session.add(query)
-    manager.session.commit()
+    query = query_from_network(network_id)
+
 
     return redirect_explorer(query.id)
 
@@ -310,6 +310,29 @@ def view_pipeline_help():
         'pipeline_help.html',
         function_dict=data
     )
+
+
+@ui_blueprint.route('/network/<int:network_1_id>/compare/<int:network_2_id>')
+def view_network_comparison(network_1_id, network_2_id):
+    """View the comparison between two networks
+
+    :param int network_1_id: Identifier for the first network
+    :param int network_2_id: Identifier for the second network
+    """
+    safe_get_network(network_1_id)
+    safe_get_network(network_2_id)
+
+    q1 = query_from_network(network_1_id)
+    q2 = query_from_network(network_2_id)
+
+    log.info('q1: %s from n1 %s', q1, network_1_id)
+    log.info('q2: %s from n2 %s', q2, network_2_id)
+
+    return redirect(url_for(
+        '.view_query_comparison',
+        query_1_id=q1.id,
+        query_2_id=q2.id
+    ))
 
 
 @ui_blueprint.route('/query/<int:query_1_id>/compare/<int:query_2_id>')

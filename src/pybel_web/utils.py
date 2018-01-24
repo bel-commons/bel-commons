@@ -44,6 +44,7 @@ from pybel_tools.summary import (
     get_unused_list_annotation_values,
 )
 from pybel_tools.utils import min_tanimoto_set_similarity, prepare_c3, prepare_c3_time_series
+from pybel_web.models import Project
 from .application_utils import get_manager, get_user_datastore
 from .constants import AND
 from .models import EdgeComment, EdgeVote, Experiment, NetworkOverlap, Query, Report, User
@@ -1036,3 +1037,89 @@ def render_network_summary_safe(manager_, network_id, template):
         abort(403, 'Insufficient rights for network {}'.format(network_id))
 
     return render_network_summary(network_id, template=template)
+
+
+def get_project_or_404(project_id):
+    """Get a project by id and aborts 404 if doesn't exist
+
+    :param int project_id: The identifier of the project
+    :rtype: Project
+    :raises: HTTPException
+    """
+    project = manager.session.query(Project).get(project_id)
+
+    if project is None:
+        abort(404, 'Project {} does not exist'.format(project_id))
+
+    return project
+
+
+def user_has_project_rights(user, project):
+    """Returns if the given user has rights to the given project
+
+    :type user: User
+    :type project: Project
+    :rtype: bool
+    """
+    return user.is_authenticated and (user.is_admin or project.has_user(current_user))
+
+
+def safe_get_project(project_id):
+    """Gets a project by identifier, aborts 404 if doesn't exist and aborts 403 if current user does not have rights
+
+    :param int project_id: The identifier of the project
+    :rtype: Project
+    :raises: HTTPException
+    """
+    project = get_project_or_404(project_id)
+
+    if not user_has_project_rights(current_user, project):
+        abort(403, 'User {} does not have permission to access Project {}'.format(current_user, project))
+
+    return project
+
+
+def get_network_or_404(network_id):
+    """Gets a network or aborts 404 if it doesn't exist
+
+    :param int network_id:
+    :rtype: Network
+    :raises: HTTPException
+    """
+    network = manager.session.query(Network).get(network_id)
+
+    if network is None:
+        abort(404, 'Network {} does not exist'.format(network_id))
+
+    return network
+
+
+def safe_get_network(network_id):
+    """Aborts if the current user is not the owner of the network
+
+    :type network_id: int
+    :rtype: Network
+    :raises: HTTPException
+    """
+    network = get_network_or_404(network_id)
+
+    if not current_user.owns_network(network):
+        abort(403, 'User {} does not have permission to access Network {}'.format(current_user, network))
+
+    return network
+
+
+def query_from_network(network_id, autocommit=True):
+    """Makes a query from the given network identifier
+
+    :param int network_id: The identifier of a network
+    :param bool autocommit: Should the query be committed immediately
+    :rtype: Query
+    """
+    query = Query.from_query_args(manager, [network_id], current_user)
+
+    if autocommit:
+        manager.session.add(query)
+        manager.session.commit()
+
+    return query
