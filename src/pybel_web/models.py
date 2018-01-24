@@ -620,8 +620,8 @@ class Query(Base):
         """Builds a orm query from a pybel-tools query
 
         :param pybel.manager.Manager manager:
-        :param pybel_web.models.User user:
         :param pybel_tools.query.Query query:
+        :param Optional[pybel_web.models.User] user:
         :rtype: Query
         """
         assembly = Assembly.from_query(manager, query)
@@ -643,10 +643,10 @@ class Query(Base):
         """Builds a orm query from the arguments for a pybel-tools query
 
         :param pybel.manager.Manager manager:
-        :param pybel_web.models.User user:
-        :param list[int] network_ids:
-        :param list[dict] seed_list:
-        :param Pipeline pipeline: Instance of a pipeline
+        :param list[int] network_ids: A list of network identifiers
+        :param Optional[pybel_web.models.User] user:
+        :param Optional[list[dict]] seed_list:
+        :param Optional[Pipeline pipeline]: Instance of a pipeline
         :rtype: Query
         """
         q = pybel_tools.query.Query(network_ids, seeding=seed_list, pipeline=pipeline)
