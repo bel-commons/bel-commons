@@ -57,9 +57,9 @@
                             </ul>
                             <h4>Annotations</h4>
                             <dl>
-                                {% for annotation in edge.annotations %}
-                                    <dt>{{ annotation.name }}</dt>
-                                    <dd>{{ annotation.entry.name }}</dd>
+                                {% for annotation_entry in edge.annotations %}
+                                    <dt>{{ annotation_entry.annotation.name }}</dt>
+                                    <dd>{{ annotation_entry.name }}</dd>
                                 {% endfor %}
                             </dl>
                         </div>
