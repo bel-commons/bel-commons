@@ -56,7 +56,7 @@
                                 {% endfor %}
                             </ul>
                             <h4>Annotations</h4>
-                            <dl>
+                            <dl class="dl-horizontal">
                                 {% for annotation_entry in edge.annotations %}
                                     <dt>{{ annotation_entry.annotation.name }}</dt>
                                     <dd>{{ annotation_entry.name }}</dd>
