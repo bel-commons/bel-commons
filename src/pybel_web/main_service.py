@@ -2,6 +2,7 @@
 
 """This module contains the user interface to PyBEL Web"""
 
+import datetime
 import itertools as itt
 import logging
 import sys
@@ -31,6 +32,7 @@ from .utils import (
 log = logging.getLogger(__name__)
 
 ui_blueprint = Blueprint('ui', __name__)
+time_instantiated = str(datetime.datetime.now())
 
 
 def _serve_relations(edges, source, target=None):
@@ -236,7 +238,8 @@ def view_about():
         ('Python Version', sys.version),
         ('PyBEL Version', get_pybel_version()),
         ('PyBEL Tools Version', get_pybel_tools_version()),
-        ('PyBEL Web version', PYBEL_WEB_VERSION)
+        ('PyBEL Web version', PYBEL_WEB_VERSION),
+        ('Deployed', time_instantiated)
     ]
 
     return render_template('about.html', metadata=metadata)
