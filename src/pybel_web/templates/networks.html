@@ -52,6 +52,10 @@
                     if (this.children[0].innerHTML.toLowerCase().indexOf(search) != -1) {
                         $(this).show();
                     }
+
+                    else if(this.children[1].childNodes[1].innerHTML.toLowerCase().indexOf(search) != -1){
+                        $(this).show();
+                    }
                     else {
                         $(this).hide();
                     }
