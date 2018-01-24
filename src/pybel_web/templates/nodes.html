@@ -88,13 +88,15 @@
                             {% if node.namespace_entry %}
                                 <h4>Entity</h4>
                                 <dl class="dl-horizontal">
+                                    <dt>Name</dt>
+                                    <dd>{{ node.namespace_entry.name }}</dd>
                                     {% if node.namespace_entry.namespace.url %}
-                                        <dt>URL</dt>
+                                        <dt>Namespace</dt>
+                                        <dd>{{ node.namespace_entry.namespace.name }}</dd>
+                                        <dt>Namespace URL</dt>
                                         <dd>
                                             <a href="{{ node.namespace_entry.namespace.url }}">{{ node.namespace_entry.namespace.url }}</a>
                                         </dd>
-                                        <dt>Name</dt>
-                                        <dd>{{ node.namespace_entry.namespace.name }}</dd>
                                     {% else %}
                                         <dt>Pattern</dt>
                                         <dd>{{ node.namespace_entry.namespace.pattern }}</dd>
