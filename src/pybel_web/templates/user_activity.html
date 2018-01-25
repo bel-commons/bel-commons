@@ -31,7 +31,11 @@
                 </div>
                 <ul class="list-group">
                     {% for report in pending_reports %}
-                        <li class="list-group-item"><code>#{{ report.id }}</code> {{ report.source_name }}</li>
+                        {% if not report.failed and not report.stalled %}
+                            <li class="list-group-item">
+                                <code>#{{ report.id }}</code> {{ report.source_name }}
+                            </li>
+                        {% endif %}
                     {% endfor %}
                 </ul>
                 <a href="{{ url_for('parser.view_parser') }}" class="btn btn-primary btn-block">
