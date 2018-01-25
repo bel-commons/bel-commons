@@ -145,6 +145,10 @@ def async_summarizer(report_id):
         else:
             log.info('HTML rendered: %s', html[:500])
 
+    report.time = time.time() - t
+    manager.session.add(report)
+    manager.session.commit()
+
     log.info('finished in %.2f seconds', time.time() - t)
 
     return 0
