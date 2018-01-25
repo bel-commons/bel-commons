@@ -110,11 +110,12 @@ def async_parser(report_id):
         manager.session.commit()
         return body
 
+    log.info('parsing graph')
+
     try:
-        log.info('parsing graph')
         graph = report.parse_graph(manager=manager)
 
-    except requests.exceptions.ConnectionError:
+    except (MissingBelResource, requests.exceptions.ConnectionError, requests.exceptions.HTTPError):
         message = 'Connection to resource could not be established.'
         return finish_parsing('Parsing Failed for {}'.format(source_name), message)
 
@@ -145,8 +146,8 @@ def async_parser(report_id):
         message = '{} was rejected because it has "default" metadata: {}'.format(source_name, problem)
         return finish_parsing('Rejected {}'.format(source_name), message)
 
-    network = manager.session.query(Network).filter(Network.name == graph.name,
-                                                    Network.version == graph.version).one_or_none()
+    network_filter = and_(Network.name == graph.name, Network.version == graph.version)
+    network = manager.session.query(Network).filter(network_filter).one_or_none()
 
     if network is not None:
         message = integrity_message.format(graph.name, graph.version)
@@ -200,9 +201,10 @@ def async_parser(report_id):
         log.info('inserting %s with %s', graph, manager.engine.url)
         network = manager.insert_graph(graph, store_parts=app.config.get("PYBEL_USE_EDGE_STORE", True))
 
-    except IntegrityError:
+    except IntegrityError as e:
         manager.session.rollback()
-        message = integrity_message.format(graph.name, graph.version)
+        log.exception('Integrity error')
+        message = str(e)
         return finish_parsing(upload_failed_text, message)
 
     except OperationalError:
