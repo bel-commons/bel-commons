@@ -220,6 +220,7 @@ def get_network_summary_dict(graph):
         error_groups=get_most_common_errors(graph),
         hub_data=get_top_hubs(graph),
         disease_data=count_top_pathologies(graph),
+        syntax_errors=get_syntax_errors(graph),
     )
 
 
@@ -228,13 +229,14 @@ def render_network_summary(network_id, template):
     
     :param int network_id:
     :param str template:
+    :rtype: flask.Response
     """
-    network = manager.session.query(Network).get(network_id)
+    network = manager.get_network_by_id(network_id)
     graph = network.as_bel()
 
     try:
         er = network.report.get_calculations()
-    except:  # TODO remove this later
+    except Exception:  # TODO remove this later
         log.warning('Falling back to on-the-fly calculation of summary of %s', network)
         er = get_network_summary_dict(graph)
 
@@ -247,22 +249,10 @@ def render_network_summary(network_id, template):
     relation_count = er['relation_count']
     error_count = er['error_count']
     modifications_count = er['modifications_count']
-
-    hub_data = er.get('hub_data')  # FIXME assume it's there
-
-    if not hub_data:
-        log.warning('Calculating hub data on the fly')
-        hub_data = get_top_hubs(graph)
-
-    disease_data = er.get('disease_data')  # FIXME assume it's there
-
-    if not disease_data:
-        disease_data = count_top_pathologies(graph)
-
+    hub_data = er['hub_data']
+    disease_data = er['disease_data']
     overlaps = get_top_overlaps(network_id)
     network_versions = manager.get_networks_by_name(graph.name)
-
-    syntax_errors = get_syntax_errors(graph)
 
     return render_template(
         template,
@@ -281,7 +271,6 @@ def render_network_summary(network_id, template):
         chart_7_data=prepare_c3(hub_data, 'Top Hubs'),
         chart_9_data=prepare_c3(disease_data, 'Pathologies') if disease_data else None,
         chart_10_data=prepare_c3_time_series(citation_years, 'Number of articles') if citation_years else None,
-        syntax_errors=syntax_errors,
         **er
     )
 
