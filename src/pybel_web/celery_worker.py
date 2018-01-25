@@ -134,8 +134,9 @@ def async_summarizer(report_id):
     with app.app_context():
         html = render_template('email_report.html', graph=graph, **get_network_summary_dict(graph))
 
-        if 'mail' in app.extensions:
-            app.extensions['mail'].send_message(
+        mailer = app.extensions.get('mail')
+        if mailer is not None:
+            mailer.send_message(
                 subject='Parsing report for {}'.format(graph),
                 recipients=[report.user.email],
                 body='Below is the compilation report for {}'.format(graph),
@@ -280,23 +281,16 @@ def async_parser(report_id):
     except IntegrityError as e:
         manager.session.rollback()
         log.exception('Integrity error')
-        message = str(e)
-        return finish_parsing(upload_failed_text, message)
+        return finish_parsing(upload_failed_text, str(e))
 
     except OperationalError:
         manager.session.rollback()
         message = 'Database is locked. Unable to upload.'
         return finish_parsing(upload_failed_text, message)
 
-    except EdgeAddError as e:
-        manager.session.rollback()
-        message = "Error storing in database: {}.\n\nPayload: {}".format(e, json.dumps(e.data, indent=2))
-        return finish_parsing(upload_failed_text, message)
-
     except Exception as e:
         manager.session.rollback()
-        message = "Error storing in database: {}".format(e)
-        return finish_parsing(upload_failed_text, message)
+        return finish_parsing(upload_failed_text, str(e))
 
     log.info('done storing [%d]. starting to make report.', network.id)
 
