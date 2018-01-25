@@ -1207,8 +1207,7 @@ def get_query_summary(query_id):
 
     network = get_graph_from_request(query_id)
 
-    # TODO: @choyt check if this is the best way to check if the network is empty
-    if network.nodes():
+    if network is not None and network.node:
         rv['status'] = True
         rv['payload'] = info_json(network)
     else:
