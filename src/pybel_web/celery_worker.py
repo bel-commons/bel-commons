@@ -187,8 +187,8 @@ def async_parser(report_id):
     try:
         graph = report.parse_graph(manager=manager)
 
-    except (MissingBelResource, requests.exceptions.ConnectionError, requests.exceptions.HTTPError):
-        message = 'Connection to resource could not be established.'
+    except (MissingBelResource, requests.exceptions.ConnectionError, requests.exceptions.HTTPError) as e:
+        message = 'Connection to resource could not be established: {}'.format(e)
         return finish_parsing('Parsing Failed for {}'.format(source_name), message)
 
     except InconsistentDefinitionError as e:
