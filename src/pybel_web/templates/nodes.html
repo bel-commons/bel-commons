@@ -90,12 +90,14 @@
                                 <dl class="dl-horizontal">
                                     <dt>Name</dt>
                                     <dd>{{ node.namespace_entry.name }}</dd>
+                                    <dt>Namespace</dt>
+                                    <dd>{{ node.namespace_entry.namespace.keyword }}</dd>
                                     {% if node.namespace_entry.namespace.url %}
-                                        <dt>Namespace</dt>
-                                        <dd>{{ node.namespace_entry.namespace.name }}</dd>
                                         <dt>Namespace URL</dt>
                                         <dd>
-                                            <a href="{{ node.namespace_entry.namespace.url }}">{{ node.namespace_entry.namespace.url }}</a>
+                                            <a href="{{ node.namespace_entry.namespace.url }}">
+                                                {{ node.namespace_entry.namespace.url }}
+                                            </a>
                                         </dd>
                                     {% else %}
                                         <dt>Pattern</dt>
