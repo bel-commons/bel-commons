@@ -18,6 +18,11 @@
             </div>
             <div class="panel-body">
                 <dl class="dl-horizontal">
+                    <dt>Name</dt>
+                    <dd>{{ graph.name }}</dd>
+                    <dt>Version</dt>
+                    <dd>{{ graph.version }}</dd>
+
                     {% if graph.description %}
                         <dt>Description</dt>
 
@@ -30,7 +35,7 @@
         <a id="namespaces"></a>
         <div class="panel panel-default">
             <div class="panel-heading">
-                <h3 class="panel-title">Namespaces
+                <h3 class="panel-title">Namespaces ({{ graph.namespace_url|length }})
                     <a class="pull-right" href="#top">
                         <span class="glyphicon glyphicon-arrow-up"></span>
                     </a>
@@ -38,32 +43,49 @@
             </div>
             <div class="panel-body">
                 <p>This section lists all of the namespaces that are defined in the original BEL script.</p>
-                <dl class="dl-horizontal">
+                <table class="table table-hover table-responsive table-striped">
+                    <thead>
+                    <tr>
+                        <th>Namespace</th>
+                        <th>URL</th>
+                    </tr>
+                    </thead>
+                    <tbody>
                     {% for key, value in graph.namespace_url.items()|sort %}
-                        <dt>{{ key }}</dt>
-                        <dd><a href="{{ value }}">{{ value }}</a></dd>
+                        <tr>
+                            <td>{{ key }}</td>
+                            <td><a href="{{ value }}">{{ value }}</a></td>
+                        </tr>
                     {% endfor %}
-                </dl>
+                    </tbody>
+                </table>
             </div>
         </div>
 
         <a id="annotations"></a>
         <div class="panel panel-default">
             <div class="panel-heading">
-                <h3 class="panel-title">Annotations
-                    <a class="pull-right" href="#top">
-                        <span class="glyphicon glyphicon-arrow-up"></span>
-                    </a>
+                <h3 class="panel-title">Annotations ({{ graph.annotation_url|length }})
                 </h3>
             </div>
             <div class="panel-body">
                 <p>This section lists all of the annotations that are defined in the original BEL script.</p>
-                <dl class="dl-horizontal">
+                <table class="table table-hover table-responsive table-striped">
+                    <thead>
+                    <tr>
+                        <th>Annotation</th>
+                        <th>URL</th>
+                    </tr>
+                    </thead>
+                    <tbody>
                     {% for key, value in graph.annotation_url.items()|sort %}
-                        <dt>{{ key }}</dt>
-                        <dd><a href="{{ value }}">{{ value }}</a></dd>
+                        <tr>
+                            <td>{{ key }}</td>
+                            <td><a href="{{ value }}">{{ value }}</a></td>
+                        </tr>
                     {% endfor %}
-                </dl>
+                    </tbody>
+                </table>
             </div>
         </div>
 
@@ -73,12 +95,7 @@
             <a id="unused-namespaces"></a>
             <div class="panel panel-warning">
                 <div class="panel-heading">
-                    <h3 class="panel-title">Unused Namespaces
-                        <span class="badge">{{ unused_namespaces|length }}</span>
-                        <a class="pull-right" href="#top">
-                            <span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span>
-                        </a>
-                    </h3>
+                    <h3 class="panel-title">Unused Namespaces ({{ unused_namespaces|length }})</h3>
                 </div>
                 <div class="panel-body">
                     <p>The source BEL script contained references to the following namespaces, but they were never
@@ -97,19 +114,11 @@
             <a id="list-annotations"></a>
             <div class="panel panel-warning">
                 <div class="panel-heading">
-                    <h3 class="panel-title">Locally Defined Annotations
-                        <span class="badge">{{ graph.annotation_list|length }}</span>
-                        <a class="pull-right" href="#top">
-                            <span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span>
-                        </a>
-                    </h3>
+                    <h3 class="panel-title">Locally Defined Annotations ({{ graph.annotation_list|length }})</h3>
                 </div>
                 <div class="panel-body">
                     <p>
-                        The source BEL script contained annotations defined as a list. Click each link to export
-                        the list definition as a <code>BELANNO</code> file that can hosted externally to promote
-                        re-usability and interoperability. After, you can replace the list definition in the source
-                        BEL with a <code>SET ANNOTATION X AS URL "Y"</code> definition.
+                        The source BEL script contained annotations defined as a list.
                     </p>
                     <ul class="row">
                         {% for list_annotation in graph.annotation_list %}
@@ -126,12 +135,7 @@
             <a id="unused-annotations"></a>
             <div class="panel panel-warning">
                 <div class="panel-heading">
-                    <h3 class="panel-title">Unused Annotations
-                        <span class="badge">{{ unused_annotations|length }}</span>
-                        <a class="pull-right" href="#top">
-                            <span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span>
-                        </a>
-                    </h3>
+                    <h3 class="panel-title">Unused Annotations ({{ unused_annotations|length }})</h3>
                 </div>
                 <div class="panel-body">
                     <p>The source BEL script contained references to the following annotations, but they were never
@@ -154,11 +158,8 @@
             <a id="unused-list-annotations"></a>
             <div class="panel panel-warning">
                 <div class="panel-heading">
-                    <h3 class="panel-title">Unused List Annotation Values
-                        <span class="badge">{{ unused_list_annotation_values|length }}</span>
-                        <a class="pull-right" href="#top">
-                            <span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span>
-                        </a>
+                    <h3 class="panel-title">
+                        Unused List Annotation Values ({{ unused_list_annotation_values|length }})
                     </h3>
                 </div>
                 <div class="panel-body">
@@ -200,12 +201,7 @@
             <a id="graph-syntax-errors"></a>
             <div class="panel panel-danger panel-table">
                 <div class="panel-heading">
-                    <h3 class="panel-title">Syntax Errors
-                        <span class="badge">{{ syntax_errors|length }}</span>
-                        <a class="pull-right" href="#top">
-                            <span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span>
-                        </a>
-                    </h3>
+                    <h3 class="panel-title">Syntax Errors ({{ syntax_errors|length }})</h3>
                 </div>
                 <table class="table table-hover table-responsive table-striped">
                     <thead>
@@ -235,12 +231,7 @@
             <a id="graph-warnings"></a>
             <div class="panel panel-danger panel-table">
                 <div class="panel-heading">
-                    <h3 class="panel-title">All Parser Warnings
-                        <span class="badge">{{ graph.warnings|length }}</span>
-                        <a class="pull-right" href="#top">
-                            <span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span>
-                        </a>
-                    </h3>
+                    <h3 class="panel-title">Errors ({{ graph.warnings|length }})</h3>
                 </div>
                 <table class="table table-hover table-responsive table-striped">
                     <thead>
@@ -267,11 +258,7 @@
             <a id="error-groups"></a>
             <div class="panel panel-danger panel-table">
                 <div class="panel-heading">
-                    <h3 class="panel-title">Top Warnings
-                        <a class="pull-right" href="#top">
-                            <span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span>
-                        </a>
-                    </h3>
+                    <h3 class="panel-title">Top Warnings</h3>
                 </div>
                 <table class="table table-hover table-responsive table-striped">
                     <thead>
@@ -298,17 +285,15 @@
             <a id="undefined-namespaces"></a>
             <div class="panel panel-danger">
                 <div class="panel-heading">
-                    <h3 class="panel-title">Undefined Namespaces
-                        <span class="badge">{{ undefined_namespaces|length }}</span>
-                        <a class="pull-right" href="#top">
-                            <span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span>
-                        </a>
+                    <h3 class="panel-title">
+                        Undefined Namespaces ({{ undefined_namespaces|length }})
                     </h3>
                 </div>
                 <div class="panel-body">
-                    <p>The source BEL script contained references to the following namespaces, but they were never
-                        defined. Click the links to download them as enumerated namespaces, and update the BEL script
-                        accordingly.</p>
+                    <p>
+                        The source BEL script contained references to the following namespaces, but they were never
+                        defined.
+                    </p>
                     <ul class="row">
                         {% for undefined_namespace in undefined_namespaces|sort %}
                             <li class="col-lg-3 col-md-4 col-sm-6">
@@ -324,12 +309,7 @@
             <a id="undefined-annotations"></a>
             <div class="panel panel-danger">
                 <div class="panel-heading">
-                    <h3 class="panel-title">Undefined Annotations
-                        <span class="badge">{{ undefined_annotations|length }}</span>
-                        <a class="pull-right" href="#top">
-                            <span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span>
-                        </a>
-                    </h3>
+                    <h3 class="panel-title">Undefined Annotations ({{ undefined_annotations|length }})</h3>
                 </div>
                 <div class="panel-body">
                     <p>The source BEL script contained references to the following annotations, but they were never
@@ -350,11 +330,8 @@
             <a id="incorrect-namespaces"></a>
             <div class="panel panel-danger">
                 <div class="panel-heading">
-                    <h3 class="panel-title">Namespaces with Incorrect Names
-                        <span class="badge">{{ namespaces_with_incorrect_names|length }}</span>
-                        <a class="pull-right" href="#top">
-                            <span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span>
-                        </a>
+                    <h3 class="panel-title">
+                        Namespaces with Incorrect Names ({{ namespaces_with_incorrect_names|length }})
                     </h3>
                 </div>
                 <div class="panel-body">
@@ -368,5 +345,27 @@
                 </div>
             </div>
         {% endif %}
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">About</h3>
+            </div>
+            <div class="panel-body">
+                <p>PyBEL Web is developed and maintained by <a href="https://github.com/cthoyt">Charles Tapley Hoyt</a>
+                    and
+                    <a href="https://github.com/ddomingof">Daniel Domingo-Fernandez</a> at <a
+                            href="https://www.scai.fraunhofer.de/en/business-research-areas/bioinformatics.html">Fraunhofer
+                        SCAI</a> with support from the <a href="https://www.imi.europa.eu/">IMI</a> projects, <a
+                            href="http://www.aetionomy.eu/">AETIONOMY</a> and <a href="http://www.phago.eu/">PHAGO</a>.
+
+                    It is built on top of the open source project, <a href="https://github.com/pybel/pybel">PyBEL</a>.
+                    Please feel free to contact us
+                    <a href="mailto:charles.hoyt@scai.fraunhofer.de">here</a> to give us feedback or report any issues.
+                </p>
+                <p style="color:#d9534f">
+                    This is the a pre-release, meaning some features aren't yet complete.
+                </p>
+            </div>
+        </div>
     </div>
 {% endblock %}

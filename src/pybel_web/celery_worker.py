@@ -138,6 +138,7 @@ def async_summarizer(report_id):
             app.extensions['mail'].send_message(
                 subject='Parsing report for {}'.format(graph),
                 recipients=[report.user.email],
+                body='Below is the compilation report for {}'.format(graph),
                 html=html,
                 sender=pbw_sender,
             )
