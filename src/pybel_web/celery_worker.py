@@ -17,6 +17,7 @@ from pickle import dumps, loads
 
 import requests.exceptions
 from celery.utils.log import get_task_logger
+from sqlalchemy import and_
 from sqlalchemy.exc import IntegrityError, OperationalError
 
 from pybel import from_cbn_jgif, from_json, from_url, to_bel_path, to_bytes, to_database
@@ -24,15 +25,16 @@ from pybel.constants import METADATA_CONTACT, METADATA_DESCRIPTION, METADATA_LIC
 from pybel.manager.cache_manager import EdgeAddError
 from pybel.manager.citation_utils import enrich_pubmed_citations
 from pybel.manager.models import Network
-from pybel.parser.parse_exceptions import InconsistentDefinitionError
+from pybel.parser.parse_exceptions import InconsistentDefinitionError, MissingBelResource
 from pybel.struct import strip_annotations, union
 from pybel_tools.mutation import add_canonical_names, add_identifiers, infer_central_dogma
 from pybel_tools.utils import enable_cool_mode
+from pybel_tools.visualization.utils import build_template_renderer
 from pybel_web.application import create_application
 from pybel_web.celery_utils import create_celery
 from pybel_web.constants import CHARLIE_EMAIL, DANIEL_EMAIL, integrity_message, merged_document_folder
 from pybel_web.models import Experiment, Project, Report, User
-from pybel_web.utils import calculate_scores, fill_out_report, make_graph_summary, manager
+from pybel_web.utils import calculate_scores, fill_out_report, get_network_summary_dict, make_graph_summary, manager
 
 log = get_task_logger(__name__)
 
@@ -54,6 +56,7 @@ dumb_belief_stuff = {
 
 pbw_sender = ("PyBEL Web", 'pybel@scai.fraunhofer.de')
 
+render_template_inline = build_template_renderer(__file__)
 
 @celery.task(name='parse-url')
 def parse_by_url(url):
@@ -74,6 +77,76 @@ def parse_by_url(url):
         manager.session.close()
 
 
+def safe_get_report(report_id):
+    """
+    :param int report_id: The identifier of the report
+    :rtype: Report
+    :raises: ValueError
+    """
+    report = manager.session.query(Report).get(report_id)
+
+    if report is None:
+        raise ValueError('Report {} not found'.format(report_id))
+
+    return report
+
+
+@celery.task(name='network-summarize')
+def async_summarizer(report_id):
+    """Asynchronously parses a BEL script and emails feedback"""
+    t = time.time()
+    report = safe_get_report(report_id)
+    source_name = report.source_name
+
+    def make_mail(subject, body):
+        if 'mail' not in app.extensions:
+            return
+
+        with app.app_context():
+            app.extensions['mail'].send_message(
+                subject=subject,
+                recipients=[report.user.email],
+                body=body,
+                sender=pbw_sender,
+            )
+
+    def finish_parsing(subject, body):
+        make_mail(subject, body)
+        report.message = body
+        manager.session.commit()
+        return body
+
+    try:
+        graph = report.parse_graph(manager=manager)
+
+    except (MissingBelResource, requests.exceptions.ConnectionError, requests.exceptions.HTTPError):
+        message = 'Connection to resource could not be established.'
+        return finish_parsing('Parsing Failed for {}'.format(source_name), message)
+
+    except InconsistentDefinitionError as e:
+        message = 'Parsing failed for {} because {} was redefined on line {}.'.format(source_name, e.definition,
+                                                                                      e.line_number)
+        return finish_parsing('Parsing Failed for {}'.format(source_name), message)
+
+    except Exception as e:
+        message = 'Parsing failed for {} from a general error: {}'.format(source_name, e)
+        return finish_parsing('Parsing Failed for {}'.format(source_name), message)
+
+    html = render_template_inline('email_report.html', graph=graph, **get_network_summary_dict(graph))
+
+    with app.app_context():
+        app.extensions['mail'].send_message(
+            subject='Parsing report for {}'.format(graph),
+            recipients=[report.user.email],
+            html=html,
+            sender=pbw_sender,
+        )
+
+    log.info('finished in %.2f seconds', time.time() - t)
+
+    return 0
+
+
 @celery.task(name='pybelparser')
 def async_parser(report_id):
     """Asynchronously parses a BEL script and sends email feedback
@@ -81,11 +154,7 @@ def async_parser(report_id):
     :param int report_id: Report identifier
     """
     t = time.time()
-
-    report = manager.session.query(Report).get(report_id)
-
-    if report is None:
-        raise ValueError('Report {} not found'.format(report_id))
+    report = safe_get_report(report_id)
 
     report_id = report.id
     source_name = report.source_name

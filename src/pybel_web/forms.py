@@ -62,6 +62,7 @@ class ParserForm(FlaskForm):
         'My document contains <a href="http://pybel.readthedocs.io/en/latest/io.html#allow-nested">nested statements</a>')
     disable_citation_clearing = BooleanField(
         'My document sometimes has evidences before citations - disable <a href="http://pybel.readthedocs.io/en/latest/io.html#citation-clearing">citation clearing</a>')
+    feedback = BooleanField('Just email me a summary of my network and error report', default=False)
     public = BooleanField('Make my knowledge assembly publicly available', default=True)
     infer_origin = BooleanField(
         'Infer the <a href="https://en.wikipedia.org/wiki/Central_dogma_of_molecular_biology">central dogma</a>',

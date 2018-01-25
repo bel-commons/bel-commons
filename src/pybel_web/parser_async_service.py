@@ -51,7 +51,7 @@ def view_parser():
 
     try:
         manager.session.commit()
-    except:
+    except Exception:
         manager.session.rollback()
         flash('Unable to upload BEL document')
         return redirect(url_for('.view_parser'))
@@ -60,10 +60,14 @@ def view_parser():
     current_user_str = str(current_user)
     manager.session.close()
 
-    task = current_app.celery.send_task('pybelparser', args=[report_id])
-
-    log.info('Parse task from %s: %s', current_user_str, task.id)
-    flash('Queued parsing task {} for {}.'.format(report_id, report_name))
+    if form.feedback.data:
+        task = current_app.celery.send_task('network-summarize', args=[report_id])
+        log.info('Email summary task from %s: %s', current_user_str, task.id)
+        flash('Queued email summary task {} for {}.'.format(report_id, report_name))
+    else:
+        task = current_app.celery.send_task('pybelparser', args=[report_id])
+        log.info('Parse task from %s: %s', current_user_str, task.id)
+        flash('Queued parsing task {} for {}.'.format(report_id, report_name))
 
     return redirect(url_for('ui.view_current_user_activity'))
 
