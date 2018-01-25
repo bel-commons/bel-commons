@@ -17,6 +17,7 @@ from pickle import dumps, loads
 
 import requests.exceptions
 from celery.utils.log import get_task_logger
+from flask import render_template
 from sqlalchemy import and_
 from sqlalchemy.exc import IntegrityError, OperationalError
 
@@ -29,7 +30,6 @@ from pybel.parser.parse_exceptions import InconsistentDefinitionError, MissingBe
 from pybel.struct import strip_annotations, union
 from pybel_tools.mutation import add_canonical_names, add_identifiers, infer_central_dogma
 from pybel_tools.utils import enable_cool_mode
-from pybel_tools.visualization.utils import build_template_renderer
 from pybel_web.application import create_application
 from pybel_web.celery_utils import create_celery
 from pybel_web.constants import CHARLIE_EMAIL, DANIEL_EMAIL, integrity_message, merged_document_folder
@@ -56,7 +56,6 @@ dumb_belief_stuff = {
 
 pbw_sender = ("PyBEL Web", 'pybel@scai.fraunhofer.de')
 
-render_template_inline = build_template_renderer(__file__)
 
 @celery.task(name='parse-url')
 def parse_by_url(url):
@@ -132,15 +131,18 @@ def async_summarizer(report_id):
         message = 'Parsing failed for {} from a general error: {}'.format(source_name, e)
         return finish_parsing('Parsing Failed for {}'.format(source_name), message)
 
-    html = render_template_inline('email_report.html', graph=graph, **get_network_summary_dict(graph))
-
     with app.app_context():
-        app.extensions['mail'].send_message(
-            subject='Parsing report for {}'.format(graph),
-            recipients=[report.user.email],
-            html=html,
-            sender=pbw_sender,
-        )
+        html = render_template('email_report.html', graph=graph, **get_network_summary_dict(graph))
+
+        if 'mail' in app.extensions:
+            app.extensions['mail'].send_message(
+                subject='Parsing report for {}'.format(graph),
+                recipients=[report.user.email],
+                html=html,
+                sender=pbw_sender,
+            )
+        else:
+            log.info('HTML rendered: %s', html[:500])
 
     log.info('finished in %.2f seconds', time.time() - t)
 
