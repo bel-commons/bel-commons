@@ -45,7 +45,7 @@
                                 <h4>Citation</h4>
                                 <p>{{ edge.citation }}</p>
                             {% endif %}
-                            <h4>Appears in Networks:</h4>
+                            <h5>Appears in Networks:</h5>
                             <ul>
                                 {% for network in edge.networks %}
                                     <li>
@@ -55,13 +55,16 @@
                                     </li>
                                 {% endfor %}
                             </ul>
-                            <h4>Annotations</h4>
-                            <dl class="dl-horizontal">
-                                {% for annotation_entry in edge.annotations %}
-                                    <dt>{{ annotation_entry.annotation.name }}</dt>
-                                    <dd>{{ annotation_entry.name }}</dd>
-                                {% endfor %}
-                            </dl>
+                            {% set annotation_entries = edge.annotations.all() %}
+                            {% if annotation_entries %}
+                                <h5>Annotations</h5>
+                                <dl class="dl-horizontal">
+                                    {% for annotation_entry in annotation_entries %}
+                                        <dt>{{ annotation_entry.annotation.name }}</dt>
+                                        <dd>{{ annotation_entry.name }}</dd>
+                                    {% endfor %}
+                                </dl>
+                            {% endif %}
                         </div>
                     </div>
                 {% endfor %}
