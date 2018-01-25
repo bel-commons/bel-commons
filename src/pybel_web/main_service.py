@@ -407,8 +407,8 @@ def view_node(node_id):
         abort(404, 'Node not found: {}'.format(node_id))
 
     relations = list(itt.chain(
-        manager.query_edges(source=node),
-        manager.query_edges(target=node)
+        node.in_edges,
+        node.out_edges
     ))
     return _serve_relations(relations, node)
 
