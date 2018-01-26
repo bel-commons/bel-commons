@@ -32,7 +32,54 @@
             </div>
         </div>
 
-        <a id="namespaces"></a>
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Nodes ({{ graph.number_of_nodes() }})</h3>
+            </div>
+            <div class="panel-body">
+                <table class="table table-hover table-responsive table-striped">
+                    <thead>
+                    <tr>
+                        <th>Function</th>
+                        <th>Count</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for key, value in function_count.most_common() %}
+                        <tr>
+                            <td>{{ key }}</td>
+                            <td>{{ value }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Edges ({{ graph.number_of_edges() }})</h3>
+            </div>
+            <div class="panel-body">
+                <table class="table table-hover table-responsive table-striped">
+                    <thead>
+                    <tr>
+                        <th>Edge</th>
+                        <th>Count</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for key, value in relation_count.most_common() %}
+                        <tr>
+                            <td>{{ key }}</td>
+                            <td>{{ value }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
         <div class="panel panel-default">
             <div class="panel-heading">
                 <h3 class="panel-title">Namespaces ({{ graph.namespace_url|length }})
