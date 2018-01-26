@@ -373,7 +373,7 @@ def view_pubmed(pmid):
 
     :param str pmid: The PubMed identifier
     """
-    citation = manager.get_citation_by_reference(CITATION_TYPE_PUBMED, pmid)
+    citation = manager.get_citation_by_pmid(pmid)
 
     return render_template('citation.html', citation=citation)
 
