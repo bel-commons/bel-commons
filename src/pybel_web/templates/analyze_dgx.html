@@ -16,7 +16,7 @@
 
         <div class="panel panel-default">
             <div class="panel-body">
-                <p>This form will run an analysis on <code>{{ network_name }}</code> using a variant of the
+                <p>This form will run an analysis on <code>Query {{ query.id }}</code> using a variant of the
                     <a href="https://bmcsystbiol.biomedcentral.com/articles/10.1186/1752-0509-6-54">Network Perturbation
                         Amplitude</a> algorithm called Candidate Mechanism Perturbation Amplitude to
                     prioritize biological processes in the context of a differential gene expression experiment.
@@ -24,6 +24,36 @@
                 <p>For more information on how this app works, see the <a href="http://pybel.readthedocs.io/">PyBEL</a>
                     and <a href="http://pybel-tools.readthedocs.io/">PyBEL Tools</a> documentation.
                 </p>
+            </div>
+        </div>
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Query Info</h3>
+            </div>
+            <div class="panel-body">
+                <dl class="dl-horizontal">
+                    <dt>Creator</dt>
+                    <dd>{{ query.user }}</dd>
+                    <dt>Assembly</dt>
+                    <dd>
+                        <ul>
+                            {% for network in query.assembly.networks %}
+                                <li>
+                                    {{ network }}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </dd>
+                    {% if query.seeding %}
+                        <dt>Seeding</dt>
+                        <dd>{{ query.seeding }}</dd>
+                    {% endif %}
+                    {% if query.pipeline_protocol %}
+                        <dt>Pipeline</dt>
+                        <dd>{{ query.pipeline_protocol }}</dd>
+                    {% endif %}
+                </dl>
             </div>
         </div>
 

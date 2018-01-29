@@ -103,39 +103,37 @@
                     </button>
                 {% endif %}
 
-                {% if current_user.is_beta_tester %}
+                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#paths">
+                    Path Mining
+                </button>
 
-                    <button type="button" class="btn btn-warning" data-toggle="modal" data-target="#paths">
-                        Path Mining
+                <div class="btn-group">
+                    <button type="button" class="btn btn-primary dropdown-toggle"
+                            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        Tools <span class="caret"></span>
                     </button>
-
-                    <div class="btn-group">
-                        <button type="button" class="btn btn-warning dropdown-toggle"
-                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            Tools <span class="caret"></span>
-                        </button>
-                        <ul class="dropdown-menu">
-                            {% for toolbox_function, toolbox_button, toolbox_description in explorer_toolbox %}
-                                <li>
-                                    <a href="#" class="explorer-tool" type="button" value="{{ toolbox_function }}"
-                                       data-value="{{ toolbox_function }}" data-toggle="popright"
-                                       data-dismiss="modal" data-content="{{ toolbox_description }}">
+                    <ul class="dropdown-menu">
+                        {% for toolbox_function, toolbox_button, toolbox_description in explorer_toolbox %}
+                            <li>
+                                <a href="#" class="explorer-tool" type="button" value="{{ toolbox_function }}"
+                                   data-value="{{ toolbox_function }}" data-toggle="popright"
+                                   data-dismiss="modal" data-content="{{ toolbox_description }}">
                                         <span class="glyphicon glyphicon-tasks"
                                               aria-hidden="true"></span> {{ toolbox_button }}
-                                    </a>
-                                </li>
-                            {% endfor %}
-                        </ul>
-                    </div>
+                                </a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
 
-                    <button type="button" class="btn btn-warning" data-toggle="modal" data-target="#algorithms">
-                        Algorithms
-                    </button>
-                    <a class="btn btn-warning" id="analysis-upload-button">
-                        <span class="glyphicon glyphicon-flash" aria-hidden="true"></span>
-                        Analyze
-                    </a>
-                {% endif %}
+                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#algorithms">
+                    Algorithms
+                </button>
+                <a class="btn btn-primary" id="analysis-upload-button">
+                    <span class="glyphicon glyphicon-flash" aria-hidden="true"></span>
+                    Analyze
+                </a>
+
             </div>
         </div>
 

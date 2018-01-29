@@ -86,7 +86,7 @@ def view_query_analysis_uploader(query_id):
     form = DifferentialGeneExpressionForm()
 
     if not form.validate_on_submit():
-        return render_template('analyze_dgx.html', form=form, network_name='Query {}'.format(query_id))
+        return render_template('analyze_dgx.html', form=form, query=query)
 
     t = time.time()
 
@@ -138,7 +138,7 @@ def view_network_analysis_uploader(network_id):
     if network_id not in get_network_ids_with_permission_helper(current_user, manager):
         abort(403, 'Insufficient rights for network {}'.format(network_id))
 
-    query = Query.from_query_args(manager, network_id, current_user)
+    query = Query.from_query_args(manager, [network_id], current_user)
     manager.session.add(query)
     manager.session.commit()
 

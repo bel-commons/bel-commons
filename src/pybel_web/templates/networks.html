@@ -140,18 +140,21 @@
 
         <div class="panel panel-default">
             <div class="panel-heading">
-                <div class="btn-group pull-right">
-                    <a class="btn btn-warning btn-xs"
-                       href="{{ url_for('dbs.pillage', next=url_for('ui.view_networks')) }}">
-                        Pillage
-                    </a>
-                    <a class="btn btn-danger btn-xs" href="{{ url_for('dbs.drop_networks', next=url_for('ui.home')) }}"
-                       role="button" data-toggle="confirmation" data-btn-ok-icon="glyphicon glyphicon-share-alt"
-                       data-btn-ok-class="btn-success" data-btn-cancel-icon="glyphicon glyphicon-ban-circle"
-                       data-btn-cancel-class="btn-danger">
-                        Drop All
-                    </a>
-                </div>
+                {% if current_user.is_authenticated and current_user.is_admin %}
+                    <div class="btn-group pull-right">
+                        <a class="btn btn-warning btn-xs"
+                           href="{{ url_for('dbs.pillage', next=url_for('ui.view_networks')) }}">
+                            Pillage
+                        </a>
+                        <a class="btn btn-danger btn-xs"
+                           href="{{ url_for('dbs.drop_networks', next=url_for('ui.home')) }}"
+                           role="button" data-toggle="confirmation" data-btn-ok-icon="glyphicon glyphicon-share-alt"
+                           data-btn-ok-class="btn-success" data-btn-cancel-icon="glyphicon glyphicon-ban-circle"
+                           data-btn-cancel-class="btn-danger">
+                            Drop All
+                        </a>
+                    </div>
+                {% endif %}
                 <h3 class="panel-title">Networks</h3>
             </div>
             <div class="panel-body">
@@ -283,19 +286,17 @@
                                     </a>
                                 </li>
 
-                                {% if current_user.is_beta_tester %}
-                                    <li>
-                                        <a href="{{ url_for('analysis.view_network_analysis_uploader', network_id=network.id) }}"
-                                           class="btn btn-warning" data-toggle="popover"
-                                           title="Analyze this Network"
-                                           data-content="Upload your experiments and run algorithms on your network.">
-                                            <span class="glyphicon glyphicon-flash" aria-hidden="true"></span>
-                                            Analyze
-                                        </a>
-                                    </li>
-                                {% endif %}
+                                <li>
+                                    <a href="{{ url_for('analysis.view_network_analysis_uploader', network_id=network.id) }}"
+                                       class="btn btn-default" data-toggle="popover"
+                                       title="Analyze this Network"
+                                       data-content="Upload your experiments and run algorithms on your network.">
+                                        <span class="glyphicon glyphicon-flash" aria-hidden="true"></span>
+                                        Analyze
+                                    </a>
+                                </li>
 
-                                {% if current_user.is_authenticated %}
+                                {% if current_user.is_authenticated and ((network.report and network.report.user == current_user) or current_user.is_admin) %}
                                     <li>
                                         <div class="btn-group">
                                             <button type="button" class="btn btn-default dropdown-toggle"

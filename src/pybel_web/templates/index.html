@@ -65,7 +65,8 @@
                        role="button">
                         Drop All Queries
                     </a>
-                    <a class="btn btn-warning" href="{{ url_for('ui.rollback', next=url_for('ui.home')) }}" role="button"
+                    <a class="btn btn-warning" href="{{ url_for('ui.rollback', next=url_for('ui.home')) }}"
+                       role="button"
                        data-toggle="confirmation" data-btn-ok-icon="glyphicon glyphicon-share-alt"
                        data-btn-ok-class="btn-success" data-btn-cancel-icon="glyphicon glyphicon-ban-circle"
                        data-btn-cancel-class="btn-danger">
@@ -88,7 +89,7 @@
                 support <strong>elucidating</strong> disease-specific, mechanistic insight.
             </p>
             <p style="color:#d9534f">
-                This is the third beta, from early 2018, meaning some features aren't yet complete. Bear with us!
+                This is the third beta, from early 2018, meaning some features aren't yet complete.
             </p>
         </div>
 
@@ -120,9 +121,8 @@
                                 <h3>Summarize</h3>
                                 <p>
                                     View summaries and statistics over curated networks and as a first step towards
-                                    exploration{% if current_user.is_beta_tester %}, visualization, and
-                                        <a href="{{ url_for('analysis.view_analyses') }}">analysis</a>{% else %}
-                                        and visualization{% endif %}.
+                                    exploration, visualization, and
+                                    <a href="{{ url_for('analysis.view_analyses') }}">analysis</a>.
                                 </p>
                                 <p>
                                     {% if current_user.is_admin %}
