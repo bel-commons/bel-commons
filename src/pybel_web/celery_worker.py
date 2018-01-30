@@ -23,7 +23,6 @@ from sqlalchemy.exc import IntegrityError, OperationalError
 
 from pybel import from_cbn_jgif, from_json, from_url, to_bel_path, to_bytes, to_database
 from pybel.constants import METADATA_CONTACT, METADATA_DESCRIPTION, METADATA_LICENSES
-from pybel.manager.cache_manager import EdgeAddError
 from pybel.manager.citation_utils import enrich_pubmed_citations
 from pybel.manager.models import Network
 from pybel.parser.parse_exceptions import InconsistentDefinitionError, MissingBelResource
@@ -33,8 +32,9 @@ from pybel_tools.utils import enable_cool_mode
 from pybel_web.application import create_application
 from pybel_web.celery_utils import create_celery
 from pybel_web.constants import CHARLIE_EMAIL, DANIEL_EMAIL, integrity_message, merged_document_folder
+from pybel_web.manager_utils import fill_out_report, make_graph_summary
 from pybel_web.models import Experiment, Project, Report, User
-from pybel_web.utils import calculate_scores, fill_out_report, get_network_summary_dict, make_graph_summary, manager
+from pybel_web.utils import calculate_scores, get_network_summary_dict, manager
 
 log = get_task_logger(__name__)
 
