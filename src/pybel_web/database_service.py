@@ -40,13 +40,13 @@ from . import models
 from .constants import *
 from .main_service import BLACK_LIST, PATHS_METHOD, UNDIRECTED
 from .manager import *
+from .manager_utils import fill_out_report, make_graph_summary
 from .models import EdgeComment, Experiment, Project, Report, User
 from .send_utils import serve_network, to_json_custom
 from .utils import (
-    current_user_has_query_rights, fill_out_report, get_edge_by_hash_or_404,
-    get_network_ids_with_permission_helper, get_network_or_404, get_node_by_hash_or_404, get_node_overlaps,
-    get_or_create_vote, get_query_ancestor_id, get_recent_reports, help_get_edge_entry, make_graph_summary, manager,
-    next_or_jsonify, safe_get_network, safe_get_project, safe_get_query, user_datastore,
+    current_user_has_query_rights, get_edge_by_hash_or_404, get_network_ids_with_permission_helper, get_network_or_404,
+    get_node_by_hash_or_404, get_node_overlaps, get_or_create_vote, get_query_ancestor_id, get_recent_reports,
+    help_get_edge_entry, manager, next_or_jsonify, safe_get_network, safe_get_project, safe_get_query, user_datastore,
 )
 
 log = logging.getLogger(__name__)

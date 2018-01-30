@@ -12,6 +12,7 @@ from flask_security import SQLAlchemyUserDatastore, current_user, url_for_securi
 from raven.contrib.flask import Sentry
 from sqlalchemy import or_
 
+from pybel.examples import sialic_acid_graph
 from pybel.manager.models import (
     Annotation, AnnotationEntry, Author, Citation, Edge, Evidence, Namespace,
     NamespaceEntry, Network, Node,
@@ -23,6 +24,7 @@ from .admin_model_views import (
     ModelViewBase, NamespaceView, NetworkView, NodeView, QueryView, ReportView, UserView,
 )
 from .constants import ALEX_EMAIL, CHARLIE_EMAIL, DANIEL_EMAIL
+from .manager_utils import insert_graph
 from .models import (
     Assembly, Base, EdgeComment, EdgeVote, Experiment, NetworkOverlap, Project, Query, Report, Role, User,
 )
@@ -139,7 +141,7 @@ def build_project_view(manager, user_datastore):
     return ProjectView
 
 
-class FlaskPyBEL:
+class FlaskPyBEL(object):
     """Encapsulates the data needed for the PyBEL Web Application"""
 
     #: The name in which this app is stored in the Flask.extensions dictionary
@@ -147,7 +149,8 @@ class FlaskPyBEL:
 
     def __init__(self, app=None, manager=None):
         """
-        :param flask.Flask app: A Flask app
+        :param Optional[flask.Flask] app: A Flask app
+        :param Optional[pybel.manager.Manager] manager: A thing that has an engine and a session object
         """
         self.app = app
         self.manager = manager
@@ -161,7 +164,7 @@ class FlaskPyBEL:
     def init_app(self, app, manager):
         """
         :param flask.Flask app: A Flask app
-        :param manager: A thing that has an engine and a session object
+        :param pybel.manager.Manager manager: A thing that has an engine and a session object
         """
         self.app = app
         self.manager = manager
@@ -268,6 +271,7 @@ class FlaskPyBEL:
 
         self._prepare_service()
         self._build_admin_service()
+        self._ensure_graphs()
 
     def _prepare_service(self):
         """Adds the default users to the user datastore"""
@@ -331,6 +335,13 @@ class FlaskPyBEL:
         admin.add_view(build_project_view(self.manager, self.user_datastore)(Project, manager.session))
 
         return admin
+
+    def _ensure_graphs(self):
+        """Adds BEL graphs that should always be present"""
+        if not self.manager.has_name_version(sialic_acid_graph.name, sialic_acid_graph.version):
+            logging.getLogger('urllib3.connectionpool').setLevel(logging.WARNING)
+            log.info('uploading example network %s', sialic_acid_graph)
+            insert_graph(self.manager, sialic_acid_graph, public=True)
 
     @classmethod
     def get_state(cls, app):

@@ -42,10 +42,11 @@ from .curation_service import curation_blueprint
 from .database_service import api_blueprint
 from .external_services import belief_blueprint, external_blueprint
 from .main_service import ui_blueprint
+from .manager_utils import insert_graph
 from .models import Base, Experiment, Project, Report, Role, User
 from .parser_async_service import parser_async_blueprint
 from .parser_endpoint import build_parser_service
-from .utils import insert_graph, iterate_user_strings
+from .utils import iterate_user_strings
 
 log = logging.getLogger('pybel_web')
 

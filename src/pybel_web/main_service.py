@@ -117,6 +117,7 @@ def view_edge(edge_hash):
     """
     return render_template('edges.html', edges=[manager.get_edge_by_hash(edge_hash)], current_user=current_user)
 
+
 @ui_blueprint.route('/nodes')
 @roles_required('admin')
 def view_nodes():
@@ -141,7 +142,6 @@ def view_explore_network(network_id):
         abort(403, 'Insufficient rights for network {}'.format(network_id))
 
     query = query_from_network(network_id)
-
 
     return redirect_explorer(query.id)
 
