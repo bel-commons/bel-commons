@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 
 import hashlib
 import logging
+import time
 
 from flask import Blueprint, current_app, flash, redirect, render_template, url_for
 from flask_security import current_user, login_required
@@ -59,6 +60,8 @@ def view_parser():
     report_id, report_name = report.id, report.source_name
     current_user_str = str(current_user)
     manager.session.close()
+
+    time.sleep(2)
 
     if form.feedback.data:
         task = current_app.celery.send_task('network-summarize', args=[report_id])
