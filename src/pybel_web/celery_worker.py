@@ -263,7 +263,7 @@ def async_parser(report_id):
         if report.infer_origin:
             infer_central_dogma(graph)
 
-        enrich_pubmed_citations(graph, manager=manager)
+        enrich_pubmed_citations(manager, graph)
 
     except (IntegrityError, OperationalError):  # just skip this if there's a problem
         manager.session.rollback()
@@ -467,7 +467,7 @@ def upload_cbn(dir_path):
             graph = from_cbn_jgif(cbn_jgif_dict)
 
             strip_annotations(graph)
-            enrich_pubmed_citations(graph, manager=manager)
+            enrich_pubmed_citations(manager, graph)
             to_database(graph, connection=manager)
 
     log.info('done in %.2f', time.time() - t)
