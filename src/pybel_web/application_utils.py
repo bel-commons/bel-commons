@@ -12,7 +12,7 @@ from flask_security import SQLAlchemyUserDatastore, current_user, url_for_securi
 from raven.contrib.flask import Sentry
 from sqlalchemy import or_
 
-from pybel.examples import sialic_acid_graph
+from pybel.examples import egf_graph, sialic_acid_graph
 from pybel.manager.models import (
     Annotation, AnnotationEntry, Author, Citation, Edge, Evidence, Namespace,
     NamespaceEntry, Network, Node,
@@ -30,7 +30,7 @@ from .models import (
 )
 
 log = logging.getLogger(__name__)
-
+logging.getLogger('urllib3.connectionpool').setLevel(logging.WARNING)
 
 def iter_public_networks(manager_):
     """Lists the graphs that have been made public
@@ -337,11 +337,11 @@ class FlaskPyBEL(object):
         return admin
 
     def _ensure_graphs(self):
-        """Adds BEL graphs that should always be present"""
-        if not self.manager.has_name_version(sialic_acid_graph.name, sialic_acid_graph.version):
-            logging.getLogger('urllib3.connectionpool').setLevel(logging.WARNING)
-            log.info('uploading example network %s', sialic_acid_graph)
-            insert_graph(self.manager, sialic_acid_graph, public=True)
+        """Adds example BEL graphs that should always be present"""
+        for graph in (sialic_acid_graph, egf_graph):
+            if not self.manager.has_name_version(graph.name, graph.version):
+                log.info('uploading example graph: %s', graph)
+                insert_graph(self.manager, graph, public=True)
 
     @classmethod
     def get_state(cls, app):
