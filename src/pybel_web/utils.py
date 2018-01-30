@@ -308,42 +308,13 @@ def query_form_to_dict(form):
     return query_dict
 
 
-def get_query_ancestor_id(query_id):  # TODO refactor this to be part of Query class
-    """Gets the oldest ancestor of the given query
-
-    :param int query_id: The original query database identifier
-    :rtype: Query
-    """
-    query = manager.session.query(Query).get(query_id)
-
-    if not query.parent_id:
-        return query_id
-
-    return get_query_ancestor_id(query.parent_id)
-
-
-def get_query_descendants(query_id):  # TODO refactor this to be part of Query class
-    """Gets all ancestors to the root query as a list of queries. In this formulation, the original query comes first
-    in the list, with its parent next, its grandparent third, and so-on.
-
-    :param int query_id: The original query database identifier
-    :rtype: list[Query]
-    """
-    query = manager.session.query(Query).get(query_id)
-
-    if not query.parent_id:
-        return [query]
-
-    return [query] + get_query_descendants(query.parent_id)
-
-
 def calculate_overlap_dict(g1, g2, g1_label=None, g2_label=None):
     """Creates a dictionary of images depicting the graphs' overlaps in multiple categories
 
     :param pybel.BELGraph g1: A BEL graph
     :param pybel.BELGraph g2: A BEL graph
-    :param str g1_label: The label for the first fraph
-    :param str g2_label: The label for the first fraph
+    :param str g1_label: The label for the first graph
+    :param str g2_label: The label for the first graph
     :return: A dictionary containing important information for displaying base64 images
     :rtype: dict
     """

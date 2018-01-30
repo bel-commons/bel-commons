@@ -670,6 +670,19 @@ class Query(Base):
             pipeline_protocol=_query.pipeline.to_jsons(),
         )
 
+    def get_ancestor(self):
+        """Gets the oldest ancestor of the given query by iteratively getting the parent. Returns none if there is no
+        parent for this query.
+
+        :rtype: Optional[Query]
+        """
+        ancestor = self.parent
+
+        while ancestor.parent:
+            ancestor = ancestor.parent
+
+        return ancestor
+
 
 class EdgeVote(Base):
     """Describes the vote on an edge"""

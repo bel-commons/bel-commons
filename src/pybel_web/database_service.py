@@ -45,7 +45,7 @@ from .models import EdgeComment, Experiment, Project, Report, User
 from .send_utils import serve_network, to_json_custom
 from .utils import (
     current_user_has_query_rights, get_edge_by_hash_or_404, get_network_ids_with_permission_helper, get_network_or_404,
-    get_node_by_hash_or_404, get_node_overlaps, get_or_create_vote, get_query_ancestor_id, get_recent_reports,
+    get_node_by_hash_or_404, get_node_overlaps, get_or_create_vote, get_recent_reports,
     help_get_edge_entry, manager, next_or_jsonify, safe_get_network, safe_get_project, safe_get_query, user_datastore,
 )
 
@@ -2013,12 +2013,12 @@ def get_query_oldest_ancestry(query_id):
     """
     query = safe_get_query(query_id)
 
-    ancestor_id = get_query_ancestor_id(query.id)
+    ancestor_query = query.get_ancestor()
 
-    return jsonify({
-        'id': ancestor_id,
-        'parent': bool(query.parent)
-    })
+    if ancestor_query:
+        return jsonify(id=ancestor_query.id, parent=True)
+
+    return jsonify(parent=False)
 
 
 def add_pipeline_entry(query_id, name, *args, **kwargs):
