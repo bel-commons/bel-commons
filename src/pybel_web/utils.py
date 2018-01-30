@@ -5,11 +5,9 @@ import datetime
 import logging
 import pickle
 import time
-import warnings
 from collections import Counter, defaultdict
 from io import BytesIO
 
-import networkx as nx
 import pandas
 from flask import abort, flash, jsonify, redirect, render_template, request, url_for
 from flask_security import current_user
@@ -18,10 +16,7 @@ from sqlalchemy import and_, func
 import pybel
 from pybel.constants import GENE
 from pybel.manager import Network
-from pybel.struct.summary import (
-    count_namespaces, get_pubmed_identifiers,
-)
-from pybel.utils import hash_node
+from pybel.struct.summary import count_namespaces, get_pubmed_identifiers
 from pybel_tools.analysis.cmpa import calculate_average_scores_on_subgraphs as calculate_average_cmpa_on_subgraphs
 from pybel_tools.filters import remove_nodes_by_namespace
 from pybel_tools.generation import generate_bioprocess_mechanisms
@@ -674,29 +669,6 @@ def get_edge_by_hash_or_404(edge_hash):
     return edge
 
 
-def relabel_nodes_to_hashes(graph, copy=False):
-    """Relabels nodes to hashes in the graph
-
-    :param pybel.BELGraph graph:
-    :param bool copy: Copy the graph?
-    :rtype: pybel.BELGraph
-    """
-    warnings.warn('should use the pybel implementation of this', DeprecationWarning)
-    if 'PYBEL_RELABELED' in graph.graph:
-        log.warning('%s has already been relabeled', graph.name)
-        return graph
-
-    mapping = {}
-    for node in graph:
-        mapping[node] = hash_node(node)
-
-    nx.relabel.relabel_nodes(graph, mapping, copy=copy)
-
-    graph.graph['PYBEL_RELABELED'] = True
-
-    return graph
-
-
 def get_node_overlaps(network_id):
     """Calculates overlaps to all other networks in the database
 
@@ -874,3 +846,18 @@ def query_from_network(network_id, autocommit=True):
         manager.session.commit()
 
     return query
+
+
+def safe_get_report(manager_, report_id):
+    """
+    :param pybel.manager.Manager manager_: A PyBEL manager
+    :param int report_id: The identifier of the report
+    :rtype: Report
+    :raises: ValueError
+    """
+    report = manager_.session.query(Report).get(report_id)
+
+    if report is None:
+        raise ValueError('Report {} not found'.format(report_id))
+
+    return report

@@ -26,15 +26,15 @@ from pybel.constants import METADATA_CONTACT, METADATA_DESCRIPTION, METADATA_LIC
 from pybel.manager.citation_utils import enrich_pubmed_citations
 from pybel.manager.models import Network
 from pybel.parser.parse_exceptions import InconsistentDefinitionError, MissingBelResource
-from pybel.struct import strip_annotations, union
+from pybel.struct import strip_annotations
 from pybel_tools.mutation import add_canonical_names, add_identifiers, infer_central_dogma
 from pybel_tools.utils import enable_cool_mode
 from pybel_web.application import create_application
 from pybel_web.celery_utils import create_celery
 from pybel_web.constants import CHARLIE_EMAIL, DANIEL_EMAIL, integrity_message, merged_document_folder
 from pybel_web.manager_utils import fill_out_report, make_graph_summary
-from pybel_web.models import Experiment, Project, Report, User
-from pybel_web.utils import calculate_scores, get_network_summary_dict, manager
+from pybel_web.models import Experiment, Project, User
+from pybel_web.utils import calculate_scores, get_network_summary_dict, manager, safe_get_report
 
 log = get_task_logger(__name__)
 
@@ -67,7 +67,7 @@ def parse_by_url(url):
         return 'Parsing failed for {}. '.format(url)
 
     try:
-        network = manager.insert_graph(graph, store_parts=app.config.get("PYBEL_USE_EDGE_STORE""", True))
+        network = manager.insert_graph(graph)
         return network.id
     except Exception:
         manager.session.rollback()
@@ -76,25 +76,11 @@ def parse_by_url(url):
         manager.session.close()
 
 
-def safe_get_report(report_id):
-    """
-    :param int report_id: The identifier of the report
-    :rtype: Report
-    :raises: ValueError
-    """
-    report = manager.session.query(Report).get(report_id)
-
-    if report is None:
-        raise ValueError('Report {} not found'.format(report_id))
-
-    return report
-
-
 @celery.task(name='network-summarize')
 def async_summarizer(report_id):
     """Asynchronously parses a BEL script and emails feedback"""
     t = time.time()
-    report = safe_get_report(report_id)
+    report = safe_get_report(manager, report_id)
     source_name = report.source_name
 
     def make_mail(subject, body):
@@ -162,7 +148,7 @@ def async_parser(report_id):
     :param int report_id: Report identifier
     """
     t = time.time()
-    report = safe_get_report(report_id)
+    report = safe_get_report(manager, report_id)
 
     report_id = report.id
     source_name = report.source_name
@@ -330,10 +316,7 @@ def merge_project(user_id, project_id):
 
     user = manager.session.query(User).get(user_id)
     project = manager.session.query(Project).get(project_id)
-
-    graphs = [network.as_bel() for network in project.networks]
-
-    graph = union(graphs)
+    graph = project.as_bel()
 
     graph.name = hashlib.sha1(to_bytes(graph)).hexdigest()
     graph.version = '1.0.0'

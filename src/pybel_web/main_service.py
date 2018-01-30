@@ -14,7 +14,6 @@ from flask import Blueprint, abort, current_app, flash, redirect, render_templat
 from flask_security import current_user, login_required, roles_required
 
 import pybel_tools.query
-from pybel.constants import CITATION_TYPE_PUBMED
 from pybel.manager.models import Annotation, Edge, Namespace, Node
 from pybel.utils import get_version as get_pybel_version
 from pybel_tools.pipeline import no_arguments_map

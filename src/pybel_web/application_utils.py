@@ -32,6 +32,7 @@ from .models import (
 log = logging.getLogger(__name__)
 logging.getLogger('urllib3.connectionpool').setLevel(logging.WARNING)
 
+
 def iter_public_networks(manager_):
     """Lists the graphs that have been made public
 
