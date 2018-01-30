@@ -17,7 +17,7 @@ from pybel.manager.models import (
     Annotation, AnnotationEntry, Author, Citation, Edge, Evidence, Namespace,
     NamespaceEntry, Network, Node,
 )
-from pybel_tools.mutation import expand_node_neighborhood, expand_nodes_neighborhoods
+from pybel_tools.mutation import add_canonical_names, expand_node_neighborhood, expand_nodes_neighborhoods
 from pybel_tools.pipeline import in_place_mutator, uni_in_place_mutator
 from .admin_model_views import (
     AnnotationView, CitationView, EdgeView, EvidenceView, ExperimentView, ModelView,
@@ -340,6 +340,7 @@ class FlaskPyBEL(object):
         """Adds example BEL graphs that should always be present"""
         for graph in (sialic_acid_graph, egf_graph):
             if not self.manager.has_name_version(graph.name, graph.version):
+                add_canonical_names(graph)
                 log.info('uploading example graph: %s', graph)
                 insert_graph(self.manager, graph, public=True)
 
