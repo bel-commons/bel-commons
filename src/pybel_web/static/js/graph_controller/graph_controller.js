@@ -111,8 +111,8 @@ function displayEdgeInfo(edge) {
     var edgeObject = {};
 
     edgeObject["Links"] = '<ul class="list-inline">';
-    edgeObject["Links"] += '<li><a target="_blank" href="/node/' + edge.source.id + '">' + edge.source.cname + ' <span class="glyphicon glyphicon-new-window"></span></a></li>';
-    edgeObject["Links"] += '<li><a target="_blank" href="/node/' + edge.target.id + '">' + edge.target.cname + ' <span class="glyphicon glyphicon-new-window"></span></a></li>';
+    edgeObject["Links"] += '<li><a target="_blank" href="/node/' + edge.source.id + '"><code>' + edge.source.cname + '</code> <span class="glyphicon glyphicon-new-window"></span></a></li>';
+    edgeObject["Links"] += '<li><a target="_blank" href="/node/' + edge.target.id + '"><code>' + edge.target.cname + '</code> <span class="glyphicon glyphicon-new-window"></span></a></li>';
     edgeObject["Links"] += '<li><a target="_blank" href="/node/' + edge.source.id + '/edges/' + edge.target.id + '">All Evidences <span class="glyphicon glyphicon-new-window"></span></a></li>';
     edgeObject["Links"] += '</ul>';
 
@@ -127,7 +127,7 @@ function displayEdgeInfo(edge) {
                 if (context.citation) {
                     edgeObject[sk] += '<dt>Citation</dt><dd>';
                     if (context.citation.type === "PubMed") {
-                        edgeObject[sk] += '<a target="_blank" href="https://www.ncbi.nlm.nih.gov/pubmed/' + context.citation.reference + '" style="text-decoration: underline">PMID:' + context.citation.reference + ' <span class="glyphicon glyphicon-new-window"></a> <a target="_blank" href="/citation/pubmed/' +
+                        edgeObject[sk] += '<a target="_blank" href="https://www.ncbi.nlm.nih.gov/pubmed/' + context.citation.reference + '" style="text-decoration: underline">PMID:' + context.citation.reference + ' <span class="glyphicon glyphicon-new-window"></a> | <a target="_blank" href="/citation/pubmed/' +
                             context.citation.reference + '">See More Statements <span class="glyphicon glyphicon-search" aria-hidden="true"></span></a>';
                     } else if (context.citation.type === "URL") {
                         edgeObject[sk] += '<a target="_blank" href=' + context.citation.reference + " target='_blank' " +
@@ -153,7 +153,6 @@ function displayEdgeInfo(edge) {
                         });
                     });
                 }
-
 
                 if (window.allow_voting === true) {
                     edgeObject[sk] += '<dt>Links</dt><dd><a target="_blank" href="/api/edge/' + context.id + '">' + 'More Information</a> ';
