@@ -193,12 +193,19 @@
                                 {% endif %}
                             </small>
                             <div class="pull-right">
-                                {% if network.report and network.report.public %}
-                                    <span class="glyphicon glyphicon-globe" aria-hidden="true"></span>
-                                {% elif current_user.is_authenticated and network.report.user != current_user %}
-                                    <span class="glyphicon glyphicon-tent" aria-hidden="true"></span>
-                                {% else %}
-                                    <span class="glyphicon glyphicon-piggy-bank" aria-hidden="true"></span>
+                                {% if network.report %}
+                                    <small class="text-muted">
+                                        {{ network.report.number_nodes }} nodes |
+                                        {{ network.report.number_edges }} edges |
+
+                                        {% if network.report.public %}
+                                            Public <span class="glyphicon glyphicon-globe" aria-hidden="true"></span>
+                                        {% elif current_user.is_authenticated and network.report.user != current_user %}
+                                            Internal <span class="glyphicon glyphicon-tent" aria-hidden="true"></span>
+                                        {% else %}
+                                            Private <span class="glyphicon glyphicon-piggy-bank" aria-hidden="true"></span>
+                                        {% endif %}
+                                    </small>
                                 {% endif %}
                             </div>
                         </h4>
@@ -239,6 +246,7 @@
                                                    data-content="Access the compilation summary of the network.">
                                                     <span class="glyphicon glyphicon-warning-sign"
                                                           aria-hidden="true"></span> Compilation
+                                                    {% if network.report %}<span class="badge">{{ network.report.number_warnings }}</span>{% endif %}
                                                 </a>
                                             </li>
                                             <li>
@@ -258,9 +266,7 @@
                                         <a href="{{ url_for('ui.view_explore_network', network_id=network.id) }}"
                                            class="btn btn-default" data-toggle="popover"
                                            title="Explore this Network"
-                                           data-content="Visualize this Network in the Biological Network Explorer.
-                                   Note that if the network is larger than 100 nodes, you would need to filter the
-                                   network before rendering it in order to avoid crash your browser.">
+                                           data-content="This network has {{ network.report.number_nodes }} so it can be directly shown in the Biological Network Explorer.">
                                             <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
                                             Explore
                                         </a>

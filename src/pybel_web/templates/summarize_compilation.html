@@ -96,7 +96,7 @@
                     {% endif %}
 
                     {% if unused_list_annotation_values is defined and unused_list_annotation_values|length > 0 %}
-                        <li><a href="#unused-list-annotations">Unused List Annotation Values</a></li>
+                        <li><a href="#unused-list-annotations">Unused Locally Defined Annotations</a></li>
                     {% endif %}
 
                     {% if syntax_errors|length > 0 %}
@@ -187,28 +187,6 @@
             </div>
         </div>
 
-        <a id="annotations"></a>
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                <h3 class="panel-title">Annotations
-                    <a class="pull-right" href="#top">
-                        <span class="glyphicon glyphicon-arrow-up"></span>
-                    </a>
-                </h3>
-            </div>
-            <div class="panel-body">
-                <p>This section lists all of the annotations that are defined in the original BEL script.</p>
-                <dl class="dl-horizontal">
-                    {% for key, value in graph.annotation_url.items()|sort %}
-                        <dt>{{ key }}</dt>
-                        <dd><a href="{{ value }}">{{ value }}</a></dd>
-                    {% endfor %}
-                </dl>
-            </div>
-        </div>
-
-        <!-- Warnings -->
-
         {% if unused_namespaces is defined and unused_namespaces|length > 0 %}
             <a id="unused-namespaces"></a>
             <div class="panel panel-warning">
@@ -233,36 +211,25 @@
             </div>
         {% endif %}
 
-        {% if graph.annotation_list|length > 0 %}
-            <a id="list-annotations"></a>
-            <div class="panel panel-warning">
-                <div class="panel-heading">
-                    <h3 class="panel-title">Locally Defined Annotations
-                        <span class="badge">{{ graph.annotation_list|length }}</span>
-                        <a class="pull-right" href="#top">
-                            <span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span>
-                        </a>
-                    </h3>
-                </div>
-                <div class="panel-body">
-                    <p>
-                        The source BEL script contained annotations defined as a list. Click each link to export
-                        the list definition as a <code>BELANNO</code> file that can hosted externally to promote
-                        re-usability and interoperability. After, you can replace the list definition in the source
-                        BEL with a <code>SET ANNOTATION X AS URL "Y"</code> definition.
-                    </p>
-                    <ul class="row">
-                        {% for list_annotation in graph.annotation_list %}
-                            <li class="col-lg-3 col-md-4 col-sm-6">
-                                <a href="{{ url_for('dbs.download_list_annotation', network_id=network.id, annotation=list_annotation) }}">
-                                    {{ list_annotation }}
-                                </a>
-                            </li>
-                        {% endfor %}
-                    </ul>
-                </div>
+        <a id="annotations"></a>
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Annotations
+                    <a class="pull-right" href="#top">
+                        <span class="glyphicon glyphicon-arrow-up"></span>
+                    </a>
+                </h3>
             </div>
-        {% endif %}
+            <div class="panel-body">
+                <p>This section lists all of the annotations that are defined in the original BEL script.</p>
+                <dl class="dl-horizontal">
+                    {% for key, value in graph.annotation_url.items()|sort %}
+                        <dt>{{ key }}</dt>
+                        <dd><a href="{{ value }}">{{ value }}</a></dd>
+                    {% endfor %}
+                </dl>
+            </div>
+        </div>
 
         {% if unused_annotations is defined and unused_annotations|length > 0 %}
             <a id="unused-annotations"></a>
@@ -292,11 +259,42 @@
             </div>
         {% endif %}
 
+        {% if graph.annotation_list|length > 0 %}
+            <a id="list-annotations"></a>
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Locally Defined Annotations
+                        <span class="badge">{{ graph.annotation_list|length }}</span>
+                        <a class="pull-right" href="#top">
+                            <span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span>
+                        </a>
+                    </h3>
+                </div>
+                <div class="panel-body">
+                    <p>
+                        The source BEL script contained annotations defined as a list. Click each link to export
+                        the list definition as a <code>BELANNO</code> file that can hosted externally to promote
+                        re-usability and interoperability. After, you can replace the list definition in the source
+                        BEL with a <code>SET ANNOTATION X AS URL "Y"</code> definition.
+                    </p>
+                    <ul class="row">
+                        {% for list_annotation in graph.annotation_list %}
+                            <li class="col-lg-3 col-md-4 col-sm-6">
+                                <a href="{{ url_for('dbs.download_list_annotation', network_id=network.id, annotation=list_annotation) }}">
+                                    {{ list_annotation }}
+                                </a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        {% endif %}
+
         {% if unused_list_annotation_values is defined and unused_list_annotation_values|length > 0 %}
             <a id="unused-list-annotations"></a>
             <div class="panel panel-warning">
                 <div class="panel-heading">
-                    <h3 class="panel-title">Unused List Annotation Values
+                    <h3 class="panel-title">Unused Locally Defined Annotations
                         <span class="badge">{{ unused_list_annotation_values|length }}</span>
                         <a class="pull-right" href="#top">
                             <span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span>
@@ -337,26 +335,26 @@
         {% endif %}
 
         <!-- BEL Parser Errors -->
-
-        <a id="content-statistics"></a>
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                <h3 class="panel-title">Warning Statistics
-                    <a class="pull-right" href="#top">
-                        <span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span>
-                    </a>
-                </h3>
-            </div>
-            <div class="panel-body">
-                <div class="row">
-                    {% if chart_3_data %}
-                        <div class="col-md-4">
+        {% if chart_3_data %}
+            <a id="content-statistics"></a>
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Warning Statistics
+                        <a class="pull-right" href="#top">
+                            <span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span>
+                        </a>
+                    </h3>
+                </div>
+                <div class="panel-body">
+                    <div class="row">
+                        <div class="col-lg-12 col-md-12">
                             <div id="chart3"></div>
                         </div>
-                    {% endif %}
+
+                    </div>
                 </div>
             </div>
-        </div>
+        {% endif %}
 
         {% if syntax_errors|length > 0 %}
             <a id="graph-syntax-errors"></a>
@@ -479,7 +477,7 @@
                     <p>Names referenced without a namespace are antithetical to reproducible science and data
                         integration practices. The list of "naked names" can be downloaded
                         <a href="{{ url_for('dbs.download_naked_names', network_id=network_id) }}">here</a>
-                        for further use with tools to helpfind the appropriate names.</p>
+                        for further use with tools to help find the appropriate names.</p>
                 </div>
             </div>
         {% endif %}

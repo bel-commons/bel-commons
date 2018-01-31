@@ -44,22 +44,23 @@
                title="Explore this Network"
                data-content="This network has {{ network.report.number_nodes }} so it can be directly shown in the Biological Network Explorer.">
                 <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
-                Explore <span class="badge">{{ network.report.number_nodes }}</span>
+                Explore
             </a>
         {% else %}
-            <button class="btn btn-primary" data-toggle="popover"
-                    title="Explore this Network" disabled
-                    data-content="This network is too large to explore directly, so build a query first.">
-                <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
-                Explore {% if network.report %}<span class="badge">{{ network.report.number_nodes }}</span>{% endif %}
-            </button>
+            <a href="{{ url_for('ui.build_subsample_query', network_id=network.id) }}"
+               class="btn btn-default" data-toggle="popover"
+               title="Sample this Network"
+               data-content="This network is too large to explore directly, so view a random sample of 250 edges.">
+                <span class="glyphicon glyphicon-filter" aria-hidden="true"></span>
+                Explore
+                {% if network.report %}<span class="badge">{{ network.report.number_nodes }}</span>{% endif %}
+            </a>
         {% endif %}
 
         <a href="{{ url_for('ui.view_query_builder', start=network.id) }}"
            class="btn btn-default" data-toggle="popover"
            title="Perform a Query on this Network"
-           data-content="You can ask specific questions to your network using the
-                                           Query Builder.">
+           data-content="You can ask specific questions to your network using the Query Builder.">
             <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
             Query
         </a>
