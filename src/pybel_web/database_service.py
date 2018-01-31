@@ -24,7 +24,7 @@ from pybel.manager.models import (
 )
 from pybel.resources.definitions import write_annotation, write_namespace
 from pybel.struct import union
-from pybel.struct.summary import get_pubmed_identifiers
+from pybel.struct.summary import get_annotation_values_by_annotation, get_pubmed_identifiers
 from pybel.utils import hash_node
 from pybel_tools import pipeline
 from pybel_tools.analysis.cmpa import RESULT_LABELS
@@ -33,8 +33,7 @@ from pybel_tools.mutation import add_canonical_names
 from pybel_tools.query import Query
 from pybel_tools.selection import get_subgraph_by_annotations, get_subgraph_by_node_filter
 from pybel_tools.summary import (
-    get_authors, get_incorrect_names_by_namespace, get_naked_names, get_tree_annotations, get_undefined_namespace_names,
-    info_json, info_list,
+    get_authors, get_incorrect_names_by_namespace, get_naked_names, get_undefined_namespace_names, info_json, info_list,
 )
 from . import models
 from .constants import *
@@ -429,6 +428,7 @@ def namespaces_by_network(network_id):
       200:
         description: The namespaces described in this network
     """
+    log.info('network_id: %s', network_id)
     abort(501)
 
 
@@ -449,6 +449,7 @@ def annotations_by_network(network_id):
       200:
         description: The annotations referenced by the network
     """
+    log.info('network_id: %s', network_id)
     abort(501)
 
 
@@ -469,6 +470,7 @@ def citations_by_network(network_id):
       200:
         description: The citations referenced by the edges in the network
     """
+    log.info('network_id: %s', network_id)
     abort(501)
 
 
@@ -863,6 +865,26 @@ def make_network_private(network_id):
 # NETWORK QUERIES
 ####################################
 
+def get_tree_annotations(graph):
+    """Builds tree structure with annotation for a given graph
+
+    :param pybel.BELGraph graph: A BEL Graph
+    :return: The JSON structure necessary for building the tree box
+    :rtype: list[dict]
+    """
+    annotations = get_annotation_values_by_annotation(graph)
+    return [
+        {
+            'text': annotation,
+            'children': [
+                {'text': value}
+                for value in sorted(values)
+            ]
+        }
+        for annotation, values in sorted(annotations.items())
+    ]
+
+
 @lru_cache(maxsize=64)
 def get_tree_from_query(query_id):
     """Gets the tree json for a given network
@@ -1115,6 +1137,7 @@ def get_random_paths(query_id):
     nodes = network.nodes()
 
     def pick_random_pair():
+        """Gets a random node"""
         return random.choices(nodes, k=2)
 
     source, target = pick_random_pair()
