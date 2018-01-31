@@ -147,11 +147,11 @@ function displayEdgeInfo(edge) {
                 }
 
                 if (context.annotations && Object.keys(context.annotations).length > 0) {
-
-                    $.each(context.annotations, function (annotation_key, annotation_value) {
-                        edgeObject[sk] += '<dt>' + annotation_key + '</dt><dd>' + annotation_value + '</dd>';
+                    $.each(context.annotations, function (annotation_key, annotation_values) {
+                        $.each(annotation_values, function (annotation_value) {
+                            edgeObject[sk] += '<dt>' + annotation_key + '</dt><dd>' + annotation_value + '</dd>';
+                        });
                     });
-                    //edgeObject[sk] += '<dt>Annotations</dt><dd>' + JSON.stringify(context.annotations) + '</dd>';
                 }
 
 
