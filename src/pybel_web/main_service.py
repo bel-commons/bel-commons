@@ -490,6 +490,12 @@ def view_config():
     return render_template('deployment.html', config=current_app.config)
 
 
+@ui_blueprint.route('/curate')
+@roles_required('admin')
+def view_curation_interface():
+    return render_template('curate.html')
+
+
 #######################################
 # The following endpoints are helpers #
 #######################################

@@ -1,0 +1,252 @@
+{% extends "base.html" %}
+
+{% import "bootstrap/wtf.html" as wtf %}
+{% import "bootstrap/fixes.html" as fixes %}
+{% import "bootstrap/utils.html" as util %}
+
+{% block title %}Curate{% endblock %}
+
+{% block styles %}
+    {{ super() }}
+    <style>
+
+        .select2-selection--multiple .select2-search--inline .select2-search__field {
+            width: auto !important;
+        }
+
+        [data-role="dynamic-fields"] > .form-inline + .form-inline {
+            margin-top: 0.5em;
+        }
+
+        [data-role="dynamic-fields"] > .form-inline [data-role="add"] {
+            display: none;
+        }
+
+        [data-role="dynamic-fields"] > .form-inline:last-child [data-role="add"] {
+            display: inline-block;
+        }
+
+        [data-role="dynamic-fields"] > .form-inline:last-child [data-role="remove"] {
+            display: none;
+        }
+    </style>
+    <link rel="stylesheet" type="text/css" href='https://code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css'/>
+    <link rel="stylesheet" type="text/css"
+          href='https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/css/select2.min.css'/>
+    <link rel="stylesheet" type="text/css"
+          href='https://cdnjs.cloudflare.com/ajax/libs/select2-bootstrap-theme/0.1.0-beta.10/select2-bootstrap.min.css'/>
+{% endblock %}
+
+{% block scripts %}
+    {{ super() }}
+    <link rel="stylesheet"
+          href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css'/>
+    <script type="text/javascript"
+            src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/js/select2.full.min.js"></script>
+    <script type="text/javascript"
+            src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+    <script>
+
+        // Autocompletion in the first input
+        $('#pipeline').autocomplete({
+            source: function (request, response) {
+                $.ajax({
+                    url: "/api/annotation/suggestion/",
+                    dataType: "json",
+                    data: {
+                        q: request.term
+                    },
+                    success: function (data) {
+                        response(data); // functionName
+                    }
+                });
+            }, minLength: 2
+        });
+
+        /**
+         * * Dynamically adds/deletes pipeline inputs
+         */
+        $(function () {
+            // Remove button click
+            $(document).on(
+                'click',
+                '[data-role="dynamic-fields"] > .form-inline [data-role="remove"]',
+                function (e) {
+                    e.preventDefault();
+                    $(this).closest('.form-inline').remove();
+                }
+            );
+            // Add button click
+            $(document).on(
+                'click',
+                '[data-role="dynamic-fields"] > .form-inline [data-role="add"]',
+                function (e) {
+                    e.preventDefault();
+                    var container = $(this).closest('[data-role="dynamic-fields"]');
+                    var new_field_group = container.children().filter('.form-inline:first-child').clone();
+                    new_field_group.find('input').each(function () {
+                        $(this).val(''); // Empty current value and start autocompletion
+                        $(this).autocomplete({
+                            source: function (request, response) {
+                                $.ajax({
+                                    url: "/api/pipeline/suggestion/",
+                                    dataType: "json",
+                                    data: {
+                                        q: request.term
+                                    },
+                                    success: function (data) {
+                                        response(data);
+                                    }
+                                });
+                            }, minLength: 2
+                        });
+                    });
+                    container.append(new_field_group);
+                }
+            );
+        });
+
+    </script>
+{% endblock %}
+
+{% block content %}
+    <div class="container">
+
+        <form>
+
+            <h1>Provenance</h1>
+
+            <label for="citation">Citation</label>
+            <input type="text" id="citation" placeholder="PubMed Identifier" class="form-control">
+
+            <label for="evidence">Evidence</label>
+            <textarea class="form-control" id="evidence" rows="3"></textarea>
+
+            <label for="evidence-type">Document Type/Location</label>
+            <select class="form-control" id="evidence-type">
+                <option value="abstract">Abstract</option>
+                <option value="introduction">Introduction</option>
+                <option value="methods">Methods</option>
+                <option value="discussion">Discussion</option>
+                <option value="conclusion">Conclusion</option>
+                <option value="figure">Figure</option>
+                <option value="review">Review</option>
+            </select>
+
+
+            <h1>Relation</h1>
+            <div class="row">
+
+                <div class="form-group col-lg-4">
+                    <label for="subject-type">Subject Type</label>
+                    <select class="form-control" id="subject-type">
+                        <option value="abundance">Abundance</option>
+                        <option value="protein">Protein</option>
+                        <option value="rna">RNA</option>
+                        <option value="gene">Gene</option>
+                    </select>
+
+                    <label for="subject-entry">Subject Name</label>
+                    <input type="text" id="subject-entry" class="form-control">
+
+                    <label for="subject-location">Subject Location</label>
+                    <input type="text" placeholder="Optional" id="subject-location" class="form-control">
+
+                    <label for="subject-activity">Subject Activity</label>
+                    <input type="text" placeholder="Optional" id="subject-activity" class="form-control">
+
+                    <label for="subject-from-location">Subject From Location</label>
+                    <input type="text" placeholder="Optional" id="subject-from-location" class="form-control">
+
+                    <label for="subject-to-location">Subject To Location</label>
+                    <input type="text" placeholder="Optional" id="subject-to-location" class="form-control">
+
+                    <label for="subject-degraded">Subject is Degraded</label>
+                    <input type="checkbox" id="subject-degraded">
+                </div>
+
+                <div class="form-group col-lg-4">
+                    <label for="relation-type">Relation Type</label>
+                    <select class="form-control" id="relation-type">
+                        <option>increases</option>
+                        <option>directlyIncreases</option>
+                        <option>decreases</option>
+                        <option>directlyDecreases</option>
+                    </select>
+                </div>
+
+                <div class="form-group col-lg-4">
+                    <label for="object-type">Object Type</label>
+                    <select class="form-control" id="object-type">
+                        <option value="abundance">Abundance</option>
+                        <option value="protein">Protein</option>
+                        <option value="rna">RNA</option>
+                        <option value="gene">Gene</option>
+                    </select>
+
+                    <label for="object-entry">Object Name</label>
+                    <input type="text" id="object-entry" class="form-control">
+
+                    <label for="object-location">Object Location</label>
+                    <input type="text" placeholder="Optional" id="object-location" class="form-control">
+
+                    <label for="object-activity">Object Activity</label>
+                    <input type="text" placeholder="Optional" id="object-activity" class="form-control">
+
+                    <label for="object-from-location">Object From Location</label>
+                    <input type="text" placeholder="Optional" id="object-from-location" class="form-control">
+
+                    <label for="object-to-location">Object To Location</label>
+                    <input type="text" placeholder="Optional" id="object-to-location" class="form-control">
+
+                    <label for="object-degraded">Object is Degraded</label>
+                    <input type="checkbox" id="object-degraded">
+                </div>
+            </div>
+
+            <h1>Annotations</h1>
+            <div data-role="dynamic-fields">
+                <div class="input-group">
+                    <input type="text" class="form-control" name="pipeline[]" id="pipeline"
+                           placeholder="Search for an annotation" title="annotation">
+
+                    <div class="input-group-btn">
+                        <button class="btn btn-danger" type="button" data-role="remove">
+                            <span class="glyphicon glyphicon-remove"></span>
+                        </button>
+                        <button class="btn btn-primary" type="button" data-role="add">
+                            <span class="glyphicon glyphicon-plus"></span>
+                        </button>
+                    </div>
+                </div>
+            </div>  <!-- /div[data-role="dynamic-fields"] -->
+
+            <h1>Evaluation</h1>
+
+            <div class="row">
+                <div class="col-lg-6">
+                    <label for="curation-hypothesis">Article Confidence: Is this relation an
+                        inference/hypothetical?</label>
+                    <select class="form-control" id="curation-hypothesis">
+                        <option selected value="false">No</option>
+                        <option value="true">Yes</option>
+                    </select>
+                </div>
+                <div class="col-lg-6">
+                    <label for="curation-confidence">How confident are you that this relation is correct?</label>
+                    <select class="form-control" id="curation-confidence">
+                        <option value="Very Low">Very Low</option>
+                        <option value="Low">Low</option>
+                        <option value="Medium">Medium</option>
+                        <option value="High">High</option>
+                        <option value="Very High">Very High</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="text-center" style="margin: 20px auto">
+                <input class="btn btn-primary btn-lg" id="submit" placeholder="Submit" type="submit">
+            </div>
+        </form>
+    </div>
+{% endblock %}

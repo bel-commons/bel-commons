@@ -181,6 +181,12 @@
                                        role="button" data-toggle="tooltip" data-placement="top"
                                        title="Validate a manually curated BEL Namespace or Annotation with the EBI Ontology Lookup Service">
                                         Validate</a>
+
+                                    {% if current_user.is_admin %}
+                                        <a href="{{ url_for('ui.view_curation_interface') }}" class="btn btn-warning">
+                                            Curate
+                                        </a>
+                                    {% endif %}
                                 </p>
                             </div>
                         </div>
