@@ -40,9 +40,8 @@
 
         {% if network.report and network.report.is_displayable %}
             <a href="{{ url_for('ui.view_explore_network', network_id=network.id) }}"
-               class="btn btn-default" data-toggle="popover"
-               title="Explore this Network"
-               data-content="This network has {{ network.report.number_nodes }} so it can be directly shown in the Biological Network Explorer.">
+               class="btn btn-default" data-toggle="popover" title="Explore this Network"
+               data-content="This network has {{ network.report.number_nodes }} nodes so it can be directly shown in the Biological Network Explorer.">
                 <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
                 Explore
             </a>
