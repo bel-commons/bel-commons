@@ -42,18 +42,16 @@
             <a href="{{ url_for('ui.view_explore_network', network_id=network.id) }}"
                class="btn btn-default" data-toggle="popover"
                title="Explore this Network"
-               data-content="Visualize this Network in the Biological Network Explorer.
-                                       Note that if the network is larger than 100 nodes, you would need to filter the
-                                       network before rendering it in order to avoid crash your browser.">
+               data-content="This network has {{ network.report.number_nodes }} so it can be directly shown in the Biological Network Explorer.">
                 <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
-                Explore
+                Explore <span class="badge">{{ network.report.number_nodes }}</span>
             </a>
         {% else %}
-            <button class="btn btn-default" data-toggle="popover"
+            <button class="btn btn-primary" data-toggle="popover"
                     title="Explore this Network" disabled
                     data-content="This network is too large to explore directly, so build a query first.">
                 <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
-                Explore
+                Explore {% if network.report %}<span class="badge">{{ network.report.number_nodes }}</span>{% endif %}
             </button>
         {% endif %}
 
@@ -66,22 +64,20 @@
             Query
         </a>
 
-        {% if current_user.is_beta_tester %}
-            <a href="{{ url_for('analysis.view_network_analysis_uploader', network_id=network.id) }}"
-               class="btn btn-warning" data-toggle="popover"
-               title="Analyze this Network"
-               data-content="Upload your experiments and run algorithms on your network.">
-                <span class="glyphicon glyphicon-flash" aria-hidden="true"></span>
-                Analyze
-            </a>
+        <a href="{{ url_for('analysis.view_network_analysis_uploader', network_id=network.id) }}"
+           class="btn btn-default" data-toggle="popover"
+           title="Analyze this Network"
+           data-content="Upload your experiments and run algorithms on your network.">
+            <span class="glyphicon glyphicon-flash" aria-hidden="true"></span>
+            Analyze
+        </a>
 
 
-            <a class="btn btn-warning" href="{{ url_for('analysis.view_analyses', network_id=network_id) }}"
-               role="button">
-                <span class="glyphicon glyphicon-tasks" aria-hidden="true"></span>
-                Results
-            </a>
-        {% endif %}
+        <a class="btn btn-default" href="{{ url_for('analysis.view_analyses', network_id=network_id) }}"
+           role="button">
+            <span class="glyphicon glyphicon-tasks" aria-hidden="true"></span>
+            Results
+        </a>
 
         {% if current_user.is_authenticated %}
             <!-- Single button -->
