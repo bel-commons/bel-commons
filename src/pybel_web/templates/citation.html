@@ -32,15 +32,17 @@
 
         {% for evidence in citation.evidences %}
             <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">
+                        Evidence {{ evidence.sha512[:10] }}
+                    </h3>
+                </div>
                 <div class="panel-body">
                     <p>{{ evidence.text }}</p>
                 </div>
                 <div class="list-group">
                     {% for edge in evidence.edges %}
-                        <div class="list-group-item">
-                            <h4 class="list-group-item-heading">{{ edge.bel }}</h4>
-                            <p class="list-group-item-text">{{ edge.sha512 }}</p>
-                        </div>
+                        {% include 'edge_macro.html' %}
                     {% endfor %}
                 </div>
             </div>

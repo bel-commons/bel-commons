@@ -36,37 +36,7 @@
         <div class="panel panel-default">
             <div class="list-group" id="edge-list">
                 {% for edge in edges %}
-                    <div class="list-group-item">
-                        <h4 class="list-group-item-heading">
-                            {{ edge.bel }}
-                        </h4>
-                        <div class="list-group-item-text">
-                            {% if edge.citation %}
-                                <h4>Citation</h4>
-                                <p>{{ edge.citation }}</p>
-                            {% endif %}
-                            <h5>Appears in Networks:</h5>
-                            <ul>
-                                {% for network in edge.networks %}
-                                    <li>
-                                        <a href="{{ url_for('ui.view_summarize_statistics', network_id=network.id) }}">
-                                            {{ network }}
-                                        </a>
-                                    </li>
-                                {% endfor %}
-                            </ul>
-                            {% set annotation_entries = edge.annotations.all() %}
-                            {% if annotation_entries %}
-                                <h5>Annotations</h5>
-                                <dl class="dl-horizontal">
-                                    {% for annotation_entry in annotation_entries %}
-                                        <dt>{{ annotation_entry.annotation.name }}</dt>
-                                        <dd>{{ annotation_entry.name }}</dd>
-                                    {% endfor %}
-                                </dl>
-                            {% endif %}
-                        </div>
-                    </div>
+                    {% include 'edge_macro.html' %}
                 {% endfor %}
             </div>
         </div>
