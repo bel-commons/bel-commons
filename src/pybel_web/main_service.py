@@ -23,9 +23,9 @@ from .constants import *
 from .manager import *
 from .models import Project, Query, Report, User
 from .utils import (
-    calculate_overlap_dict, get_network_ids_with_permission_helper, get_networks_with_permission,
-    manager, next_or_jsonify, query_form_to_dict, query_from_network, redirect_explorer, render_network_summary_safe,
-    safe_get_network, safe_get_query,
+    calculate_overlap_dict, get_network_ids_with_permission_helper, get_networks_with_permission, manager,
+    next_or_jsonify, query_form_to_dict, query_from_network, redirect_explorer, render_network_summary_safe,
+    safe_get_network, safe_get_node, safe_get_query,
 )
 
 log = logging.getLogger(__name__)
@@ -100,6 +100,53 @@ def view_networks():
     )
 
 
+@ui_blueprint.route('/nodes')
+@roles_required('admin')
+def view_nodes():
+    """Renders a page viewing all edges"""
+    return render_template(
+        'nodes.html',
+        nodes=manager.session.query(Node).limit(15),
+        current_user=current_user,
+        hgnc_manager=hgnc_manager,
+        chebi_manager=chebi_manager,
+        go_manager=go_manager,
+    )
+
+
+@ui_blueprint.route('/node/<node_hash>')
+def view_node(node_hash):
+    """View a node summary with a list of all edges incident to the node
+
+    :param str node_hash: The node's hash
+    """
+    node = safe_get_node(manager, node_hash)
+
+    relations = list(itt.chain(
+        node.in_edges,
+        node.out_edges
+    ))
+    return _serve_relations(relations, node)
+
+
+@ui_blueprint.route('/node/<source_hash>/edges/<target_hash>')
+def view_relations(source_hash, target_hash):
+    """View a list of all relations between two nodes
+
+    :param str source_hash: The source node's hash
+    :param str target_hash: The target node's hash
+    """
+    source = safe_get_node(manager, source_hash)
+    target = safe_get_node(manager, target_hash)
+
+    relations = list(manager.query_edges(source=source, target=target))
+
+    if 'undirected' in request.args:
+        relations.extend(manager.query_edges(source=target, target=source))
+
+    return _serve_relations(relations, source, target)
+
+
 @ui_blueprint.route('/edges')
 @roles_required('admin')
 def view_edges():
@@ -115,20 +162,6 @@ def view_edge(edge_hash):
     :param str edge_hash: The identifier of the edge to display
     """
     return render_template('edges.html', edges=[manager.get_edge_by_hash(edge_hash)], current_user=current_user)
-
-
-@ui_blueprint.route('/nodes')
-@roles_required('admin')
-def view_nodes():
-    """Renders a page viewing all edges"""
-    return render_template(
-        'nodes.html',
-        nodes=manager.session.query(Node),
-        current_user=current_user,
-        hgnc_manager=hgnc_manager,
-        chebi_manager=chebi_manager,
-        go_manager=go_manager,
-    )
 
 
 @ui_blueprint.route('/network/<int:network_id>/explore', methods=['GET'])
@@ -375,41 +408,6 @@ def view_pubmed(pmid):
     citation = manager.get_citation_by_pmid(pmid)
 
     return render_template('citation.html', citation=citation)
-
-
-@ui_blueprint.route('/node/<source_id>/edges/<target_id>')
-def view_relations(source_id, target_id):
-    """View a list of all relations between two nodes
-
-    :param str source_id: The source node's hash
-    :param str target_id: The target node's hash
-    """
-    source = manager.get_node_by_hash(source_id)
-    target = manager.get_node_by_hash(target_id)
-    relations = list(manager.query_edges(source=source, target=target))
-
-    if 'undirected' in request.args:
-        relations.extend(manager.query_edges(source=target, target=source))
-
-    return _serve_relations(relations, source, target)
-
-
-@ui_blueprint.route('/node/<node_id>')
-def view_node(node_id):
-    """View a node summary with a list of all edges incident to the node
-
-    :param str node_id: The node's hash
-    """
-    node = manager.get_node_by_hash(node_id)
-
-    if node is None:
-        abort(404, 'Node not found: {}'.format(node_id))
-
-    relations = list(itt.chain(
-        node.in_edges,
-        node.out_edges
-    ))
-    return _serve_relations(relations, node)
 
 
 @ui_blueprint.route('/download/bel/<fid>')

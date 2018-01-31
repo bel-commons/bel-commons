@@ -861,3 +861,18 @@ def safe_get_report(manager_, report_id):
         raise ValueError('Report {} not found'.format(report_id))
 
     return report
+
+
+def safe_get_node(manager_, node_hash):
+    """Gets a node
+
+    :param pybel.manager.Manager manager_:
+    :param str node_hash:
+    :rtype: Node
+    """
+    node = manager_.get_node_by_hash(node_hash)
+
+    if node is None:
+        abort(404, 'Node not found: {}'.format(node_hash))
+
+    return node
