@@ -672,17 +672,19 @@ def claim_network(network_id):
     """
     network = get_network_or_404(network_id)
 
+    t = time.time()
+
     res = _help_claim_network(network, current_user)
 
     if not res:
         return next_or_jsonify(
-            'Already claimed by {}'.format(network.report.user),
+            '{} has already been claimed by {}'.format(network, network.report.user),
             network={'id': network.id},
             owner={'id': network.report.user.id},
         )
 
     return next_or_jsonify(
-        'Claimed {}'.format(network),
+        'Claimed {} in {:.2f} seconds'.format(network, time.time() - t),
         network={'id': network.id},
         owner={'id': current_user.id}
     )
