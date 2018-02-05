@@ -25,7 +25,8 @@ from pybel import from_cbn_jgif, from_json, from_url, to_bel_path, to_bytes, to_
 from pybel.constants import METADATA_CONTACT, METADATA_DESCRIPTION, METADATA_LICENSES
 from pybel.manager.citation_utils import enrich_pubmed_citations
 from pybel.manager.models import Network
-from pybel.parser.parse_exceptions import InconsistentDefinitionError, MissingBelResource
+from pybel.parser.exc import InconsistentDefinitionError
+from pybel.resources.exc import ResourceError
 from pybel.struct import strip_annotations
 from pybel_tools.mutation import add_canonical_names, add_identifiers, infer_central_dogma
 from pybel_tools.utils import enable_cool_mode
@@ -104,7 +105,7 @@ def async_summarizer(report_id):
     try:
         graph = report.parse_graph(manager=manager)
 
-    except (MissingBelResource, requests.exceptions.ConnectionError, requests.exceptions.HTTPError):
+    except (ResourceError, requests.exceptions.ConnectionError, requests.exceptions.HTTPError):
         message = 'Connection to resource could not be established.'
         return finish_parsing('Parsing Failed for {}'.format(source_name), message)
 
@@ -178,7 +179,7 @@ def async_parser(report_id):
     try:
         graph = report.parse_graph(manager=manager)
 
-    except (MissingBelResource, requests.exceptions.ConnectionError, requests.exceptions.HTTPError) as e:
+    except (ResourceError, requests.exceptions.ConnectionError, requests.exceptions.HTTPError) as e:
         message = 'Connection to resource could not be established: {}'.format(e)
         return finish_parsing('Parsing Failed for {}'.format(source_name), message)
 
