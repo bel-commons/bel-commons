@@ -17,7 +17,7 @@ from flask_security import current_user, login_required, roles_required
 from sqlalchemy import func
 
 import pybel
-from pybel.constants import METADATA_AUTHORS, METADATA_CONTACT, METADATA_NAME, NAME, NAMESPACE, NAMESPACE_DOMAIN_OTHER
+from pybel.constants import NAME, NAMESPACE, NAMESPACE_DOMAIN_OTHER
 from pybel.manager.models import (
     Annotation, AnnotationEntry, Author, Citation, Edge, Namespace, Network, Node, network_edge,
 )
@@ -149,9 +149,9 @@ def _build_namespace_helper(graph, namespace, names):
         namespace_name=namespace,
         namespace_keyword=namespace,
         namespace_domain=NAMESPACE_DOMAIN_OTHER,
-        author_name=graph.document.get(METADATA_AUTHORS),
-        author_contact=graph.document.get(METADATA_CONTACT),
-        citation_name=graph.document.get(METADATA_NAME),
+        author_name=graph.authors,
+        author_contact=graph.contact,
+        citation_name=graph.name,
         citation_description='This namespace was serialized by PyBEL Web',
         cacheable=False,
         values=names,
@@ -245,9 +245,9 @@ def _build_annotation_helper(graph, annotation, values):
     write_annotation(
         keyword=annotation,
         values=values,
-        author_name=graph.document.get(METADATA_AUTHORS),
-        author_contact=graph.document.get(METADATA_CONTACT),
-        citation_name=graph.document.get(METADATA_NAME),
+        author_name=graph.authors,
+        author_contact=graph.contact,
+        citation_name=graph.name,
         description='This annotation was serialize by PyBEL Web from {}'.format(graph),
         file=si,
     )
