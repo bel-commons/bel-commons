@@ -97,11 +97,9 @@
                     Controls
                 </button>
 
-                {% if current_user.is_authenticated %}
                     <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#export">
                         Export
                     </button>
-                {% endif %}
 
                 <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#paths">
                     Path Mining
@@ -745,6 +743,8 @@
                                     <i class="fa fa-file-image-o"></i></button>
                             </td>
                         </tr>
+
+                        {% if current_user.is_authenticated %}
                         <tr>
                             <td>Save as a BEL script</td>
                             <td>
@@ -804,8 +804,13 @@
                                 </button>
                             </td>
                         </tr>
+                        {% endif %}
+
                         <tr>
-                            <td>Save as a GSEA GRP file</td>
+                            <td>Save as a GSEA <a
+                                    href="https://software.broadinstitute.org/cancer/software/gsea/wiki/index.php/Data_formats#GRP:_Gene_set_file_format_.28.2A.grp.29">GRP</a>
+                                file
+                            </td>
                             <td>
                                 <button type="button" class="btn btn-default explorer-download" data-format="gsea">
                                     <span class="glyphicon glyphicon-download" aria-hidden="true"></span>
@@ -822,6 +827,11 @@
                         </tr>
                         </tbody>
                     </table>
+
+                    {% if not current_user.is_authenticated %}
+                        <p><a href="{{ url_for('security.login') }}">Log In</a> for more options.</p>
+                    {% endif %}
+
                 </div><!-- /.Modal body -->
                 <div class="modal-footer">
                     <button type="button" class="btn btn-default" data-dismiss="modal">
