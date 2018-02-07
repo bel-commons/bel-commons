@@ -1131,9 +1131,9 @@ def get_random_paths(query_id):
         required: true
         type: integer
     """
-    network = get_graph_from_request(query_id)
+    graph = get_graph_from_request(query_id)
 
-    path = get_random_path(network)
+    path = get_random_path(graph)
 
     return jsonify([
         hash_node(node)

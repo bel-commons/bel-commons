@@ -536,10 +536,11 @@ def current_user_has_query_rights(query_id):
 
 
 def get_query_or_404(query_id):
-    """
+    """Gets a query or returns a HTTPException with 404 message if it does not exist
 
-    :param int query_id:
+    :param int query_id: The database identifier for a query
     :rtype: Query
+    :raises: werkzeug.exceptions.HTTPException
     """
     query = manager.session.query(Query).get(query_id)
 
@@ -550,10 +551,13 @@ def get_query_or_404(query_id):
 
 
 def safe_get_query(query_id):
-    """Gets a query or raises an abort
+    """Gets a query by ite database identifier. Raises an HTTPException with 404 if the query does not exist or
+    raises an HTTPException with 403 if the user does not have the appropriate permissions for all networks in the
+    query's assembly
 
     :param int query_id: The database identifier for a query
     :rtype: Query
+    :raises: werkzeug.exceptions.HTTPException
     """
     query = get_query_or_404(query_id)
 
