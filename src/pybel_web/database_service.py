@@ -54,10 +54,11 @@ api_blueprint = Blueprint('dbs', __name__)
 
 @lru_cache(maxsize=64)
 def get_graph_from_request(query_id):
-    """Process the GET request returning the filtered network
+    """Process the GET request returning the filtered network.
 
     :param int query_id: The database query identifier
     :rtype: Optional[pybel.BELGraph]
+    :rtype: werkzeug.exceptions.HTTPException
     """
     query = safe_get_query(query_id)
     return query.run(manager)
