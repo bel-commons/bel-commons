@@ -5,7 +5,6 @@
 import csv
 import logging
 import pickle
-import random
 import time
 from functools import lru_cache
 from io import StringIO
@@ -31,7 +30,7 @@ from pybel_tools.analysis.cmpa import RESULT_LABELS
 from pybel_tools.filters.node_filters import exclude_pathology_filter
 from pybel_tools.mutation import add_canonical_names
 from pybel_tools.query import Query
-from pybel_tools.selection import get_subgraph_by_annotations, get_subgraph_by_node_filter
+from pybel_tools.selection import get_random_path, get_subgraph_by_annotations, get_subgraph_by_node_filter
 from pybel_tools.summary import (
     get_authors, get_incorrect_names_by_namespace, get_naked_names, get_undefined_namespace_names, info_json, info_list,
 )
@@ -1134,30 +1133,11 @@ def get_random_paths(query_id):
     """
     network = get_graph_from_request(query_id)
 
-    network = network.to_undirected()
-
-    nodes = network.nodes()
-
-    def pick_random_pair():
-        """Gets a random node"""
-        return random.choices(nodes, k=2)
-
-    source, target = pick_random_pair()
-
-    tries = 0
-    sentinel_tries = 5
-    while not nx.has_path(network, source, target) and tries < sentinel_tries:
-        tries += 1
-        source, target = pick_random_pair()
-
-    if tries == sentinel_tries:
-        return source
-
-    shortest_path = nx.shortest_path(network, source=source, target=target)
+    path = get_random_path(network)
 
     return jsonify([
         hash_node(node)
-        for node in shortest_path
+        for node in path
     ])
 
 
