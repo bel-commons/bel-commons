@@ -8,7 +8,6 @@ import flask
 from flask import jsonify, request
 
 from pybel import BELGraph
-from pybel.constants import *
 from pybel.parser import BelParser
 from .send_utils import serve_network
 
@@ -31,13 +30,14 @@ def build_parser_service(app, conversion_function=None):
     :param conversion_function: An optional function to convert the output of the parser before serializing to JSON
     :type conversion_function: types.FunctionType or types.LambdaType
     """
-    graph = BELGraph()
-    graph.document.update({
-        METADATA_NAME: 'PyBEL Web Parser Results',
-        METADATA_AUTHORS: getuser(),
-        METADATA_DESCRIPTION: 'This graph was produced using the PyBEL Parser API. It was instantiated at {}'.format(
+    graph = BELGraph(
+        name='PyBEL Web Parser Results',
+        version='1.0.0',
+        authors=getuser(),
+        description='This graph was produced using the PyBEL Parser API. It was instantiated at {}'.format(
             time.asctime())
-    })
+    )
+
     parser = BelParser(graph)
 
     @app.route('/api/parser/status')
