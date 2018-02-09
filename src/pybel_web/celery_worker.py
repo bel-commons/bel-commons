@@ -77,6 +77,23 @@ def parse_by_url(url):
         manager.session.close()
 
 
+def send_summary_mail(graph, report, t):
+    with app.app_context():
+        html = render_template('email_report.html', graph=graph, **get_network_summary_dict(graph))
+
+        mailer = app.extensions.get('mail')
+        if mailer is not None:
+            mailer.send_message(
+                subject='Parsing Report for {}'.format(graph),
+                recipients=[report.user.email],
+                body='Below is the parsing report for {}, completed in {:.2f} seconds.'.format(graph, t),
+                html=html,
+                sender=pbw_sender,
+            )
+        else:
+            log.info('HTML rendered: %s', html[:500])
+
+
 @celery.task(name='network-summarize')
 def async_summarizer(report_id):
     """Asynchronously parses a BEL script and emails feedback"""
@@ -118,22 +135,11 @@ def async_summarizer(report_id):
         message = 'Parsing failed for {} from a general error: {}'.format(source_name, e)
         return finish_parsing('Parsing Failed for {}'.format(source_name), message)
 
-    with app.app_context():
-        html = render_template('email_report.html', graph=graph, **get_network_summary_dict(graph))
+    time_difference = time.time() - t
 
-        mailer = app.extensions.get('mail')
-        if mailer is not None:
-            mailer.send_message(
-                subject='Parsing report for {}'.format(graph),
-                recipients=[report.user.email],
-                body='Below is the compilation report for {}'.format(graph),
-                html=html,
-                sender=pbw_sender,
-            )
-        else:
-            log.info('HTML rendered: %s', html[:500])
+    send_summary_mail(graph, report, time_difference)
 
-    report.time = time.time() - t
+    report.time = time_difference
     manager.session.add(report)
     manager.session.commit()
 
@@ -209,6 +215,8 @@ def async_parser(report_id):
     if problem:
         message = '{} was rejected because it has "default" metadata: {}'.format(source_name, problem)
         return finish_parsing('Rejected {}'.format(source_name), message)
+
+    send_summary_mail(graph, report, time.time() - t)
 
     network_filter = and_(Network.name == graph.name, Network.version == graph.version)
     network = manager.session.query(Network).filter(network_filter).one_or_none()
@@ -291,7 +299,7 @@ def async_parser(report_id):
         manager.session.commit()
 
         log.info('report #%d complete [%d]', report.id, network.id)
-        make_mail('Successfully uploaded {} ({})'.format(source_name, graph),
+        make_mail('Uploaded succeeded for {} ({})'.format(graph, source_name),
                   '{} ({}) is done parsing. Check the network list page.'.format(source_name, graph))
 
         return network.id
