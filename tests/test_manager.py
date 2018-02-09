@@ -33,6 +33,7 @@ class TemporaryCacheInstanceMixin(unittest.TestCase):
         os.close(self.fd)
         os.remove(self.path)
 
+
 class TemporaryCacheClsMixin(unittest.TestCase):
     @classmethod
     def setUpClass(cls):

@@ -231,7 +231,7 @@ class FlaskPyBEL(object):
 
             :param pybel.BELGraph universe: A BEL graph
             :param pybel.BELGraph graph: A BEL graph
-            :param list node_hashes: A list of node hashes
+            :param list[str] node_hashes: A list of node hashes
             """
             nodes = [
                 self.manager.get_node_tuple_by_hash(node_hash)
@@ -245,7 +245,7 @@ class FlaskPyBEL(object):
 
             :param pybel.BELGraph universe: A BEL graph
             :param pybel.BELGraph graph: A BEL graph
-            :param node_hash: The node hash
+            :param str node_hash: The node hash
             """
             node = self.manager.get_node_tuple_by_hash(node_hash)
             return expand_node_neighborhood(universe, graph, node)
@@ -255,7 +255,7 @@ class FlaskPyBEL(object):
             """Removes a list of nodes by identifier
 
             :param pybel.BELGraph graph: A BEL graph
-            :param list node_hashes: A list of node hashes
+            :param list[str] node_hashes: A list of node hashes
             """
             nodes = self.manager.get_node_tuples_by_hashes(node_hashes)
             graph.remove_nodes_from(nodes)
@@ -265,7 +265,7 @@ class FlaskPyBEL(object):
             """Removes a node by identifier
 
             :param pybel.BELGraph graph: A BEL graph
-            :param node_hash: A node hash
+            :param str node_hash: A node hash
             """
             node = self.manager.get_node_tuple_by_hash(node_hash)
             graph.remove_node(node)

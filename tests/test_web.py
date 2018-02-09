@@ -153,9 +153,6 @@ class WebTest(unittest.TestCase):
 
                     self.assertEqual(200, response.status_code)
 
-
-
-
     def test_api_count_users(self):
         with self.app_instance.app_context():
             response = self.app.get('/api/user/count')
