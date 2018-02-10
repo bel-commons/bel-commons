@@ -12,11 +12,12 @@ from flask_security import SQLAlchemyUserDatastore, current_user, url_for_securi
 from raven.contrib.flask import Sentry
 from sqlalchemy import or_
 
-from pybel.examples import egf_graph, sialic_acid_graph
+from pybel.examples import *
 from pybel.manager.models import (
     Annotation, AnnotationEntry, Author, Citation, Edge, Evidence, Namespace,
     NamespaceEntry, Network, Node,
 )
+from pybel.struct.mutation import infer_child_relations
 from pybel_tools.mutation import add_canonical_names, expand_node_neighborhood, expand_nodes_neighborhoods
 from pybel_tools.pipeline import in_place_mutator, uni_in_place_mutator
 from .admin_model_views import (
@@ -171,7 +172,6 @@ class FlaskPyBEL(object):
         self.manager = manager
 
         sentry_dsn = app.config.get('SENTRY_DSN')
-
         if sentry_dsn:
             log.info('initiating Sentry: %s', sentry_dsn)
             self.sentry = Sentry(app, dsn=sentry_dsn)
@@ -224,7 +224,14 @@ class FlaskPyBEL(object):
             """You must not cross this error"""
             return render_template('403.html')
 
-        # register functions with decorator
+        self._register_mutators()
+        self._prepare_service()
+        self._build_admin_service()
+        self._ensure_graphs()
+
+    def _register_mutators(self):
+        """Registers all the mutator functions with PyBEL tools decorators"""
+
         @uni_in_place_mutator
         def expand_nodes_neighborhoods_by_ids(universe, graph, node_hashes):
             """Expands around the neighborhoods of a list of nodes by identifier
@@ -270,9 +277,15 @@ class FlaskPyBEL(object):
             node = self.manager.get_node_tuple_by_hash(node_hash)
             graph.remove_node(node)
 
-        self._prepare_service()
-        self._build_admin_service()
-        self._ensure_graphs()
+        @in_place_mutator
+        def propagate_node_by_hash(graph, node_hash):
+            """Infers relationships from a node
+
+            :param pybel.BELGraph graph: A BEL graph
+            :param str node_hash: A node hash
+            """
+            node = self.manager.get_node_tuple_by_hash(node_hash)
+            infer_child_relations(graph, node)
 
     def _prepare_service(self):
         """Adds the default users to the user datastore"""
@@ -339,11 +352,19 @@ class FlaskPyBEL(object):
 
     def _ensure_graphs(self):
         """Adds example BEL graphs that should always be present"""
-        for graph in (sialic_acid_graph, egf_graph):
+        for graph in (sialic_acid_graph, egf_graph, statin_graph):
             if not self.manager.has_name_version(graph.name, graph.version):
                 add_canonical_names(graph)
-                log.info('uploading example graph: %s', graph)
+                log.info('uploading public example graph: %s', graph)
                 insert_graph(self.manager, graph, public=True)
+
+        test_user = self.user_datastore.find_user(email='test@scai.fraunhofer.de')
+
+        for graph in (braf_graph,):
+            if not self.manager.has_name_version(graph.name, graph.version):
+                add_canonical_names(graph)
+                log.info('uploading internal example graph: %s', graph)
+                insert_graph(self.manager, graph, user_id=test_user.id, public=False)
 
     @classmethod
     def get_state(cls, app):
@@ -355,15 +376,6 @@ class FlaskPyBEL(object):
             raise ValueError('FlaskPyBEL has not been instantiated')
 
         return app.extensions[cls.APP_NAME]
-
-
-def get_sentry(app):
-    """Gets the User Data Store from a Flask app
-
-    :param flask.Flask app: A Flask app
-    :rtype: raven.Sentry
-    """
-    return FlaskPyBEL.get_state(app).sentry
 
 
 def get_user_datastore(app):

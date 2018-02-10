@@ -3,33 +3,21 @@
 from celery import Celery
 
 
-def create_celery(application):
+def create_celery(app):
     """Configures celery instance from application, using its config
 
-    :param flask.Flask application: Flask application instance
-    :return: A Celery instance
+    :param flask.Flask app: Flask application instance
     :rtype: celery.Celery
     """
-    if hasattr(application, 'celery'):
-        return application.celery
+    if hasattr(app, 'celery'):
+        return app.celery
 
     celery = Celery(
-        application.import_name,
-        broker=application.config['CELERY_BROKER_URL']
+        app.import_name,
+        broker=app.config['CELERY_BROKER_URL']
     )
-    celery.conf.update(application.config)
-    TaskBase = celery.Task
+    celery.conf.update(app.config)
 
-    class ContextTask(TaskBase):
-        """Celery task running within a Flask application context."""
-        abstract = True
-
-        def __call__(self, *args, **kwargs):
-            with application.app_context():
-                return super(ContextTask, self).__call__(*args, **kwargs)
-
-    celery.Task = ContextTask
-
-    application.celery = celery
+    app.celery = celery
 
     return celery

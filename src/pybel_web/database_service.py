@@ -21,6 +21,8 @@ from pybel.constants import NAME, NAMESPACE, NAMESPACE_DOMAIN_OTHER
 from pybel.manager.models import (
     Annotation, AnnotationEntry, Author, Citation, Edge, Namespace, Network, Node, network_edge,
 )
+from pybel_tools.pipeline import function_is_registered
+
 from pybel.resources.definitions import write_annotation, write_namespace
 from pybel.struct import union
 from pybel.struct.summary import get_annotation_values_by_annotation, get_pubmed_identifiers
@@ -69,7 +71,7 @@ def receive():
     """Receives a JSON serialized BEL graph"""
     # TODO assume https authentication and use this to assign user to receive network function
     payload = request.get_json()
-    task = current_app.celery.send_task('receive-network', args=[payload])
+    task = current_app.celery.send_task('upload-json', args=[current_app.config['SQLALCHEMY_DATABASE_URI'], payload])
     return next_or_jsonify('Sent async receive task', network_id=task.id)
 
 
@@ -2034,6 +2036,10 @@ def add_pipeline_entry(query_id, name, *args, **kwargs):
     :param str name: The name of the function to append
     """
     query = safe_get_query(query_id)
+
+    if not function_is_registered(name):
+        abort(403, 'Invalid function name')
+
     qo = query.build_appended(name, *args, **kwargs)
 
     if current_user.is_authenticated:

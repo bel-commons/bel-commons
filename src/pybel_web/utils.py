@@ -632,7 +632,14 @@ def next_or_jsonify(message, *args, status=200, category='message', **kwargs):
 
 
 def calculate_scores(graph, data, runs):
-    """Calculates CMPA scores"""
+    """Calculates CMPA scores
+
+    :param pybel.BELGraph graph: A BEL graph
+    :param dict[str,float] data: A dictionary of {name: data}
+    :param int runs: The number of permutations
+    :rtype: dict[tuple,tuple]
+    :return: A dictionary of {pybel node tuple: results tuple} from :func:`calculate_average_cmpa_on_subgraphs`
+    """
     remove_nodes_by_namespace(graph, {'MGI', 'RGD'})
     collapse_by_central_dogma_to_genes(graph)
     rewire_variants_to_genes(graph)
@@ -743,13 +750,13 @@ def help_get_edge_entry(manager_, edge):
     return data
 
 
-def redirect_explorer(query_id):
+def redirect_explorer(query):
     """Returns the response for the biological network explorer in a given query
 
-    :param int query_id: A query identifier
+    :param Query query: A query
     :rtype: flask.Response
     """
-    return redirect(url_for('ui.view_explorer_query', query_id=query_id))
+    return redirect(url_for('ui.view_explorer_query', query_id=query.id))
 
 
 def render_network_summary_safe(manager_, network_id, template):
@@ -836,7 +843,7 @@ def safe_get_network(network_id):
     return network
 
 
-def query_from_network(network_id, autocommit=True):
+def query_from_network_id(network_id, autocommit=True):  # FIXME make it take a straight network
     """Makes a query from the given network identifier
 
     :param int network_id: The identifier of a network

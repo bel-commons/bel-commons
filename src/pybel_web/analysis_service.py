@@ -15,9 +15,8 @@ from flask import Blueprint, abort, current_app, make_response, redirect, render
 from flask_security import current_user, login_required
 
 from pybel_tools.analysis.cmpa import RESULT_LABELS
-from .celery_utils import create_celery
 from .forms import DifferentialGeneExpressionForm
-from .models import Experiment, Query
+from .models import Experiment, Omics, Query
 from .utils import get_network_ids_with_permission_helper, manager, safe_get_query
 
 log = logging.getLogger(__name__)
@@ -42,13 +41,15 @@ def view_analyses(query_id=None):
     )
 
 
-def safe_get_experiment(experiment_id):
+def safe_get_experiment(manager_, experiment_id):
     """Safely gets an experiment
 
+    :param pybel.manager.Manager manager_:
     :param int experiment_id:
     :rtype: Experiment
+    :raises: werkzeug.exceptions.HTTPException
     """
-    experiment = manager.session.query(Experiment).get(experiment_id)
+    experiment = manager_.session.query(Experiment).get(experiment_id)
 
     if experiment is None:
         abort(404, 'Experiment {} does not exist'.format(experiment_id))
@@ -62,8 +63,11 @@ def safe_get_experiment(experiment_id):
 @analysis_blueprint.route('/analysis/<int:experiment_id>/results/')
 @login_required
 def view_analysis_results(experiment_id):
-    """View the results of a given analysis"""
-    experiment = safe_get_experiment(experiment_id)
+    """View the results of a given analysis
+
+    :param int experiment_id: The identifier of the experiment whose results to view
+    """
+    experiment = safe_get_experiment(manager, experiment_id)
 
     data = experiment.get_data_list()
 
@@ -80,7 +84,10 @@ def view_analysis_results(experiment_id):
 @analysis_blueprint.route('/query/<int:query_id>/analysis/upload', methods=('GET', 'POST'))
 @login_required
 def view_query_analysis_uploader(query_id):
-    """Renders the asynchronous analysis page"""
+    """Renders the asynchronous analysis page
+
+    :param int query_id: The identifier of the query to upload against
+    """
     query = safe_get_query(query_id)
 
     form = DifferentialGeneExpressionForm()
@@ -107,15 +114,20 @@ def view_query_analysis_uploader(query_id):
     if data_column not in df.columns:
         raise ValueError('{} not a column in document'.format(data_column))
 
-    experiment = Experiment(
+    omics = Omics(
         description=form.description.data,
         source_name=form.file.data.filename,
         source=pickle.dumps(df),
         gene_column=gene_column,
         data_column=data_column,
-        permutations=form.permutations.data,
+        user=current_user,
+    )
+
+    experiment = Experiment(
         user=current_user,
         query=query,
+        permutations=form.permutations.data,
+        omics=omics
     )
 
     manager.session.add(experiment)
@@ -123,18 +135,22 @@ def view_query_analysis_uploader(query_id):
 
     log.debug('stored data for analysis in %.2f seconds', time.time() - t)
 
-    celery = create_celery(current_app)
-
-    task = celery.send_task('run-cmpa', args=[experiment.id])
+    task = current_app.celery.send_task('run-cmpa', args=[
+        current_app.config['SQLALCHEMY_DATABASE_URI'],
+        experiment.id
+    ])
 
     flask.flash('Queued Experiment {} with task {}'.format(experiment.id, task))
-    return redirect(url_for('home'))
+    return redirect(url_for('ui.home'))
 
 
 @analysis_blueprint.route('/network/<int:network_id>/analysis/upload/', methods=('GET', 'POST'))
 @login_required
 def view_network_analysis_uploader(network_id):
-    """Views the results of analysis on a given graph"""
+    """Views the results of analysis on a given graph
+
+    :param int network_id: The identifier ot the network to query against
+    """
     if network_id not in get_network_ids_with_permission_helper(current_user, manager):
         abort(403, 'Insufficient rights for network {}'.format(network_id))
 
@@ -146,6 +162,11 @@ def view_network_analysis_uploader(network_id):
 
 
 def help_compare(experiments):
+    """Help build the analysis comparison page
+
+    :param iter[Experiment] experiments:
+    :return: flask.Response
+    """
     x_label = []
     xd = {}
     entries = defaultdict(list)
@@ -174,15 +195,21 @@ def help_compare(experiments):
 @analysis_blueprint.route('/analysis/comparison/<list:experiment_ids>')
 @login_required
 def view_results_comparison(experiment_ids):
-    """Different data analyses on same query"""
-    experiments = [safe_get_experiment(experiment_id) for experiment_id in experiment_ids]
+    """Different data analyses on same query
+
+    :param list[int] experiment_ids: The identifiers of experiments to compare
+    """
+    experiments = [safe_get_experiment(manager, experiment_id) for experiment_id in experiment_ids]
     return help_compare(experiments)
 
 
 @analysis_blueprint.route('/analysis/comparison/query/<int:query_id>')
 @login_required
 def view_results_comparison_by_query(query_id):
-    """Different data analyses on same query"""
+    """Different data analyses on same query
+
+    :param int query_id: The query identifier whose related experiments to compare
+    """
     query = safe_get_query(query_id)
     return help_compare(query.experiments)
 
@@ -221,7 +248,7 @@ def help_make_experiment_comparison_response(experiments, attachment_name=None):
 @login_required
 def view_results_comparison_csv(experiment_ids):
     """Different data analyses on same query"""
-    experiments = [safe_get_experiment(experiment_id) for experiment_id in experiment_ids]
+    experiments = [safe_get_experiment(manager, experiment_id) for experiment_id in experiment_ids]
     return help_make_experiment_comparison_response(experiments)
 
 
@@ -230,6 +257,7 @@ def view_results_comparison_csv(experiment_ids):
 def view_results_comparison_query_csv(query_id):
     """Returns all data analyses on same query as a CSV"""
     query = safe_get_query(query_id)
+
     return help_make_experiment_comparison_response(
         query.experiments,
         attachment_name='{}_analyses.csv'.format(query_id)

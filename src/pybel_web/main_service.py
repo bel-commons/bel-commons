@@ -23,9 +23,9 @@ from .constants import *
 from .manager import *
 from .models import Project, Query, Report, User
 from .utils import (
-    calculate_overlap_dict, get_network_ids_with_permission_helper, get_networks_with_permission, manager,
-    next_or_jsonify, query_form_to_dict, query_from_network, redirect_explorer, render_network_summary_safe,
-    safe_get_network, safe_get_node, safe_get_query,
+    calculate_overlap_dict, get_networks_with_permission, manager, next_or_jsonify, query_form_to_dict,
+    query_from_network_id, redirect_explorer, render_network_summary_safe, safe_get_network, safe_get_node,
+    safe_get_query,
 )
 
 log = logging.getLogger(__name__)
@@ -170,12 +170,9 @@ def view_explore_network(network_id):
 
     :param int network_id: The identifier of the network to explore
     """
-    if network_id not in get_network_ids_with_permission_helper(current_user, manager):
-        abort(403, 'Insufficient rights for network {}'.format(network_id))
-
-    query = query_from_network(network_id)
-
-    return redirect_explorer(query.id)
+    safe_get_network(network_id)
+    query = query_from_network_id(network_id)
+    return redirect_explorer(query)
 
 
 @ui_blueprint.route('/explore/<int:query_id>', methods=['GET'])
@@ -208,7 +205,7 @@ def view_explore_project(project_id):
     manager.session.add(query)
     manager.session.commit()
 
-    return redirect_explorer(query.id)
+    return redirect_explorer(query)
 
 
 @ui_blueprint.route('/query/build', methods=['GET', 'POST'])
@@ -234,7 +231,7 @@ def get_pipeline():
     manager.session.add(query)
     manager.session.commit()
 
-    return redirect_explorer(query.id)
+    return redirect_explorer(query)
 
 
 @ui_blueprint.route('/namespaces')
@@ -357,8 +354,8 @@ def view_network_comparison(network_1_id, network_2_id):
     safe_get_network(network_1_id)
     safe_get_network(network_2_id)
 
-    q1 = query_from_network(network_1_id)
-    q2 = query_from_network(network_2_id)
+    q1 = query_from_network_id(network_1_id)
+    q2 = query_from_network_id(network_2_id)
 
     log.info('q1: %s from n1 %s', q1, network_1_id)
     log.info('q2: %s from n2 %s', q2, network_2_id)
@@ -507,7 +504,11 @@ def send_async_project_merge(user_id, project_id):
     :param int user_id: The identifier of the user sending the task
     :param int project_id: The identifier of the project to merge
     """
-    task = current_app.celery.send_task('merge-project', args=[user_id, project_id])
+    task = current_app.celery.send_task('merge-project', args=[
+        current_app.config['SQLALCHEMY_DATABASE_URI'],
+        user_id,
+        project_id
+    ])
     flash('Merge task sent: {}'.format(task))
     return redirect(url_for('ui.view_current_user_activity'))
 
@@ -529,7 +530,7 @@ def build_summary_link_query(network_id):
     manager.session.add(query)
     manager.session.commit()
 
-    return redirect_explorer(query.id)
+    return redirect_explorer(query)
 
 
 @ui_blueprint.route('/network/<int:network_id>/sample/')
@@ -544,4 +545,4 @@ def build_subsample_query(network_id):
     manager.session.add(query)
     manager.session.commit()
 
-    return redirect_explorer(query.id)
+    return redirect_explorer(query)

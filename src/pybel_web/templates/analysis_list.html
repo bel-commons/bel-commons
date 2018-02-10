@@ -31,8 +31,9 @@
                 <thead>
                 <tr>
                     <th>EID</th>
-                    <th>QID</th>
-                    <th>Source Data</th>
+                    <th>Query</th>
+                    <th>Data ID</th>
+                    <th>Data Name</th>
                     <th>Description</th>
                     <th>Permutations</th>
                     <th>Created</th>
@@ -45,7 +46,8 @@
                     <tr>
                         <td>{{ experiment.id }} </td>
                         <td>{{ experiment.query.id }}</td>
-                        <td>{{ experiment.source_name }}</td>
+                        <td>{{ experiment.omics.id }}</td>
+                        <td>{{ experiment.omics }}</td>
                         <td>{{ experiment.description }}</td>
                         <td>{{ experiment.permutations }}</td>
                         <td>{{ experiment.created }}</td>

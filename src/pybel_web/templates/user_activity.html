@@ -337,7 +337,7 @@
                                                 {% if protocol_entry['args'] %}
                                                     {% for arg in protocol_entry['args'] %}
                                                         <li><code>
-                                                            {% if protocol_entry['function'] in ['delete_node_by_id', 'expand_node_neighborhood_by_id'] %}
+                                                            {% if protocol_entry['function'] in ['delete_node_by_id', 'expand_node_neighborhood_by_id', 'propagate_node_by_hash'] %}
                                                                 {{ manager.get_node_by_hash(arg) }}
                                                             {% else %}
                                                                 {{ arg }}

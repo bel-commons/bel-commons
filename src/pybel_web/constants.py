@@ -109,4 +109,18 @@ def get_explorer_toolbox():
             'Adds parent chemical entries'
         ))
 
+    if function_is_registered('enrich_proteins_with_enzyme_families'):
+        explorer_toolbox.append((
+            'enrich_proteins_with_enzyme_families',
+            'Add Enzyme Class Members',
+            'Adds enzyme classes for each protein'
+        ))
+
+    if function_is_registered('enrich_enzymes'):
+        explorer_toolbox.append((
+            'enrich_enzymes',
+            'Enrich Enzyme Classes',
+            'Adds proteins corresponding to present ExPASy Enzyme codes'
+        ))
+
     return explorer_toolbox

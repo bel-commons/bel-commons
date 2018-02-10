@@ -176,7 +176,7 @@ class WebTest(unittest.TestCase):
             data=pipeline_query,
         )
 
-        response_data = json.loads(response.get_data())
+        response_data = json.loads(response.get_results_df())
 
         query_id = response_data['id']
 
@@ -206,7 +206,7 @@ class WebTest(unittest.TestCase):
             data=pipeline_query,
         )
 
-        response_data = json.loads(response.get_data())
+        response_data = json.loads(response.get_results_df())
 
         query_id = response_data['id']
 

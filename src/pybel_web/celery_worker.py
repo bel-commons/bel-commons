@@ -21,8 +21,9 @@ from flask import render_template
 from sqlalchemy import and_
 from sqlalchemy.exc import IntegrityError, OperationalError
 
-from pybel import from_cbn_jgif, from_json, from_url, to_bel_path, to_bytes, to_database
+from pybel import from_cbn_jgif, from_json, to_bel_path, to_bytes, to_database
 from pybel.constants import METADATA_CONTACT, METADATA_DESCRIPTION, METADATA_LICENSES
+from pybel.manager import Manager
 from pybel.manager.citation_utils import enrich_pubmed_citations
 from pybel.manager.models import Network
 from pybel.parser.exc import InconsistentDefinitionError
@@ -35,7 +36,7 @@ from pybel_web.celery_utils import create_celery
 from pybel_web.constants import CHARLIE_EMAIL, DANIEL_EMAIL, integrity_message, merged_document_folder
 from pybel_web.manager_utils import fill_out_report, make_graph_summary
 from pybel_web.models import Experiment, Project, User
-from pybel_web.utils import calculate_scores, get_network_summary_dict, manager, safe_get_report
+from pybel_web.utils import calculate_scores, get_network_summary_dict, safe_get_report
 
 log = get_task_logger(__name__)
 
@@ -46,9 +47,6 @@ log.setLevel(logging.DEBUG)
 app = create_application()
 celery = create_celery(app)
 
-log.info('created celery worker')
-log.info('using connection: %s', app.config['PYBEL_CONNECTION'])
-
 dumb_belief_stuff = {
     METADATA_DESCRIPTION: {'Document description'},
     METADATA_CONTACT: {'your@email.com'},
@@ -58,45 +56,15 @@ dumb_belief_stuff = {
 pbw_sender = ("PyBEL Web", 'pybel@scai.fraunhofer.de')
 
 
-@celery.task(name='parse-url')
-def parse_by_url(url):
-    """Parses a graph at the given URL resource"""
-    # FIXME add proper exception handling and feedback
-    try:
-        graph = from_url(url, manager=manager)
-    except Exception:
-        return 'Parsing failed for {}. '.format(url)
+@celery.task(name='summarize-bel')
+def summarize_bel(connection, report_id):
+    """Asynchronously parses a BEL script and emails feedback
 
-    try:
-        network = manager.insert_graph(graph)
-        return network.id
-    except Exception:
-        manager.session.rollback()
-        return 'Inserting failed for {}'.format(url)
-    finally:
-        manager.session.close()
+    :param str connection: A connection to build the manager
+    :param int report_id: A report to parse
+    """
+    manager = Manager(connection=connection)
 
-
-def send_summary_mail(graph, report, t):
-    with app.app_context():
-        html = render_template('email_report.html', graph=graph, **get_network_summary_dict(graph))
-
-        mailer = app.extensions.get('mail')
-        if mailer is not None:
-            mailer.send_message(
-                subject='Parsing Report for {}'.format(graph),
-                recipients=[report.user.email],
-                body='Below is the parsing report for {}, completed in {:.2f} seconds.'.format(graph, t),
-                html=html,
-                sender=pbw_sender,
-            )
-        else:
-            log.info('HTML rendered: %s', html[:500])
-
-
-@celery.task(name='network-summarize')
-def async_summarizer(report_id):
-    """Asynchronously parses a BEL script and emails feedback"""
     t = time.time()
     report = safe_get_report(manager, report_id)
     source_name = report.source_name
@@ -114,6 +82,13 @@ def async_summarizer(report_id):
             )
 
     def finish_parsing(subject, body):
+        """Sends a message and finishes parsing
+
+        :param str subject:
+        :param str body:
+        :return: The body
+        :rtype: str
+        """
         make_mail(subject, body)
         report.message = body
         manager.session.commit()
@@ -140,20 +115,26 @@ def async_summarizer(report_id):
     send_summary_mail(graph, report, time_difference)
 
     report.time = time_difference
+    report.completed = True
     manager.session.add(report)
     manager.session.commit()
 
     log.info('finished in %.2f seconds', time.time() - t)
 
+    manager.session.close()
+
     return 0
 
 
-@celery.task(name='pybelparser')
-def async_parser(report_id):
+@celery.task(name='upload-bel')
+def upload_bel(connection, report_id):
     """Asynchronously parses a BEL script and sends email feedback
 
+    :param str connection: The connection string
     :param int report_id: Report identifier
     """
+    manager = Manager(connection=connection)
+
     t = time.time()
     report = safe_get_report(manager, report_id)
 
@@ -315,12 +296,15 @@ def async_parser(report_id):
 
 
 @celery.task(name='merge-project')
-def merge_project(user_id, project_id):
+def merge_project(connection, user_id, project_id):
     """Merges the graphs in a project and does stuff
 
+    :param str connection: A connection to build the manager
     :param int user_id: The database identifier of the user
     :param int project_id: The database identifier of the project
     """
+    manager = Manager(connection=connection)
+
     t = time.time()
 
     user = manager.session.query(User).get(user_id)
@@ -358,12 +342,13 @@ def merge_project(user_id, project_id):
 
 
 @celery.task(name='run-cmpa')
-def run_cmpa(experiment_id):
+def run_cmpa(connection, experiment_id):
     """Runs the CMPA analysis
 
+    :param str connection: A connection to build the manager
     :param int experiment_id:
     """
-    log.info('starting experiment %s', experiment_id)
+    manager = Manager(connection=connection)
 
     experiment = manager.session.query(Experiment).get(experiment_id)
 
@@ -374,7 +359,7 @@ def run_cmpa(experiment_id):
     log.info('executing query')
     graph = experiment.query.run(manager)
 
-    df = loads(experiment.source)
+    df = experiment.get_source_df()
 
     gene_column = experiment.gene_column
     data_column = experiment.data_column
@@ -389,8 +374,7 @@ def run_cmpa(experiment_id):
     log.info('calculating scores')
     scores = calculate_scores(graph, data, experiment.permutations)
 
-    experiment.result = dumps(scores)
-    experiment.completed = True
+    experiment.dump_results(scores)
 
     try:
         manager.session.add(experiment)
@@ -419,9 +403,15 @@ def run_cmpa(experiment_id):
     return experiment_id
 
 
-@celery.task(name='receive-network')
-def async_recieve(payload):
-    """Receives a JSON serialized BEL graph"""
+@celery.task(name='upload-json')
+def upload_json(connection, payload):
+    """Receives a JSON serialized BEL graph
+
+    :param str connection: A connection to build the manager
+    :param payload: JSON dictionary for :func:`pybel.from_json`
+    """
+    manager = Manager(connection=connection)
+
     try:
         graph = from_json(payload)
     except Exception:
@@ -441,12 +431,14 @@ def async_recieve(payload):
 
 
 @celery.task(name='upload-cbn')
-def upload_cbn(dir_path):
+def upload_cbn(connection, dir_path):
     """Uploads CBN data to edge store
 
+    :param str connection: A connection to build the manager
     :param str dir_path: Directory full of CBN JGIF files
-    :param pybel.Manager manager:
     """
+    manager = Manager(connection=connection)
+
     t = time.time()
 
     for jfg_path in os.listdir(dir_path):
@@ -465,3 +457,37 @@ def upload_cbn(dir_path):
     log.info('done in %.2f', time.time() - t)
 
     return 0
+
+
+def send_summary_mail(graph, report, t):
+    """Sends a mail with a summary
+
+    :param pybel.BELGraph graph:
+    :param Report report:
+    :param float t:
+    """
+    with app.app_context():
+        html = render_template(
+            'email_report.html',
+            graph=graph,
+            report=report,
+            time=t,
+            **get_network_summary_dict(graph)
+        )
+
+        mailer = app.extensions.get('mail')
+        if mailer is not None:
+            mailer.send_message(
+                subject='Parsing Report for {}'.format(graph),
+                recipients=[report.user.email],
+                body='Below is the parsing report for {}, completed in {:.2f} seconds.'.format(graph, t),
+                html=html,
+                sender=pbw_sender,
+            )
+        else:
+            path = os.path.join(os.path.expanduser('~'), 'Downloads', 'report_{}.html'.format(report.id))
+
+            with open(path, 'w') as file:
+                print(html, file=file)
+
+            log.info('HTML printed to file at: %s', path)

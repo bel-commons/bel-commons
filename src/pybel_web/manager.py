@@ -52,7 +52,7 @@ except ImportError:
 else:
     log.info('Using Bio2BEL ExPASy')
     expasy_manager = bio2bel_expasy.Manager()
-    in_place_mutator(expasy_manager.enrich_proteins)
+    in_place_mutator(expasy_manager.enrich_proteins_with_enzyme_families)
     in_place_mutator(expasy_manager.enrich_enzymes)
 
 try:

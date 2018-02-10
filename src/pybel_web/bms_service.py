@@ -18,7 +18,7 @@ bms_blueprint = Blueprint('bms', __name__)
 
 
 def make_folder_queue(folder_path, allow_nested=False, citation_clearing=True, infer_origin=False):
-    """This shuld be pretty similar to the one above
+    """This should be pretty similar to the one above
 
     :param str folder_path:
     :param bool allow_nested:
@@ -58,7 +58,7 @@ def make_folder_queue(folder_path, allow_nested=False, citation_clearing=True, i
 
         report_id, report_name = report.id, report.source_name
         manager.session.close()
-        task = current_app.celery.send_task('pybelparser', args=[report_id])
+        task = current_app.celery.send_task('upload-bel', args=[report_id])
 
         tasks.append(task)
 

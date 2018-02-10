@@ -8,7 +8,6 @@
 {% block title %}Compilation Summary{% endblock %}
 
 {% block content %}
-    <br />
     <a id="top"></a>
     <div class="container">
         <a id="provenance"></a>
@@ -25,9 +24,15 @@
 
                     {% if graph.description %}
                         <dt>Description</dt>
-
                         <dd>{{ graph.description }}</dd>
                     {% endif %}
+
+                    <dt>Uploader</dt>
+                    <dd>{{ report.user }}</dd>
+                    <dt>Upload Time</dt>
+                    <dd>{{ report.created }}</dd>
+                    <dt>Parse Time</dt>
+                    <dd>{{ time }} seconds</dd>
                 </dl>
             </div>
         </div>

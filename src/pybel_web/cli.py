@@ -159,8 +159,8 @@ def run(host, port, default_config, debug, config, with_gunicorn, workers):
     if 'BEL4IMOCEDE_DATA_PATH' in os.environ:
         try:
             from . import mozg_service
-        except:
-            log.exception('problem loading mozg service')
+        except Exception:
+            log.info('unable to load mozg service')
         else:
             app.register_blueprint(mozg_service.mozg_blueprint)
 
@@ -182,19 +182,17 @@ def run(host, port, default_config, debug, config, with_gunicorn, workers):
 @click.option('--debug', default='INFO', type=click.Choice(['INFO', 'DEBUG']))
 def worker(concurrency, debug):
     """Runs the celery worker"""
-    from .celery_worker import app
+    from .celery_worker import celery
     from celery.bin import worker
 
-    pybel_worker = worker.worker(app=app.celery)
+    pybel_worker = worker.worker(app=celery)
 
-    options = {
-        'broker': 'amqp://guest:guest@localhost:5672//',
-        'loglevel': debug,
-        'traceback': True,
-        'concurrency': concurrency
-    }
-
-    pybel_worker.run(**options)
+    pybel_worker.run(
+        broker='amqp://guest:guest@localhost:5672//',
+        loglevel=debug,
+        traceback=True,
+        concurrency=concurrency
+    )
 
 
 @main.group()

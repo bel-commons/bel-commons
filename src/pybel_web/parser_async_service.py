@@ -10,7 +10,6 @@ from flask import Blueprint, current_app, flash, redirect, render_template, url_
 from flask_security import current_user, login_required
 
 from pybel.constants import PYBEL_CONNECTION
-from .celery_utils import create_celery
 from .forms import ParseUrlForm, ParserForm
 from .models import Report
 from .utils import manager
@@ -63,39 +62,16 @@ def view_parser():
 
     time.sleep(2)
 
+    connection = current_app.config['SQLALCHEMY_DATABASE_URI']
+
     if form.feedback.data:
-        task = current_app.celery.send_task('network-summarize', args=[report_id])
-        log.info('Email summary task from %s: %s', current_user_str, task.id)
+        task = current_app.celery.send_task('summarize-bel', args=[connection, report_id])
+        log.info('Email summary task from %s: report=%s/task=%s', current_user_str, report_id, task.id)
         flash('Queued email summary task {} for {}.'.format(report_id, report_name))
+
     else:
-        task = current_app.celery.send_task('pybelparser', args=[report_id])
-        log.info('Parse task from %s: %s', current_user_str, task.id)
+        task = current_app.celery.send_task('upload-bel', args=[connection, report_id])
+        log.info('Parse task from %s: report=%s/task=%s', current_user_str, report_id, task.id)
         flash('Queued parsing task {} for {}.'.format(report_id, report_name))
 
     return redirect(url_for('ui.view_current_user_activity'))
-
-
-@parser_async_blueprint.route('/parse/url', methods=('GET', 'POST'))
-def view_url_parser():
-    """Renders a form for parsing by URL"""
-    form = ParseUrlForm()
-
-    if not form.validate_on_submit():
-        return render_template(
-            'generic_form.html',
-            form=form,
-            current_user=current_user,
-            page_title='Upload by URL',
-            page_header='Upload by URL',
-        )
-
-    celery = create_celery(current_app)
-    task = celery.send_task('parse-url', args=[
-        current_app.config.get(PYBEL_CONNECTION),
-        form.url.data
-    ])
-
-    log.info('Parse URL task from %s: %s', current_user, task.id)
-    flash('Queued parsing task {} for {}.'.format(task.id, form.url.data))
-
-    return redirect(url_for('view_current_user_activity'))

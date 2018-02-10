@@ -36,7 +36,29 @@ USER_NETWORK_TABLE_NAME = 'pybel_user_network'
 COMMENT_TABLE_NAME = 'pybel_comment'
 VOTE_TABLE_NAME = 'pybel_vote'
 OVERLAP_TABLE_NAME = 'pybel_overlap'
+OMICS_TABLE_NAME = 'pybel_omics'
 
+
+class Omics(Base):
+    """Represents a file filled with omics data"""
+    __tablename__ = OMICS_TABLE_NAME
+
+    id = Column(Integer, primary_key=True)
+
+    created = Column(DateTime, default=datetime.datetime.utcnow, doc='The date on which this file was uploaded')
+    description = Column(Text, nullable=True, doc='A description of the purpose of the analysis')
+
+    source_name = Column(Text, doc='The name of the source file')
+    source = Column(LargeBinary(LONGBLOB), doc='The source document holding the data')
+
+    gene_column = Column(Text, nullable=False)
+    data_column = Column(Text, nullable=False)
+
+    user_id = Column(Integer, ForeignKey('{}.id'.format(USER_TABLE_NAME)))
+    user = relationship('User', backref=backref('omics', lazy='dynamic'))
+
+    def __str__(self):
+        return str(self.source_name)
 
 class Experiment(Base):
     """Represents a Candidate Mechanism Perturbation Amplitude experiment run in PyBEL Web"""
@@ -45,25 +67,39 @@ class Experiment(Base):
     id = Column(Integer, primary_key=True)
 
     created = Column(DateTime, default=datetime.datetime.utcnow, doc='The date on which this analysis was run')
-    description = Column(Text, nullable=True, doc='A description of the purpose of the analysis')
-    permutations = Column(Integer, doc='Number of permutations performed')
-    source_name = Column(Text, doc='The name of the source file')
-    source = Column(LargeBinary(LONGBLOB), doc='The source document holding the data')
-    result = Column(LargeBinary(LONGBLOB), doc='The result python dictionary')
 
-    query_id = Column(Integer, ForeignKey('{}.id'.format(QUERY_TABLE_NAME)), nullable=False)
+    query_id = Column(Integer, ForeignKey('{}.id'.format(QUERY_TABLE_NAME)), nullable=False, index=True)
     query = relationship('Query', backref=backref("experiments"))
 
-    user_id = Column(Integer, ForeignKey('{}.id'.format(USER_TABLE_NAME)))
+    user_id = Column(Integer, ForeignKey('{}.id'.format(USER_TABLE_NAME)), nullable=False, index=True)
     user = relationship('User', backref=backref('experiments', lazy='dynamic'))
 
-    gene_column = Column(Text, nullable=False)
-    data_column = Column(Text, nullable=False)
+    omics_id = Column(Integer, ForeignKey('{}.id'.format(OMICS_TABLE_NAME)), nullable=False, index=True)
+    omics = relationship('Omics', backref=backref('experiments', lazy='dynamic'))
+
+    type = Column(String(8), nullable=False, default='CMPA', index=True, doc='Analysis type. CMPA, RCR, etc.')
+    permutations = Column(Integer, doc='Number of permutations performed')
+    result = Column(LargeBinary(LONGBLOB), doc='The result python dictionary')
 
     completed = Column(Boolean, default=False)
 
-    def get_data(self):
-        """Loads the pickled pandas dataframe back into an object
+    def get_source_df(self):
+        """Loads the pickled pandas DataFrame from the source file
+
+        :rtype: pandas.DataFrame
+        """
+        return loads(self.omics.source)
+
+    def dump_results(self, scores):
+        """Dumps the results and marks this experiment as complete
+
+        :param dict[tuple,tuple] scores: The scores to store in this experiment
+        """
+        self.result = dumps(scores)
+        self.completed = True
+
+    def get_results_df(self):
+        """Loads the pickled pandas DataFrame back into an object
 
         :rtype: pandas.DataFrame
         """
@@ -74,7 +110,7 @@ class Experiment(Base):
 
         :rtype: list[tuple]
         """
-        result = self.get_data()
+        result = self.get_results_df()
         return [
             (k, v)
             for k, v in result.items()
@@ -83,6 +119,18 @@ class Experiment(Base):
 
     def __repr__(self):
         return '<Experiment on {}>'.format(self.query)
+
+    @property
+    def source_name(self):
+        return self.omics.source_name
+
+    @property
+    def gene_column(self):
+        return self.omics.gene_column
+
+    @property
+    def data_column(self):
+        return self.omics.data_column
 
 
 class Report(Base):
@@ -365,9 +413,9 @@ class User(Base, UserMixin):
     def is_scai(self):
         """Is this user from SCAI?"""
         return (
-            self.has_role('scai') or
-            self.email.endswith('@scai.fraunhofer.de') or
-            self.email.endswith('@scai-extern.fraunhofer.de')
+                self.has_role('scai') or
+                self.email.endswith('@scai.fraunhofer.de') or
+                self.email.endswith('@scai-extern.fraunhofer.de')
         )
 
     @property
