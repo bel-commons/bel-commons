@@ -132,6 +132,9 @@ class Experiment(Base):
     def data_column(self):
         return self.omics.data_column
 
+    @property
+    def description(self):
+        return self.omics.description
 
 class Report(Base):
     """Stores information about compilation and uploading events"""
