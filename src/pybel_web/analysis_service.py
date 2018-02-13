@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import csv
 import json
 import logging
 import pickle
@@ -161,35 +160,55 @@ def view_network_analysis_uploader(network_id):
     return redirect(url_for('.view_query_analysis_uploader', query_id=query.id))
 
 
-def help_compare(experiments):
-    """Help build the analysis comparison page
+def get_dataframe_from_experiments(experiments):
+    """
 
     :param iter[Experiment] experiments:
-    :return: flask.Response
+    :rtype: pandas.DataFrame
     """
-    x_label = []
-    xd = {}
+    x_label = ['name', 'namespace']
+
     entries = defaultdict(list)
 
     for experiment in experiments:
         if experiment.result is None:
             continue
-        x_label.append(experiment.description)
-        xd[experiment.id] = experiment.description
-        for entry, values in sorted(experiment.get_data_list()):
-            entries[entry].append(values[3])
 
-    chart_data = [
-        [entry] + values
+        x_label.append('[{}] {}'.format(experiment.id, experiment.description))
+
+        for (_, namespace, name), values in sorted(experiment.get_data_list()):
+            median_value = values[3]
+            entries[name, namespace].append(median_value)
+
+    result = [
+        list(entry) + list(values)
         for entry, values in entries.items()
     ]
 
-    return render_template(
-        'analysis_compare.html',
-        x_label=x_label,
-        xd=xd,
-        chart_data=chart_data
-    )
+    df = pd.DataFrame(result, columns=x_label)
+    df = df.fillna(0)
+
+    return df
+
+
+@analysis_blueprint.route('/api/analysis/comparison/<list:experiment_ids>.tsv')
+@login_required
+def calculate_comparison(experiment_ids):
+    """Different data analyses on same query
+
+    :param list[int] experiment_ids: The identifiers of experiments to compare
+    :return: flask.Response
+    """
+    experiments = [safe_get_experiment(manager, experiment_id) for experiment_id in experiment_ids]
+    df = get_dataframe_from_experiments(experiments)
+
+    # TODO consider doing k-means clustering here if a K is given in the arguments
+
+    si = StringIO()
+    df.to_csv(si, index=False, sep='\t')
+    output = make_response(si.getvalue())
+    output.headers["Content-type"] = "text/tab-separated-values"
+    return output
 
 
 @analysis_blueprint.route('/analysis/comparison/<list:experiment_ids>')
@@ -199,8 +218,7 @@ def view_results_comparison(experiment_ids):
 
     :param list[int] experiment_ids: The identifiers of experiments to compare
     """
-    experiments = [safe_get_experiment(manager, experiment_id) for experiment_id in experiment_ids]
-    return help_compare(experiments)
+    return render_template('analysis_compare.html', experiment_ids=experiment_ids)
 
 
 @analysis_blueprint.route('/analysis/comparison/query/<int:query_id>')
@@ -211,54 +229,5 @@ def view_results_comparison_by_query(query_id):
     :param int query_id: The query identifier whose related experiments to compare
     """
     query = safe_get_query(query_id)
-    return help_compare(query.experiments)
-
-
-def help_make_experiment_comparison_response(experiments, attachment_name=None):
-    x_label = []
-    entries = defaultdict(list)
-
-    for experiment in experiments:
-        if not experiment.result:
-            continue
-
-        x_label.append('[{}] {}'.format(experiment.id, experiment.description))
-
-        for entry, values in sorted(experiment.get_data_list()):
-            entries[entry].append(values[3])
-
-    chart_data = [['Type', 'Namespace', 'Name'] + x_label] + [
-        list(entry) + values
-        for entry, values in entries.items()
-    ]
-
-    si = StringIO()
-    cw = csv.writer(si)
-    cw.writerows(chart_data)
-    output = make_response(si.getvalue())
-
-    if attachment_name:
-        output.headers["Content-Disposition"] = "attachment; filename={}".format(attachment_name)
-
-    output.headers["Content-type"] = "text/csv"
-    return output
-
-
-@analysis_blueprint.route('/analysis/comparison/<list:experiment_ids>.csv')
-@login_required
-def view_results_comparison_csv(experiment_ids):
-    """Different data analyses on same query"""
-    experiments = [safe_get_experiment(manager, experiment_id) for experiment_id in experiment_ids]
-    return help_make_experiment_comparison_response(experiments)
-
-
-@analysis_blueprint.route('/query/<int:query_id>/analyses.csv')
-@login_required
-def view_results_comparison_query_csv(query_id):
-    """Returns all data analyses on same query as a CSV"""
-    query = safe_get_query(query_id)
-
-    return help_make_experiment_comparison_response(
-        query.experiments,
-        attachment_name='{}_analyses.csv'.format(query_id)
-    )
+    experiment_ids = [experiment.id for experiment in query.experiments]
+    return render_template('analysis_compare.html', experiment_ids=experiment_ids)
