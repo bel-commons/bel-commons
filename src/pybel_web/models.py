@@ -60,6 +60,7 @@ class Omics(Base):
     def __str__(self):
         return str(self.source_name)
 
+
 class Experiment(Base):
     """Represents a Candidate Mechanism Perturbation Amplitude experiment run in PyBEL Web"""
     __tablename__ = EXPERIMENT_TABLE_NAME
@@ -136,6 +137,7 @@ class Experiment(Base):
     @property
     def description(self):
         return self.omics.description
+
 
 class Report(Base):
     """Stores information about compilation and uploading events"""
@@ -538,19 +540,19 @@ class Assembly(Base):
         return union(network.as_bel() for network in self.networks)
 
     @staticmethod
-    def from_query(manager, query):
-        """Builds an assembly from a query
+    def from_networks(networks, user=None):
+        """Builds an assembly from a list of networks
 
-        :param manager: A PyBEL cache manager
-        :param pybel_tools.query.Query query:
+        :param iter[Network] networks: The network in this assembly
+        :param Optional[User] user: The user who created this assembly
         :rtype: Assembly
         """
-        return Assembly(
-            networks=[
-                manager.session.query(Network).get(network_id)
-                for network_id in query.network_ids
-            ],
-        )
+        assembly = Assembly(networks=networks)
+
+        if user is not None and user.is_authenticated:
+            assembly.user = user
+
+        return assembly
 
     @staticmethod
     def from_network(network, user=None):
@@ -560,12 +562,22 @@ class Assembly(Base):
         :param Optional[User] user: The user who created this assembly
         :rtype: Assembly
         """
-        assembly = Assembly(networks=[network])
+        return Assembly.from_networks(networks=[network], user=user)
 
-        if user is not None and user.is_authenticated:
-            assembly.user = user
+    @staticmethod
+    def from_query(manager, query, user=None):
+        """Builds an assembly from a query
 
-        return assembly
+        :param manager: A PyBEL cache manager
+        :param pybel_tools.query.Query query: A query object
+        :param Optional[User] user: The user who created this assembly
+        :rtype: Assembly
+        """
+        networks = [
+            manager.session.query(Network).get(network_id)
+            for network_id in query.network_ids
+        ]
+        return Assembly.from_networks(networks, user=user)
 
     def __repr__(self):
         return '<Assembly {} with [{}]>'.format(
@@ -683,24 +695,16 @@ class Query(Base):
         return self.data.run(manager)
 
     @staticmethod
-    def from_query(manager, query, user=None):
-        """Builds a orm query from a pybel-tools query
+    def from_assembly(assembly, user=None):
+        """Builds a query from an assembly
 
-        :param pybel.manager.Manager manager:
-        :param pybel_tools.query.Query query:
-        :param Optional[pybel_web.models.User] user:
+        :param Assembly assembly: An assembly
+        :param Optional[User] user: The user who owns this query
         :rtype: Query
         """
-        assembly = Assembly.from_query(manager, query)
-
-        query = Query(
-            assembly=assembly,
-            seeding=query.seeding_to_jsons(),
-            pipeline_protocol=query.pipeline.to_jsons(),
-        )
+        query = Query(assembly=assembly)
 
         if user is not None and user.is_authenticated:
-            assembly.user = user
             query.user = user
 
         return query
@@ -709,17 +713,30 @@ class Query(Base):
     def from_network(network, user=None):
         """Builds a query from a network
 
-        :param network:
-        :param user:
+        :param Network network: A network
+        :param Optional[User] user: The user who owns this query
         :rtype: Query
         """
         assembly = Assembly.from_network(network, user=user)
-        query = Query(assembly=assembly)
-
-        if user is not None and user.is_authenticated:
-            query.user = user
-
+        query = Query.from_assembly(assembly, user=user)
         return query
+
+    @staticmethod
+    def from_query(manager, query, user=None):
+        """Builds a orm query from a pybel-tools query
+
+        :param pybel.manager.Manager manager: A database manager
+        :param pybel_tools.query.Query query: A query
+        :param Optional[pybel_web.models.User] user: A user
+        :rtype: Query
+        """
+        assembly = Assembly.from_query(manager, query, user=user)
+
+        result = Query.from_assembly(assembly, user=user)
+        result.seeding = query.seeding_to_jsons()
+        result.pipeline_protocol = query.pipeline.to_jsons()
+
+        return result
 
     @staticmethod
     def from_query_args(manager, network_ids, user=None, seed_list=None, pipeline=None):
