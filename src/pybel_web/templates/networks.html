@@ -298,16 +298,17 @@
                                     </a>
                                 </li>
 
-                                {% if current_user.is_authenticated %}
-                                    <li>
-                                        <div class="btn-group">
-                                            <button type="button" class="btn btn-default dropdown-toggle"
-                                                    data-toggle="dropdown"
-                                                    aria-haspopup="true" aria-expanded="false">
-                                                <span class="glyphicon glyphicon-download" aria-hidden="true"></span> Download
-                                                <span class="caret"></span>
-                                            </button>
-                                            <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
+                                <li>
+                                    <div class="btn-group">
+                                        <button type="button" class="btn btn-default dropdown-toggle"
+                                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                            <span class="glyphicon glyphicon-download" aria-hidden="true"></span>
+                                            Download
+                                            <span class="caret"></span>
+                                        </button>
+                                        <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
+
+                                            {% if current_user.is_authenticated %}
                                                 <li>
                                                     <a href="{{ url_for('dbs.export_network', network_id=network.id, serve_format='bel') }}">
                                                     <span class="glyphicon glyphicon-download"
@@ -354,22 +355,31 @@
                                                     <span class="glyphicon glyphicon-download"
                                                           aria-hidden="true"></span> CSV</a>
                                                 </li>
-                                                <li>
-                                                    <a href="{{ url_for('dbs.export_network', network_id=network.id, serve_format='gsea') }}">
+                                            {% endif %}
+
+                                            <li>
+                                                <a href="{{ url_for('dbs.export_network', network_id=network.id, serve_format='gsea') }}">
                                                     <span class="glyphicon glyphicon-download"
-                                                          aria-hidden="true"></span> GSEA
-                                                    </a>
-                                                </li>
-                                                <li>
-                                                    <a href="{{ url_for('dbs.export_network', network_id=network.id, serve_format='citations') }}">
+                                                          aria-hidden="true"></span> GRP
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a href="{{ url_for('dbs.export_network', network_id=network.id, serve_format='citations') }}">
                                                     <span class="glyphicon glyphicon-download"
                                                           aria-hidden="true"></span> Citations
-                                                    </a>
-                                                </li>
-                                            </ul>
-                                        </div>
-                                    </li>
-                                {% endif %}
+                                                </a>
+                                            </li>
+                                            <li role="separator" class="divider"></li>
+                                            <li>
+                                                <a href="">
+                                                    Download Format Help
+                                                </a>
+                                            </li>
+
+                                        </ul>
+                                    </div>
+                                </li>
+
 
                                 {% if current_user.is_authenticated and ((network.report and network.report.user == current_user) or current_user.is_admin) %}
                                     <li>

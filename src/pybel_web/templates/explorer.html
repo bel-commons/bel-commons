@@ -98,7 +98,7 @@
                 </button>
 
                     <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#export">
-                        Export
+                        Download
                     </button>
 
                 <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#paths">
@@ -807,9 +807,9 @@
                         {% endif %}
 
                         <tr>
-                            <td>Save as a GSEA <a
+                            <td>Save as a <a
                                     href="https://software.broadinstitute.org/cancer/software/gsea/wiki/index.php/Data_formats#GRP:_Gene_set_file_format_.28.2A.grp.29">GRP</a>
-                                file
+                                file for Gene Set Enrichment Analysis (GSEA)
                             </td>
                             <td>
                                 <button type="button" class="btn btn-default explorer-download" data-format="gsea">
@@ -818,7 +818,7 @@
                             </td>
                         </tr>
                         <tr>
-                            <td>Save Citations as file</td>
+                            <td>Save the citations as list of PubMed identifiers in a text file</td>
                             <td>
                                 <button type="button" class="btn btn-default explorer-download" data-format="citations">
                                     <span class="glyphicon glyphicon-download" aria-hidden="true"></span>
@@ -829,7 +829,7 @@
                     </table>
 
                     {% if not current_user.is_authenticated %}
-                        <p><a href="{{ url_for('security.login') }}">Log In</a> for more options.</p>
+                        <p><a href="{{ url_for('security.login') }}">Log In</a> for more download options.</p>
                     {% endif %}
 
                 </div><!-- /.Modal body -->
