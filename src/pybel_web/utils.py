@@ -418,10 +418,10 @@ def calculate_overlap_dict(g1, g2, g1_label=None, g2_label=None):
 
 
 def iter_public_networks(manager_):
-    """Lists the graphs that have been made public
+    """Lists the recent networks from :meth:`pybel.manager.Manager.list_recent_networks()` that have been made public
 
     :param pybel.manager.Manager manager_:
-    :rtype: list[Network]
+    :rtype: iter[Network]
     """
     return (
         network
@@ -655,7 +655,7 @@ def calculate_scores(graph, data, runs):
 def get_node_by_hash_or_404(node_hash):
     """Gets a node's hash or sends a 404 missing message
 
-    :param str node_hash: Node hash
+    :param str node_hash: A PyBEL node hash
     :rtype: pybel.manager.models.Node
     """
     node = manager.get_node_by_hash(node_hash)
@@ -675,7 +675,7 @@ def get_edge_by_hash_or_404(edge_hash):
     edge = manager.get_edge_by_hash(edge_hash)
 
     if edge is None:
-        abort(404, 'Edge {} not found'.format(edge_hash))
+        abort(404, 'Edge not found: {}'.format(edge_hash))
 
     return edge
 
@@ -816,7 +816,7 @@ def safe_get_project(project_id):
 def get_network_or_404(network_id):
     """Gets a network or aborts 404 if it doesn't exist
 
-    :param int network_id:
+    :param int network_id: The identifier of the network
     :rtype: Network
     :raises: HTTPException
     """
@@ -831,7 +831,7 @@ def get_network_or_404(network_id):
 def safe_get_network(network_id):
     """Aborts if the current user is not the owner of the network
 
-    :type network_id: int
+    :param int network_id: The identifier of the network
     :rtype: Network
     :raises: HTTPException
     """
