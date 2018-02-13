@@ -552,6 +552,21 @@ class Assembly(Base):
             ],
         )
 
+    @staticmethod
+    def from_network(network, user=None):
+        """Builds an assembly from a singular network
+
+        :param Network network: The network in this assembly
+        :param Optional[User] user: The user who created this assembly
+        :rtype: Assembly
+        """
+        assembly = Assembly(networks=[network])
+
+        if user is not None and user.is_authenticated:
+            assembly.user = user
+
+        return assembly
+
     def __repr__(self):
         return '<Assembly {} with [{}]>'.format(
             self.id,
@@ -686,6 +701,22 @@ class Query(Base):
 
         if user is not None and user.is_authenticated:
             assembly.user = user
+            query.user = user
+
+        return query
+
+    @staticmethod
+    def from_network(network, user=None):
+        """Builds a query from a network
+
+        :param network:
+        :param user:
+        :rtype: Query
+        """
+        assembly = Assembly.from_network(network, user=user)
+        query = Query(assembly=assembly)
+
+        if user is not None and user.is_authenticated:
             query.user = user
 
         return query
