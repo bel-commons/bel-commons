@@ -13,7 +13,6 @@ import json
 import logging
 import os
 import time
-from pickle import dumps, loads
 
 import requests.exceptions
 from celery.utils.log import get_task_logger
@@ -45,6 +44,7 @@ enable_cool_mode()  # turn off warnings for compilation
 log.setLevel(logging.DEBUG)
 
 app = create_application()
+mail = app.extensions.get('mail')
 celery = create_celery(app)
 
 dumb_belief_stuff = {
@@ -70,11 +70,11 @@ def summarize_bel(connection, report_id):
     source_name = report.source_name
 
     def make_mail(subject, body):
-        if 'mail' not in app.extensions:
+        if not mail:
             return
 
         with app.app_context():
-            app.extensions['mail'].send_message(
+            mail.send_message(
                 subject=subject,
                 recipients=[report.user.email],
                 body=body,
@@ -144,11 +144,11 @@ def upload_bel(connection, report_id):
     log.info('Starting parse task for %s (report %s)', source_name, report_id)
 
     def make_mail(subject, body):
-        if 'mail' not in app.extensions:
+        if not mail:
             return
 
         with app.app_context():
-            app.extensions['mail'].send_message(
+            mail.send_message(
                 subject=subject,
                 recipients=[report.user.email],
                 body=body,
@@ -230,16 +230,15 @@ def upload_bel(connection, report_id):
         message = 'Granted rights for {} to {} after parsing {}'.format(network, report.user, source_name)
         return finish_parsing('Granted Rights from {}'.format(source_name), message)
 
+    log.info('enriching graph')
+    add_canonical_names(graph)
+    add_identifiers(graph)
+
+    if report.infer_origin:
+        infer_central_dogma(graph)
+
     try:
-        log.info('enriching graph')
-        add_canonical_names(graph)
-
-        add_identifiers(graph)
-
-        if report.infer_origin:
-            infer_central_dogma(graph)
-
-        enrich_pubmed_citations(manager, graph)
+        enrich_pubmed_citations(manager, graph)  # FIXME send this as a follow-up task
 
     except (IntegrityError, OperationalError):  # just skip this if there's a problem
         manager.session.rollback()
@@ -325,18 +324,17 @@ def merge_project(connection, user_id, project_id):
         to_bel_path(graph, path)
         log.info('Merge took %.2f seconds to %s', time.time() - t, path)
 
-    if 'mail' not in app.extensions:
-        log.warning('Download from: %s', url_link)
-        return
+    log.info('Download from: %s', url_link)
 
-    app.extensions['mail'].send_message(
-        subject='Merged BEL Project BEL Resources: {} '.format(project.name),
-        recipients=[user.email],
-        body='The BEL documents from {} were merged. '
-             'The resulting BEL script is attached and '
-             'given the serial number {}. Download from: {}'.format(project.name, graph.name, url_link),
-        sender=pbw_sender
-    )
+    if mail is not None:
+        mail.send_message(
+            subject='Merged BEL Project BEL Resources: {} '.format(project.name),
+            recipients=[user.email],
+            body='The BEL documents from {} were merged. '
+                 'The resulting BEL script is attached and '
+                 'given the serial number {}. Download from: {}'.format(project.name, graph.name, url_link),
+            sender=pbw_sender
+        )
 
     return 1
 
@@ -394,9 +392,9 @@ def run_cmpa(connection, experiment_id):
         source_name
     )
 
-    if 'mail' in app.extensions:
+    if mail is not None:
         with app.app_context():
-            app.extensions['mail'].send_message(
+            mail.send_message(
                 subject='CMPA Analysis complete',
                 recipients=[email],
                 body=message,
@@ -478,9 +476,8 @@ def send_summary_mail(graph, report, t):
             **get_network_summary_dict(graph)
         )
 
-        mailer = app.extensions.get('mail')
-        if mailer is not None:
-            mailer.send_message(
+        if mail is not None:
+            mail.send_message(
                 subject='Parsing Report for {}'.format(graph),
                 recipients=[report.user.email],
                 body='Below is the parsing report for {}, completed in {:.2f} seconds.'.format(graph, t),
