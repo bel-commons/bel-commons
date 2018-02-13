@@ -24,7 +24,7 @@ from .manager import *
 from .models import Project, Query, Report, User
 from .utils import (
     calculate_overlap_dict, get_networks_with_permission, manager, next_or_jsonify, query_form_to_dict,
-    query_from_network_id, redirect_explorer, render_network_summary_safe, safe_get_network, safe_get_node,
+    query_from_network, redirect_explorer, render_network_summary_safe, safe_get_network, safe_get_node,
     safe_get_query,
 )
 
@@ -170,8 +170,8 @@ def view_explore_network(network_id):
 
     :param int network_id: The identifier of the network to explore
     """
-    safe_get_network(network_id)
-    query = query_from_network_id(network_id)
+    network = safe_get_network(network_id)
+    query = query_from_network(network)
     return redirect_explorer(query)
 
 
@@ -351,11 +351,11 @@ def view_network_comparison(network_1_id, network_2_id):
     :param int network_1_id: Identifier for the first network
     :param int network_2_id: Identifier for the second network
     """
-    safe_get_network(network_1_id)
-    safe_get_network(network_2_id)
+    network_1 = safe_get_network(network_1_id)
+    network_2 = safe_get_network(network_2_id)
 
-    q1 = query_from_network_id(network_1_id)
-    q2 = query_from_network_id(network_2_id)
+    q1 = query_from_network(network_1)
+    q2 = query_from_network(network_2)
 
     log.info('q1: %s from n1 %s', q1, network_1_id)
     log.info('q2: %s from n2 %s', q2, network_2_id)

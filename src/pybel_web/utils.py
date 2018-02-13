@@ -843,14 +843,14 @@ def safe_get_network(network_id):
     return network
 
 
-def query_from_network_id(network_id, autocommit=True):  # FIXME make it take a straight network
-    """Makes a query from the given network identifier
+def query_from_network(network, autocommit=True):
+    """Makes a query from the given network
 
-    :param int network_id: The identifier of a network
+    :param Network network: The network
     :param bool autocommit: Should the query be committed immediately
     :rtype: Query
     """
-    query = Query.from_query_args(manager, [network_id], current_user)
+    query = Query.from_network(network, user=current_user)
 
     if autocommit:
         manager.session.add(query)
