@@ -837,6 +837,11 @@ def safe_get_network(network_id):
     """
     network = get_network_or_404(network_id)
 
+    if network.report and network.report.public:
+        return network
+
+    # FIXME what about networks in a project?
+
     if not current_user.owns_network(network):
         abort(403, 'User {} does not have permission to access Network {}'.format(current_user, network))
 
