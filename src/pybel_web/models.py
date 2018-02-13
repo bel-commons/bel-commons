@@ -82,6 +82,7 @@ class Experiment(Base):
     result = Column(LargeBinary(LONGBLOB), doc='The result python dictionary')
 
     completed = Column(Boolean, default=False)
+    time = Column(Float, nullable=True)
 
     def get_source_df(self):
         """Loads the pickled pandas DataFrame from the source file

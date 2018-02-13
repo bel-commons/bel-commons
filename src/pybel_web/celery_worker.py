@@ -348,6 +348,8 @@ def run_cmpa(connection, experiment_id):
     :param str connection: A connection to build the manager
     :param int experiment_id:
     """
+    t = time.time()
+
     manager = Manager(connection=connection)
 
     experiment = manager.session.query(Experiment).get(experiment_id)
@@ -375,6 +377,7 @@ def run_cmpa(connection, experiment_id):
     scores = calculate_scores(graph, data, experiment.permutations)
 
     experiment.dump_results(scores)
+    experiment.time = time.time() - t
 
     try:
         manager.session.add(experiment)
