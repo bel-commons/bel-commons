@@ -63,3 +63,19 @@ else:
     log.info('Using Bio2BEL GO')
     go_manager = bio2bel_go.Manager()
     in_place_mutator(go_manager.enrich_bioprocesses)
+
+try:
+    import bio2bel_entrez
+except ImportError:
+    entrez_manager = None
+else:
+    log.info('Using Bio2BEL Entrez')
+    entrez_manager = bio2bel_entrez.Manager()
+
+try:
+    import bio2bel_interpro
+except ImportError:
+    interpro_manager = None
+else:
+    log.info('Using Bio2BEL Interpro')
+    interpro_manager = bio2bel_interpro.Manager()
