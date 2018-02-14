@@ -121,6 +121,22 @@
                                         <dt>Synonyms Type</dt>
                                         <dd>{{ gene.alias_names|join(' | ') }}</dd>
                                     </dl>
+                                {% elif entrez_manager and node.namespace_entry.namespace.keyword in ['EGID', 'EG', 'ENTREZ'] %}
+                                    {% set gene =  entrez_manager.get_gene_by_id(node.namespace_entry.name) %}
+
+                                    <h4>Entrez</h4>
+                                    <dl class="dl-horizontal">
+                                        <dt>Identifier</dt>
+                                        <dd>{{ gene.identifier }}</dd>
+                                        <dt>Name</dt>
+                                        <dd>{{ gene.name }}</dd>
+                                        <dt>Description</dt>
+                                        <dd>{{ gene.description }}</dd>
+                                        <dt>Type of Gene</dt>
+                                        <dd>{{ gene.type_of_gene }}</dd>
+                                        <dt>Species</dt>
+                                        <dd>{{ gene.species }}</dd>
+                                    </dl>
                                 {% elif chebi_manager and node.namespace_entry.namespace.keyword in ['CHEBI', 'CHEBIID'] %}
                                     {% if node.namespace_entry.namespace.keyword == 'CHEBI' %}
                                         {% set chemical= chebi_manager.get_chemical_by_chebi_name(node.namespace_entry.name) %}
