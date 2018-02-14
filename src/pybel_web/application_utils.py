@@ -171,10 +171,10 @@ class FlaskPyBEL(object):
         self.app = app
         self.manager = manager
 
-        sentry_dsn = app.config.get('SENTRY_DSN')
-        if sentry_dsn:
-            log.info('initiating Sentry: %s', sentry_dsn)
-            self.sentry = Sentry(app, dsn=sentry_dsn)
+        self.sentry_dsn = app.config.get('SENTRY_DSN')
+        if self.sentry_dsn:
+            log.info('initiating Sentry: %s', self.sentry_dsn)
+            self.sentry = Sentry(app, dsn=self.sentry_dsn)
 
         Base.metadata.bind = self.manager.engine
         Base.query = self.manager.session.query_property()
@@ -197,10 +197,19 @@ class FlaskPyBEL(object):
 
         self.user_datastore.commit()
 
-        app.extensions = getattr(app, 'extensions', {})
-        app.extensions[self.APP_NAME] = self
+        self.app.extensions = getattr(app, 'extensions', {})
+        self.app.extensions[self.APP_NAME] = self
 
-        @app.errorhandler(500)
+        self._register_error_handlers()
+        self._register_mutators()
+        self._prepare_service()
+        self._build_admin_service()
+        self._ensure_graphs()
+
+    def _register_error_handlers(self):
+        """Registers the 500 and 403 error handlers"""
+
+        @self.app.errorhandler(500)
         def internal_server_error(error):
             """Call this filter when there's an internal server error.
 
@@ -208,7 +217,7 @@ class FlaskPyBEL(object):
             """
             kwargs = {}
 
-            if sentry_dsn:
+            if self.sentry_dsn:
                 kwargs.update(dict(
                     event_id=g.sentry_event_id,
                     public_dsn=self.sentry.client.get_public_dsn('https')
@@ -219,15 +228,10 @@ class FlaskPyBEL(object):
                 **kwargs
             )
 
-        @app.errorhandler(403)
+        @self.app.errorhandler(403)
         def forbidden_error(error):
             """You must not cross this error"""
             return render_template('403.html')
-
-        self._register_mutators()
-        self._prepare_service()
-        self._build_admin_service()
-        self._ensure_graphs()
 
     def _register_mutators(self):
         """Registers all the mutator functions with PyBEL tools decorators"""
