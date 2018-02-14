@@ -127,13 +127,13 @@
                                 <p>
                                     {% if current_user.is_admin %}
                                         <a href="{{ url_for('ui.view_networks') }}" class="btn btn-primary">
-                                            Networks
+                                            Networks <span class="badge">{{ number_networks }}</span>
                                         </a>
                                         <a href="{{ url_for('ui.view_edges') }}" class="btn btn-warning">
-                                            Edges
+                                            Edges <span class="badge">{{ number_edges }}</span>
                                         </a>
                                         <a href="{{ url_for('ui.view_nodes') }}" class="btn btn-warning">
-                                            Nodes
+                                            Nodes <span class="badge">{{ number_nodes }}</span>
                                         </a>
                                     {% else %}
                                         <a href="{{ url_for('ui.view_networks') }}" class="btn btn-primary btn-block">

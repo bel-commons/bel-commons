@@ -60,6 +60,15 @@ def _serve_relations(edges, source, target=None):
     )
 
 
+def format_big_number(n):
+    if n > 1000000:
+        return '{}M'.format(int(round(n / 1000000)))
+    elif n > 1000:
+        return '{}K'.format(int(round(n / 1000)))
+    else:
+        return str(n)
+
+
 @ui_blueprint.route('/', methods=['GET', 'POST'])
 def home():
     """The home page has links to the main features of PyBEL Web:
@@ -70,7 +79,17 @@ def home():
     4. Network/Edge/NanoPub Store Navigator
     5. Query Builder
     """
-    return render_template('index.html', current_user=current_user)
+    number_networks = manager.count_networks()
+    number_edges = manager.count_edges()
+    number_nodes = manager.count_nodes()
+
+    return render_template(
+        'index.html',
+        current_user=current_user,
+        number_networks=format_big_number(number_networks),
+        number_edges=format_big_number(number_edges),
+        number_nodes=format_big_number(number_nodes)
+    )
 
 
 @ui_blueprint.route('/networks', methods=['GET', 'POST'])
