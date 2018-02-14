@@ -352,7 +352,7 @@ class FlaskPyBEL(object):
 
     def _ensure_graphs(self):
         """Adds example BEL graphs that should always be present"""
-        for graph in (sialic_acid_graph, egf_graph, statin_graph):
+        for graph in (sialic_acid_graph, egf_graph, statin_graph, homology_graph):
             if not self.manager.has_name_version(graph.name, graph.version):
                 add_canonical_names(graph)
                 log.info('uploading public example graph: %s', graph)
