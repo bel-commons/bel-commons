@@ -48,6 +48,12 @@
                         <div class="list-group-item-text">
                             In-Edges: {{ node.in_edges.count() }} |
                             Out-Edges: {{ node.out_edges.count() }} |
+
+                            {% if node.type == 'Gene' %}
+                                Orthologies: {{ node.out_edges.filter_by(relation='orthologous').count() }} |
+                            {% endif %}
+
+                            Equivalencies: {{ node.out_edges.filter_by(relation='equivalentTo').count() }} |
                             Classes: {{ node.out_edges.filter_by(relation='isA').count() }}
 
                             <h4>Appears in Networks:</h4>
@@ -122,12 +128,12 @@
                                         <dd>{{ gene.alias_names|join(' | ') }}</dd>
                                     </dl>
                                 {% elif entrez_manager and node.namespace_entry.namespace.keyword in ['EGID', 'EG', 'ENTREZ'] %}
-                                    {% set gene =  entrez_manager.get_gene_by_id(node.namespace_entry.name) %}
+                                    {% set gene =  entrez_manager.get_gene_by_entrez_id(node.namespace_entry.name) %}
 
                                     <h4>Entrez</h4>
                                     <dl class="dl-horizontal">
                                         <dt>Identifier</dt>
-                                        <dd>{{ gene.identifier }}</dd>
+                                        <dd>{{ gene.entrez_id }}</dd>
                                         <dt>Name</dt>
                                         <dd>{{ gene.name }}</dd>
                                         <dt>Description</dt>
