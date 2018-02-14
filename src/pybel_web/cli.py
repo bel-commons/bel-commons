@@ -29,7 +29,7 @@ import gunicorn.app.base
 from flask_security import SQLAlchemyUserDatastore
 
 import pybel
-from pybel.constants import PYBEL_CONNECTION, PYBEL_DATA_DIR, get_cache_connection
+from pybel.constants import PYBEL_CONNECTION, get_cache_connection
 from pybel.manager import Manager
 from pybel.manager.models import Network
 from pybel.utils import get_version as pybel_version
@@ -49,8 +49,6 @@ from .parser_endpoint import build_parser_service
 from .utils import iterate_user_strings
 
 log = logging.getLogger('pybel_web')
-
-user_dump_path = os.path.join(PYBEL_DATA_DIR, 'users.tsv')
 
 
 def set_debug(level):
@@ -219,7 +217,7 @@ def setup(manager):
 
 
 @manage.command()
-@click.option('-f', '--file', type=click.File('r'), default=user_dump_path, help='Input user/role file')
+@click.option('-f', '--file', type=click.File('r'), default=sys.stdout, help='Input user/role file')
 @click.pass_obj
 def load(manager, file):
     """Load dumped stuff for loading later (in lieu of having proper migrations)"""
@@ -256,12 +254,12 @@ def load(manager, file):
 
 @manage.command()
 @click.option('-y', '--yes', is_flag=True)
-@click.option('-u', '--user-dump', type=click.File('w'), default=user_dump_path, help='Place to dump user data')
+@click.option('-u', '--user-dump', type=click.File('w'), default=sys.stdout, help='Place to dump user data')
 @click.pass_obj
 def drop(manager, yes, user_dump):
     """Drops database"""
     if yes or click.confirm('Drop database at {}?'.format(manager.connection)):
-        click.echo('Dumping users to {}'.format(user_dump_path))
+        click.echo('Dumping users to {}'.format(user_dump))
         for s in iterate_user_strings(manager):
             click.echo(s, file=user_dump)
         click.echo('Done dumping users')

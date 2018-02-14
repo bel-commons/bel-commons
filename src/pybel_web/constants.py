@@ -2,7 +2,7 @@
 
 import os
 
-from pybel.constants import PYBEL_DATA_DIR
+from pybel.constants import PYBEL_DIR
 from pybel_tools.pipeline import function_is_registered
 
 PYBEL_WEB_VERSION = '0.2.2-dev'
@@ -36,7 +36,7 @@ CHARLIE_EMAIL = 'charles.hoyt@scai.fraunhofer.de'
 DANIEL_EMAIL = 'daniel.domingo.fernandez@scai.fraunhofer.de'
 ALEX_EMAIL = 'aliaksandr.masny@scai.fraunhofer.de'
 
-merged_document_folder = os.path.join(PYBEL_DATA_DIR, 'pbw_merged_documents')
+merged_document_folder = os.path.join(PYBEL_DIR, 'pbw_merged_documents')
 
 if not os.path.exists(merged_document_folder):
     os.mkdir(merged_document_folder)
@@ -55,8 +55,8 @@ _explorer_toolbox = (
     ('remove_isolated_nodes', 'Remove Isolated Nodes', 'Remove from the network all isolated nodes'),
     ('get_largest_component', 'Get Largest Component', 'Retain only the largest component and removes all others'),
     ('enrich_unqualified', 'Enrich unqualified edges', 'Adds unqualified edges from the universe'),
-    #('remove_pathologies', 'Remove Pathologies', 'Removes all pathology nodes'), # TODO
-    #('remove_associative', 'Remove Associative Edges', 'Removes all associative edges'), # TODO
+    # ('remove_pathologies', 'Remove Pathologies', 'Removes all pathology nodes'), # TODO
+    # ('remove_associative', 'Remove Associative Edges', 'Removes all associative edges'), # TODO
 )
 
 
