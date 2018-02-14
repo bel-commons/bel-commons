@@ -352,13 +352,13 @@ def view_summarize_biogrammar(network_id):
     return render_network_summary_safe(manager, network_id, template='summarize_biogrammar.html')
 
 
-@ui_blueprint.route('/how_to_use', methods=['GET'])
+@ui_blueprint.route('/how_to_use')
 def view_how_to_use():
     """Shows How to use PyBEL-web"""
     return render_template('how_to_use.html')
 
 
-@ui_blueprint.route('/pipeline/help', methods=['GET'])
+@ui_blueprint.route('/help/pipeline')
 def view_pipeline_help():
     """View the help info for the functions"""
 
@@ -375,6 +375,12 @@ def view_pipeline_help():
         'pipeline_help.html',
         function_dict=data
     )
+
+
+@ui_blueprint.route('/help/download')
+def view_download_help():
+    """View the help info for the functions"""
+    return render_template('help_download_format.html')
 
 
 @ui_blueprint.route('/network/<int:network_1_id>/compare/<int:network_2_id>')

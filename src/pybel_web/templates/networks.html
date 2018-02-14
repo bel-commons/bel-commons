@@ -328,15 +328,9 @@
                                                     </a>
                                                 </li>
                                                 <li>
-                                                    <a href="{{ url_for('dbs.export_network', network_id=network.id, serve_format='json') }}">
-                                                    <span class="glyphicon glyphicon-download"
-                                                          aria-hidden="true"></span> Compact JSON
-                                                    </a>
-                                                </li>
-                                                <li>
                                                     <a href="{{ url_for('dbs.export_network', network_id=network.id, serve_format='bytes') }}">
                                                     <span class="glyphicon glyphicon-download"
-                                                          aria-hidden="true"></span> Pickle</a>
+                                                          aria-hidden="true"></span> Python Pickle</a>
                                                 </li>
                                                 <li>
                                                     <a href="{{ url_for('dbs.export_network', network_id=network.id, serve_format='sif') }}">
@@ -371,7 +365,7 @@
                                             </li>
                                             <li role="separator" class="divider"></li>
                                             <li>
-                                                <a href="">
+                                                <a href="{{ url_for('ui.view_download_help') }}">
                                                     Download Format Help
                                                 </a>
                                             </li>
