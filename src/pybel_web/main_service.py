@@ -3,7 +3,6 @@
 """This module contains the user interface to PyBEL Web"""
 
 import datetime
-import itertools as itt
 import logging
 import sys
 import time
@@ -119,18 +118,38 @@ def view_networks():
     )
 
 
-@ui_blueprint.route('/nodes')
-@roles_required('admin')
-def view_nodes():
-    """Renders a page viewing all edges"""
+def _render_nodes(nodes):
+    """Renders a list of nodes
+
+    :param iter[Node] nodes:
+    :return: flask.Response
+    """
     return render_template(
         'nodes.html',
-        nodes=manager.session.query(Node).limit(15),
+        nodes=nodes,
         current_user=current_user,
         hgnc_manager=hgnc_manager,
         chebi_manager=chebi_manager,
         go_manager=go_manager,
+        entrez_manager=entrez_manager,
+        interpro_manager=interpro_manager,
     )
+
+
+@ui_blueprint.route('/nodes')
+@roles_required('admin')
+def view_nodes():
+    """Renders a page viewing all edges"""
+    nodes = manager.session.query(Node)
+
+    limit = request.args.get('limit', 15, type=int)
+    nodes = nodes.limit(limit)
+
+    offset = request.args.get('offset', type=int)
+    if offset:
+        nodes = nodes.offset(offset)
+
+    return _render_nodes(nodes)
 
 
 @ui_blueprint.route('/node/<node_hash>')
@@ -140,12 +159,7 @@ def view_node(node_hash):
     :param str node_hash: The node's hash
     """
     node = safe_get_node(manager, node_hash)
-
-    relations = list(itt.chain(
-        node.in_edges,
-        node.out_edges
-    ))
-    return _serve_relations(relations, node)
+    return _render_nodes([node])
 
 
 @ui_blueprint.route('/node/<source_hash>/edges/<target_hash>')

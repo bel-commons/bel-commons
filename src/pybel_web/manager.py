@@ -12,6 +12,8 @@ __all__ = [
     'mirtarbase_manager',
     'expasy_manager',
     'go_manager',
+    'entrez_manager',
+    'interpro_manager',
 ]
 
 log = logging.getLogger(__name__)
