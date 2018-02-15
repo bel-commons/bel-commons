@@ -4,6 +4,16 @@
 {% import "bootstrap/fixes.html" as fixes %}
 {% import "bootstrap/utils.html" as util %}
 
+{% block scripts %}
+    {{ super() }}
+    <script type="text/javascript" src="https://cdn.datatables.net/v/bs/dt-1.10.16/datatables.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            $("#stratified").DataTable();
+        });
+    </script>
+{% endblock %}
 
 {% block title %}Stratified Summary{% endblock %}
 
@@ -34,7 +44,7 @@
             <div class="panel-heading">
                 <h3 class="panel-title">Summary Stratified by {{ annotation }}</h3>
             </div>
-            <table class="table">
+            <table class="table table-striped table-hover" id="stratified">
                 <thead>
                 <tr>
                     <th>{{ annotation }}</th>
