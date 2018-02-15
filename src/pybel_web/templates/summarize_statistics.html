@@ -150,8 +150,6 @@
                     <dd>{{ network.report.average_degree }}</dd>
                     <dt>Number Citations</dt>
                     <dd>{{ network.report.number_citations }}</dd>
-                    <dt>Number Authors</dt>
-                    <dd>{{ network.report.number_authors }}</dd>
                     <dt>Number BEL Errors</dt>
                     <dd>{{ network.report.number_warnings }}</dd>
                 </dl>
@@ -280,7 +278,7 @@
                 type: 'bar'
             },
             title: {
-                text: 'Node Types'
+                text: 'Nodes ({{ network.report.number_nodes }})'
             },
             axis: {
                 rotated: true,
@@ -308,7 +306,7 @@
                 type: 'bar'
             },
             title: {
-                text: 'Relation Types'
+                text: 'Edges ({{ network.report.number_edges }})'
             },
             axis: {
                 rotated: true,
@@ -337,7 +335,7 @@
                     type: 'bar'
                 },
                 title: {
-                    text: 'Node Transformations'
+                    text: 'Transformations ({{ number_transformations }})'
                 },
                 axis: {
                     rotated: true,
@@ -367,7 +365,7 @@
                     type: 'bar'
                 },
                 title: {
-                    text: 'Node Modifications'
+                    text: 'Variants ({{ number_variants }})'
                 },
                 axis: {
                     rotated: true,
@@ -396,7 +394,7 @@
                 type: 'bar'
             },
             title: {
-                text: 'Namespace Usage'
+                text: 'Namespace Usage ({{ number_namespaces }})'
             },
             axis: {
                 rotated: true,
