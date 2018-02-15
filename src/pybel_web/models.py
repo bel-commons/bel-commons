@@ -651,13 +651,15 @@ class Query(Base):
 
         return self._query
 
-    def to_json(self):
+    def to_json(self, include_id=True):
         """Serializes this object to JSON
 
+        :param bool include_id: Should the identifier be included?
         :rtype: dict
         """
-        result = {'id': self.id}
-        result.update(self.data.to_json())
+        result = self.data.to_json()
+        if include_id:
+            result['id'] = self.id
         return result
 
     def seeding_to_json(self):
