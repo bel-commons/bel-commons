@@ -103,6 +103,20 @@ function displayNodeInfo(node) {
 }
 
 /**
+ * Gets the best name for an edfe object
+ * @param {object} edge_data object
+ */
+function getCanonicalName(edge_data) {
+    if (edge_data.cname) {
+        return edge_data.cname;
+    } else if (edge_data.name) {
+        return edge_data.name
+    } else if (edge_data.bel) {
+        return edge_data.bel
+    }
+}
+
+/**
  * Renders edge info table
  * @param {object} edge object
  */
@@ -111,11 +125,10 @@ function displayEdgeInfo(edge) {
     var edgeObject = {};
 
     edgeObject["Links"] = '<ul class="list-inline">';
-    edgeObject["Links"] += '<li><a target="_blank" href="/node/' + edge.source.id + '"><code>' + edge.source.cname + '</code> <span class="glyphicon glyphicon-new-window"></span></a></li>';
-    edgeObject["Links"] += '<li><a target="_blank" href="/node/' + edge.target.id + '"><code>' + edge.target.cname + '</code> <span class="glyphicon glyphicon-new-window"></span></a></li>';
+    edgeObject["Links"] += '<li><a target="_blank" href="/node/' + edge.source.id + '"><code>' + getCanonicalName(edge.source) + '</code> <span class="glyphicon glyphicon-new-window"></span></a></li>';
+    edgeObject["Links"] += '<li><a target="_blank" href="/node/' + edge.target.id + '"><code>' + getCanonicalName(edge.target) + '</code> <span class="glyphicon glyphicon-new-window"></span></a></li>';
     edgeObject["Links"] += '<li><a target="_blank" href="/node/' + edge.source.id + '/edges/' + edge.target.id + '">All Evidences <span class="glyphicon glyphicon-new-window"></span></a></li>';
     edgeObject["Links"] += '</ul>';
-
 
     if (edge.contexts) {
         $.each(edge.contexts, function (key, context) {
