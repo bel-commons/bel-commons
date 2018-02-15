@@ -9,14 +9,37 @@
     <link href="{{ url_for('static', filename='css/c3.min.css') }}" rel="stylesheet" type="text/css"/>
 {% endblock %}
 
+
+{% block scripts %}
+    {{ super() }}
+
+    <script>
+        $(function () {
+            $('[data-toggle="tooltip"]').tooltip()
+        })
+    </script>
+    <script type="text/javascript" src="https://cdn.datatables.net/v/bs/dt-1.10.16/datatables.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            $("#regulatory-pairs-table").DataTable();
+            $("#contradictory-pairs-table").DataTable();
+            $("#unstable-pairs-table").DataTable();
+            $("#contradictory-triplets-table").DataTable();
+            $("#unstable-triplets-table").DataTable();
+            $("#causal-pathologies-table").DataTable();
+
+        });
+    </script>
+{% endblock %}
+
+
 {% block head %}
     {{ super() }}
 
     <script src="{{ url_for('static', filename='js/d3.3.5.17.min.js') }}" charset="utf-8"></script>
     <script src="{{ url_for('static', filename='js/c3.min.js') }}"></script>
     <script src="//code.jquery.com/jquery-1.12.4.js"></script>
-    <script src="https://cdn.datatables.net/1.10.13/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.10.13/js/dataTables.bootstrap.min.js"></script>
     <script>
         // Initializes popover
         $(function () {
@@ -27,6 +50,8 @@
         })
     </script>
 {% endblock %}
+
+
 
 {% block title %}Biogrammar{% endblock %}
 
@@ -166,7 +191,7 @@
                         <code>B decreases A</code>.
                     </p>
                 </div>
-                <table class="table table-hover table-responsive table-striped">
+                <table class="table table-hover table-responsive table-striped" id="regulatory-pairs-table">
                     <thead>
                     <tr>
                         <th></th>
@@ -175,15 +200,15 @@
                     </tr>
                     </thead>
                     <tbody>
-                    {% for source, source_id, target, target_id in regulatory_pairs %}
+                    {% for source, source_id, target, target_hash in regulatory_pairs %}
                         <tr>
                             <td>
-                                <a href="{{ url_for('ui.build_summary_link_query', network_id=network_id, nodes=[source_id, target_id]) }}"
+                                <a href="{{ url_for('ui.build_summary_link_query', network_id=network_id, nodes=[source_id, target_hash]) }}"
                                    data-toggle="tooltip" data-placement="top"
                                    title="Explore BEL network induced over these nodes">
                                     <span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span>
                                 </a>
-                                <a href="{{ url_for('ui.view_relations', source_id=source_id, target_id=target_id, undirected='yes') }}"
+                                <a href="{{ url_for('ui.view_relations', source_hash=source_id, target_hash=target_hash, undirected='yes') }}"
                                    data-toggle="tooltip" data-placement="top" title="List all evidences">
                                     <span class="glyphicon glyphicon-th-list" aria-hidden="true"></span>
                                 </a>
@@ -215,7 +240,7 @@
                         considered in analyses.
                     </p>
                 </div>
-                <table class="table table-hover table-responsive table-striped">
+                <table class="table table-hover table-responsive table-striped" id="contradictory-pairs-table">
                     <thead>
                     <tr>
                         <th></th>
@@ -225,15 +250,15 @@
                     </tr>
                     </thead>
                     <tbody>
-                    {% for source, source_id, target, target_id, relations in contradictory_pairs %}
+                    {% for source, source_hash, target, target_hash, relations in contradictory_pairs %}
                         <tr>
                             <td>
-                                <a href="{{ url_for('ui.build_summary_link_query', network_id=network_id, nodes=[source_id, target_id]) }}"
+                                <a href="{{ url_for('ui.build_summary_link_query', network_id=network_id, nodes=[source_hash, target_hash]) }}"
                                    data-toggle="tooltip" data-placement="top"
                                    title="Explore BEL network induced over these nodes">
                                     <span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span>
                                 </a>
-                                <a href="{{ url_for('ui.view_relations', source_id=source_id, target_id=target_id) }}"
+                                <a href="{{ url_for('ui.view_relations', source_hash=source_hash, target_hash=target_hash) }}"
                                    data-toggle="tooltip" data-placement="top" title="List evidences">
                                     <span class="glyphicon glyphicon-th-list" aria-hidden="true"></span>
                                 </a>
@@ -275,7 +300,7 @@
                     <p>While neither chaotic nor dampened pairs are biologically invalid, they require additional
                         context to understand their regulation.</p>
                 </div>
-                <table class="table table-hover table-responsive table-striped">
+                <table class="table table-hover table-responsive table-striped" id="unstable-pairs-table">
                     <thead>
                     <tr>
                         <th></th>
@@ -285,15 +310,15 @@
                     </tr>
                     </thead>
                     <tbody>
-                    {% for source, source_id, target, target_id, label in unstable_pairs %}
+                    {% for source, source_hash, target, target_hash, label in unstable_pairs %}
                         <tr>
                             <td>
-                                <a href="{{ url_for('ui.build_summary_link_query', network_id=network_id, nodes=[source_id, target_id]) }}"
+                                <a href="{{ url_for('ui.build_summary_link_query', network_id=network_id, nodes=[source_hash, target_hash]) }}"
                                    data-toggle="tooltip" data-placement="top"
                                    title="Explore BEL network induced over these nodes">
                                     <span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span>
                                 </a>
-                                <a href="{{ url_for('ui.view_relations', source_id=source_id, target_id=target_id, undirected='yes') }}"
+                                <a href="{{ url_for('ui.view_relations', source_hash=source_hash, target_hash=target_hash, undirected='yes') }}"
                                    data-toggle="tooltip" data-placement="top" title="List all evidences">
                                     <span class="glyphicon glyphicon-th-list" aria-hidden="true"></span>
                                 </a>
@@ -345,7 +370,7 @@
                         </dd>
                     </dl>
                 </div>
-                <table class="table table-hover table-responsive table-striped">
+                <table class="table table-hover table-responsive table-striped" id="contradictory-triplets-table">
                     <thead>
                     <tr>
                         <th></th>
@@ -403,7 +428,7 @@
                         </dd>
                     </dl>
                 </div>
-                <table class="table table-hover table-responsive table-striped">
+                <table class="table table-hover table-responsive table-striped" id="unstable-triplets-table">
                     <thead>
                     <tr>
                         <th></th>
@@ -450,7 +475,7 @@
                         the subject of causal statements.
                     </p>
                 </div>
-                <table class="table table-hover table-responsive table-striped">
+                <table class="table table-hover table-responsive table-striped" id="causal-pathologies-table">
                     <thead>
                     <tr>
                         <th></th>
@@ -460,10 +485,10 @@
                     </tr>
                     </thead>
                     <tbody>
-                    {% for source, source_id, target, target_id, relation in causal_pathologies %}
+                    {% for source, source_hash, target, target_hash, relation in causal_pathologies %}
                         <tr>
                             <td>
-                                <a href="{{ url_for('ui.build_summary_link_query', network_id=network_id, nodes=[source_id, target_id]) }}"
+                                <a href="{{ url_for('ui.build_summary_link_query', network_id=network_id, nodes=[source_hash, target_hash]) }}"
                                    data-toggle="tooltip" data-placement="top"
                                    title="Explore BEL network induced over these nodes">
                                     <span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span>
@@ -503,10 +528,10 @@
                     </tr>
                     </thead>
                     <tbody>
-                    {% for source, source_id in undefined_families %}
+                    {% for source, source_hash in undefined_families %}
                         <tr>
                             <td>
-                                <a href="{{ url_for('ui.build_summary_link_query', network_id=network_id, seed_method='neighbors', nodes=[source_id]) }}"
+                                <a href="{{ url_for('ui.build_summary_link_query', network_id=network_id, seed_method='neighbors', nodes=[source_hash]) }}"
                                    data-toggle="tooltip" data-placement="top"
                                    title="Explore BEL network induced over these nodes">
                                     <span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span>
@@ -525,12 +550,4 @@
     {% include "footer.html" %}
 {% endblock %}
 
-{% block scripts %}
-    {{ super() }}
 
-    <script>
-        $(function () {
-            $('[data-toggle="tooltip"]').tooltip()
-        })
-    </script>
-{% endblock %}
