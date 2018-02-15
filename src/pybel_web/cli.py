@@ -299,11 +299,15 @@ def network():
 
 @network.command()
 @click.option('-p', '--path')
+@click.option('--public', is_flag=True)
 @click.pass_obj
-def parse(manager, path):
+def parse(manager, path, public):
     """Parses a BEL script and uploads"""
+    enable_cool_mode()
+    t = time.time()
     graph = pybel.from_path(path, manager=manager)
-    insert_graph(manager, graph)
+    log.info('parsing done in %.2f seconds', time.time() - t)
+    insert_graph(manager, graph, public=public)
 
 
 @network.command()
