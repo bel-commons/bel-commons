@@ -893,6 +893,7 @@ def safe_get_node(manager_, node_hash):
     node = manager_.get_node_by_hash(node_hash)
 
     if node is None:
-        abort(404, 'Node not found: {}'.format(node_hash))
+        abort(404, 'Node with following hash not found. This is most likely because it comes from a namespace that has '
+                   'not been finalized, and is therefore not cached. {}'.format(node_hash))
 
     return node
