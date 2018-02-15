@@ -25,6 +25,7 @@ except ImportError:
 else:
     log.info('Using Bio2BEL ChEBI')
     chebi_manager = bio2bel_chebi.Manager()
+    chebi_manager.create_all()
     in_place_mutator(chebi_manager.enrich_chemical_hierarchy)
 
 try:
@@ -34,6 +35,7 @@ except ImportError:
 else:
     log.info('Using Bio2BEL HGNC')
     hgnc_manager = bio2bel_hgnc.Manager()
+    hgnc_manager.create_all()
     in_place_mutator(hgnc_manager.enrich_genes_with_families)
     in_place_mutator(hgnc_manager.enrich_families_with_genes)
 
@@ -44,6 +46,7 @@ except ImportError:
 else:
     log.info('Using Bio2BEL miRTarBase')
     mirtarbase_manager = bio2bel_mirtarbase.Manager()
+    mirtarbase_manager.create_all()
     in_place_mutator(mirtarbase_manager.enrich_mirnas)
     in_place_mutator(mirtarbase_manager.enrich_rnas)
 
@@ -54,6 +57,7 @@ except ImportError:
 else:
     log.info('Using Bio2BEL ExPASy')
     expasy_manager = bio2bel_expasy.Manager()
+    expasy_manager.create_all()
     in_place_mutator(expasy_manager.enrich_proteins_with_enzyme_families)
     in_place_mutator(expasy_manager.enrich_enzymes)
 
@@ -73,6 +77,7 @@ except ImportError:
 else:
     log.info('Using Bio2BEL Entrez')
     entrez_manager = bio2bel_entrez.Manager()
+    entrez_manager.create_all()
 
 try:
     import bio2bel_interpro
@@ -81,3 +86,4 @@ except ImportError:
 else:
     log.info('Using Bio2BEL Interpro')
     interpro_manager = bio2bel_interpro.Manager()
+    interpro_manager.create_all()
