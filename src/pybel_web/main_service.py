@@ -369,14 +369,13 @@ def view_summarize_stratified(network_id, annotation):
         summaries[name] = info_json(subgraph)
         summaries[name]['node_overlap'] = subgraph.number_of_nodes() / graph.number_of_nodes()
         summaries[name]['edge_overlap'] = subgraph.number_of_edges() / graph.number_of_edges()
-        summaries[name]['component_overlap'] = summaries[name]['Components'] / graph_summary['Components']
         summaries[name]['citation_overlap'] = summaries[name]['Citations'] / graph_summary['Citations']
 
     return render_template(
         'summarize_stratified.html',
         network=network,
         annotation=annotation,
-        full_summary = graph_summary,
+        full_summary=graph_summary,
         summaries=summaries
     )
 
