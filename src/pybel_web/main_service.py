@@ -16,6 +16,8 @@ import pybel_tools.query
 from pybel.manager.models import Annotation, Edge, Namespace, Node
 from pybel.utils import get_version as get_pybel_version
 from pybel_tools.pipeline import no_arguments_map
+from pybel_tools.selection import get_subgraphs_by_annotation
+from pybel_tools.summary import info_json
 from pybel_tools.utils import get_version as get_pybel_tools_version
 from . import models
 from .constants import *
@@ -350,6 +352,33 @@ def view_summarize_biogrammar(network_id):
     :param int network_id: The identifier of the network to summarize
     """
     return render_network_summary_safe(manager, network_id, template='summarize_biogrammar.html')
+
+
+@ui_blueprint.route('/summary/<int:network_id>/stratified/<annotation>')
+def view_summarize_stratified(network_id, annotation):
+    """Show stratified summary of graph's subgraphs by annotation"""
+    network = safe_get_network(network_id)
+    graph = network.as_bel()
+    graphs = get_subgraphs_by_annotation(graph, annotation)
+
+    graph_summary = info_json(graph)
+
+    summaries = {}
+
+    for name, subgraph in graphs.items():
+        summaries[name] = info_json(subgraph)
+        summaries[name]['node_overlap'] = subgraph.number_of_nodes() / graph.number_of_nodes()
+        summaries[name]['edge_overlap'] = subgraph.number_of_edges() / graph.number_of_edges()
+        summaries[name]['component_overlap'] = summaries[name]['Components'] / graph_summary['Components']
+        summaries[name]['citation_overlap'] = summaries[name]['Citations'] / graph_summary['Citations']
+
+    return render_template(
+        'summarize_stratified.html',
+        network=network,
+        annotation=annotation,
+        full_summary = graph_summary,
+        summaries=summaries
+    )
 
 
 @ui_blueprint.route('/how_to_use')

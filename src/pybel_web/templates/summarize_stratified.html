@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% import "bootstrap/wtf.html" as wtf %}
+{% import "bootstrap/fixes.html" as fixes %}
+{% import "bootstrap/utils.html" as util %}
+
+
+{% block title %}Stratified Summary{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div class="page-header">
+            <h1>Stratified Summary of {{ network.name }}
+                <small class="text-muted">{{ network.version }}</small>
+            </h1>
+        </div>
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Summary of {{ network }}</h3>
+            </div>
+            <div class="panel-body">
+                <dl class="dl-horizontal">
+                    {% for k, v in full_summary.items() %}
+                        <dt>{{ k }}</dt>
+                        <dd>{{ v }}</dd>
+                    {% endfor %}
+                </dl>
+            </div>
+        </div>
+
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Summary Stratified by {{ annotation }}</h3>
+            </div>
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>{{ annotation }}</th>
+                    <th>Nodes</th>
+                    <th>Edges</th>
+                    <th>Components</th>
+                    <th>Citations</th>
+                    <th>Density</th>
+
+                    <th>Node Percentage</th>
+                    <th>Edge Percentage</th>
+                    <th>Component Percentage</th>
+                    <th>Citation Percentage</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for name, data in summaries.items() %}
+                    <tr>
+                        <td>{{ name }}</td>
+                        <td>{{ data['Nodes'] }}</td>
+                        <td>{{ data['Edges'] }}</td>
+                        <td>{{ data['Components'] }}</td>
+                        <td>{{ data['Citations'] }}</td>
+                        <td>{{ (data['Network density'] * 100) | round(precision=3) }}%</td>
+                        <td>{{ (data['node_overlap']* 100) | round(precision=3) }}%</td>
+                        <td>{{ (data['edge_overlap']* 100) | round(precision=3) }}%</td>
+                        <td>{{ (data['component_overlap']* 100) | round(precision=3) }}%</td>
+                        <td>{{ (data['citation_overlap']* 100) | round(precision=3) }}%</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}
