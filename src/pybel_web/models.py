@@ -665,6 +665,9 @@ class Query(Base):
 
         :rtype: list[dict]
         """
+        if self.seeding is None:
+            return []
+
         seeding = json.loads(self.seeding)
 
         result = []
@@ -682,6 +685,9 @@ class Query(Base):
 
         :rtype: list[dict]
         """
+        if self.pipeline_protocol is None:
+            return []
+
         return json.loads(self.pipeline_protocol)
 
     def run(self, manager):
