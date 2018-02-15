@@ -54,18 +54,8 @@
                             {% endif %}
 
                             Equivalencies: {{ node.out_edges.filter_by(relation='equivalentTo').count() }} |
-                            Classes: {{ node.out_edges.filter_by(relation='isA').count() }}
-
-                            <h4>Appears in Networks:</h4>
-                            <ul>
-                                {% for network in node.networks %}
-                                    <li>
-                                        <a href="{{ url_for('ui.view_summarize_statistics', network_id=network.id) }}">
-                                            {{ network }}
-                                        </a>
-                                    </li>
-                                {% endfor %}
-                            </ul>
+                            Classes: {{ node.out_edges.filter_by(relation='isA').count() }} |
+                            Children: {{ node.in_edges.filter_by(relation='isA').count() }}
 
 
                             {% set node_in_edges = node.in_edges.limit(3) %}
@@ -91,6 +81,17 @@
                                 </ul>
                             {% endif %}
 
+                            <h4>Appears in Networks:</h4>
+                            <ul>
+                                {% for network in node.networks %}
+                                    <li>
+                                        <a href="{{ url_for('ui.view_summarize_statistics', network_id=network.id) }}">
+                                            {{ network }}
+                                        </a>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+
                             {% if node.namespace_entry %}
                                 <h4>Entity</h4>
                                 <dl class="dl-horizontal">
@@ -98,6 +99,8 @@
                                     <dd>{{ node.namespace_entry.name }}</dd>
                                     <dt>Namespace</dt>
                                     <dd>{{ node.namespace_entry.namespace.keyword }}</dd>
+                                    <dt>Namespace Version</dt>
+                                    <dd>{{ node.namespace_entry.namespace.version }}</dd>
                                     {% if node.namespace_entry.namespace.url %}
                                         <dt>Namespace URL</dt>
                                         <dd>
