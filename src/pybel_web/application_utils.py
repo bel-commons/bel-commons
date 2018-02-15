@@ -149,7 +149,7 @@ class FlaskPyBEL(object):
     #: The name in which this app is stored in the Flask.extensions dictionary
     APP_NAME = 'pbw'
 
-    def __init__(self, app=None, manager=None):
+    def __init__(self, app=None, manager=None, ensure_graphs=False):
         """
         :param Optional[flask.Flask] app: A Flask app
         :param Optional[pybel.manager.Manager] manager: A thing that has an engine and a session object
@@ -159,11 +159,11 @@ class FlaskPyBEL(object):
         self.user_datastore = None
 
         if app is not None and manager is not None:
-            self.init_app(app, manager)
+            self.init_app(app, manager, ensure_graphs=ensure_graphs)
 
         self.sentry = None
 
-    def init_app(self, app, manager):
+    def init_app(self, app, manager, ensure_graphs=False):
         """
         :param flask.Flask app: A Flask app
         :param pybel.manager.Manager manager: A thing that has an engine and a session object
@@ -204,7 +204,9 @@ class FlaskPyBEL(object):
         self._register_mutators()
         self._prepare_service()
         self._build_admin_service()
-        self._ensure_graphs()
+
+        if ensure_graphs:
+            self._ensure_graphs()
 
     def _register_error_handlers(self):
         """Registers the 500 and 403 error handlers"""
