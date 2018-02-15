@@ -127,7 +127,7 @@ def summarize_bel(connection, report_id):
 
 
 @celery.task(name='upload-bel')
-def upload_bel(connection, report_id):
+def upload_bel(connection, report_id, enrich_citations=False):
     """Asynchronously parses a BEL script and sends email feedback
 
     :param str connection: The connection string
@@ -237,15 +237,16 @@ def upload_bel(connection, report_id):
     if report.infer_origin:
         infer_central_dogma(graph)
 
-    try:
-        enrich_pubmed_citations(manager, graph)  # FIXME send this as a follow-up task
+    if enrich_citations:
+        try:
+            enrich_pubmed_citations(manager, graph)  # FIXME send this as a follow-up task
 
-    except (IntegrityError, OperationalError):  # just skip this if there's a problem
-        manager.session.rollback()
-        log.exception('problem with database while fixing citations')
+        except (IntegrityError, OperationalError):  # just skip this if there's a problem
+            manager.session.rollback()
+            log.exception('problem with database while fixing citations')
 
-    except Exception:
-        log.exception('problem fixing citations')
+        except Exception:
+            log.exception('problem fixing citations')
 
     upload_failed_text = 'Upload Failed for {}'.format(source_name)
 
