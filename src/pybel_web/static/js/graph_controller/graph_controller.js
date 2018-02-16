@@ -103,16 +103,19 @@ function displayNodeInfo(node) {
 }
 
 /**
- * Gets the best name for an edfe object
- * @param {object} edge_data object
+ * Gets the best name for a node object
+ * @param {object} node_data object
  */
-function getCanonicalName(edge_data) {
-    if (edge_data.cname) {
-        return edge_data.cname;
-    } else if (edge_data.name) {
-        return edge_data.name
-    } else if (edge_data.bel) {
-        return edge_data.bel
+function getCanonicalName(node_data) {
+    if (node_data.cname) {
+        return node_data.cname;
+    } else if (node_data.name) {
+        return node_data.name
+    } else if (node_data.bel) {
+        return node_data.bel
+    } else {
+        console.log('Undefined node: ' + node_data);
+        return 'UNDEFINED'
     }
 }
 
@@ -1080,15 +1083,7 @@ function initD3Force(graph, tree) {
         .attr("fill", "black")
         .attr("dx", 16)
         .attr("dy", ".35em")
-        .text(function (data) {
-            if (data.cname) {
-                return data.cname;
-            } else if (data.name) {
-                return data.name;
-            } else {
-                return 'UNDEFINED'
-            }
-        });
+        .text(getCanonicalName);
 
     // Highlight on mouse-enter and back to normal on mouseout
     node
@@ -1504,12 +1499,11 @@ function initD3Force(graph, tree) {
 
     // Create node list and create an array with duplicates
     $.each(graph.nodes, function (key, value) {
-
-        nodeNames.push(value.cname);
+        nodeNames.push(getCanonicalName(value));
 
         $("#node-list-ul").append("<li class='list-group-item'><input class='node-checkbox' type='checkbox'>" +
             "<div class='circle " + value.function + "'>" +
-            "</div><span class='node-" + value.id + "'>" + value.cname + "</span></li>");
+            "</div><span class='node-" + value.id + "'>" + getCanonicalName(value) + "</span></li>");
     });
 
     var duplicates = findDuplicates(nodeNames);
@@ -1519,11 +1513,14 @@ function initD3Force(graph, tree) {
     // Check over duplicate cnames and create hashmap to id
     $.each(graph.nodes, function (key, value) {
         // if the node has no duplicate show it in autocompletion with its cname
-        if (duplicates.indexOf(value.cname) < 0) {
-            nodeNamesToId[value.cname] = value.id;
+
+        var canonical_name = getCanonicalName(value);
+
+        if (duplicates.indexOf(canonical_name < 0)) {
+            nodeNamesToId[canonical_name] = value.id;
         } else {
             // if it has a duplicate show also the function after the cname
-            nodeNamesToId[value.cname + ' (' + value.function + ')'] = value.id;
+            nodeNamesToId[canonical_name + ' (' + value.function + ')'] = value.id;
         }
     });
 
@@ -1560,8 +1557,8 @@ function initD3Force(graph, tree) {
 
         for (edgeType in edgeTypes) {
             $("#edge-list-ul").append("<li class='list-group-item'><input class='edge-checkbox' type='checkbox'><span id="
-                + edge.source.id + '-' + edge.target.id + ">" + edge.source.cname + ' <strong><i>' + edgeType +
-                '</i></strong> ' + edge.target.cname + "</span></li>");
+                + edge.source.id + '-' + edge.target.id + ">" + getCanonicalName(edge.source) + ' <strong><i>' + edgeType +
+                '</i></strong> ' + getCanonicalName(edge.target) + "</span></li>");
         }
     });
 
