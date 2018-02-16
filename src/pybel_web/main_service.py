@@ -15,7 +15,11 @@ from flask_security import current_user, login_required, roles_required
 import pybel_tools.query
 from pybel.manager.models import Annotation, Edge, Namespace, Node
 from pybel.utils import get_version as get_pybel_version
-from pybel_tools.pipeline import no_arguments_map
+from pybel_tools.mutation import (
+    collapse_by_central_dogma_to_genes, remove_associations, remove_isolated_nodes,
+    remove_pathologies,
+)
+from pybel_tools.pipeline import Pipeline, no_arguments_map
 from pybel_tools.selection import get_subgraphs_by_annotation
 from pybel_tools.summary import info_json
 from pybel_tools.utils import get_version as get_pybel_tools_version
@@ -33,6 +37,13 @@ log = logging.getLogger(__name__)
 
 ui_blueprint = Blueprint('ui', __name__)
 time_instantiated = str(datetime.datetime.now())
+
+extract_useful_subgraph = Pipeline.from_functions([
+    remove_pathologies,
+    remove_associations,
+    collapse_by_central_dogma_to_genes,
+    remove_isolated_nodes
+])
 
 
 def _serve_relations(edges, source, target=None):
@@ -364,6 +375,7 @@ def view_summarize_stratified(network_id, annotation):
     graph_summary = info_json(graph)
 
     summaries = {}
+    useful_summaries = {}
 
     for name, subgraph in graphs.items():
         summaries[name] = info_json(subgraph)
@@ -371,12 +383,19 @@ def view_summarize_stratified(network_id, annotation):
         summaries[name]['edge_overlap'] = subgraph.number_of_edges() / graph.number_of_edges()
         summaries[name]['citation_overlap'] = summaries[name]['Citations'] / graph_summary['Citations']
 
+        useful_subgraph = extract_useful_subgraph(subgraph)
+        useful_summaries[name] = info_json(useful_subgraph)
+        useful_summaries[name]['node_overlap'] = subgraph.number_of_nodes() / graph.number_of_nodes()
+        useful_summaries[name]['edge_overlap'] = subgraph.number_of_edges() / graph.number_of_edges()
+        useful_summaries[name]['citation_overlap'] = summaries[name]['Citations'] / graph_summary['Citations']
+
     return render_template(
         'summarize_stratified.html',
         network=network,
         annotation=annotation,
         full_summary=graph_summary,
-        summaries=summaries
+        summaries=summaries,
+        useful_summaries=useful_summaries,
     )
 
 
