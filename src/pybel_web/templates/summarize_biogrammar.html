@@ -7,6 +7,10 @@
 {% block styles %}
     {{ super() }}
     <link href="{{ url_for('static', filename='css/c3.min.css') }}" rel="stylesheet" type="text/css"/>
+
+    <link href="https://cdn.datatables.net/1.10.16/css/jquery.dataTables.min.css" rel="stylesheet" type="text/css"/>
+    <link href="https://cdn.datatables.net/buttons/1.5.1/css/buttons.dataTables.min.css" rel="stylesheet"
+          type="text/css"/>
 {% endblock %}
 
 
@@ -30,7 +34,7 @@
     <script>
         $(document).ready(function () {
             const dataTableConfig = {
-                dom: "<'row'<'col-sm-1'><'col-sm-2'l><'col-sm-3'f><'col-sm-3'B>>" +
+                dom: "<'row'<'col-sm-1'><'col-sm-2'l><'col-sm-3'f><'col-sm-4'B>>" +
                 "<'row'<'col-sm-12'tr>>" +
                 "<'row'<'col-sm-5'i><'col-sm-7'p>>",
                 buttons: [
