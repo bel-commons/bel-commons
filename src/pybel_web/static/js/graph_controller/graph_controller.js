@@ -120,6 +120,15 @@ function handleChebiNodeInfo(nodeObject, data) {
     }
 }
 
+function handleExpasyNodeInfo(nodeObject, data) {
+    if (data.expasy_id) {
+        nodeObject['ExPASy Identifier'] = data.expasy_id
+    }
+    if (data.description) {
+        nodeObject['ExPASy Description'] = data.description
+    }
+}
+
 
 function handleNodeResponse(dynamicTable, nodeObject, node, nodeResponse) {
     if (nodeResponse.identifier) {
@@ -142,6 +151,9 @@ function handleNodeResponse(dynamicTable, nodeObject, node, nodeResponse) {
         }
         if (nodeResponse.annotations.CHEBI) {
             handleChebiNodeInfo(nodeObject, nodeResponse.annotations.CHEBI)
+        }
+        if (nodeResponse.annotations.EXPASY) {
+            handleExpasyNodeInfo(nodeObject, nodeResponse.annotations.EXPASY)
         }
     }
 

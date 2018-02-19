@@ -1826,6 +1826,10 @@ def get_enriched_node_json(node):
         model = entrez_manager.get_gene_by_entrez_id(name)
         node_data['annotations']['ENTREZ'] = {'missing': True} if model is None else model.to_json()
 
+    elif namespace in {'EXPASY', 'EC'} and expasy_manager:
+        model = expasy_manager.get_enzyme_by_id(name)
+        node_data['annotations']['EXPASY'] = {'missing': True} if model is None else model.to_json()
+
     elif namespace == 'RGD':
         pass
 
