@@ -21,8 +21,6 @@ from pybel.constants import NAME, NAMESPACE, NAMESPACE_DOMAIN_OTHER
 from pybel.manager.models import (
     Annotation, AnnotationEntry, Author, Citation, Edge, Namespace, Network, Node, network_edge,
 )
-from pybel_tools.pipeline import function_is_registered
-
 from pybel.resources.definitions import write_annotation, write_namespace
 from pybel.struct import union
 from pybel.struct.summary import get_annotation_values_by_annotation, get_pubmed_identifiers
@@ -1710,9 +1708,7 @@ def get_node_by_hash(node_hash):
     """
     node = get_node_by_hash_or_404(node_hash)
 
-    rv = node.to_json()
-
-    rv = enrich_node_json(rv)
+    rv = get_enriched_node_json(node)
 
     return jsonify(rv)
 
@@ -1802,12 +1798,15 @@ def get_all_nodes():
     ])
 
 
-def enrich_node_json(node_data):
+def get_enriched_node_json(node):
     """Enrich the node data with some of the Bio2BEL managers
 
-    :param dict node_data:
+    :param pybel.manager.models.Node node:
     :rtype: dict
     """
+    node_data = node.to_json()
+    node_data['bel'] = node.bel
+
     if NAMESPACE not in node_data:
         return
 
@@ -1817,11 +1816,15 @@ def enrich_node_json(node_data):
 
     if namespace == 'HGNC' and hgnc_manager:
         model = hgnc_manager.get_gene_by_hgnc_symbol(name)
-        node_data['annotations']['HGNC'] = model.to_dict()
+        node_data['annotations']['HGNC'] = {'missing': True} if model is None else model.to_dict()
 
     elif namespace == 'CHEBI' and chebi_manager:
         model = chebi_manager.get_chemical_by_chebi_name(name)
-        node_data['annotations']['CHEBI'] = model.to_json()
+        node_data['annotations']['CHEBI'] = {'missing': True} if model is None else model.to_json()
+
+    elif namespace in {'EGID', 'ENTREZ'} and entrez_manager:
+        model = entrez_manager.get_gene_by_entrez_id(name)
+        node_data['annotations']['ENTREZ'] = {'missing': True} if model is None else model.to_json()
 
     elif namespace == 'RGD':
         pass

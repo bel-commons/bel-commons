@@ -83,7 +83,7 @@ swagger_config = {
 }
 
 
-def create_application(get_mail=False, config_location=None, **kwargs):
+def create_application(get_mail=False, config_location=None, examples=None, **kwargs):
     """Builds a Flask app for the PyBEL web service
     
     1. Loads default config
@@ -92,6 +92,7 @@ def create_application(get_mail=False, config_location=None, **kwargs):
     :param bool get_mail: Activate the return have a tuple of (Flask, Mail)
     :param str config_location: The path to the object that will get loaded for default configuration. Defaults to
                                 :data:`'pybel_web.config.Config'`
+    :param Optional[bool] examples: Should examples be pre-loaded
     :param dict kwargs: keyword arguments to add to config
     :rtype: flask.Flask
     """
@@ -165,7 +166,7 @@ def create_application(get_mail=False, config_location=None, **kwargs):
 
     manager = WebManager()
 
-    pbx.init_app(app, manager)
+    pbx.init_app(app, manager, examples=examples)
     security.init_app(app, pbx.user_datastore, register_form=ExtendedRegisterForm)
     swagger.init_app(app)
 

@@ -7,6 +7,8 @@ from pybel_tools.pipeline import function_is_registered
 
 PYBEL_WEB_VERSION = '0.2.2-dev'
 
+PYBEL_WEB_EXAMPLES = 'PYBEL_WEB_EXAMPLES'
+
 integrity_message = "A graph with the same name ({}) and version ({}) already exists. If there have been changes since the last version, try bumping the version number."
 
 NETWORK_ID = 'network_id'

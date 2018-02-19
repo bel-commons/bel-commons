@@ -2,10 +2,14 @@
     <h4 class="list-group-item-heading">
         {{ edge.bel }}
 
-        <small class="text-muted">
-            <a href="{{ url_for('ui.view_node', node_hash=edge.source.sha512) }}">Source</a> |
-            <a href="{{ url_for('ui.view_node', node_hash=edge.target.sha512) }}">Target</a>
-        </small>
+        <div class="pull-right">
+            <small class="text-muted">
+
+                <a href="{{ url_for('ui.view_node', node_hash=edge.source.sha512) }}">Source</a> |
+                <a href="{{ url_for('ui.view_node', node_hash=edge.target.sha512) }}">Target</a> |
+                Hash: <a href="{{ url_for('ui.view_edge', edge_hash=edge.sha512) }}"><code>{{ edge.sha512[:10] }}</code></a>
+            </small>
+        </div>
     </h4>
     <div class="list-group-item-text">
 

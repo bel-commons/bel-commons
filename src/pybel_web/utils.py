@@ -661,6 +661,7 @@ def get_node_by_hash_or_404(node_hash):
 
     :param str node_hash: A PyBEL node hash
     :rtype: pybel.manager.models.Node
+    :raises: werkzeug.exceptions.HTTPException
     """
     node = manager.get_node_by_hash(node_hash)
 
@@ -675,6 +676,7 @@ def get_edge_by_hash_or_404(edge_hash):
 
     :param str edge_hash: A PyBEL edge hash
     :rtype: Edge
+    :raises: werkzeug.exceptions.HTTPException
     """
     edge = manager.get_edge_by_hash(edge_hash)
 
@@ -753,14 +755,6 @@ def help_get_edge_entry(manager_, edge):
 
     return data
 
-
-def redirect_explorer(query):
-    """Returns the response for the biological network explorer in a given query
-
-    :param Query query: A query
-    :rtype: flask.Response
-    """
-    return redirect(url_for('ui.view_explorer_query', query_id=query.id))
 
 
 def render_network_summary_safe(manager_, network_id, template):

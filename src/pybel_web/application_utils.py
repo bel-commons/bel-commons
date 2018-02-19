@@ -24,7 +24,7 @@ from .admin_model_views import (
     AnnotationView, CitationView, EdgeView, EvidenceView, ExperimentView, ModelView,
     ModelViewBase, NamespaceView, NetworkView, NodeView, QueryView, ReportView, UserView,
 )
-from .constants import ALEX_EMAIL, CHARLIE_EMAIL, DANIEL_EMAIL
+from .constants import ALEX_EMAIL, CHARLIE_EMAIL, DANIEL_EMAIL, PYBEL_WEB_EXAMPLES
 from .manager_utils import insert_graph
 from .models import (
     Assembly, Base, EdgeComment, EdgeVote, Experiment, NetworkOverlap, Project, Query, Report, Role, User,
@@ -149,24 +149,28 @@ class FlaskPyBEL(object):
     #: The name in which this app is stored in the Flask.extensions dictionary
     APP_NAME = 'pbw'
 
-    def __init__(self, app=None, manager=None, ensure_graphs=False):
+    def __init__(self, app=None, manager=None, examples=None):
         """
         :param Optional[flask.Flask] app: A Flask app
         :param Optional[pybel.manager.Manager] manager: A thing that has an engine and a session object
+        :param bool examples: Should the example subgraphs be loaded on startup? Warning: takes a while. Defaults to
+
         """
         self.app = app
         self.manager = manager
         self.user_datastore = None
 
         if app is not None and manager is not None:
-            self.init_app(app, manager, ensure_graphs=ensure_graphs)
+            self.init_app(app, manager, examples=examples)
 
+        self.sentry_dsn = None
         self.sentry = None
 
-    def init_app(self, app, manager, ensure_graphs=False):
+    def init_app(self, app, manager, examples=None):
         """
         :param flask.Flask app: A Flask app
         :param pybel.manager.Manager manager: A thing that has an engine and a session object
+        :param bool examples: Should the example subgraphs be loaded on startup? Warning: takes a while.
         """
         self.app = app
         self.manager = manager
@@ -205,7 +209,8 @@ class FlaskPyBEL(object):
         self._prepare_service()
         self._build_admin_service()
 
-        if ensure_graphs:
+        examples = examples if examples is not None else app.config.get(PYBEL_WEB_EXAMPLES, False)
+        if examples:
             self._ensure_graphs()
 
     def _register_error_handlers(self):

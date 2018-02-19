@@ -15,6 +15,7 @@ from flask_security import current_user, login_required, roles_required
 import pybel_tools.query
 from pybel.manager.models import Annotation, Edge, Namespace, Node
 from pybel.utils import get_version as get_pybel_version
+from pybel_tools.biogrammar.double_edges import summarize_competeness
 from pybel_tools.mutation import (
     collapse_by_central_dogma_to_genes, remove_associations, remove_isolated_nodes,
     remove_pathologies,
@@ -26,11 +27,11 @@ from pybel_tools.utils import get_version as get_pybel_tools_version
 from . import models
 from .constants import *
 from .manager import *
+from .manager import manager_dict
 from .models import Project, Query, Report, User
 from .utils import (
     calculate_overlap_dict, get_networks_with_permission, manager, next_or_jsonify, query_form_to_dict,
-    query_from_network, redirect_explorer, render_network_summary_safe, safe_get_network, safe_get_node,
-    safe_get_query,
+    query_from_network, render_network_summary_safe, safe_get_network, safe_get_node, safe_get_query,
 )
 
 log = logging.getLogger(__name__)
@@ -79,6 +80,15 @@ def format_big_number(n):
         return '{}K'.format(int(round(n / 1000)))
     else:
         return str(n)
+
+
+def redirect_to_view_explorer_query(query):
+    """Returns the response for the biological network explorer in a given query to :func:`view_explorer_query`
+
+    :param Query query: A query
+    :rtype: flask.Response
+    """
+    return redirect(url_for('ui.view_explorer_query', query_id=query.id))
 
 
 @ui_blueprint.route('/', methods=['GET', 'POST'])
@@ -131,15 +141,17 @@ def view_networks():
     )
 
 
-def _render_nodes(nodes):
+def _render_nodes(nodes, count=None):
     """Renders a list of nodes
 
     :param iter[Node] nodes:
+    :param Optional[int] count: The number of nodes displayed
     :return: flask.Response
     """
     return render_template(
         'nodes.html',
         nodes=nodes,
+        count=count,
         current_user=current_user,
         hgnc_manager=hgnc_manager,
         chebi_manager=chebi_manager,
@@ -155,6 +167,20 @@ def view_nodes():
     """Renders a page viewing all edges"""
     nodes = manager.session.query(Node)
 
+    func = request.args.get('function')
+    if func:
+        nodes = nodes.filter(Node.type == func)
+
+    namespace = request.args.get('namespace')
+    if namespace:
+        nodes = nodes.filter(Node.namespace_entry.namespace.name.contains(namespace))
+
+    search = request.args.get('search')
+    if search:
+        nodes = nodes.filter(Node.bel.contains(search))
+
+    count = nodes.count()
+
     limit = request.args.get('limit', 15, type=int)
     nodes = nodes.limit(limit)
 
@@ -162,7 +188,7 @@ def view_nodes():
     if offset:
         nodes = nodes.offset(offset)
 
-    return _render_nodes(nodes)
+    return _render_nodes(nodes, count=count)
 
 
 @ui_blueprint.route('/node/<node_hash>')
@@ -210,7 +236,7 @@ def view_edge(edge_hash):
     return render_template('edges.html', edges=[manager.get_edge_by_hash(edge_hash)], current_user=current_user)
 
 
-@ui_blueprint.route('/network/<int:network_id>/explore', methods=['GET'])
+@ui_blueprint.route('/network/<int:network_id>/explore')
 def view_explore_network(network_id):
     """Renders a page for the user to explore a network
 
@@ -218,10 +244,10 @@ def view_explore_network(network_id):
     """
     network = safe_get_network(network_id)
     query = query_from_network(network)
-    return redirect_explorer(query)
+    return redirect_to_view_explorer_query(query)
 
 
-@ui_blueprint.route('/explore/<int:query_id>', methods=['GET'])
+@ui_blueprint.route('/explore/<int:query_id>')
 def view_explorer_query(query_id):
     """Renders a page for the user to explore a network
 
@@ -231,7 +257,25 @@ def view_explorer_query(query_id):
     return render_template('explorer.html', query=query, explorer_toolbox=get_explorer_toolbox())
 
 
-@ui_blueprint.route('/project/<int:project_id>/explore', methods=['GET'])
+@ui_blueprint.route('/node/<node_hash>/explore/')
+def view_explorer_node(node_hash):
+    """Builds an induction query around the node then sends it
+
+    :param str node_hash: The hash of the node
+    """
+    node = safe_get_node(manager, node_hash)
+
+    query_original = Query.from_networks(networks=node.networks, user=current_user)
+    manager.session.flush()
+
+    query = query_original.add_seed_neighbors([node])
+    manager.session.add(query)
+    manager.session.commit()
+
+    return redirect(url_for('.view_explorer_query', query_id=query.id))
+
+
+@ui_blueprint.route('/project/<int:project_id>/explore')
 @login_required
 def view_explore_project(project_id):
     """Renders a page for the user to explore the full network from a project
@@ -240,18 +284,13 @@ def view_explore_project(project_id):
     """
     project = manager.session.query(Project).get(project_id)
 
-    q = pybel_tools.query.Query(network_ids=[
-        network.id
-        for network in project.networks
-    ])
-
-    query = Query.from_query(manager, q, current_user)
+    query = Query.from_networks(project.networks, user=current_user)
     query.assembly.name = '{} query of {}'.format(time.asctime(), project.name)
 
     manager.session.add(query)
     manager.session.commit()
 
-    return redirect_explorer(query)
+    return redirect_to_view_explorer_query(query)
 
 
 @ui_blueprint.route('/query/build', methods=['GET', 'POST'])
@@ -277,7 +316,7 @@ def get_pipeline():
     manager.session.add(query)
     manager.session.commit()
 
-    return redirect_explorer(query)
+    return redirect_to_view_explorer_query(query)
 
 
 @ui_blueprint.route('/namespaces')
@@ -317,7 +356,7 @@ def view_about():
         ('Deployed', time_instantiated)
     ]
 
-    return render_template('about.html', metadata=metadata)
+    return render_template('about.html', metadata=metadata, managers=manager_dict)
 
 
 @ui_blueprint.route('/user')
@@ -363,6 +402,20 @@ def view_summarize_biogrammar(network_id):
     :param int network_id: The identifier of the network to summarize
     """
     return render_network_summary_safe(manager, network_id, template='summarize_biogrammar.html')
+
+
+@ui_blueprint.route('/summary/<int:network_id>/completeness')
+def view_summarize_completeness(network_id):
+    """Renders a page with the summary of the completeness analysis of a BEL script
+
+    :param int network_id: The identifier of the network to summarize
+    """
+    network = manager.get_network_by_id(network_id)
+    graph = network.as_bel()
+
+    entries = summarize_competeness(graph)
+
+    return render_template('summarize_completeness.html', current_user=current_user, network=network, entries=entries)
 
 
 @ui_blueprint.route('/summary/<int:network_id>/stratified/<annotation>')
@@ -576,6 +629,7 @@ def view_config():
 @ui_blueprint.route('/curate')
 @roles_required('admin')
 def view_curation_interface():
+    """View the curation interface prototype"""
     return render_template('curate.html')
 
 
@@ -616,7 +670,7 @@ def build_summary_link_query(network_id):
     manager.session.add(query)
     manager.session.commit()
 
-    return redirect_explorer(query)
+    return redirect_to_view_explorer_query(query)
 
 
 @ui_blueprint.route('/network/<int:network_id>/sample/')
@@ -631,4 +685,4 @@ def build_subsample_query(network_id):
     manager.session.add(query)
     manager.session.commit()
 
-    return redirect_explorer(query)
+    return redirect_to_view_explorer_query(query)

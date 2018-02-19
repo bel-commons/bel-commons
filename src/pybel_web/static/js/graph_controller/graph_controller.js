@@ -65,6 +65,94 @@ function getSelectedNodesFromTree(tree) {
     return selectionHashMap;
 }
 
+
+function handleHgncNodeInfo(nodeObject, data) {
+    if (data.identifier) {
+        nodeObject['HGNC Identifier'] = data.identifier
+    }
+    if (data.symbol) {
+        nodeObject['HGNC Symbol'] = data.symbol
+    }
+    if (data.name) {
+        nodeObject['HGNC Name'] = data.name
+    }
+    if (data.locus_group) {
+        nodeObject['HGNC Locus Group'] = data.locus_group
+    }
+    if (data.locus_type) {
+        nodeObject['HGNC Locus Type'] = data.locus_type
+    }
+}
+
+function handleEntrezNodeInfo(nodeObject, data) {
+    if (data.entrez_id) {
+        nodeObject['Entrez Identifier'] = data.entrez_id
+    }
+    if (data.name) {
+        nodeObject['Entrez Name'] = data.name
+    }
+    if (data.species) {
+        nodeObject['Entrez Species'] = data.species
+    }
+    if (data.description) {
+        nodeObject['Entrez Description'] = data.description
+    }
+    if (data.type) {
+        nodeObject['Entrez Type'] = data.type
+    }
+}
+
+function handleChebiNodeInfo(nodeObject, data) {
+    if (data.chebi_id) {
+        nodeObject['ChEBI Identifier'] = data.chebi_id
+    }
+    if (data.name) {
+        nodeObject['ChEBI Name'] = data.name
+    }
+    if (data.symbol) {
+        nodeObject['ChEBI Definition'] = data.definition
+    }
+    if (data.inchi) {
+        nodeObject['ChEBI InChI'] = data.inchi
+    }
+    if (data.source) {
+        nodeObject['ChEBI Source'] = data.source
+    }
+}
+
+
+function handleNodeResponse(dynamicTable, nodeObject, node, nodeResponse) {
+    if (nodeResponse.identifier) {
+        nodeObject["Identifier"] = nodeResponse.identifier;
+    }
+    if (nodeResponse.label) {
+        nodeObject["Label"] = nodeResponse.label
+    }
+    if (nodeResponse.description) {
+        nodeObject["Description"] = nodeResponse.description
+    }
+
+    if (nodeResponse.annotations) {
+        // TODO use microservices for this instead of asking PyBEL Web
+        if (nodeResponse.annotations.HGNC) {
+            handleHgncNodeInfo(nodeObject, nodeResponse.annotations.HGNC)
+        }
+        if (nodeResponse.annotations.ENTREZ) {
+            handleEntrezNodeInfo(nodeObject, nodeResponse.annotations.ENTREZ)
+        }
+        if (nodeResponse.annotations.CHEBI) {
+            handleChebiNodeInfo(nodeObject, nodeResponse.annotations.CHEBI)
+        }
+    }
+
+    var row = 0;
+    $.each(nodeObject, function (key, value) {
+        insertRow(dynamicTable, row, key, value);
+        row++
+    });
+
+}
+
 /**
  * Renders node info table
  * @param {object} node object
@@ -77,28 +165,22 @@ function displayNodeInfo(node) {
         dynamicTable.deleteRow(0);
     }
 
+    const url = "/api/node/" + node.id;
+
     var nodeObject = {};
 
-    if (node.bel) {
-        nodeObject["BEL"] = '<a target="_blank" href="/node/' + node.id + '"><code>' + node.bel + "</code> <span class=\"glyphicon glyphicon-new-window\"></span></a>";
-    }
-    if (node.identifier) {
-        nodeObject["Identifier"] = node.identifier;
-    }
-    if (node.label) {
-        nodeObject["Label"] = node.label
-    }
-    if (node.description) {
-        nodeObject["Description"] = node.description
-    }
-    if (node.id) {
-        nodeObject["Hash"] = '<a target="_blank" href="/node/' + node.id + '"><code>' + node.id.slice(0, 10) + "</code></a>";
-    }
+    nodeObject["BEL"] = '<a target="_blank" href="/node/' + node.id + '"><code>' + node.bel + "</code> <span class=\"glyphicon glyphicon-new-window\"></span></a>";
 
-    var row = 0;
-    $.each(nodeObject, function (key, value) {
-        insertRow(dynamicTable, row, key, value);
-        row++
+    $.ajax({
+        type: "GET",
+        url: url,
+        dataType: "json",
+        error: function (request) {
+            console.log('unable to look up node ' + node.id);
+        },
+        success: function (nodeResponse) {
+            handleNodeResponse(dynamicTable, nodeObject, node, nodeResponse)
+        }
     });
 }
 

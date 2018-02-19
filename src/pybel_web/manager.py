@@ -87,3 +87,5 @@ else:
     log.info('Using Bio2BEL Interpro')
     interpro_manager = bio2bel_interpro.Manager()
     interpro_manager.create_all()
+
+manager_dict = {k: v for k, v in locals().items() if k.endswith('_manager')}

@@ -10,7 +10,6 @@
     <div class="container">
         {{ util.flashed_messages(dismissible=True, container=False) }}
 
-
         <div class="panel panel-default">
             <div class="panel-heading">
                 <div class="btn-group pull-right">
@@ -40,23 +39,44 @@
                         <h4 class="list-group-item-heading">
                             {{ node.bel }}
 
-                            {% if current_user.is_admin %}
-                                <a href="{{ url_for('dbs.drop_node', node_hash=node.sha512, next=url_for('ui.view_nodes')) }}"
-                                   class="btn btn-danger pull-right">Drop</a>
-                            {% endif %}
+                            <div class="pull-right">
+                                <small class="text-muted">
+                                    In-Edges: {{ node.in_edges.count() }} |
+                                    Out-Edges: {{ node.out_edges.count() }} |
+
+                                    {% if node.type == 'Gene' %}
+                                        Orthologies: {{ node.out_edges.filter_by(relation='orthologous').count() }} |
+                                    {% endif %}
+
+                                    Equivalencies: {{ node.out_edges.filter_by(relation='equivalentTo').count() }} |
+                                    Classes: {{ node.out_edges.filter_by(relation='isA').count() }} |
+                                    Children: {{ node.in_edges.filter_by(relation='isA').count() }} |
+
+                                    <a href="{{ url_for('ui.view_explorer_node', node_hash=node.sha512) }}">Explore</a>
+
+                                    {% if current_user.is_admin %}
+                                        |
+                                        <a href="{{ url_for('dbs.get_node_by_hash', node_hash=node.sha512) }}">JSON</a>
+                                        |
+                                        <a href="{{ url_for('dbs.drop_node', node_hash=node.sha512, next=url_for('ui.view_nodes')) }}">Drop</a>
+                                    {% endif %}
+                                </small>
+                            </div>
                         </h4>
                         <div class="list-group-item-text">
-                            In-Edges: {{ node.in_edges.count() }} |
-                            Out-Edges: {{ node.out_edges.count() }} |
-
-                            {% if node.type == 'Gene' %}
-                                Orthologies: {{ node.out_edges.filter_by(relation='orthologous').count() }} |
+                            {% set node_members = node.out_edges.filter_by(relation='hasComponent').all() %}
+                            {% if node_members %}
+                                <h4>Components</h4>
+                                <ul>
+                                    {% for node_member in node_members %}
+                                        <li>
+                                            <a href="{{ url_for('ui.view_node', node_hash=node_member.target.sha512) }}">
+                                                {{ node_member.target.bel }}
+                                            </a>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
                             {% endif %}
-
-                            Equivalencies: {{ node.out_edges.filter_by(relation='equivalentTo').count() }} |
-                            Classes: {{ node.out_edges.filter_by(relation='isA').count() }} |
-                            Children: {{ node.in_edges.filter_by(relation='isA').count() }}
-
 
                             {% set node_in_edges = node.in_edges.limit(3) %}
                             {% set node_out_edges = node.out_edges.limit(2) %}
@@ -121,13 +141,15 @@
                                     <dl class="dl-horizontal">
                                         <dt>Identifier</dt>
                                         <dd>{{ gene.identifier }}</dd>
+                                        <dt>Symbol</dt>
+                                        <dd>{{ gene.symbol }}</dd>
                                         <dt>Name</dt>
                                         <dd>{{ gene.name }}</dd>
                                         <dt>Locus Group</dt>
                                         <dd>{{ gene.locus_group }}</dd>
                                         <dt>Locus Type</dt>
                                         <dd>{{ gene.locus_type }}</dd>
-                                        <dt>Synonyms Type</dt>
+                                        <dt>Synonyms</dt>
                                         <dd>{{ gene.alias_names|join(' | ') }}</dd>
                                     </dl>
                                 {% elif entrez_manager and node.namespace_entry.namespace.keyword in ['EGID', 'EG', 'ENTREZ'] %}
@@ -206,6 +228,11 @@
                     </div>
                 {% endfor %}
             </div>
+            {% if count %}
+                <div class="panel-footer">
+                    <p>Showing {{ nodes.count() }} of {{ count }} nodes</p>
+                </div>
+            {% endif %}
         </div>
     </div>
 

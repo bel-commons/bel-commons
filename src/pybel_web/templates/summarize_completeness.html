@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% import "bootstrap/wtf.html" as wtf %}
+{% import "bootstrap/fixes.html" as fixes %}
+{% import "bootstrap/utils.html" as util %}
+
+{% block scripts %}
+    {{ super() }}
+    <script type="text/javascript" src="https://cdn.datatables.net/v/bs/dt-1.10.16/datatables.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            $("#stratified").DataTable();
+        });
+    </script>
+{% endblock %}
+
+{% block title %}Knowledge Completeness Summary{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div class="page-header">
+            <h1>Knowledge Completeness Summary of {{ network.name }}
+                <small class="text-muted">{{ network.version }}</small>
+            </h1>
+        </div>
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Translocations</h3>
+            </div>
+
+            <div class="panel-body">
+                <p>
+                    Summarizes when the translocation of a given node causes a change in its activity, but there is no
+                    knowledge related to what that activity implies.
+                </p>
+            </div>
+            <div class="list-group">
+                {% for entries_types, entries_items in entries.items() %}
+                    {% for entry in entries_items %}
+                        <div class="list-group-item">
+                            <h4 class="list-group-item-heading">{{ entry['line'] }} - {{ entries_types }}</h4>
+                            <div class="list-group-item-text">
+
+                                <p><code>{{ entry['bel'] }}</code></p>
+
+                                <p>{{ entry }}</p>
+
+                                {% if entry['chain'] %}
+                                    <ul>
+                                        {% for related in entry['chain'] %}
+                                            <li><b>Chain:</b> {{ related }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                {% endif %}
+                                {% if entry['related'] %}
+                                    <ul>
+                                        {% for related in entry['related'] %}
+                                            <li><b>Related:</b> {{ related }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+{% endblock %}

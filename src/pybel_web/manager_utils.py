@@ -6,9 +6,10 @@ import time
 from collections import Counter
 
 import networkx as nx
+from sqlalchemy.exc import IntegrityError
 
 import pybel
-from pybel.canonicalize import calculate_canonical_name, node_to_bel
+from pybel.canonicalize import calculate_canonical_name
 from pybel.constants import RELATION
 from pybel.manager import Network
 from pybel.struct.filters import filter_edges
@@ -61,6 +62,11 @@ def canonical_hash(graph, node):
 
 
 def get_network_summary_dict(graph):
+    """Creates a summary dictionary
+
+    :param pybel.BELGraph graph:
+    :rtype: dict
+    """
     node_bel_cache = {}
 
     def dcn(node):
@@ -71,7 +77,7 @@ def get_network_summary_dict(graph):
         if node in node_bel_cache:
             return node_bel_cache[node]
 
-        node_bel_cache[node] = node_to_bel(graph.node[node])
+        node_bel_cache[node] = graph.node_to_bel(node)
         return node_bel_cache[node]
 
     def get_pair_tuple(source_tuple, target_tuple):
@@ -165,7 +171,7 @@ def get_network_summary_dict(graph):
 
 
 def make_graph_summary(graph):
-    """Makes a graph summary for sticking in the report
+    """Makes a graph summary for sticking in the report including the summary from :func:`get_network_summary_dict`
 
     :param pybel.BELGraph graph:
     :rtype: dict
@@ -202,7 +208,7 @@ def fill_out_report(network, report, graph_summary):
 
     :param Network network:
     :param Report report:
-    :param dict graph_summary:
+    :param dict graph_summary: Summary generated from :func:`make_graph_summary`
     """
     report.network = network
     report.number_nodes = graph_summary['number_nodes']
@@ -225,7 +231,12 @@ def insert_graph(m, graph, user_id=1, public=False):  # TODO put this in extende
     :param int user_id: The identifier of the user to report. Defaults to 1.
     :param bool public: Should the network be public? Defaults to false
     """
-    network = m.insert_graph(graph)
+    try:
+        network = m.insert_graph(graph)
+    except IntegrityError:
+        m.session.rollback()
+        log.warning('Integrity Error: could not add %s', graph)
+        return
 
     report = Report(
         user_id=user_id,

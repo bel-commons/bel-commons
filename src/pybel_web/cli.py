@@ -114,9 +114,10 @@ def main():
               help='Use different default config object')
 @click.option('-v', '--debug', count=True, help="Turn on debugging. More v's, more debugging")
 @click.option('--config', type=click.File('r'), help='Additional configuration in a JSON file')
+@click.option('-e', '--examples', is_flag=True, help='Ensure examples')
 @click.option('--with-gunicorn', is_flag=True)
 @click.option('-w', '--workers', type=int, default=number_of_workers(), help='Number of workers')
-def run(host, port, default_config, debug, config, with_gunicorn, workers):
+def run(host, port, default_config, debug, config, examples, with_gunicorn, workers):
     """Runs PyBEL Web"""
     set_debug_param(debug)
     if debug < 3:
@@ -137,6 +138,7 @@ def run(host, port, default_config, debug, config, with_gunicorn, workers):
 
     app = create_application(
         config_location=_config_map.get(default_config),
+        examples=examples,
         **config_dict
     )
 
@@ -311,12 +313,19 @@ def parse(manager, path, public):
 
 
 @network.command()
-@click.option('-p', '--path')
+@click.option('-p', '--path', help='A path or directory of gpickles to upload. Defaults to cwd', default=os.getcwd())
 @click.pass_obj
 def upload(manager, path):
     """Upload a gpickle"""
-    graph = pybel.from_pickle(path)
-    insert_graph(manager, graph)
+    if os.path.isdir(path):
+        from pybel_tools.io import iter_from_pickles_from_directory
+        for graph in iter_from_pickles_from_directory(path):
+            click.echo('inserting %s', graph)
+            insert_graph(manager, graph)
+
+    else:
+        graph = pybel.from_pickle(path)
+        insert_graph(manager, graph)
 
 
 @manage.group()

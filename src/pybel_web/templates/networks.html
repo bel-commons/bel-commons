@@ -187,8 +187,9 @@
                             <div class="pull-right">
                                 {% if network.report %}
                                     <small class="text-muted">
-                                        {{ network.report.number_nodes }} nodes |
-                                        {{ network.report.number_edges }} edges |
+                                        {{ network.report.number_nodes }} node{% if network.report.number_nodes > 1 %}s{% endif %} |
+                                        {{ network.report.number_edges }} edge{% if network.report.number_edges > 1 %}s{% endif %} |
+                                        {{ network.report.number_citations }} citation{% if network.report.number_citations > 1 %}s{% endif %} |
 
                                         {% if network.report.public %}
                                             Public <span class="glyphicon glyphicon-globe" aria-hidden="true"></span>
@@ -254,6 +255,17 @@
                                                     Biogrammar
                                                 </a>
                                             </li>
+                                            {% if current_user.is_authenticated and current_user.is_admin %}
+                                                <li>
+                                                    <a href="{{ url_for('ui.view_summarize_completeness', network_id=network.id) }}"
+                                                       data-toggle="popright"
+                                                       data-content="Access the completeness summary of the network.">
+                                                        <span class="glyphicon glyphicon-tint"
+                                                              aria-hidden="true"></span>
+                                                        Completeness
+                                                    </a>
+                                                </li>
+                                            {% endif %}
                                         </ul>
                                     </div>
                                 </li>

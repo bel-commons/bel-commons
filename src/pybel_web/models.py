@@ -718,6 +718,18 @@ class Query(Base):
         return query
 
     @staticmethod
+    def from_networks(networks, user=None):
+        """Builds a query from a network
+
+        :param list[Network] networks: A network
+        :param Optional[User] user: The user who owns this query
+        :rtype: Query
+        """
+        assembly = Assembly.from_networks(networks, user=user)
+        query = Query.from_assembly(assembly, user=user)
+        return query
+
+    @staticmethod
     def from_network(network, user=None):
         """Builds a query from a network
 
@@ -725,9 +737,7 @@ class Query(Base):
         :param Optional[User] user: The user who owns this query
         :rtype: Query
         """
-        assembly = Assembly.from_network(network, user=user)
-        query = Query.from_assembly(assembly, user=user)
-        return query
+        return Query.from_networks(networks=[network], user=user)
 
     @staticmethod
     def from_query(manager, query, user=None):
@@ -735,7 +745,7 @@ class Query(Base):
 
         :param pybel.manager.Manager manager: A database manager
         :param pybel_tools.query.Query query: A query
-        :param Optional[pybel_web.models.User] user: A user
+        :param Optional[User] user: A user
         :rtype: Query
         """
         assembly = Assembly.from_query(manager, query, user=user)
@@ -752,9 +762,9 @@ class Query(Base):
 
         :param pybel.manager.Manager manager:
         :param list[int] network_ids: A list of network identifiers
-        :param Optional[pybel_web.models.User] user:
+        :param Optional[User] user:
         :param Optional[list[dict]] seed_list:
-        :param Optional[Pipeline pipeline]: Instance of a pipeline
+        :param Optional[Pipeline] pipeline: Instance of a pipeline
         :rtype: Query
         """
         q = pybel_tools.query.Query(network_ids, seeding=seed_list, pipeline=pipeline)
@@ -776,6 +786,22 @@ class Query(Base):
             assembly=self.assembly,
             seeding=self.seeding,
             pipeline_protocol=_query.pipeline.to_jsons(),
+        )
+
+    def add_seed_neighbors(self, nodes):
+        """Adds a seed by neighbors. Returns a new query
+
+        :param list[pybel.manager.models.Node] nodes: A list of nodes
+        :rtype: Query
+        """
+        _query = self.data
+        _query.append_seeding_neighbors([node.to_tuple() for node in nodes])
+
+        return Query(
+            parent_id=self.id,
+            assembly=self.assembly,
+            seeding=_query.seeding_to_jsons(),
+            pipeline_protocol=self.pipeline_protocol,
         )
 
 

@@ -186,6 +186,21 @@
 
         <div class="panel panel-default">
             <div class="panel-heading">
+                <h3 class="panel-title">Bio2BEL Managers</h3>
+            </div>
+            <div class="list-group">
+                {% for name, m in managers.items() %}
+                    <div class="list-group-item">
+                        <h4 class="list-group-item-heading">{{ name }}</h4>
+                        <p class="list-group-item-text">
+                        </p>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
                 <h3 class="panel-title">Dependencies</h3>
             </div>
             <div class="panel-body row">
