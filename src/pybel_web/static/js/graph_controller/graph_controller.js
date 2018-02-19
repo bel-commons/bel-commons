@@ -129,6 +129,22 @@ function handleExpasyNodeInfo(nodeObject, data) {
     }
 }
 
+function handleGoNodeInfo(nodeObject, data) {
+    console.log(data);
+    if (data.id) {
+        nodeObject['GO Identifier'] = data.id
+    }
+    if (data.name) {
+        nodeObject['GO Name'] = data.name
+    }
+    if (data.def) {
+        nodeObject['GO Definition'] = data.def
+    }
+    if (data.alt_id) {
+        nodeObject['GO Alternate Identifiers'] = data.alt_id.join(' | ')
+    }
+}
+
 
 function handleNodeResponse(dynamicTable, nodeObject, node, nodeResponse) {
     if (nodeResponse.identifier) {
@@ -154,6 +170,9 @@ function handleNodeResponse(dynamicTable, nodeObject, node, nodeResponse) {
         }
         if (nodeResponse.annotations.EXPASY) {
             handleExpasyNodeInfo(nodeObject, nodeResponse.annotations.EXPASY)
+        }
+        if (nodeResponse.annotations.GO) {
+            handleGoNodeInfo(nodeObject, nodeResponse.annotations.GO)
         }
     }
 

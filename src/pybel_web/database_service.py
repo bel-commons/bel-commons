@@ -1830,6 +1830,16 @@ def get_enriched_node_json(node):
         model = expasy_manager.get_enzyme_by_id(name)
         node_data['annotations']['EXPASY'] = {'missing': True} if model is None else model.to_json()
 
+    elif namespace in {'GOBP', 'GOBPID', 'GO'} and go_manager:
+        go_identifier = go_manager.guess_identifier(node_data)
+
+        if go_identifier is None:
+            node_data['annotations']['GO'] = {'missing': True}
+        else:
+            go_data = go_manager.get_go_by_id(go_identifier)
+
+            node_data['annotations']['GO'] = go_data
+
     elif namespace == 'RGD':
         pass
 
