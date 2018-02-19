@@ -132,13 +132,13 @@ function handleExpasyNodeInfo(nodeObject, data) {
 
 function handleNodeResponse(dynamicTable, nodeObject, node, nodeResponse) {
     if (nodeResponse.identifier) {
-        nodeObject["Identifier"] = nodeResponse.identifier;
+        nodeObject["Identifier"] = node.identifier;
     }
     if (nodeResponse.label) {
-        nodeObject["Label"] = nodeResponse.label
+        nodeObject["Label"] = node.label
     }
     if (nodeResponse.description) {
-        nodeObject["Description"] = nodeResponse.description
+        nodeObject["Description"] = node.description
     }
 
     if (nodeResponse.annotations) {
