@@ -88,4 +88,8 @@ else:
     interpro_manager = bio2bel_interpro.Manager()
     interpro_manager.create_all()
 
-manager_dict = {k: v for k, v in locals().items() if k.endswith('_manager')}
+manager_dict = {
+    name: manager
+    for name, manager in locals().items()
+    if name.endswith('_manager') and manager
+}
