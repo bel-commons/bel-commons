@@ -206,6 +206,7 @@ function displayNodeInfo(node) {
         type: "GET",
         url: url,
         dataType: "json",
+        global: false,
         error: function (request) {
             console.log('unable to look up node ' + node.id);
         },
