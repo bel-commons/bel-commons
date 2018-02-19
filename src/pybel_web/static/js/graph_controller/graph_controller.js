@@ -145,19 +145,20 @@ function handleGoNodeInfo(nodeObject, data) {
     }
 }
 
-
-function handleNodeResponse(dynamicTable, nodeObject, node, nodeResponse) {
-    if (nodeResponse.identifier) {
+function handleNodeResponseCommon(nodeObject, node) {
+    if (node.identifier) {
         nodeObject["Identifier"] = node.identifier;
     }
-    if (nodeResponse.label) {
+    if (node.label) {
         nodeObject["Label"] = node.label
     }
-    if (nodeResponse.description) {
+    if (node.description) {
         nodeObject["Description"] = node.description
     }
+}
 
-    if (nodeResponse.annotations) {
+function handleNodeResponse(nodeObject, nodeResponse) {
+    if (nodeResponse && nodeResponse.annotations) {
         // TODO use microservices for this instead of asking PyBEL Web
         if (nodeResponse.annotations.HGNC) {
             handleHgncNodeInfo(nodeObject, nodeResponse.annotations.HGNC)
@@ -175,13 +176,14 @@ function handleNodeResponse(dynamicTable, nodeObject, node, nodeResponse) {
             handleGoNodeInfo(nodeObject, nodeResponse.annotations.GO)
         }
     }
+}
 
+function updateDynamicTable(dynamicTable, nodeObject) {
     var row = 0;
     $.each(nodeObject, function (key, value) {
         insertRow(dynamicTable, row, key, value);
         row++
     });
-
 }
 
 /**
@@ -209,12 +211,17 @@ function displayNodeInfo(node) {
         global: false,
         error: function (request) {
             console.log('unable to look up node ' + node.id);
+            handleNodeResponseCommon(nodeObject, node);
+            updateDynamicTable(dynamicTable, nodeObject);
         },
         success: function (nodeResponse) {
-            handleNodeResponse(dynamicTable, nodeObject, node, nodeResponse)
+            handleNodeResponseCommon(nodeObject, node);
+            handleNodeResponse(nodeObject, nodeResponse);
+            updateDynamicTable(dynamicTable, nodeObject);
         }
     });
 }
+
 
 /**
  * Gets the best name for a node object
