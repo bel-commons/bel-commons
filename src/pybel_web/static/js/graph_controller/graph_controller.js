@@ -109,7 +109,7 @@ function handleChebiNodeInfo(nodeObject, data) {
     if (data.name) {
         nodeObject['ChEBI Name'] = data.name
     }
-    if (data.symbol) {
+    if (data.definition) {
         nodeObject['ChEBI Definition'] = data.definition
     }
     if (data.inchi) {
