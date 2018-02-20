@@ -313,14 +313,15 @@ def parse(manager, path, public):
 
 
 @network.command()
-@click.option('-p', '--path', help='A path or directory of gpickles to upload. Defaults to cwd', default=os.getcwd())
+@click.option('-p', '--path', help='A path or directory of gpickles to upload. Defaults to cwd {}'.format(os.getcwd()),
+              default=os.getcwd())
 @click.pass_obj
 def upload(manager, path):
     """Upload a gpickle"""
     if os.path.isdir(path):
         from pybel_tools.io import iter_from_pickles_from_directory
         for graph in iter_from_pickles_from_directory(path):
-            click.echo('inserting %s', graph)
+            click.echo('inserting {}'.format(graph))
             insert_graph(manager, graph)
 
     else:
