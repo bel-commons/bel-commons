@@ -44,7 +44,6 @@ INSTALL_REQUIRES = [
     'matplotlib_venn',
     'matplotlib',
     'gitpython',
-    'gunicorn',
 ]
 EXTRAS_REQUIRE = {
     'bio2bel': ['bio2bel_hgnc', 'bio2bel_chebi', 'bio2bel_mirtarbase'],

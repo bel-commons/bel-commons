@@ -21,4 +21,3 @@ matplotlib_venn
 matplotlib
 gitpython
 wtforms
-gunicorn

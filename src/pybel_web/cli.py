@@ -25,7 +25,6 @@ import sys
 import time
 
 import click
-import gunicorn.app.base
 from flask_security import SQLAlchemyUserDatastore
 
 import pybel
@@ -79,19 +78,35 @@ def number_of_workers():
     return (multiprocessing.cpu_count() * 2) + 1
 
 
-class StandaloneApplication(gunicorn.app.base.BaseApplication):
-    def __init__(self, app, options=None):
-        self.options = options or {}
-        self.application = app
-        super(StandaloneApplication, self).__init__()
+def make_gunicorn_app(app, host, port, workers):
+    """Make a GUnicorn App
 
-    def load_config(self):
-        for key, value in self.options.items():
-            if key in self.cfg.settings and value is not None:
-                self.cfg.set(key.lower(), value)
+    :param flask.Flask app:
+    :param str host:
+    :param int port:
+    :param int workers:
+    :rtype: gunicorn.app.base.BaseApplication
+    """
+    import gunicorn.app.base
 
-    def load(self):
-        return self.application
+    class StandaloneApplication(gunicorn.app.base.BaseApplication):
+        def __init__(self, options=None):
+            self.options = options or {}
+            self.application = app
+            super(StandaloneApplication, self).__init__()
+
+        def load_config(self):
+            for key, value in self.options.items():
+                if key in self.cfg.settings and value is not None:
+                    self.cfg.set(key.lower(), value)
+
+        def load(self):
+            return self.application
+
+    return StandaloneApplication({
+        'bind': '%s:%s' % (host, port),
+        'workers': workers,
+    })
 
 
 _config_map = {
@@ -100,11 +115,16 @@ _config_map = {
     'prod': 'pybel_web.config.ProductionConfig'
 }
 
+_main_help = "PyBEL-Tools Command Line Interface on {}\n with " \
+             "PyBEL v{} and PyBEL Tools v{}".format(sys.executable,
+                                                    pybel_version(),
+                                                    pybel_tools_get_version())
 
-@click.group(help="PyBEL-Tools Command Line Interface on {}\n with PyBEL v{}".format(sys.executable, pybel_version()))
+
+@click.group(help=_main_help)
 @click.version_option()
 def main():
-    """PyBEL Tools Command Line Interface"""
+    pass
 
 
 @main.command()
@@ -118,7 +138,7 @@ def main():
 @click.option('--with-gunicorn', is_flag=True)
 @click.option('-w', '--workers', type=int, default=number_of_workers(), help='Number of workers')
 def run(host, port, default_config, debug, config, examples, with_gunicorn, workers):
-    """Runs PyBEL Web"""
+    """Run the web application"""
     set_debug_param(debug)
     if debug < 3:
         enable_cool_mode()
@@ -167,10 +187,7 @@ def run(host, port, default_config, debug, config, examples, with_gunicorn, work
     log.info('Done building %s in %.2f seconds', app, time.time() - t)
 
     if with_gunicorn:
-        gunicorn_app = StandaloneApplication(app, {
-            'bind': '%s:%s' % (host, port),
-            'workers': workers,
-        })
+        gunicorn_app = make_gunicorn_app(app, host, port, workers)
         gunicorn_app.run()
 
     else:
@@ -181,7 +198,7 @@ def run(host, port, default_config, debug, config, examples, with_gunicorn, work
 @click.option('-c', '--concurrency', type=int, default=1)
 @click.option('--debug', default='INFO', type=click.Choice(['INFO', 'DEBUG']))
 def worker(concurrency, debug):
-    """Runs the celery worker"""
+    """Run the celery worker"""
     from .celery_worker import celery
     from celery.bin import worker
 
@@ -200,7 +217,7 @@ def worker(concurrency, debug):
 @click.option('--config', type=click.File('r'), help='Specify configuration JSON file')
 @click.pass_context
 def manage(ctx, connection, config):
-    """Manage database"""
+    """Manage the database"""
     if config:
         file = json.load(config)
         ctx.obj = Manager.ensure(file.get(PYBEL_CONNECTION, get_cache_connection()))
@@ -214,7 +231,7 @@ def manage(ctx, connection, config):
 @manage.command()
 @click.pass_obj
 def setup(manager):
-    """Creates the database"""
+    """Create the database"""
     manager.create_all()
 
 
@@ -259,7 +276,7 @@ def load(manager, file):
 @click.option('-u', '--user-dump', type=click.File('w'), default=sys.stdout, help='Place to dump user data')
 @click.pass_obj
 def drop(manager, yes, user_dump):
-    """Drops database"""
+    """Drop the database"""
     if yes or click.confirm('Drop database at {}?'.format(manager.connection)):
         click.echo('Dumping users to {}'.format(user_dump))
         for s in iterate_user_strings(manager):
@@ -273,23 +290,23 @@ def drop(manager, yes, user_dump):
 @manage.command()
 @click.pass_obj
 def sanitize_reports(manager):
-    """Adds charlie as the owner of all non-reported graphs"""
+    """Add charlie as the owner of all non-reported graphs"""
     ds = SQLAlchemyUserDatastore(manager, User, Role)
-    user = ds.find_user(email=CHARLIE_EMAIL)
-    click.echo('Adding {} as owner of unreported uploads'.format(user))
+    user_ = ds.find_user(email=CHARLIE_EMAIL)
+    click.echo('Adding {} as owner of unreported uploads'.format(user_))
 
-    for network in manager.session.query(Network):
-        if network.report is not None:
+    for network_ in manager.session.query(Network):
+        if network_.report is not None:
             continue
 
         report = Report(
-            network=network,
-            user=user
+            network=network_,
+            user=user_
         )
 
         manager.session.add(report)
 
-        click.echo('Sanitizing {}'.format(network))
+        click.echo('Sanitizing {}'.format(network_))
 
     manager.session.commit()
 
@@ -361,7 +378,7 @@ def add(manager, email, password, admin, scai):
             ds.add_role_to_user(u, 'scai')
 
         ds.commit()
-    except:
+    except Exception:
         log.exception("Couldn't create user")
 
 
@@ -385,7 +402,7 @@ def make_admin(manager, email):
     try:
         ds.add_role_to_user(email, 'admin')
         ds.commit()
-    except:
+    except Exception:
         log.exception("Couldn't make admin")
 
 
@@ -399,7 +416,7 @@ def add_role(manager, email, role):
     try:
         ds.add_role_to_user(email, role)
         ds.commit()
-    except:
+    except Exception:
         log.exception("Couldn't add role")
 
 
@@ -418,7 +435,7 @@ def add(manager, name, description):
     try:
         ds.create_role(name=name, description=description)
         ds.commit()
-    except:
+    except Exception:
         log.exception("Couldn't create role")
 
 
