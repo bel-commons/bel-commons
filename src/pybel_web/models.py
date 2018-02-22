@@ -19,7 +19,7 @@ from pybel.manager import Base
 from pybel.manager.models import EDGE_TABLE_NAME, LONGBLOB, NETWORK_TABLE_NAME, Network
 from pybel.struct import union
 from pybel.utils import list2tuple
-from pybel_tools.query import SEED_DATA_KEY, SEED_TYPE_KEY
+from pybel_tools.query import SEED_DATA, SEED_METHOD
 
 EXPERIMENT_TABLE_NAME = 'pybel_experiment'
 REPORT_TABLE_NAME = 'pybel_report'
@@ -674,10 +674,8 @@ class Query(Base):
 
         result = []
         for seed in seeding:
-            seed_method, seed_data = seed[SEED_TYPE_KEY], seed[SEED_DATA_KEY]
-
-            if seed_method not in {'pubmed', 'authors', 'annotation'}:
-                seed[SEED_DATA_KEY] = list2tuple(seed_data)
+            if seed[SEED_METHOD] not in {'pubmed', 'authors', 'annotation'}:
+                seed[SEED_DATA] = list2tuple(seed[SEED_DATA])
             result.append(seed)
 
         return result
