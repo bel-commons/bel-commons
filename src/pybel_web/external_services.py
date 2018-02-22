@@ -3,9 +3,7 @@
 """This module contains integrations developed for external services"""
 
 import logging
-import warnings
 
-import networkx as nx
 from flask import Blueprint, jsonify, request
 from flask_cors import cross_origin
 
@@ -69,29 +67,6 @@ def list_neurommsig_ad_subgraph_names():
     return jsonify(sorted(values))
 
 
-def relabel_nodes_to_hashes(graph, copy=False):
-    """Relabels nodes to hashes in the graph
-
-    :param pybel.BELGraph graph:
-    :param bool copy: Copy the graph?
-    :rtype: pybel.BELGraph
-    """
-    warnings.warn('should use the pybel implementation of this', DeprecationWarning)
-    if 'PYBEL_RELABELED' in graph.graph:
-        log.warning('%s has already been relabeled', graph.name)
-        return graph
-
-    mapping = {}
-    for node, data in graph.nodes_iter(data=True):
-        mapping[node] = graph.hash_node(data)
-
-    nx.relabel.relabel_nodes(graph, mapping, copy=copy)
-
-    graph.graph['PYBEL_RELABELED'] = True
-
-    return graph
-
-
 @external_blueprint.route('/api/external/neurommsig/get_alzheimers_subgraphs/')
 @cross_origin()
 def get_neurommsig_ad_subgraph():
@@ -114,7 +89,5 @@ def get_neurommsig_ad_subgraph():
     alzheimers_network = manager.get_most_recent_network_by_name("Alzheimer's Disease Knowledge Assembly")
 
     network = get_subgraph_by_annotations(alzheimers_network.as_bel(), {'Subgraph': subgraph_annotations}, or_=True)
-
-    network = relabel_nodes_to_hashes(network)
 
     return serve_network(network)
