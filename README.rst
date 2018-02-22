@@ -31,6 +31,14 @@ Get the latest code on `GitLab <https://gitlab.scai.fraunhofer.de/charles.hoyt/p
 
     $ python3 -m pip install git+https://gitlab.scai.fraunhofer.de/charles.hoyt/pybel-web.git
 
+It's also suggested to use a relational database management system like MySQL or PostgreSQL and install their
+corresponding connectors:
+
+.. code-block:: sh
+
+    $ python3 -m pip install mysqlclient
+
+
 Create the Database
 -------------------
 As an example with MySQL-specific SQL:
