@@ -10,12 +10,13 @@ from flask import Blueprint, make_response, render_template, request
 from flask_security import current_user, login_required
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileAllowed, FileField
+from ols_client import OlsClient
 from wtforms import fields
 from wtforms.validators import DataRequired
 
-from ols_client import OlsClient
 from pybel.constants import NAMESPACE_DOMAIN_TYPES
 from pybel.resources.definitions import parse_bel_resource, write_namespace
+from pybel.utils import get_version as get_pybel_version
 from pybel_tools.document_utils import write_boilerplate
 
 log = logging.getLogger(__name__)
@@ -136,7 +137,7 @@ def merge_namespaces():
         author_name=current_user.name,
         author_contact=current_user.email,
         citation_name=form.citation.data,
-        citation_description='This namespace was created by the PyBEL Web namespace merge service',
+        citation_description='This merged namespace was created by the PyBEL v{}'.format(get_pybel_version()),
         namespace_domain=form.domain.data,
         author_copyright=form.licenses.data,
         values=names,

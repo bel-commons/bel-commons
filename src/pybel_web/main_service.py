@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""This module contains the user interface to PyBEL Web"""
+"""This module contains the user interface blueprint for the application"""
 
 import datetime
 import logging
@@ -93,7 +93,7 @@ def redirect_to_view_explorer_query(query):
 
 @ui_blueprint.route('/', methods=['GET', 'POST'])
 def home():
-    """The home page has links to the main features of PyBEL Web:
+    """The home page has links to the main components of the application:
 
     1. BEL Parser
     2. Curation Tools
@@ -120,16 +120,15 @@ def view_networks():
     with the version number and the first author. Each has several actions:
 
     1. View one of the following summaries:
-      - Statistical summary
-      - Compilation summary
-      - Biological grammar summary
-
+       - Statistical summary
+       - Compilation summary
+       - Biological grammar summary
     2. Explore the full network, or a random subgraph if it is too big.
     3. Create a biological query starting with this network
     4. Analyze the network with one of the procedures (CMPA, etc.)
     5. Execute one of the following actions if the current user is the owner:
-      - Drop
-      - Make public/private
+       - Drop
+       - Make public/private
     """
     networks = get_networks_with_permission(manager)
 
@@ -352,7 +351,7 @@ def view_about():
         ('Python Version', sys.version),
         ('PyBEL Version', get_pybel_version()),
         ('PyBEL Tools Version', get_pybel_tools_version()),
-        ('PyBEL Web version', PYBEL_WEB_VERSION),
+        ('BEL Commons Version', VERSION),
         ('Deployed', time_instantiated)
     ]
 

@@ -29,7 +29,7 @@ from pybel.constants import PYBEL_CONNECTION, config as pybel_config, get_cache_
 from pybel.manager import BaseManager, Manager
 from .application_utils import FlaskPyBEL
 from .celery_utils import create_celery
-from .constants import PYBEL_WEB_VERSION
+from .constants import VERSION
 from .forms import ExtendedRegisterForm
 
 log = logging.getLogger(__name__)
@@ -71,7 +71,7 @@ def get_config_location(config_location=None):
 
 
 swagger_config = {
-    'title': 'PyBEL Web API',
+    'title': 'BEL Commons API',
     'description': 'This exposes the functions of PyBEL as a RESTful API',
     'contact': {
         'responsibleOrganization': 'Fraunhofer SCAI',
@@ -84,7 +84,7 @@ swagger_config = {
 
 
 def create_application(get_mail=False, config_location=None, examples=None, **kwargs):
-    """Builds a Flask app for the PyBEL web service
+    """Builds a Flask app
     
     1. Loads default config
     2. Updates with kwargs
@@ -143,9 +143,9 @@ def create_application(get_mail=False, config_location=None, examples=None, **kw
         if notify:
             with app.app_context():
                 mail.send_message(
-                    subject="PyBEL Web - Startup",
-                    body="PyBEL Web v{} was started on {} by {} at {}.\n\nDeployed to: {}".format(
-                        PYBEL_WEB_VERSION,
+                    subject="BEL Commons Startup",
+                    body="BEL Commons v{} was started on {} by {} at {}.\n\nDeployed to: {}".format(
+                        VERSION,
                         socket.gethostname(),
                         getuser(),
                         time.asctime(),

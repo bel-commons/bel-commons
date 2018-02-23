@@ -223,7 +223,7 @@ def fill_out_report(network, report, graph_summary):
     report.completed = True
 
 
-def insert_graph(m, graph, user_id=1, public=False):  # TODO put this in extended manager for PyBEL Web
+def insert_graph(m, graph, user_id=1, public=False):
     """Insert a graph and also make a report
 
     :param pybel.manager.Manager m: A PyBEL manager

@@ -62,7 +62,7 @@ class Omics(Base):
 
 
 class Experiment(Base):
-    """Represents a Candidate Mechanism Perturbation Amplitude experiment run in PyBEL Web"""
+    """Represents a Candidate Mechanism Perturbation Amplitude experiment or RCR experiment"""
     __tablename__ = EXPERIMENT_TABLE_NAME
 
     id = Column(Integer, primary_key=True)

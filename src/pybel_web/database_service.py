@@ -24,7 +24,7 @@ from pybel.manager.models import (
 from pybel.resources.definitions import write_annotation, write_namespace
 from pybel.struct import union
 from pybel.struct.summary import get_annotation_values_by_annotation, get_pubmed_identifiers
-from pybel.utils import hash_node
+from pybel.utils import get_version as get_pybel_version, hash_node
 from pybel_tools import pipeline
 from pybel_tools.analysis.cmpa import RESULT_LABELS
 from pybel_tools.filters.node_filters import exclude_pathology_filter
@@ -152,7 +152,7 @@ def _build_namespace_helper(graph, namespace, names):
         author_name=graph.authors,
         author_contact=graph.contact,
         citation_name=graph.name,
-        citation_description='This namespace was serialized by PyBEL Web',
+        citation_description='This namespace was serialized by PyBEL v{} from {}'.format(get_pybel_version(), graph),
         cacheable=False,
         values=names,
         file=si
@@ -248,7 +248,7 @@ def _build_annotation_helper(graph, annotation, values):
         author_name=graph.authors,
         author_contact=graph.contact,
         citation_name=graph.name,
-        description='This annotation was serialize by PyBEL Web from {}'.format(graph),
+        description='This annotation was serialize by PyBEL v{} from {}'.format(get_pybel_version(), graph),
         file=si,
     )
 

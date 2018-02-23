@@ -24,7 +24,7 @@ log = logging.getLogger(__name__)
 
 
 def to_json_custom(graph, _id='id', source='source', target='target'):
-    """Prepares JSON for PyBEL Web's biological network explorer
+    """Prepares JSON for the biological network explorer
 
     :type graph: pybel.BELGraph
     :param str _id: The key to use for the identifier of a node, which is calculated with an enumeration

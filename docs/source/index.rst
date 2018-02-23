@@ -1,5 +1,5 @@
-PyBEL Web Documentation
-=======================
+BEL Commons Documentation
+=========================
 
 .. toctree::
    :maxdepth: 2

@@ -2,7 +2,7 @@
 
 """
 
-How to Run PyBEL Web
+How to run this web application
 
 ``gunicorn -w 4 -b 0.0.0.0:5000 pybel_web.run:app``
 

@@ -1,5 +1,5 @@
-PyBEL Web
-=========
+BEL Commons
+===========
 An environment for curating, validating, and exploring knowledge assemblies encoded in Biological Expression Language
 (BEL) to support elucidating disease-specific, mechanistic insight.
 
@@ -90,7 +90,7 @@ https://pybel.scai.fraunhofer.de.
 
 Updating
 ~~~~~~~~
-- update repositories in ``/var/www/pybel/src/``. PyBEL, PyBEL Tools, and PyBEL Web are all installed as editable
+- update repositories in ``/var/www/pybel/src/``. PyBEL, PyBEL Tools, and BEL Commons are all installed as editable
   in the virtual environment, ``venv``, stored in ``/var/www/pybel/.virtualenvs``
 - restart services with the commands:
     - ``sudo systemctl restart uwsgi.service``

@@ -159,7 +159,7 @@ function handleNodeResponseCommon(nodeObject, node) {
 
 function handleNodeResponse(nodeObject, nodeResponse) {
     if (nodeResponse && nodeResponse.annotations) {
-        // TODO use microservices for this instead of asking PyBEL Web
+        // TODO use microservices for this instead of asking the main application
         if (nodeResponse.annotations.HGNC) {
             handleHgncNodeInfo(nodeObject, nodeResponse.annotations.HGNC)
         }

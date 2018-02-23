@@ -5,7 +5,7 @@ import os
 from pybel.constants import PYBEL_DIR
 from pybel_tools.pipeline import function_is_registered
 
-PYBEL_WEB_VERSION = '0.2.2-dev'
+VERSION = '0.2.2-dev'
 
 PYBEL_WEB_EXAMPLES = 'PYBEL_WEB_EXAMPLES'
 

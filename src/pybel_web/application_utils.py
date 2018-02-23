@@ -144,7 +144,7 @@ def build_project_view(manager, user_datastore):
 
 
 class FlaskPyBEL(object):
-    """Encapsulates the data needed for the PyBEL Web Application"""
+    """Encapsulates the data needed for the application"""
 
     #: The name in which this app is stored in the Flask.extensions dictionary
     APP_NAME = 'pbw'
@@ -192,7 +192,7 @@ class FlaskPyBEL(object):
 
         self.user_datastore.find_or_create_role(
             name='admin',
-            description='Admin of PyBEL Web'
+            description='Admin of the web application'
         )
         self.user_datastore.find_or_create_role(
             name='scai',

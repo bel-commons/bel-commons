@@ -28,6 +28,7 @@ class AnnotationView(ModelView):
     """Special view for PyBEL annotations"""
     column_exclude_list = ['type', 'usage', 'author', 'license', 'citation_description']
 
+
 class NamespaceView(ModelView):
     """Special view for PyBEL namespaces"""
     column_exclude_list = ['query_url', 'description', 'author', 'license', 'citation_description']
@@ -65,12 +66,12 @@ class ExperimentView(ModelView):
 
 
 class UserView(ModelView):
-    """Special view for PyBEL Web Users"""
+    """Special view for Users"""
     column_exclude_list = ['password']
 
 
 class QueryView(ModelView):
-    """Special view for PyBEL Web Queries"""
+    """Special view for Queries"""
     column_exclude_list = ['dump']
     column_default_sort = ('created', True)
     column_display_pk = True

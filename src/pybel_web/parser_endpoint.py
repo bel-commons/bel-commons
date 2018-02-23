@@ -31,7 +31,7 @@ def build_parser_service(app, conversion_function=None):
     :type conversion_function: types.FunctionType or types.LambdaType
     """
     graph = BELGraph(
-        name='PyBEL Web Parser Results',
+        name='PyBEL Parser Results',
         version='1.0.0',
         authors=getuser(),
         description='This graph was produced using the PyBEL Parser API. It was instantiated at {}'.format(
