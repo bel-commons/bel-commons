@@ -8,30 +8,19 @@
 
 {% block content %}
     <div class="container">
-        <div class="page-header">
-            <h1>BEL Parser</h1>
-        </div>
-
         {{ util.flashed_messages(dismissible=True, container=False) }}
 
         <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">BEL Parser</h3>
+            </div>
             <div class="panel-body">
                 <p>
-                    This web application is built with PyBEL. It parses BEL scripts and provides helpful output
-                    for fixing errors. Parsing occurs at about 900 lines per second, so be patient!.
-                </p>
-                <p>
-                    Asynchronous parsing is an experimental feature currently and doesn't provide as immediate
-                    feedback as synchronous parsing. Compilation usually is pretty fast, and takes less than 5-10
-                    minutes. We'll send you an email when it's done.
-                </p>
-                <p>
-                    By using our application, we hope you'll choose the option to make your knowledge assembly public.
-                    For more information on how this app works, see the <a href="http://pybel.readthedocs.io/">PyBEL</a>
-                    and
-                    <a href="http://pybel-tools.readthedocs.io/">PyBEL Tools</a> documentation. For more information
-                    on parser warnings, see the <a href="http://pybel.readthedocs.io/en/latest/logging.html">Logging
-                        Messages</a> documentation.
+                    This component uses <a href="https://github.com/pybel/pybel">PyBEL</a> to parse and validate BEL
+                    Script. It provides helpful output for fixing errors and warnings. It should parse at about
+                    900 lines per second, and we will send you an email upon completion with a report. For more
+                    information on parser error and warnings, see the <a
+                        href="http://pybel.readthedocs.io/en/latest/logging.html">here</a>.
                 </p>
                 <p>
                     Feel free to test our web application parsing the <a
