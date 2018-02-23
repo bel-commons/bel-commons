@@ -46,6 +46,7 @@ class Omics(Base):
     id = Column(Integer, primary_key=True)
 
     created = Column(DateTime, default=datetime.datetime.utcnow, doc='The date on which this file was uploaded')
+    public = Column(Boolean, nullable=False, default=False, doc='Should the omics data be public?')
     description = Column(Text, nullable=True, doc='A description of the purpose of the analysis')
 
     source_name = Column(Text, doc='The name of the source file')
@@ -68,6 +69,7 @@ class Experiment(Base):
     id = Column(Integer, primary_key=True)
 
     created = Column(DateTime, default=datetime.datetime.utcnow, doc='The date on which this analysis was run')
+    public = Column(Boolean, nullable=False, default=False, doc='Should the experimental results be public?')
 
     query_id = Column(Integer, ForeignKey('{}.id'.format(QUERY_TABLE_NAME)), nullable=False, index=True)
     query = relationship('Query', backref=backref("experiments"))
@@ -419,9 +421,9 @@ class User(Base, UserMixin):
     def is_scai(self):
         """Is this user from SCAI?"""
         return (
-                self.has_role('scai') or
-                self.email.endswith('@scai.fraunhofer.de') or
-                self.email.endswith('@scai-extern.fraunhofer.de')
+            self.has_role('scai') or
+            self.email.endswith('@scai.fraunhofer.de') or
+            self.email.endswith('@scai-extern.fraunhofer.de')
         )
 
     @property

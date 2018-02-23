@@ -80,6 +80,25 @@ def view_analysis_results(experiment_id):
     )
 
 
+def create_omics(data, gene_column, data_column, description, source_name, user_id):
+    df = pd.read_csv(data)
+
+    if gene_column not in df.columns:
+        raise ValueError('{} not a column in document'.format(gene_column))
+
+    if data_column not in df.columns:
+        raise ValueError('{} not a column in document'.format(data_column))
+
+    return Omics(
+        description=description,
+        source_name=source_name,
+        source=pickle.dumps(df),
+        gene_column=gene_column,
+        data_column=data_column,
+        user_id=user_id
+    )
+
+
 @analysis_blueprint.route('/query/<int:query_id>/analysis/upload', methods=('GET', 'POST'))
 @login_required
 def view_query_analysis_uploader(query_id):

@@ -503,5 +503,19 @@ def drop(manager, experiment_id, yes):
         manager.session.query(Experiment).delete()
 
 
+
+@manage.group()
+def data():
+    """Manages data input for experiments"""
+
+
+@data.command()
+@click.option('-p', '--path', type=click.File('r'))
+@click.pass_obj
+def upload(manager, path):
+    """Uploads a file"""
+
+
+
 if __name__ == '__main__':
     main()
