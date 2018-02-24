@@ -11,9 +11,12 @@ Prerequisites
 import json
 import logging
 import os
+import time
 
-from pybel import from_path, to_pickle
+import pybel
+from pybel import from_path, from_pickle, to_pickle
 from pybel.manager import Manager
+from pybel.struct.mutation import strip_annotations
 from pybel_tools.io import get_corresponding_gpickle_path, iter_from_pickles_from_directory, iter_paths_from_directory
 from pybel_tools.utils import enable_cool_mode
 from pybel_web.manager_utils import insert_graph
@@ -28,6 +31,9 @@ if BMS_BASE is None:
 
 alzheimer_directory = os.path.join(BMS_BASE, 'aetionomy', 'alzheimers')
 selventa_directory = os.path.join(BMS_BASE, 'selventa')
+cbn_human = os.path.join(BMS_BASE, 'cbn', 'Human-2.0')
+cbn_mouse = os.path.join(BMS_BASE, 'cbn', 'Mouse-2.0')
+cbn_rat = os.path.join(BMS_BASE, 'cbn', 'Rat-2.0')
 
 
 def ensure_pickles(directory, connection=None, **kwargs):
@@ -88,7 +94,7 @@ def write_manifest(directory, networks):
         json.dump(manifest_data, file, indent=2)
 
 
-def work_directory(directory, connection=None):
+def upload_bel_directory(directory, connection=None):
     """
 
     :param str directory:
@@ -104,12 +110,62 @@ def work_directory(directory, connection=None):
     write_manifest(directory, networks)
 
 
+_jgf_extension = '.jgf'
+
+
+def iter_jgf(directory):
+    for path in os.listdir(directory):
+        if path.endswith(_jgf_extension):
+            yield os.path.join(directory, path)
+
+
+def get_jgf_corresponding_gpickle_path(path):
+    return path[:-len(_jgf_extension)] + '.gpickle'
+
+
+def upload_jgf_directory(directory, connection=None):
+    """Uploads CBN data to edge store
+
+    :param str directory: Directory full of CBN JGIF files
+    :param connection: database connection string to cache, pre-built :class:`Manager`, or None to use default cache
+    :type connection: Optional[str or pybel.manager.Manager]
+    """
+    if not (os.path.exists(directory) and os.path.isdir(directory)):
+        log.warning('directory does not exist: %s', directory)
+        return
+
+    manager = Manager.ensure(connection=connection)
+
+    t = time.time()
+
+    for path in iter_jgf(directory):
+        gpickle_path = get_jgf_corresponding_gpickle_path(path)
+
+        if os.path.exists(gpickle_path):
+            graph = from_pickle(gpickle_path)
+        else:
+            with open(path) as f:
+                cbn_jgif_dict = json.load(f)
+
+            graph = pybel.from_cbn_jgif(cbn_jgif_dict)
+            to_pickle(graph, gpickle_path)
+
+        strip_annotations(graph)
+        insert_graph(manager, graph, public=True)
+
+    log.info('done in %.2f', time.time() - t)
+
+
 def main():
     """Load BEL"""
     manager = Manager()
 
-    work_directory(alzheimer_directory, connection=manager)
-    # work_directory(selventa_directory, connection=manager)
+    upload_bel_directory(alzheimer_directory, connection=manager)
+    #upload_bel_directory(selventa_directory, connection=manager)
+
+    upload_jgf_directory(cbn_human, connection=manager)
+    upload_jgf_directory(cbn_mouse, connection=manager)
+    upload_jgf_directory(cbn_rat, connection=manager)
 
 
 if __name__ == '__main__':
