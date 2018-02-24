@@ -36,8 +36,8 @@ from pybel_tools.summary import (
 )
 from . import models
 from .constants import *
+from .external_managers import *
 from .main_service import BLACK_LIST, PATHS_METHOD, UNDIRECTED
-from .manager import *
 from .manager_utils import fill_out_report, make_graph_summary
 from .models import EdgeComment, Experiment, Project, Report, User
 from .send_utils import serve_network, to_json_custom

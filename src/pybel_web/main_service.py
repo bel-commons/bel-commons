@@ -26,8 +26,8 @@ from pybel_tools.summary import info_json
 from pybel_tools.utils import get_version as get_pybel_tools_version
 from . import models
 from .constants import *
-from .manager import *
-from .manager import manager_dict
+from .external_managers import *
+from .external_managers import manager_dict
 from .models import Project, Query, Report, User
 from .utils import (
     calculate_overlap_dict, get_networks_with_permission, manager, next_or_jsonify, query_form_to_dict,
