@@ -1,0 +1,23 @@
+[
+  {
+    "source_name": "EarlyAD.csv",
+    "description": "Patients from GSE28146 with early Alzheimer's disease",
+    "gene_column": "Gene.symbol",
+    "data_column": "logFC",
+    "public": true
+  },
+  {
+    "source_name": "ModAD.csv",
+    "description": "Patients from GSE28146 with moderate Alzheimer's disease",
+    "gene_column": "Gene.symbol",
+    "data_column": "logFC",
+    "public": true
+  },
+  {
+    "source_name": "SevAD.csv",
+    "description": "Patients from GSE28146 with severe Alzheimer's disease",
+    "gene_column": "Gene.symbol",
+    "data_column": "logFC",
+    "public": true
+  }
+]
