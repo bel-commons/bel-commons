@@ -327,7 +327,8 @@ def run_cmpa_helper(manager, experiment, use_tqdm=False):
     log.info('executing query %s', experiment.query)
     graph = experiment.query.run(manager)
 
-    log.info('calculating scores for query %s with omic %s', experiment.query, experiment.omic)
+    log.info('calculating scores for query %s with omic %s with %d permutations', experiment.query, experiment.omic,
+             experiment.permutations)
     scores = calculate_scores(graph, data, experiment.permutations, use_tqdm=use_tqdm)
     experiment.dump_results(scores)
 

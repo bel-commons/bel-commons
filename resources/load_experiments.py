@@ -21,6 +21,8 @@ from pybel_web.models import Experiment, Omic, Query
 log = logging.getLogger(__name__)
 enable_cool_mode()
 
+dir_path = os.path.dirname(os.path.realpath(__file__))
+
 BMS_BASE = os.environ.get('BMS_BASE')
 
 if BMS_BASE is None:
@@ -69,7 +71,7 @@ def build_query(directory, connection=None):
 
 
 def create_experiment(query, directory, connection=None, permutations=None):
-    """Creates experiemnt models
+    """Creates experiment models
 
     :param Query query:
     :param str directory: the directory of omics data resources
@@ -80,11 +82,11 @@ def create_experiment(query, directory, connection=None, permutations=None):
     """
     manager = Manager.ensure(connection=connection)
 
-    manifest = get_manifest(directory)
+    omics_manifest = get_manifest(directory)
 
     results = []
 
-    for omic_metadata in manifest:
+    for omic_metadata in omics_manifest:
         omic = manager.session.query(Omic).get(omic_metadata['id'])
 
         experiment = Experiment(
@@ -133,23 +135,41 @@ def run_experiments(experiments, connection=None):
         manager.session.commit()
 
 
-def work_directory(directory, connection=None, permutations=None):
-    query = build_query(directory=directory, connection=connection)
-    log.info('made query %s for %s', query, directory)
+def work_directory(network_directory, omic_directory, connection=None, permutations=None):
+    query = build_query(directory=network_directory, connection=connection)
+    log.info('made query %s for %s', query, network_directory)
 
-    experiments = create_experiment(query, directory=directory, connection=connection, permutations=permutations)
+    log.info('making experiments for directory: %s', omic_directory)
+    experiments = create_experiment(query, directory=omic_directory, connection=connection, permutations=permutations)
 
+    log.info('uploading experiments for directory: %s', omic_directory)
     upload_experiments(experiments, connection=connection)
 
+    log.info('running experiments for directory: %s', omic_directory)
     run_experiments(experiments, connection=connection)
 
 
-def main():
+def main(permutations=25):
     """Runs the experiments and uploads them"""
     manager = Manager()
 
     alzheimer_directory = os.path.join(BMS_BASE, 'aetionomy', 'alzheimers')
-    work_directory(alzheimer_directory, connection=manager, permutations=25)
+    gse1297_directory = os.path.join(dir_path, 'GSE1297')
+    gse28146_directory = os.path.join(dir_path, 'GSE28146')
+
+    work_directory(
+        network_directory=alzheimer_directory,
+        omic_directory=gse1297_directory,
+        connection=manager,
+        permutations=permutations,
+    )
+
+    work_directory(
+        network_directory=alzheimer_directory,
+        omic_directory=gse28146_directory,
+        connection=manager,
+        permutations=permutations,
+    )
 
 
 if __name__ == '__main__':
