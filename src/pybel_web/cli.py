@@ -42,7 +42,7 @@ from .database_service import api_blueprint
 from .external_services import belief_blueprint, external_blueprint
 from .main_service import ui_blueprint
 from .manager_utils import insert_graph
-from .models import Base, Experiment, Omic, Project, Query, Report, Role, User
+from .models import Assembly, Base, EdgeComment, EdgeVote, Experiment, Omic, Project, Query, Report, Role, User
 from .parser_async_service import parser_async_blueprint
 from .parser_endpoint import build_parser_service
 from .utils import iterate_user_strings
@@ -568,6 +568,22 @@ def ls(manager, limit, offset):
 
     for query in q.all():
         click.echo('\t'.join(map(str, (query.id, query.created, query.assembly))))
+
+
+@manage.command()
+@click.pass_obj
+def summarize(manager):
+    """Summarizes the contents of the database"""
+    click.echo('Users: {}'.format(manager.session.query(User).count()))
+    click.echo('Roles: {}'.format(manager.session.query(Role).count()))
+    click.echo('Projects: {}'.format(manager.session.query(Project).count()))
+    click.echo('Reports: {}'.format(manager.session.query(Report).count()))
+    click.echo('Assemblies: {}'.format(manager.session.query(Assembly).count()))
+    click.echo('Votes: {}'.format(manager.session.query(EdgeVote).count()))
+    click.echo('Comments: {}'.format(manager.session.query(EdgeComment).count()))
+    click.echo('Queries: {}'.format(manager.session.query(Query).count()))
+    click.echo('Omics: {}'.format(manager.session.query(Omic).count()))
+    click.echo('Experiments: {}'.format(manager.session.query(Experiment).count()))
 
 
 if __name__ == '__main__':
