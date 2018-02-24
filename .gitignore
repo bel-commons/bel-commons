@@ -94,3 +94,6 @@ ENV/
 scratch/*
 
 .pytest_cache
+
+resources/GSE1297/manifest.json
+resources/GSE28146/manifest.json
