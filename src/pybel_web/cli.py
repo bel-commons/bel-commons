@@ -506,25 +506,19 @@ def ls(manager):
 @click.option('-y', '--yes', is_flag=True)
 @click.pass_obj
 def drop(manager, experiment_id, yes):
-    """Drops all experiments"""
+    """Drops either a single or all Experiment models"""
     if experiment_id:
         manager.session.query(Experiment).get(experiment_id).delete()
+        manager.session.commit()
 
-    if yes or click.confirm('Drop all experiments at {}?'.format(manager.connection)):
+    elif yes or click.confirm('Drop all Experiment models at {}?'.format(manager.connection)):
         manager.session.query(Experiment).delete()
+        manager.session.commit()
 
 
 @manage.group()
 def omics():
     """Manages -omics data input for experiments"""
-
-
-@omics.command()
-@click.option('-p', '--path', type=click.File('r'))
-@click.pass_obj
-def upload(manager, path):
-    """Uploads an -omics data set"""
-    raise NotImplementedError
 
 
 @omics.command()
@@ -534,6 +528,21 @@ def ls(manager):
     click.echo('\t'.join(('id', 'name', 'description')))
     for omic in manager.session.query(Omic).all():
         click.echo('\t'.join((str(omic.id), omic.source_name, omic.description)))
+
+
+@omics.command()
+@click.option('--omic-id', type=int)
+@click.option('-y', '--yes', is_flag=True)
+@click.pass_obj
+def drop(manager, omic_id, yes):
+    """Drops either a single or all Omics models"""
+    if omic_id:
+        manager.session.query(Omic).get(omic_id).delete()
+        manager.session.commit()
+
+    elif yes or click.confirm('Drop all Omic models at {}?'.format(manager.connection)):
+        manager.session.query(Omic).delete()
+        manager.session.commit()
 
 
 @manage.group()
