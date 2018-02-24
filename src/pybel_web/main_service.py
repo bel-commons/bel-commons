@@ -110,7 +110,8 @@ def home():
         current_user=current_user,
         number_networks=format_big_number(number_networks),
         number_edges=format_big_number(number_edges),
-        number_nodes=format_big_number(number_nodes)
+        number_nodes=format_big_number(number_nodes),
+        manager=manager,
     )
 
 
