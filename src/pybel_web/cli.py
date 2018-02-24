@@ -42,7 +42,7 @@ from .database_service import api_blueprint
 from .external_services import belief_blueprint, external_blueprint
 from .main_service import ui_blueprint
 from .manager_utils import insert_graph
-from .models import Base, Experiment, Project, Report, Role, User
+from .models import Base, Experiment, Omic, Project, Query, Report, Role, User
 from .parser_async_service import parser_async_blueprint
 from .parser_endpoint import build_parser_service
 from .utils import iterate_user_strings
@@ -312,11 +312,11 @@ def sanitize_reports(manager):
 
 
 @manage.group()
-def network():
+def networks():
     """Parse, upload, and manage networks"""
 
 
-@network.command()
+@networks.command()
 @click.option('-p', '--path')
 @click.option('--public', is_flag=True)
 @click.pass_obj
@@ -329,7 +329,7 @@ def parse(manager, path, public):
     insert_graph(manager, graph, public=public)
 
 
-@network.command()
+@networks.command()
 @click.option('-p', '--path', help='A path or directory of gpickles to upload. Defaults to cwd {}'.format(os.getcwd()),
               default=os.getcwd())
 @click.pass_obj
@@ -347,11 +347,11 @@ def upload(manager, path):
 
 
 @manage.group()
-def user():
+def users():
     """Create and manage users"""
 
 
-@user.command()
+@users.command()
 @click.pass_obj
 def ls(manager):
     """Lists all users"""
@@ -359,7 +359,7 @@ def ls(manager):
         click.echo(s)
 
 
-@user.command()
+@users.command()
 @click.argument('email')
 @click.argument('password')
 @click.option('-a', '--admin', is_flag=True, help="Add admin role")
@@ -369,31 +369,31 @@ def add(manager, email, password, admin, scai):
     """Creates a new user"""
     ds = SQLAlchemyUserDatastore(manager, User, Role)
     try:
-        u = ds.create_user(email=email, password=password, confirmed_at=datetime.datetime.now())
+        user = ds.create_user(email=email, password=password, confirmed_at=datetime.datetime.now())
 
         if admin:
-            ds.add_role_to_user(u, 'admin')
+            ds.add_role_to_user(user, 'admin')
 
         if scai:
-            ds.add_role_to_user(u, 'scai')
+            ds.add_role_to_user(user, 'scai')
 
         ds.commit()
     except Exception:
         log.exception("Couldn't create user")
 
 
-@user.command()
+@users.command()
 @click.argument('email')
 @click.pass_obj
 def rm(manager, email):
     """Deletes a user"""
     ds = SQLAlchemyUserDatastore(manager, User, Role)
-    u = ds.find_user(email=email)
-    ds.delete_user(u)
+    user_ = ds.find_user(email=email)
+    ds.delete_user(user_)
     ds.commit()
 
 
-@user.command()
+@users.command()
 @click.argument('email')
 @click.pass_obj
 def make_admin(manager, email):
@@ -406,7 +406,7 @@ def make_admin(manager, email):
         log.exception("Couldn't make admin")
 
 
-@user.command()
+@users.command()
 @click.argument('email')
 @click.argument('role')
 @click.pass_obj
@@ -421,11 +421,11 @@ def add_role(manager, email, role):
 
 
 @manage.group()
-def role():
+def roles():
     """Manage roles"""
 
 
-@role.command()
+@roles.command()
 @click.argument('name')
 @click.option('-d', '--description')
 @click.pass_obj
@@ -439,24 +439,25 @@ def add(manager, name, description):
         log.exception("Couldn't create role")
 
 
-@role.command()
+@roles.command()
 @click.argument('name')
 @click.pass_obj
 def rm(manager, name):
     """Deletes a user"""
     ds = SQLAlchemyUserDatastore(manager, User, Role)
-    u = ds.find_role(name)
-    if u:
-        ds.delete(u)
+    user = ds.find_role(name)
+    if user:
+        ds.delete(user)
         ds.commit()
 
 
-@role.command()
+@roles.command()
 @click.pass_obj
 def ls(manager):
     """Lists roles"""
-    for r in manager.session.query(Role).all():
-        click.echo('{}\t{}'.format(r.name, r.description))
+    click.echo('\t'.join(('id', 'name', 'description')))
+    for role in manager.session.query(Role).all():
+        click.echo('\t'.join((str(role.id), role.name, role.description)))
 
 
 @manage.group()
@@ -468,8 +469,9 @@ def projects():
 @click.pass_obj
 def ls(manager):
     """Lists projects"""
+    click.echo('\t'.join(('id', 'name', 'users')))
     for project in manager.session.query(Project).all():
-        click.echo('{}\t{}'.format(project.name, ','.join(map(str, project.users))))
+        click.echo('\t'.join((str(project.id), project.name, ','.join(map(str, project.users)))))
 
 
 @projects.command()
@@ -491,6 +493,15 @@ def experiments():
 
 
 @experiments.command()
+@click.pass_obj
+def ls(manager):
+    """Lists experiments"""
+    click.echo('\t'.join(('id', 'type', 'description', 'completed')))
+    for experiment in manager.session.query(Experiment).order_by(Experiment.created.desc()).all():
+        click.echo('\t'.join(map(str, (experiment.id, experiment.type, experiment.description, experiment.completed))))
+
+
+@experiments.command()
 @click.option('--experiment-id', type=int)
 @click.option('-y', '--yes', is_flag=True)
 @click.pass_obj
@@ -503,18 +514,51 @@ def drop(manager, experiment_id, yes):
         manager.session.query(Experiment).delete()
 
 
-
 @manage.group()
-def data():
-    """Manages data input for experiments"""
+def omics():
+    """Manages -omics data input for experiments"""
 
 
-@data.command()
+@omics.command()
 @click.option('-p', '--path', type=click.File('r'))
 @click.pass_obj
 def upload(manager, path):
-    """Uploads a file"""
+    """Uploads an -omics data set"""
+    raise NotImplementedError
 
+
+@omics.command()
+@click.pass_obj
+def ls(manager):
+    """Lists -omics data sets"""
+    click.echo('\t'.join(('id', 'name', 'description')))
+    for omic in manager.session.query(Omic).all():
+        click.echo('\t'.join((str(omic.id), omic.source_name, omic.description)))
+
+
+@manage.group()
+def queries():
+    """Manages queries"""
+
+
+@queries.command()
+@click.option('-l', '--limit', type=int, default=10, help='Limit, defaults to 10.')
+@click.option('-o', '--offset', type=int)
+@click.pass_obj
+def ls(manager, limit, offset):
+    """Lists queries"""
+    click.echo('\t'.join(('id', 'created', 'assembly')))
+
+    q = manager.session.query(Query).order_by(Query.created.desc())
+
+    if limit:
+        q = q.limit(limit)
+
+    if offset:
+        q = q.offset(offset)
+
+    for query in q.all():
+        click.echo('\t'.join(map(str, (query.id, query.created, query.assembly))))
 
 
 if __name__ == '__main__':

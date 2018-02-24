@@ -11,6 +11,9 @@ PYBEL_WEB_EXAMPLES = 'PYBEL_WEB_EXAMPLES'
 
 integrity_message = "A graph with the same name ({}) and version ({}) already exists. If there have been changes since the last version, try bumping the version number."
 
+#: Label for nodes' differential gene expression values
+LABEL = 'dgxa'
+
 NETWORK_ID = 'network_id'
 SOURCE_NODE = 'source'
 TARGET_NODE = 'target'

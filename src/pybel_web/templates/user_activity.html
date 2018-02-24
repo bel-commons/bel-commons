@@ -186,80 +186,111 @@
             </table>
         </div>
 
-        {% if current_user.is_beta_tester %}
-            <div class="panel panel-warning">
-                <div class="panel-heading">
-                    <h3 class="panel-title">My Experiments</h3>
-                </div>
-                <div class="panel-body">
-                    <p>As an example pipeline, we recommend using the data from GEO experiment <a
-                            href="https://owncloud.scai.fraunhofer.de/index.php/s/1kbzCIhbfZLauuJ">GSE28146</a> with the
-                        Alzheimer's Disease Knowledge Assembly.
-                    </p>
-                </div>
-                <table class="table table-striped table-responsive">
-                    <thead>
-                    <tr>
-                        <th>EID</th>
-                        <th>QID</th>
-                        <th>Source</th>
-                        <th>Permutations</th>
-                        <th>Description</th>
-                        <th>Complete</th>
-                        <th></th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    {% for experiment in user.experiments %}
-                        <tr>
-                            <td>
-                                <a href="{{ url_for('analysis.view_analysis_results', experiment_id=experiment.id) }}">
-                                    {{ experiment.id }}
-                                </a>
-                            </td>
-                            <td>
-                                <a href="{{ url_for('ui.view_explorer_query', query_id=experiment.query.id) }}">
-                                    {{ experiment.query.id }}
-                                </a>
-                            </td>
-                            <td>{{ experiment.source_name }}</td>
-                            <td>{{ experiment.permutations }}</td>
-                            <td>{{ experiment.description }}</td>
-                            <td>
-                                {% if experiment.completed %}
-                                    <span class="glyphicon glyphicon-ok-circle" aria-hidden="true"></span>
-                                {% else %}
-                                    <span class="glyphicon glyphicon glyphicon-remove-circle" aria-hidden="true"></span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                {% if experiment.completed %}
-                                    <div class="pull-right">
-                                        <a href="{{ url_for('analysis.view_analysis_results', experiment_id=experiment.id) }}"
-                                           class="btn btn-default btn-xs">
-                                            <span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span>
-                                        </a>
-                                        <a class="btn btn-default btn-xs"
-                                           href="{{ url_for('dbs.download_analysis', experiment_id=experiment.id) }}">
-                                            <span class="glyphicon glyphicon-download" aria-hidden="true"></span>
-                                        </a>
-                                        <a class="btn btn-default btn-xs"
-                                           href="{{ url_for('ui.view_explorer_query', query_id=experiment.query.id) }}">
-                                            <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
-                                        </a>
-                                        <a class="btn btn-default btn-xs"
-                                           href="{{ url_for('dbs.drop_experiment_by_id', experiment_id=experiment.id, next=url_for('ui.view_current_user_activity')) }}">
-                                            <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
-                                        </a>
-                                    </div>
-                                {% endif %}
-                            </td>
-                        </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">My Omics</h3>
             </div>
-        {% endif %}
+            <table class="table table-striped table-responsive">
+                <thead>
+                <tr>
+                    <th>Identifier</th>
+                    <th>Name</th>
+                    <th>Description</th>
+                    <th>Public</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for omic in user.omics %}
+                    <tr>
+                        <td>{{ omic.id }}</td>
+                        <td>{{ omic.source_name }}</td>
+                        <td>{{ omic.description }}</td>
+                        <td>
+                            {% if omic.public %}
+                                <span class="glyphicon glyphicon-ok-circle" aria-hidden="true"></span>
+                            {% else %}
+                                <span class="glyphicon glyphicon glyphicon-remove-circle" aria-hidden="true"></span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">My Experiments</h3>
+            </div>
+            <div class="panel-body">
+                <p>As an example pipeline, we recommend using the data from GEO experiment <a
+                        href="https://owncloud.scai.fraunhofer.de/index.php/s/1kbzCIhbfZLauuJ">GSE28146</a> with the
+                    Alzheimer's Disease Knowledge Assembly.
+                </p>
+            </div>
+            <table class="table table-striped table-responsive">
+                <thead>
+                <tr>
+                    <th>Identifier</th>
+                    <th>Query</th>
+                    <th>Omic</th>
+                    <th>Permutations</th>
+                    <th>Description</th>
+                    <th>Complete</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for experiment in user.experiments %}
+                    <tr>
+                        <td>
+                            <a href="{{ url_for('analysis.view_analysis_results', experiment_id=experiment.id) }}">
+                                {{ experiment.id }}
+                            </a>
+                        </td>
+                        <td>
+                            <a href="{{ url_for('ui.view_explorer_query', query_id=experiment.query.id) }}">
+                                {{ experiment.query.id }}
+                            </a>
+                        </td>
+                        <td>{{ experiment.omic.id }}</td>
+                        <td>{{ experiment.permutations }}</td>
+                        <td>{{ experiment.description }}</td>
+                        <td>
+                            {% if experiment.completed %}
+                                <span class="glyphicon glyphicon-ok-circle" aria-hidden="true"></span>
+                            {% else %}
+                                <span class="glyphicon glyphicon glyphicon-remove-circle" aria-hidden="true"></span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if experiment.completed %}
+                                <div class="pull-right">
+                                    <a href="{{ url_for('analysis.view_analysis_results', experiment_id=experiment.id) }}"
+                                       class="btn btn-default btn-xs">
+                                        <span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span>
+                                    </a>
+                                    <a class="btn btn-default btn-xs"
+                                       href="{{ url_for('dbs.download_analysis', experiment_id=experiment.id) }}">
+                                        <span class="glyphicon glyphicon-download" aria-hidden="true"></span>
+                                    </a>
+                                    <a class="btn btn-default btn-xs"
+                                       href="{{ url_for('ui.view_explorer_query', query_id=experiment.query.id) }}">
+                                        <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
+                                    </a>
+                                    <a class="btn btn-default btn-xs"
+                                       href="{{ url_for('dbs.drop_experiment_by_id', experiment_id=experiment.id, next=url_for('ui.view_current_user_activity')) }}">
+                                        <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
+                                    </a>
+                                </div>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
 
         <div class="panel panel-default">
             <div class="panel-heading">
@@ -376,16 +407,16 @@
                                 {% if current_user.is_beta_tester %}
 
                                     {% if query.experiments %}
-                                    <a class="btn btn-warning btn-xs"
-                                       href="{{ url_for('analysis.view_results_comparison_query_csv', query_id=query.id) }}">
-                                        <span class="glyphicon glyphicon-flash"></span>
-                                        <span class="glyphicon glyphicon-download"></span>
-                                    </a>
-                                    <a class="btn btn-warning btn-xs"
-                                       href="{{ url_for('analysis.view_results_comparison_by_query', query_id=query.id) }}">
-                                        <span class="glyphicon glyphicon-flash"></span>
-                                        <span class="glyphicon glyphicon-eye-open"></span>
-                                    </a>
+                                        <a class="btn btn-warning btn-xs"
+                                           href="{{ url_for('analysis.view_results_comparison_query_csv', query_id=query.id) }}">
+                                            <span class="glyphicon glyphicon-flash"></span>
+                                            <span class="glyphicon glyphicon-download"></span>
+                                        </a>
+                                        <a class="btn btn-warning btn-xs"
+                                           href="{{ url_for('analysis.view_results_comparison_by_query', query_id=query.id) }}">
+                                            <span class="glyphicon glyphicon-flash"></span>
+                                            <span class="glyphicon glyphicon-eye-open"></span>
+                                        </a>
                                     {% endif %}
 
                                     <a class="btn btn-warning btn-xs"

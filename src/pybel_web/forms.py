@@ -84,6 +84,8 @@ class DifferentialGeneExpressionForm(FlaskForm):
     log_fold_change_column = StringField('Log Fold Change Column Name', default='logFC')
     permutations = IntegerField('Number of Permutations', default=100)
     description = StringField('Description of Data', validators=[DataRequired()])
+    omics_public = BooleanField('Make my experimental source data publicly available', default=False)
+    results_public = BooleanField('Make my experimental results publicly available', default=False)
     separator = RadioField(
         'Separator',
         choices=[

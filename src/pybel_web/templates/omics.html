@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% import "bootstrap/wtf.html" as wtf %}
+{% import "bootstrap/fixes.html" as fixes %}
+{% import "bootstrap/utils.html" as util %}
+
+{% block title %}Omic Catalog{% endblock %}
+
+{% block content %}
+    <div class="container">
+        {{ util.flashed_messages(dismissible=True, container=False) }}
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Omic Catalog</h3>
+            </div>
+            <div class="panel-body">
+                <p>
+                    Each entry is a data set.
+                </p>
+            </div>
+            <table class="table table-hover table-strpied">
+                <thead>
+                <tr>
+                    <th>Identifier</th>
+                    <th>Created</th>
+                    <th>Description</th>
+                    <th>Public</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for omic in omics %}
+                    <tr>
+                        <td>{{ omic.id }}</td>
+                        <td>{{ omic.created }}</td>
+                        <td>{{ omic.description }}</td>
+                        <td>
+                            {% if omic.public %}
+                                <span class="glyphicon glyphicon-ok-circle" aria-hidden="true"></span>
+                            {% else %}
+                                <span class="glyphicon glyphicon glyphicon-remove-circle" aria-hidden="true"></span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {% include "footer.html" %}
+{% endblock %}

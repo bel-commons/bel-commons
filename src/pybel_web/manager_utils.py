@@ -2,35 +2,39 @@
 
 import itertools as itt
 import logging
+import pickle
 import time
 from collections import Counter
 
 import networkx as nx
-from sqlalchemy.exc import IntegrityError
+import pandas as pd
 
 import pybel
 from pybel.canonicalize import calculate_canonical_name
-from pybel.constants import RELATION
-from pybel.manager import Network
+from pybel.constants import GENE, RELATION
+from pybel.manager.models import Network
 from pybel.struct.filters import filter_edges
-from pybel.struct.summary import (
-    count_functions, get_syntax_errors, get_unused_namespaces,
-)
+from pybel.struct.summary import count_functions, get_syntax_errors, get_unused_namespaces
 from pybel.tokens import node_to_tuple
 from pybel.utils import hash_node
+from pybel_tools.analysis.cmpa import calculate_average_scores_on_subgraphs as calculate_average_cmpa_on_subgraphs
 from pybel_tools.analysis.stability import (
     get_chaotic_pairs, get_chaotic_triplets, get_contradiction_summary, get_dampened_pairs, get_dampened_triplets,
     get_decrease_mismatch_triplets, get_increase_mismatch_triplets, get_jens_unstable,
     get_mutually_unstable_correlation_triples, get_regulatory_pairs, get_separate_unstable_correlation_triples,
 )
-from pybel_tools.filters import has_pathology_causal, iter_undefined_families
+from pybel_tools.filters import has_pathology_causal, iter_undefined_families, remove_nodes_by_namespace
+from pybel_tools.generation import generate_bioprocess_mechanisms
+from pybel_tools.integration import overlay_type_data
+from pybel_tools.mutation import collapse_by_central_dogma_to_genes, rewire_variants_to_genes
 from pybel_tools.summary import (
     count_error_types, count_pathologies, count_relations, count_unique_authors, count_unique_citations,
     get_citation_years, get_modifications_count, get_most_common_errors, get_naked_names,
     get_namespaces_with_incorrect_names, get_undefined_annotations, get_undefined_namespaces, get_unused_annotations,
     get_unused_list_annotation_values,
 )
-from .models import Report
+from .constants import LABEL
+from .models import Omic, Report
 
 log = logging.getLogger(__name__)
 
@@ -223,29 +227,108 @@ def fill_out_report(network, report, graph_summary):
     report.completed = True
 
 
-def insert_graph(m, graph, user_id=1, public=False):
+def insert_graph(manager, graph, user_id=1, public=False):
     """Insert a graph and also make a report
 
-    :param pybel.manager.Manager m: A PyBEL manager
+    :param pybel.manager.Manager manager: A PyBEL manager
     :param pybel.BELGraph graph: A BEL graph
     :param int user_id: The identifier of the user to report. Defaults to 1.
     :param bool public: Should the network be public? Defaults to false
+    :rtype: Network
     """
-    try:
-        network = m.insert_graph(graph)
-    except IntegrityError:
-        m.session.rollback()
-        log.warning('Integrity Error: could not add %s', graph)
-        return
+    if manager.has_name_version(graph.name, graph.version):
+        log.info('database already has %s', graph)
+        return manager.get_network_by_name_version(graph.name, graph.version)
 
-    report = Report(
-        user_id=user_id,
-        public=public,
-    )
+    network = manager.insert_graph(graph)
+
+    report = Report(public=public)
+
+    if user_id:
+        report.user_id = user_id
 
     graph_summary = make_graph_summary(graph)
 
     fill_out_report(network, report, graph_summary)
 
-    m.session.add(report)
-    m.session.commit()
+    manager.session.add(report)
+    manager.session.commit()
+
+    return network
+
+
+def create_omic(data, gene_column, data_column, description, source_name, public=False, user=None):
+    """Creates an omics model
+
+    :param str or file data:
+    :param str gene_column:
+    :param str data_column:
+    :param str description:
+    :param str source_name:
+    :param bool public:
+    :param Optional[User] user:
+    :rtype: Omic
+    """
+    df = pd.read_csv(data)
+
+    if gene_column not in df.columns:
+        raise ValueError('{} not a column in document'.format(gene_column))
+
+    if data_column not in df.columns:
+        raise ValueError('{} not a column in document'.format(data_column))
+
+    result = Omic(
+        description=description,
+        source_name=source_name,
+        source=pickle.dumps(df),
+        gene_column=gene_column,
+        data_column=data_column,
+        public=public,
+    )
+
+    if user is not None:
+        result.user = user
+
+    return result
+
+
+def calculate_scores(graph, data, runs, use_tqdm=False):
+    """Calculates CMPA scores
+
+    :param pybel.BELGraph graph: A BEL graph
+    :param dict[str,float] data: A dictionary of {name: data}
+    :param int runs: The number of permutations
+    :return: A dictionary of {pybel node tuple: results tuple} from :func:`calculate_average_cmpa_on_subgraphs`
+    :rtype: dict[tuple,tuple]
+    """
+    remove_nodes_by_namespace(graph, {'MGI', 'RGD'})
+    collapse_by_central_dogma_to_genes(graph)
+    rewire_variants_to_genes(graph)
+
+    overlay_type_data(graph, data, LABEL, GENE, 'HGNC', overwrite=False, impute=0)
+
+    candidate_mechanisms = generate_bioprocess_mechanisms(graph, LABEL)
+    scores = calculate_average_cmpa_on_subgraphs(candidate_mechanisms, LABEL, runs=runs, use_tqdm=use_tqdm)
+
+    return scores
+
+
+def run_cmpa_helper(manager, experiment, use_tqdm=False):
+    """Helps run a CMPA experiment. Stores information back into original experiment
+
+    :param pybel.manager.Manager manager:
+    :param pybel_web.models.Experiment experiment:
+    """
+    t = time.time()
+
+    log.info('getting data from omic %s', experiment.omic)
+    data = experiment.omic.get_source_dict()
+
+    log.info('executing query %s', experiment.query)
+    graph = experiment.query.run(manager)
+
+    log.info('calculating scores for query %s with omic %s', experiment.query, experiment.omic)
+    scores = calculate_scores(graph, data, experiment.permutations, use_tqdm=use_tqdm)
+    experiment.dump_results(scores)
+
+    experiment.time = time.time() - t

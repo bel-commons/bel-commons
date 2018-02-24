@@ -33,9 +33,9 @@ from pybel_tools.utils import enable_cool_mode
 from pybel_web.application import create_application
 from pybel_web.celery_utils import create_celery
 from pybel_web.constants import CHARLIE_EMAIL, DANIEL_EMAIL, integrity_message, merged_document_folder
-from pybel_web.manager_utils import fill_out_report, make_graph_summary
+from pybel_web.manager_utils import fill_out_report, make_graph_summary, run_cmpa_helper
 from pybel_web.models import Experiment, Project, User
-from pybel_web.utils import calculate_scores, get_network_summary_dict, safe_get_report
+from pybel_web.utils import get_network_summary_dict, safe_get_report
 
 log = get_task_logger(__name__)
 
@@ -347,36 +347,14 @@ def run_cmpa(connection, experiment_id):
     :param str connection: A connection to build the manager
     :param int experiment_id:
     """
-    t = time.time()
-
     manager = Manager(connection=connection)
-
     experiment = manager.session.query(Experiment).get(experiment_id)
 
     query_id = experiment.query_id
     source_name = experiment.source_name
     email = experiment.user.email
 
-    log.info('executing query')
-    graph = experiment.query.run(manager)
-
-    df = experiment.get_source_df()
-
-    gene_column = experiment.gene_column
-    data_column = experiment.data_column
-
-    df_cols = [gene_column, data_column]
-
-    data = {
-        gene: value
-        for _, gene, value in df.loc[df[gene_column].notnull(), df_cols].itertuples()
-    }
-
-    log.info('calculating scores')
-    scores = calculate_scores(graph, data, experiment.permutations)
-
-    experiment.dump_results(scores)
-    experiment.time = time.time() - t
+    run_cmpa_helper(manager, experiment)
 
     try:
         manager.session.add(experiment)

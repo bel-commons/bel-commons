@@ -3,35 +3,25 @@
 import base64
 import datetime
 import logging
-import pickle
 import time
 from collections import Counter, defaultdict
 from io import BytesIO
 
-import pandas
-from flask import abort, flash, jsonify, redirect, render_template, request, url_for
+from flask import abort, flash, jsonify, redirect, render_template, request
 from flask_security import current_user
 from sqlalchemy import and_, func
 
 import pybel
-from pybel.constants import GENE
 from pybel.manager import Network
 from pybel.struct.summary import count_namespaces, get_pubmed_identifiers
-from pybel_tools.analysis.cmpa import calculate_average_scores_on_subgraphs as calculate_average_cmpa_on_subgraphs
-from pybel_tools.filters import remove_nodes_by_namespace
-from pybel_tools.generation import generate_bioprocess_mechanisms
-from pybel_tools.integration import overlay_type_data
-from pybel_tools.mutation import collapse_by_central_dogma_to_genes, rewire_variants_to_genes
 from pybel_tools.summary import count_variants, get_annotations
 from pybel_tools.utils import min_tanimoto_set_similarity, prepare_c3, prepare_c3_time_series
 from .constants import AND
 from .manager_utils import get_network_summary_dict
-from .models import EdgeComment, EdgeVote, Experiment, NetworkOverlap, Project, Query, Report, User
+from .models import EdgeComment, EdgeVote, NetworkOverlap, Project, Query, Report, User
 from .proxies import manager, user_datastore
 
 log = logging.getLogger(__name__)
-
-LABEL = 'dgxa'
 
 
 def sanitize_list_of_str(l):
@@ -107,61 +97,6 @@ def render_network_summary(network_id, template):
         chart_10_data=prepare_c3_time_series(citation_years, 'Number of articles') if citation_years else None,
         **er
     )
-
-
-def run_experiment(manager_, file, filename, description, gene_column, data_column, permutations, network, sep=','):
-    """
-
-    :param pybel.manager.Manager manager_: A cache manager
-    :param file file:
-    :param str filename:
-    :param str description:
-    :param str gene_column:
-    :param str data_column:
-    :param int permutations:
-    :param Network network:
-    :param str sep:
-    :return:
-    """
-    t = time.time()
-
-    df = pandas.read_csv(file, sep=sep)
-
-    for column in (gene_column, data_column):
-        if column not in df.columns:
-            raise ValueError('{} not a column in document'.format(column))
-
-    df = df.loc[df[gene_column].notnull(), [gene_column, data_column]]
-
-    data = {k: v for _, k, v in df.itertuples()}
-
-    graph = network.as_bel()
-
-    remove_nodes_by_namespace(graph, {'MGI', 'RGD'})
-    collapse_by_central_dogma_to_genes(graph)
-    rewire_variants_to_genes(graph)
-
-    overlay_type_data(graph, data, LABEL, GENE, 'HGNC', overwrite=False, impute=0)
-
-    candidate_mechanisms = generate_bioprocess_mechanisms(graph, LABEL)
-    scores = calculate_average_cmpa_on_subgraphs(candidate_mechanisms, LABEL, runs=permutations)
-
-    log.info('done running CMPA in %.2fs', time.time() - t)
-
-    experiment = Experiment(
-        description=description,
-        source_name=filename,
-        source=pickle.dumps(df),
-        result=pickle.dumps(scores),
-        permutations=permutations,
-        user=current_user,
-        network=network,
-    )
-
-    manager_.session.add(experiment)
-    manager_.session.commit()
-
-    return experiment
 
 
 def get_recent_reports(manager_, weeks=2):
@@ -635,27 +570,6 @@ def next_or_jsonify(message, *args, status=200, category='message', **kwargs):
     )
 
 
-def calculate_scores(graph, data, runs):
-    """Calculates CMPA scores
-
-    :param pybel.BELGraph graph: A BEL graph
-    :param dict[str,float] data: A dictionary of {name: data}
-    :param int runs: The number of permutations
-    :rtype: dict[tuple,tuple]
-    :return: A dictionary of {pybel node tuple: results tuple} from :func:`calculate_average_cmpa_on_subgraphs`
-    """
-    remove_nodes_by_namespace(graph, {'MGI', 'RGD'})
-    collapse_by_central_dogma_to_genes(graph)
-    rewire_variants_to_genes(graph)
-
-    overlay_type_data(graph, data, LABEL, GENE, 'HGNC', overwrite=False, impute=0)
-
-    candidate_mechanisms = generate_bioprocess_mechanisms(graph, LABEL)
-    scores = calculate_average_cmpa_on_subgraphs(candidate_mechanisms, LABEL, runs=runs)
-
-    return scores
-
-
 def get_node_by_hash_or_404(node_hash):
     """Gets a node's hash or sends a 404 missing message
 
@@ -754,7 +668,6 @@ def help_get_edge_entry(manager_, edge):
         data['vote'] = 0 if (vote is None or vote.agreed is None) else 1 if vote.agreed else -1
 
     return data
-
 
 
 def render_network_summary_safe(manager_, network_id, template):

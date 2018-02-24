@@ -36,17 +36,17 @@ USER_NETWORK_TABLE_NAME = 'pybel_user_network'
 COMMENT_TABLE_NAME = 'pybel_comment'
 VOTE_TABLE_NAME = 'pybel_vote'
 OVERLAP_TABLE_NAME = 'pybel_overlap'
-OMICS_TABLE_NAME = 'pybel_omics'
+OMICS_TABLE_NAME = 'pybel_omic'
 
 
-class Omics(Base):
-    """Represents a file filled with omics data"""
+class Omic(Base):
+    """Represents a file filled with omic data"""
     __tablename__ = OMICS_TABLE_NAME
 
     id = Column(Integer, primary_key=True)
 
     created = Column(DateTime, default=datetime.datetime.utcnow, doc='The date on which this file was uploaded')
-    public = Column(Boolean, nullable=False, default=False, doc='Should the omics data be public?')
+    public = Column(Boolean, nullable=False, default=False, doc='Should the omic data be public?')
     description = Column(Text, nullable=True, doc='A description of the purpose of the analysis')
 
     source_name = Column(Text, doc='The name of the source file')
@@ -58,8 +58,59 @@ class Omics(Base):
     user_id = Column(Integer, ForeignKey('{}.id'.format(USER_TABLE_NAME)))
     user = relationship('User', backref=backref('omics', lazy='dynamic'))
 
+    def __repr__(self):
+        return '<Omic id={}, source_name={}>'.format(self.id, self.source_Name)
+
     def __str__(self):
         return str(self.source_name)
+
+    def get_source_df(self):
+        """Loads the pickled pandas DataFrame from the source file
+
+        :rtype: pandas.DataFrame
+        """
+        return loads(self.source)
+
+    def get_source_dict(self):
+        """Get a dictionary from gene to value
+
+        :rtype: dict[str,float]
+        """
+        df = self.get_source_df()
+        gene_column = self.gene_column
+        data_column = self.data_column
+
+        df_cols = [gene_column, data_column]
+
+        result = {
+            gene: value
+            for _, gene, value in df.loc[df[gene_column].notnull(), df_cols].itertuples()
+        }
+
+        return result
+
+    def to_json(self, include_id=True):
+        """Serializes as a dictionary
+
+        :param bool include_id:
+        :rtype: dict
+        """
+        result = {
+            'created': str(self.created),
+            'public': self.public,
+            'description': self.description,
+            'source_name': self.source_name,
+            'gene_column': self.gene_column,
+            'data_column': self.data_column
+        }
+
+        if self.user:
+            result['user'] = self.user.to_json(include_id=include_id)
+
+        if include_id:
+            result['id'] = self.id
+
+        return result
 
 
 class Experiment(Base):
@@ -74,14 +125,14 @@ class Experiment(Base):
     query_id = Column(Integer, ForeignKey('{}.id'.format(QUERY_TABLE_NAME)), nullable=False, index=True)
     query = relationship('Query', backref=backref("experiments"))
 
-    user_id = Column(Integer, ForeignKey('{}.id'.format(USER_TABLE_NAME)), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey('{}.id'.format(USER_TABLE_NAME)))
     user = relationship('User', backref=backref('experiments', lazy='dynamic'))
 
-    omics_id = Column(Integer, ForeignKey('{}.id'.format(OMICS_TABLE_NAME)), nullable=False, index=True)
-    omics = relationship('Omics', backref=backref('experiments', lazy='dynamic'))
+    omic_id = Column(Integer, ForeignKey('{}.id'.format(OMICS_TABLE_NAME)), nullable=False, index=True)
+    omic = relationship('Omic', backref=backref('experiments', lazy='dynamic'))
 
     type = Column(String(8), nullable=False, default='CMPA', index=True, doc='Analysis type. CMPA, RCR, etc.')
-    permutations = Column(Integer, doc='Number of permutations performed')
+    permutations = Column(Integer, nullable=False, default=100, doc='Number of permutations performed')
     result = Column(LargeBinary(LONGBLOB), doc='The result python dictionary')
 
     completed = Column(Boolean, default=False)
@@ -92,7 +143,7 @@ class Experiment(Base):
 
         :rtype: pandas.DataFrame
         """
-        return loads(self.omics.source)
+        return self.omic.get_source_df()
 
     def dump_results(self, scores):
         """Dumps the results and marks this experiment as complete
@@ -122,23 +173,27 @@ class Experiment(Base):
         ]
 
     def __repr__(self):
-        return '<Experiment on {}>'.format(self.query)
+        return '<Experiment omics={}, query={}>'.format(self.omics.id, self.query.id)
 
     @property
     def source_name(self):
-        return self.omics.source_name
+        for ext in ('.tsv', '.csv'):
+            if self.omic.source_name.endswith(ext):
+                return self.omic.source_name[:-len(ext)]
+
+        return self.omic.source_name
 
     @property
     def gene_column(self):
-        return self.omics.gene_column
+        return self.omic.gene_column
 
     @property
     def data_column(self):
-        return self.omics.data_column
+        return self.omic.data_column
 
     @property
     def description(self):
-        return self.omics.description
+        return self.omic.description
 
 
 class Report(Base):
@@ -421,9 +476,9 @@ class User(Base, UserMixin):
     def is_scai(self):
         """Is this user from SCAI?"""
         return (
-            self.has_role('scai') or
-            self.email.endswith('@scai.fraunhofer.de') or
-            self.email.endswith('@scai-extern.fraunhofer.de')
+                self.has_role('scai') or
+                self.email.endswith('@scai.fraunhofer.de') or
+                self.email.endswith('@scai-extern.fraunhofer.de')
         )
 
     @property
@@ -581,12 +636,6 @@ class Assembly(Base):
         ]
         return Assembly.from_networks(networks, user=user)
 
-    def __repr__(self):
-        return '<Assembly {} with [{}]>'.format(
-            self.id,
-            ', '.join(str(network.id) for network in self.networks)
-        )
-
     def to_json(self):
         """
 
@@ -608,6 +657,15 @@ class Assembly(Base):
             result['name'] = self.name
 
         return result
+
+    def __repr__(self):
+        return '<Assembly {} with [{}]>'.format(
+            self.id,
+            ', '.join(str(network.id) for network in self.networks)
+        )
+
+    def __str__(self):
+        return ', '.join(map(str, self.networks))
 
 
 class Query(Base):
@@ -634,7 +692,7 @@ class Query(Base):
                           backref=backref('children', lazy='dynamic', cascade="all, delete-orphan"))
 
     def __repr__(self):
-        return '<Query {}>'.format(self.id)
+        return '<Query id={}>'.format(self.id)
 
     @property
     def data(self):
