@@ -192,7 +192,7 @@ class Experiment(Base):
         ]
 
     def __repr__(self):
-        return '<Experiment omics={}, query={}>'.format(self.omics.id, self.query.id)
+        return '<Experiment omic={}, query={}>'.format(self.omic.id, self.query.id)
 
     @property
     def source_name(self):
