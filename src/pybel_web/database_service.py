@@ -18,6 +18,7 @@ from sqlalchemy import func
 
 import pybel
 from pybel.constants import NAME, NAMESPACE, NAMESPACE_DOMAIN_OTHER
+from pybel.manager.citation_utils import enrich_citation_model, get_pubmed_citation_response
 from pybel.manager.models import (
     Annotation, AnnotationEntry, Author, Citation, Edge, Evidence, Namespace, Network, Node, network_edge,
 )
@@ -58,7 +59,7 @@ def get_graph_from_request(query_id):
 
     :param int query_id: The database query identifier
     :rtype: Optional[pybel.BELGraph]
-    :rtype: werkzeug.exceptions.HTTPException
+    :raises: werkzeug.exceptions.HTTPException
     """
     query = safe_get_query(query_id)
     return query.run(manager)
@@ -1247,6 +1248,41 @@ def get_citation_by_id(citation_id):
     if citation is None:
         abort(404)
     return jsonify(citation.to_json(include_id=True))
+
+
+@api_blueprint.route('/api/citation/pubmed/<pubmed_identifier>/enrich')
+def enrich_citation_by_id(pubmed_identifier):
+    """Enrich a citation in the database"""
+    citation = manager.get_citation_by_pmid(pubmed_identifier=pubmed_identifier)
+
+    if citation is None:
+        abort(404)
+
+    if citation.name and citation.title:
+        return jsonify({
+            'success': True,
+            'payload': citation.to_json(include_id=True)
+        })
+
+    t = time.time()
+
+    response = get_pubmed_citation_response([pubmed_identifier])
+
+    pmids = response['result']['uids']
+    p = response['result'][pmids[0]]
+    success = enrich_citation_model(manager, citation, p)
+
+    if success:
+        manager.session.add(citation)
+        manager.session.commit()
+
+    t = time.time() - t
+
+    return next_or_jsonify(
+        'Got PubMed:{} metadata in {:.2f} seconds'.format(pubmed_identifier, t),
+        time=t,
+        payload=citation.to_json(include_id=True)
+    )
 
 
 @api_blueprint.route('/api/author/<author>/citations')

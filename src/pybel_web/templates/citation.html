@@ -9,6 +9,7 @@
 
 {% block content %}
     <div class="container">
+        {{ util.flashed_messages(dismissible=True, container=False) }}
 
         <ol class="breadcrumb">
             <li><a href="{{ url_for('ui.home') }}">Catalog</a></li>
@@ -27,7 +28,13 @@
                     <dt>Title</dt>
                     <dd>{{ citation.title }}</dd>
                     <dt>Journal</dt>
-                    <dd>{{ citation.name }} {{ citation.volume }} {{ citation.issue }} {{ citation.pages }}</dd>
+                    <dd>{{ citation.name }}</dd>
+                    <dt>Volume</dt>
+                    <dd>{{ citation.volume }}</dd>
+                    <dt>Issue</dt>
+                    <dd>{{ citation.issue }}</dd>
+                    <dt>Pages</dt>
+                    <dd>{{ citation.pages }}</dd>
                     <dt>Date</dt>
                     <dd>{{ citation.date }}</dd>
                     <dt>Authors</dt>
@@ -35,8 +42,6 @@
                 </dl>
             </div>
         </div>
-
-        {{ util.flashed_messages(dismissible=True, container=False) }}
 
         {% for evidence in citation.evidences %}
             <div class="panel panel-default">

@@ -38,6 +38,12 @@
                             <div class="pull-right">
                                 <small class="text-muted">
                                     <a href="{{ url_for('dbs.get_citation_by_id', citation_id=citation.id) }}">JSON</a>
+
+                                    {% if citation.type == 'PubMed' and not citation.volume %}
+                                        | <a href="{{ url_for('dbs.enrich_citation_by_id', pubmed_identifier=citation.reference, next=url_for('ui.view_citation', citation_id=citation.id)) }}">
+                                            Get Metadata
+                                        </a>
+                                    {% endif %}
                                 </small>
                             </div>
                         </h4>
