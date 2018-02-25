@@ -164,7 +164,7 @@ def main(connection=None):
     :type connection: Optional[str or pybel.manager.Manager]
     """
     upload_bel_directory(alzheimer_directory, connection=connection)
-    #upload_bel_directory(selventa_directory, connection=manager)
+    upload_bel_directory(selventa_directory, connection=connection)
 
     upload_jgf_directory(cbn_human, connection=connection)
     upload_jgf_directory(cbn_mouse, connection=connection)
