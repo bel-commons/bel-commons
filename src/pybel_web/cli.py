@@ -592,8 +592,9 @@ def examples():
 
 
 @examples.command()
+@click.option('-p', '--permutations', type=int, default=25)
 @click.pass_obj
-def load(manager):
+def load(manager, permutations):
     """Load omics, networks, and experiments"""
     from .resources.load_omics import main as load_omics_main
     from .resources.load_networks import main as load_networks_main
@@ -601,7 +602,7 @@ def load(manager):
 
     load_omics_main(manager)
     load_networks_main(manager)
-    load_experiments_main(manager)
+    load_experiments_main(manager, permutations=permutations)
 
 
 @examples.command()
@@ -623,12 +624,13 @@ def load_networks(manager):
 
 
 @examples.command()
+@click.option('-p', '--permutations', type=int, default=25)
 @click.pass_obj
-def load_experiments(manager):
+def load_experiments(manager, permutations):
     """Load experiments"""
     from .resources.load_experiments import main
     set_debug(logging.INFO)
-    main(manager)
+    main(manager, permutations=permutations)
 
 
 if __name__ == '__main__':
