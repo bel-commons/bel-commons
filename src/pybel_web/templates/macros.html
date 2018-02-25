@@ -1,3 +1,34 @@
+{% macro render_node_list_item(node) -%}
+    <div class="list-group-item">
+        <h4 class="list-group-item-heading">
+            <a href="{{ url_for('ui.view_node', node_hash=node.sha512) }}">{{ node.bel }}</a>
+        </h4>
+        <div class="list-group-item-text">
+            In-Edges: {{ node.in_edges.count() }} |
+            Out-Edges: {{ node.out_edges.count() }} |
+
+            {% if node.type == 'Gene' %}
+                Orthologies: {{ node.out_edges.filter_by(relation='orthologous').count() }} |
+            {% endif %}
+
+            Equivalencies: {{ node.out_edges.filter_by(relation='equivalentTo').count() }} |
+            Classes: {{ node.out_edges.filter_by(relation='isA').count() }} |
+            Children: {{ node.in_edges.filter_by(relation='isA').count() }} |
+
+            <a href="{{ url_for('ui.view_explorer_node', node_hash=node.sha512) }}">Explore</a> |
+            <a href="{{ url_for('dbs.get_node_by_hash', node_hash=node.sha512) }}">JSON</a>
+        </div>
+    </div>
+{%- endmacro %}
+
+{% macro render_node_list(nodes) -%}
+    <div class="list-group">
+        {% for node in nodes %}
+            {{ render_node_list_item(node) }}
+        {% endfor %}
+    </div>
+{%- endmacro %}
+
 {% macro render_edge_list_item(edge, show_evidence=True) -%}
     <div class="list-group-item">
         <h4 class="list-group-item-heading">

@@ -3,6 +3,7 @@
 {% import "bootstrap/wtf.html" as wtf %}
 {% import "bootstrap/fixes.html" as fixes %}
 {% import "bootstrap/utils.html" as util %}
+{% import 'macros.html' as pbw %}
 
 {% block styles %}
     {{ super() }}
@@ -375,6 +376,23 @@
                 </tbody>
             </table>
         </div>
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Sample Edges</h3>
+            </div>
+
+            {{ pbw.render_edge_list(network.edges.limit(5)) }}
+        </div>
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Sample Nodes</h3>
+            </div>
+
+            {{ pbw.render_node_list(network.nodes.limit(5)) }}
+        </div>
+
     </div>
     {% include "footer.html" %}
 {% endblock %}
