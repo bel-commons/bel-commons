@@ -167,7 +167,17 @@
                         )
                     </dd>
                     <dt>Query Networks</dt>
-                    <dd>{{ experiment.query.networks | join(',') }}</dd>
+                    <dd>
+                        <ul>
+                            {% for network in experiment.query.networks %}
+                                <li>
+                                    <a href="{{ url_for('ui.view_network', network_id=network.id) }}">
+                                        {{ network }}
+                                    </a>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </dd>
                 </dl>
             </div>
         </div>

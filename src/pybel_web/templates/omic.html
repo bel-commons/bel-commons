@@ -46,7 +46,7 @@
             </div>
 
             {% if experiments.count() %}
-                {{ pbw.render_experiment_table(experiments) }}
+                {{ pbw.render_experiment_table(experiments, include_omic=False) }}
             {% endif %}
         </div>
     </div>
