@@ -587,11 +587,11 @@ def summarize(manager):
 
 
 @manage.group()
-def resources():
-    """Resource loading"""
+def examples():
+    """Load examples"""
 
 
-@resources.command()
+@examples.command()
 @click.pass_obj
 def load(manager):
     """Load omics, networks, and experiments"""
@@ -604,27 +604,30 @@ def load(manager):
     load_experiments_main(manager)
 
 
-@resources.command()
+@examples.command()
 @click.pass_obj
 def load_omics(manager):
     """Load omics"""
     from .resources.load_omics import main
+    set_debug(logging.INFO)
     main(manager)
 
 
-@resources.command()
+@examples.command()
 @click.pass_obj
 def load_networks(manager):
     """Load networks"""
     from .resources.load_networks import main
+    set_debug(logging.INFO)
     main(manager)
 
 
-@resources.command()
+@examples.command()
 @click.pass_obj
 def load_experiments(manager):
     """Load experiments"""
     from .resources.load_experiments import main
+    set_debug(logging.INFO)
     main(manager)
 
 
