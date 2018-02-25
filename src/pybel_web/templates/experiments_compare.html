@@ -47,6 +47,11 @@
                         <td>{{ experiment.omic.id }}</td>
                         <td>{{ experiment.omic.source_name }}</td>
                         <td>{{ experiment.omic.description }}</td>
+                        <td>
+                            <a href="{{ url_for('analysis.view_experiment_comparison', experiment_ids=(experiments|rejectattr('id', 'equalto', experiment.id)|map(attribute='id')), clusters=clusters) }}">
+                                Delete
+                            </a>
+                        </td>
                     </tr>
                 {% endfor %}
                 </tbody>
