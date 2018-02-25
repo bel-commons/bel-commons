@@ -89,6 +89,40 @@
                 <strong>exploring</strong> knowledge assemblies encoded in Biological Expression Language (BEL) to
                 support <strong>elucidating</strong> disease-specific, mechanistic insight.
             </p>
+
+            {% if current_user.is_admin %}
+                <div>
+                    <a href="{{ url_for('ui.view_networks') }}" class="btn btn-warning">
+                        Networks <span class="badge">{{ number_networks }}</span>
+                    </a>
+                    <a href="{{ url_for('ui.view_edges') }}" class="btn btn-warning">
+                        Edges <span class="badge">{{ number_edges }}</span>
+                    </a>
+                    <a href="{{ url_for('ui.view_nodes') }}" class="btn btn-warning">
+                        Nodes <span class="badge">{{ number_nodes }}</span>
+                    </a>
+                    <a href="{{ url_for('ui.view_citations') }}"
+                       class="btn btn-warning" role="button">
+                        Citations <span class="badge">{{ number_citations }}</span>
+                    </a>
+                    <a href="{{ url_for('ui.view_evidences') }}"
+                       class="btn btn-warning" role="button">
+                        Evidences <span class="badge">{{ number_evidences }}</span>
+                    </a>
+                    <a href="{{ url_for('ui.view_queries') }}"
+                       class="btn btn-warning" role="button">
+                        Queries <span class="badge">{{ number_queries }}</span>
+                    </a>
+                    <a href="{{ url_for('analysis.view_omics') }}"
+                       class="btn btn-warning" role="button">
+                        Omics <span class="badge">{{ number_omics }}</span>
+                    </a>
+                    <a href="{{ url_for('analysis.view_experiments') }}"
+                       class="btn btn-warning" role="button">
+                        Experiments <span class="badge">{{ number_experiments }}</span>
+                    </a>
+                </div>
+            {% endif %}
         </div>
 
         <div class="panel panel-default">
@@ -123,21 +157,9 @@
                                     <a href="{{ url_for('analysis.view_experiments') }}">analysis</a>.
                                 </p>
                                 <p>
-                                    {% if current_user.is_admin %}
-                                        <a href="{{ url_for('ui.view_networks') }}" class="btn btn-primary">
-                                            Networks <span class="badge">{{ number_networks }}</span>
-                                        </a>
-                                        <a href="{{ url_for('ui.view_edges') }}" class="btn btn-warning">
-                                            Edges <span class="badge">{{ number_edges }}</span>
-                                        </a>
-                                        <a href="{{ url_for('ui.view_nodes') }}" class="btn btn-warning">
-                                            Nodes <span class="badge">{{ number_nodes }}</span>
-                                        </a>
-                                    {% else %}
-                                        <a href="{{ url_for('ui.view_networks') }}" class="btn btn-primary btn-block">
-                                            Network Catalog
-                                        </a>
-                                    {% endif %}
+                                    <a href="{{ url_for('ui.view_networks') }}" class="btn btn-primary btn-block">
+                                        Network Catalog
+                                    </a>
                                 </p>
                             </div>
                         </div>
@@ -150,35 +172,8 @@
                                 <h3>Query</h3>
                                 <p>Build a network by investigating the knowledge related to interesting biological
                                     entities, chemical matter, authors, or publications.</p>
-
-
-                                {% if current_user.is_admin %}
-                                    <a href="{{ url_for('ui.view_query_builder') }}"
-                                       class="btn btn-primary" role="button">Build</a>
-                                    <a href="{{ url_for('ui.view_citations') }}"
-                                       class="btn btn-warning" role="button">
-                                        Citations <span class="badge">{{ number_citations }}</span>
-                                    </a>
-                                    <a href="{{ url_for('ui.view_evidences') }}"
-                                       class="btn btn-warning" role="button">
-                                        Evidences <span class="badge">{{ number_evidences }}</span>
-                                    </a>
-                                    <a href="{{ url_for('ui.view_queries') }}"
-                                       class="btn btn-warning" role="button">
-                                        Queries <span class="badge">{{ number_queries }}</span>
-                                    </a>
-                                    <a href="{{ url_for('analysis.view_omics') }}"
-                                       class="btn btn-warning" role="button">
-                                        Omics <span class="badge">{{ number_omics }}</span>
-                                    </a>
-                                    <a href="{{ url_for('analysis.view_experiments') }}"
-                                       class="btn btn-warning" role="button">
-                                        Experiments <span class="badge">{{ number_experiments }}</span>
-                                    </a>
-                                {% else %}
-                                    <a href="{{ url_for('ui.view_query_builder') }}"
-                                       class="btn btn-primary btn-block" role="button">Build Query</a>
-                                {% endif %}
+                                <a href="{{ url_for('ui.view_query_builder') }}"
+                                   class="btn btn-primary btn-block" role="button">Build Query</a>
                             </div>
                         </div>
                     </div>

@@ -62,7 +62,7 @@
     </div>
 {%- endmacro %}
 
-{% macro render_query_row(query) -%}
+{% macro render_query_row(query, show_delete=False) -%}
     <tr>
         <td>
             <a href="{{ url_for('ui.view_query', query_id=query.id) }}">{{ query.id }}</a>
@@ -107,7 +107,7 @@
                         </a>
                     </li>
 
-                    {% if current_user.is_admin %}
+                    {% if show_delete %}
                         <li>
                             <a href="{{ url_for('dbs.drop_query_by_id', query_id=query.id, next=url_for('ui.view_current_user_activity')) }}">
                                 <span class="glyphicon glyphicon-remove"></span> Delete

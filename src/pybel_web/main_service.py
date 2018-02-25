@@ -302,7 +302,12 @@ def view_queries():
 
     q = q.order_by(Query.created.desc())
 
-    return render_template('queries.html', queries=q.all(), manager=manager, current_user=current_user)
+    return render_template(
+        'queries.html',
+        queries=q.all(),
+        manager=manager,
+        current_user=current_user,
+    )
 
 
 @ui_blueprint.route('/citation')
