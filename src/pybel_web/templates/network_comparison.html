@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% import "bootstrap/wtf.html" as wtf %}
+{% import "bootstrap/fixes.html" as fixes %}
+{% import "bootstrap/utils.html" as util %}
+
+{% block title %}Compare Networks{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Network Comparison</h3>
+            </div>
+            <div class="panel-body">
+                <p>
+                    This page provides a comparison between the following networks:
+                </p>
+                <ul>
+                    {% for network in networks %}
+                        <li>
+                            <a href="{{ url_for('ui.view_network', network_id=network.id) }}">{{ network }}</a>
+                        </li>
+                    {% endfor %}
+                </ul>
+                <div class="row">
+                    <div class="col-sm-6 col-md-6">
+                        <h3>Node Overlap</h3>
+                        <img class="img-responsive" src="data:image/png;base64,{{ data['nodes'] }}">
+                    </div>
+                    <div class="col-sm-6 col-md-6">
+                        <h3>Edge Overlap</h3>
+                        <img class="img-responsive" src="data:image/png;base64,{{ data['edges'] }}">
+                    </div>
+                    <div class="col-sm-6 col-md-6">
+                        <h3>Citation Overlap</h3>
+                        <img class="img-responsive" src="data:image/png;base64,{{ data['citations'] }}">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% import "bootstrap/wtf.html" as wtf %}
+{% import "bootstrap/fixes.html" as fixes %}
+{% import "bootstrap/utils.html" as util %}
+
+{% block title %}Citation Catalog{% endblock %}
+
+{% block content %}
+    <div class="container">
+
+        <ol class="breadcrumb">
+            <li><a href="{{ url_for('ui.home') }}">Catalog</a></li>
+            <li class="active">Citations</li>
+        </ol>
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Citations</h3>
+            </div>
+            <div class="panel-body">
+                <div class="input-group">
+                    <input type="text" class="form-control" placeholder="Search citations...">
+                    <span class="input-group-btn">
+                    <button class="btn btn-default" type="button">Go!</button>
+                </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel panel-default">
+            <div class="list-group">
+                {% for citation in citations %}
+                    <div class="list-group-item">
+                        <h4 class="list-group-item-heading">
+                            <a href="{{ url_for('ui.view_citation', citation_id=citation.id) }}">{{ citation }}</a>
+
+                            <div class="pull-right">
+                                <small class="text-muted">
+                                    <a href="{{ url_for('dbs.get_citation_by_id', citation_id=citation.id) }}">JSON</a>
+                                </small>
+                            </div>
+                        </h4>
+                        <div class="list-group-item-text">
+                            {{ citation.name }}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+            {% if count %}
+                <div class="panel-footer">
+                    <p>Showing {{ citations|length }} of {{ count }} citations</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% include "footer.html" %}
+{% endblock %}

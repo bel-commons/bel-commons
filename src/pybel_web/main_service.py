@@ -13,7 +13,7 @@ from flask import Blueprint, abort, current_app, flash, redirect, render_templat
 from flask_security import current_user, login_required, roles_required
 
 import pybel_tools.query
-from pybel.manager.models import Annotation, Edge, Namespace, Node
+from pybel.manager.models import Annotation, Citation, Edge, Evidence, Namespace, Node
 from pybel.utils import get_version as get_pybel_version
 from pybel_tools.biogrammar.double_edges import summarize_competeness
 from pybel_tools.mutation import (
@@ -24,6 +24,7 @@ from pybel_tools.pipeline import Pipeline, no_arguments_map
 from pybel_tools.selection import get_subgraphs_by_annotation
 from pybel_tools.summary import info_json
 from pybel_tools.utils import get_version as get_pybel_tools_version
+from pybel_web.manager_utils import next_or_jsonify
 from . import models
 from .constants import *
 from .external_managers import *
@@ -33,7 +34,6 @@ from .utils import (
     calculate_overlap_dict, get_networks_with_permission, manager, query_form_to_dict,
     query_from_network, render_network_summary_safe, safe_get_network, safe_get_node, safe_get_query,
 )
-from pybel_web.manager_utils import next_or_jsonify
 
 log = logging.getLogger(__name__)
 
@@ -46,32 +46,6 @@ extract_useful_subgraph = Pipeline.from_functions([
     collapse_by_central_dogma_to_genes,
     remove_isolated_nodes
 ])
-
-
-def _serve_relations(edges, source, target=None):
-    """Serves a list of edges
-
-    :param iter[pybel.manager.models.Edge] edges:
-    :param Node source:
-    :param Node target:
-    :rtype: flask.Response
-    """
-    data = defaultdict(list)
-    ev2cit = {}
-    for edge in edges:
-        if not edge.evidence:
-            continue
-        ev = edge.evidence.text
-        data[ev].append((edge, edge.to_json()))
-        ev2cit[ev] = edge.evidence.citation.to_json()
-
-    return render_template(
-        'evidence_list.html',
-        data=data,
-        ev2cit=ev2cit,
-        source_bel=source.bel,
-        target_bel=target.bel if target else None,
-    )
 
 
 def format_big_number(n):
@@ -108,6 +82,8 @@ def home():
     number_queries = manager.session.query(Query).count()
     number_omics = manager.session.query(Omic).count()
     number_experiments = manager.session.query(Experiment).count()
+    number_citations = manager.session.query(Citation).count()
+    number_evidences = manager.session.query(Evidence).count()
 
     return render_template(
         'index.html',
@@ -118,11 +94,13 @@ def home():
         number_queries=format_big_number(number_queries),
         number_omics=number_omics,
         number_experiments=number_experiments,
+        number_citations=format_big_number(number_citations),
+        number_evidences=format_big_number(number_evidences),
         manager=manager,
     )
 
 
-@ui_blueprint.route('/networks', methods=['GET', 'POST'])
+@ui_blueprint.route('/network', methods=['GET', 'POST'])
 def view_networks():
     """The networks page has two components: a search box, and a list of networks. Each network is shown by name,
     with the version number and the first author. Each has several actions:
@@ -148,7 +126,7 @@ def view_networks():
     )
 
 
-def _render_nodes(nodes, count=None):
+def _render_nodes(template, nodes, count=None):
     """Renders a list of nodes
 
     :param iter[Node] nodes:
@@ -156,7 +134,7 @@ def _render_nodes(nodes, count=None):
     :return: flask.Response
     """
     return render_template(
-        'nodes.html',
+        template,
         nodes=nodes,
         count=count,
         current_user=current_user,
@@ -168,7 +146,7 @@ def _render_nodes(nodes, count=None):
     )
 
 
-@ui_blueprint.route('/nodes')
+@ui_blueprint.route('/node')
 @roles_required('admin')
 def view_nodes():
     """Renders a page viewing all edges"""
@@ -195,7 +173,17 @@ def view_nodes():
     if offset:
         nodes = nodes.offset(offset)
 
-    return _render_nodes(nodes, count=count)
+    return render_template(
+        'nodes.html',
+        nodes=nodes,
+        count=count,
+        current_user=current_user,
+        hgnc_manager=hgnc_manager,
+        chebi_manager=chebi_manager,
+        go_manager=go_manager,
+        entrez_manager=entrez_manager,
+        interpro_manager=interpro_manager,
+    )
 
 
 @ui_blueprint.route('/node/<node_hash>')
@@ -205,7 +193,45 @@ def view_node(node_hash):
     :param str node_hash: The node's hash
     """
     node = safe_get_node(manager, node_hash)
-    return _render_nodes([node])
+
+    return render_template(
+        'node.html',
+        node=node,
+        current_user=current_user,
+        hgnc_manager=hgnc_manager,
+        chebi_manager=chebi_manager,
+        go_manager=go_manager,
+        entrez_manager=entrez_manager,
+        interpro_manager=interpro_manager,
+    )
+
+
+@ui_blueprint.route('/evidence')
+def view_evidences():
+    """View a list of Evidence models"""
+    limit = request.args.get('limit', type=int, default=10)
+    offset = request.args.get('offset', type=int)
+
+    evidences = manager.session.query(Evidence)
+    evidences = evidences.limit(limit)
+    if offset is not None:
+        evidences = evidences.offset(offset)
+
+    return render_template(
+        'evidences.html',
+        manager=manager,
+        evidences=evidences.all(),
+        count=manager.session.query(Evidence).count(),
+    )
+
+
+@ui_blueprint.route('/evidence/<int:evidence_id>')
+def view_evidence(evidence_id):
+    """View a single Evidence model"""
+    evidence = manager.session.query(Evidence).get(evidence_id)
+    if evidence is None:
+        abort(404)
+    return render_template('evidence.html', manager=manager, evidence=evidence)
 
 
 @ui_blueprint.route('/node/<source_hash>/edges/<target_hash>')
@@ -218,15 +244,30 @@ def view_relations(source_hash, target_hash):
     source = safe_get_node(manager, source_hash)
     target = safe_get_node(manager, target_hash)
 
-    relations = list(manager.query_edges(source=source, target=target))
+    edges = list(manager.query_edges(source=source, target=target))
 
     if 'undirected' in request.args:
-        relations.extend(manager.query_edges(source=target, target=source))
+        edges.extend(manager.query_edges(source=target, target=source))
 
-    return _serve_relations(relations, source, target)
+    data = defaultdict(list)
+    ev2cit = {}
+    for edge in edges:
+        if not edge.evidence:
+            continue
+        ev = edge.evidence.text
+        data[ev].append((edge, edge.to_json()))
+        ev2cit[ev] = edge.evidence.citation.to_json()
+
+    return render_template(
+        'evidence_list.html',
+        data=data,
+        ev2cit=ev2cit,
+        source_bel=source.bel,
+        target_bel=target.bel if target else None,
+    )
 
 
-@ui_blueprint.route('/edges')
+@ui_blueprint.route('/edge')
 @roles_required('admin')
 def view_edges():
     """Renders a page viewing all edges"""
@@ -240,13 +281,20 @@ def view_edge(edge_hash):
 
     :param str edge_hash: The identifier of the edge to display
     """
-    return render_template('edges.html', edges=[manager.get_edge_by_hash(edge_hash)], current_user=current_user)
+    return render_template('edge.html', edge=manager.get_edge_by_hash(edge_hash), current_user=current_user)
+
+
+@ui_blueprint.route('/query/<int:query_id>')
+def view_query(query_id):
+    """Renders a single query page"""
+    query = safe_get_query(query_id)
+    return render_template('query.html', query=query, manager=manager, current_user=current_user)
 
 
 @ui_blueprint.route('/query')
 @roles_required('admin')
 def view_queries():
-    """Renders the query page"""
+    """Renders the query catalog"""
     q = manager.session.query(Query)
 
     if not current_user.is_admin:
@@ -255,6 +303,41 @@ def view_queries():
     q = q.order_by(Query.created.desc())
 
     return render_template('queries.html', queries=q.all(), manager=manager, current_user=current_user)
+
+
+@ui_blueprint.route('/citation')
+@roles_required('admin')
+def view_citations():
+    """Renders the query catalog"""
+    limit = request.args.get('limit', type=int, default=10)
+
+    q = manager.session.query(Citation)
+    q = q.limit(limit)
+
+    return render_template(
+        'citations.html',
+        citations=q.all(),
+        count=manager.session.query(Citation).count(),
+        manager=manager,
+        current_user=current_user
+    )
+
+
+@ui_blueprint.route('/citation/<int:citation_id>')
+def view_citation(citation_id):
+    """View a citation"""
+    citation = manager.session.query(Citation).get(citation_id)
+    return render_template('citation.html', citation=citation)
+
+
+@ui_blueprint.route('/citation/pubmed/<pmid>')
+def view_pubmed(pmid):
+    """View all evidences and relations extracted from the article with the given PubMed identifier
+
+    :param str pmid: The PubMed identifier
+    """
+    citation = manager.get_citation_by_pmid(pmid)
+    return redirect(url_for('.view_citation', citation_id=citation.id))
 
 
 @ui_blueprint.route('/network/<int:network_id>/explore')
@@ -393,16 +476,16 @@ def view_current_user_activity():
     )
 
 
-@ui_blueprint.route('/summary/<int:network_id>')
-def view_summarize_statistics(network_id):
+@ui_blueprint.route('/network/<int:network_id>')
+def view_network(network_id):
     """Renders a page with the statistics of the contents of a BEL script
 
     :param int network_id: The identifier of the network to summarize
     """
-    return render_network_summary_safe(manager, network_id, template='summarize_statistics.html')
+    return render_network_summary_safe(manager, network_id, template='network.html')
 
 
-@ui_blueprint.route('/summary/<int:network_id>/compilation')
+@ui_blueprint.route('/network/<int:network_id>/compilation')
 def view_summarize_compilation(network_id):
     """Renders a page with the compilation summary of the contents of a BEL script
 
@@ -411,7 +494,7 @@ def view_summarize_compilation(network_id):
     return render_network_summary_safe(manager, network_id, template='summarize_compilation.html')
 
 
-@ui_blueprint.route('/summary/<int:network_id>/warnings')
+@ui_blueprint.route('/network/<int:network_id>/warnings')
 def view_summarize_warnings(network_id):
     """Renders a page with the parsing errors from a BEL script
 
@@ -420,7 +503,7 @@ def view_summarize_warnings(network_id):
     return render_network_summary_safe(manager, network_id, template='summarize_warnings.html')
 
 
-@ui_blueprint.route('/summary/<int:network_id>/biogrammar')
+@ui_blueprint.route('/network/<int:network_id>/biogrammar')
 def view_summarize_biogrammar(network_id):
     """Renders a page with the summary of the biogrammar analysis of a BEL script
 
@@ -429,7 +512,7 @@ def view_summarize_biogrammar(network_id):
     return render_network_summary_safe(manager, network_id, template='summarize_biogrammar.html')
 
 
-@ui_blueprint.route('/summary/<int:network_id>/completeness')
+@ui_blueprint.route('/network/<int:network_id>/completeness')
 def view_summarize_completeness(network_id):
     """Renders a page with the summary of the completeness analysis of a BEL script
 
@@ -443,7 +526,7 @@ def view_summarize_completeness(network_id):
     return render_template('summarize_completeness.html', current_user=current_user, network=network, entries=entries)
 
 
-@ui_blueprint.route('/summary/<int:network_id>/stratified/<annotation>')
+@ui_blueprint.route('/network/<int:network_id>/stratified/<annotation>')
 def view_summarize_stratified(network_id, annotation):
     """Show stratified summary of graph's subgraphs by annotation"""
     network = safe_get_network(network_id)
@@ -518,17 +601,18 @@ def view_network_comparison(network_1_id, network_2_id):
     network_1 = safe_get_network(network_1_id)
     network_2 = safe_get_network(network_2_id)
 
-    q1 = query_from_network(network_1)
-    q2 = query_from_network(network_2)
+    data = calculate_overlap_dict(
+        g1=network_1.as_bel(),
+        g1_label=str(network_1),
+        g2=network_2.as_bel(),
+        g2_label=str(network_2),
+    )
 
-    log.info('q1: %s from n1 %s', q1, network_1_id)
-    log.info('q2: %s from n2 %s', q2, network_2_id)
-
-    return redirect(url_for(
-        '.view_query_comparison',
-        query_1_id=q1.id,
-        query_2_id=q2.id
-    ))
+    return render_template(
+        'network_comparison.html',
+        networks=[network_1, network_2],
+        data=data,
+    )
 
 
 @ui_blueprint.route('/query/<int:query_1_id>/compare/<int:query_2_id>')
@@ -554,21 +638,10 @@ def view_query_comparison(query_1_id, query_2_id):
 
     return render_template(
         'query_comparison.html',
-        query_1_id=query_1_id,
-        query_2_id=query_2_id,
+        query_1=query_1,
+        query_2=query_2,
         data=data,
     )
-
-
-@ui_blueprint.route('/citation/pubmed/<pmid>')
-def view_pubmed(pmid):
-    """View all evidences and relations extracted from the article with the given PubMed identifier
-
-    :param str pmid: The PubMed identifier
-    """
-    citation = manager.get_citation_by_pmid(pmid)
-
-    return render_template('citation.html', citation=citation)
 
 
 @ui_blueprint.route('/download/bel/<fid>')

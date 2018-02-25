@@ -3,12 +3,18 @@
 {% import "bootstrap/wtf.html" as wtf %}
 {% import "bootstrap/fixes.html" as fixes %}
 {% import "bootstrap/utils.html" as util %}
+{% import "macros.html" as pbw %}
 
 {% block title %}Node Catalog{% endblock %}
 
 {% block content %}
     <div class="container">
         {{ util.flashed_messages(dismissible=True, container=False) }}
+
+        <ol class="breadcrumb">
+            <li><a href="{{ url_for('ui.home') }}">Catalog</a></li>
+            <li class="active">Nodes</li>
+        </ol>
 
         <div class="panel panel-default">
             <div class="panel-heading">
@@ -105,7 +111,7 @@
                             <ul>
                                 {% for network in node.networks %}
                                     <li>
-                                        <a href="{{ url_for('ui.view_summarize_statistics', network_id=network.id) }}">
+                                        <a href="{{ url_for('ui.view_network', network_id=network.id) }}">
                                             {{ network }}
                                         </a>
                                     </li>
@@ -135,93 +141,13 @@
                                 </dl>
 
                                 {% if hgnc_manager and node.namespace_entry.namespace.keyword == 'HGNC' %}
-                                    {% set gene =  hgnc_manager.get_gene_by_hgnc_symbol(node.namespace_entry.name) %}
-
-                                    <h4>HGNC</h4>
-                                    <dl class="dl-horizontal">
-                                        <dt>Identifier</dt>
-                                        <dd>{{ gene.identifier }}</dd>
-                                        <dt>Symbol</dt>
-                                        <dd>{{ gene.symbol }}</dd>
-                                        <dt>Name</dt>
-                                        <dd>{{ gene.name }}</dd>
-                                        <dt>Locus Group</dt>
-                                        <dd>{{ gene.locus_group }}</dd>
-                                        <dt>Locus Type</dt>
-                                        <dd>{{ gene.locus_type }}</dd>
-                                        <dt>Synonyms</dt>
-                                        <dd>{{ gene.alias_names|join(' | ') }}</dd>
-                                    </dl>
+                                    {{ pbw.render_node_hgnc_enrichment(hgnc_manager, node) }}
                                 {% elif entrez_manager and node.namespace_entry.namespace.keyword in ['EGID', 'EG', 'ENTREZ'] %}
-                                    {% set gene =  entrez_manager.get_gene_by_entrez_id(node.namespace_entry.name) %}
-
-                                    <h4>Entrez</h4>
-                                    <dl class="dl-horizontal">
-                                        <dt>Identifier</dt>
-                                        <dd>{{ gene.entrez_id }}</dd>
-                                        <dt>Name</dt>
-                                        <dd>{{ gene.name }}</dd>
-                                        <dt>Description</dt>
-                                        <dd>{{ gene.description }}</dd>
-                                        <dt>Type of Gene</dt>
-                                        <dd>{{ gene.type_of_gene }}</dd>
-                                        <dt>Species</dt>
-                                        <dd>{{ gene.species }}</dd>
-                                    </dl>
+                                    {{ pbw.render_node_entrez_enrichment(entrez_manager, node) }}
                                 {% elif chebi_manager and node.namespace_entry.namespace.keyword in ['CHEBI', 'CHEBIID'] %}
-                                    {% if node.namespace_entry.namespace.keyword == 'CHEBI' %}
-                                        {% set chemical= chebi_manager.get_chemical_by_chebi_name(node.namespace_entry.name) %}
-                                    {% else %}
-                                        {% set chemical= chebi_manager.get_chemical_by_chebi_id(node.namespace_entry.name) %}
-                                    {% endif %}
-
-                                    <h4>ChEBI</h4>
-                                    <dl class="dl-horizontal">
-                                        <dt>Identifier</dt>
-                                        <dd>{{ chemical.chebi_id }}</dd>
-                                        <dt>Name</dt>
-                                        <dd>{{ chemical.name }}</dd>
-                                        {% if chemical.inchi %}
-                                            <dt>InChI</dt>
-                                            <dd>{{ chemical.inchi }}</dd>
-                                        {% endif %}
-                                        {% if chemical.definition %}
-                                            <dt>Description</dt>
-                                            <dd>{{ chemical.definition }}</dd>
-                                        {% endif %}
-                                        <dt>Synonyms</dt>
-                                        <dd>{{ chemical.synonyms|join(' | ') }}</dd>
-                                    </dl>
+                                    {{ pbw.render_node_chebi_enrichment(chebi_manager, node) }}
                                 {% elif go_manager and node.namespace_entry.namespace.keyword in ['GO', 'GOBP', 'GOBPID'] %}
-                                    {% if node.namespace_entry.namespace.keyword in ['GO', 'GOBP'] %}
-                                        {% set go = go_manager.get_go_by_name(node.namespace_entry.name) %}
-                                    {% else %}
-                                        {% set go = go_manager.get_go_by_id(node.namespace_entry.name) %}
-                                    {% endif %}
-
-                                    <h4>Gene Ontology</h4>
-                                    <dl class="dl-horizontal">
-                                        <dt>Identifier</dt>
-                                        <dd>{{ go['id'] }}</dd>
-                                        <dt>Name</dt>
-                                        <dd>{{ go['name'] }}</dd>
-                                        <dt>Definition</dt>
-                                        <dd>{{ go['def'] }}</dd>
-                                        {% if go['xref'] %}
-                                            <dt>Cross References</dt>
-                                            <dd>
-                                                <ul>
-                                                    {% for go_xref in go['xref'] %}
-                                                        <li>{{ go_xref }}</li>
-                                                    {% endfor %}
-                                                </ul>
-                                            </dd>
-                                        {% endif %}
-                                        {% if go['synonym'] %}
-                                            <dt>Synonyms</dt>
-                                            <dd>{{ go['synonym']|join(' | ') }}</dd>
-                                        {% endif %}
-                                    </dl>
+                                    {{ pbw.render_node_go_enrichment(go_manager, node) }}
                                 {% endif %}
                             {% endif %}
                         </div>

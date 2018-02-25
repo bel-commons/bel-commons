@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% import "bootstrap/wtf.html" as wtf %}
+{% import "bootstrap/fixes.html" as fixes %}
+{% import "bootstrap/utils.html" as util %}
+{% import 'macros.html' as pbw %}
+
+{% block title %}Citation Catalog{% endblock %}
+
+{% block content %}
+    <div class="container">
+
+        <ol class="breadcrumb">
+            <li><a href="{{ url_for('ui.home') }}">Catalog</a></li>
+            <li><a href="{{ url_for('ui.view_evidences') }}">Evidences</a></li>
+            <li class="active">{{ evidence.id }}</li>
+        </ol>
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">{{ evidence.citation }}:{{ evidence.sha512[:10] }}</h3>
+            </div>
+            <div class="panel-body">
+                {{ evidence.text }}
+            </div>
+        </div>
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Edges</h3>
+            </div>
+            {{ pbw.render_edge_list(evidence.edges, show_evidence=False) }}
+        </div>
+    </div>
+
+    {% include "footer.html" %}
+{% endblock %}

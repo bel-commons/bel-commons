@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% import "bootstrap/wtf.html" as wtf %}
+{% import "bootstrap/fixes.html" as fixes %}
+{% import "bootstrap/utils.html" as util %}
+{% import 'macros.html' as pbw %}
+
+{% block title %}Edge Catalog{% endblock %}
+
+{% block content %}
+    <div class="container">
+        {{ util.flashed_messages(dismissible=True, container=False) }}
+
+        <ol class="breadcrumb">
+            <li><a href="{{ url_for('ui.home') }}">Catalog</a></li>
+            <li><a href="{{ url_for('ui.view_edges') }}">Edges</a></li>
+            <li class="active"><code>{{ edge.bel }}</code></li>
+        </ol>
+
+        <div class="page-header">
+            <h1><code>{{ edge.bel }}</code></h1>
+        </div>
+
+        <div class="panel panel-default">
+            <div class="panel-body">
+                <a href="{{ url_for('ui.view_node', node_hash=edge.source.sha512) }}">
+                    View Source <span class="glyphicon glyphicon-new-window"></span>
+                </a> |
+                <a href="{{ url_for('ui.view_node', node_hash=edge.target.sha512) }}">
+                    View Target <span class="glyphicon glyphicon-new-window"></span>
+                </a>
+            </div>
+        </div>
+
+
+        {{ pbw.render_networks_panel(edge.networks) }}
+
+
+        {% if edge.evidence %}
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Provenance</h3>
+                </div>
+                <div class="panel-body">
+                    <h4>
+                        <a href="{{ url_for('ui.view_citation', citation_id=edge.evidence.citation.id) }}">
+                            {{ edge.evidence.citation }}
+                        </a>
+                    </h4>
+                    <p>{{ edge.evidence.text }}</p>
+
+                    {% set related_edges = edge.evidence.edges.all() %}
+                    {% if related_edges|length > 1 %}
+                        <h4>Related Edges <span class="badge">{{ (related_edges|length) - 1 }}</span></h4>
+                        <ul>
+                            {% for related_edge in related_edges %}
+                                {% if related_edge.sha512 != edge.sha512 %}
+                                    <li>
+                                        <a href="{{ url_for('ui.view_edge', edge_hash=related_edge.sha512) }}">
+                                            {{ related_edge.bel }}
+                                        </a>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+
+                </div>
+            </div>
+        {% endif %}
+
+
+        {% set annotation_entries = edge.annotations.all() %}
+        {% if annotation_entries %}
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Annotations <span class="badge">{{ annotation_entries|length }}</span></h3>
+                </div>
+                <div class="panel-body">
+                    <dl class="dl-horizontal">
+                        {% for annotation_entry in annotation_entries %}
+                            <dt>{{ annotation_entry.annotation.name }}</dt>
+                            <dd>{{ annotation_entry.name }}</dd>
+                        {% endfor %}
+                    </dl>
+                </div>
+            </div>
+        {% endif %}
+
+    </div>
+
+    {% include "footer.html" %}
+{% endblock %}

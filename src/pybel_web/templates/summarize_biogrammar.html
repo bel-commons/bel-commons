@@ -66,22 +66,25 @@
     </script>
 {% endblock %}
 
-
-
-{% block title %}Biogrammar{% endblock %}
+{% block title %}{{ network }} Summary: Biogrammar{% endblock %}
 
 {% block content %}
     <a id="top"></a>
     <div class="container">
+        {{ util.flashed_messages(dismissible=True, container=False) }}
+
+        <ol class="breadcrumb">
+            <li><a href="{{ url_for('ui.home') }}">Catalog</a></li>
+            <li><a href="{{ url_for('ui.view_networks') }}">Networks</a></li>
+            <li><a href="{{ url_for('ui.view_network', network_id=network.id) }}">{{ network }}</a></li>
+            <li class="active">Biogrammar</li>
+        </ol>
+
         <div class="page-header">
             <h1>Biogrammar Summary of {{ network.name }}
                 <small class="text-muted">{{ network.version }}</small>
             </h1>
         </div>
-
-        {{ util.flashed_messages(dismissible=True, container=False) }}
-
-        {% include "summary_header.html" %}
 
         {% if network_versions is defined and network_versions|length > 1 %}
             <div class="panel panel-default">
@@ -119,8 +122,6 @@
             </div>
             <div class="panel-body">
                 <ol>
-                    <li><a href="#provenance">Provenance</a></li>
-
                     {% if regulatory_pairs is defined and regulatory_pairs|length > 0 %}
                         <li><a href="#regulatory-pairs">Regulatory Pairs</a></li>
                     {% endif %}
@@ -149,43 +150,6 @@
                         <li><a href="#undefined-families">Undefined Families</a></li>
                     {% endif %}
                 </ol>
-            </div>
-        </div>
-
-        <a id="provenance"></a>
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                <h3 class="panel-title">Provenance
-                    <a class="pull-right" href="#top">
-                        <span class="glyphicon glyphicon-arrow-up"></span>
-                    </a>
-                </h3>
-            </div>
-            <div class="panel-body">
-                <dl class="dl-horizontal">
-                    {% if network.report %}
-                        <dt>Upload</dt>
-                        <dd>{{ network.report.user.email }} at {{ network.report.created }}</dd>
-                    {% endif %}
-
-                    <dt>Authors</dt>
-                    <dd>{{ network.authors }}</dd>
-
-                    <dt>Contact</dt>
-                    <dd>{{ network.contact }}</dd>
-
-                    {% if network.description %}
-                        <dt>Description</dt>
-
-                        <dd>{{ network.description }}</dd>
-                    {% endif %}
-
-                    <dt>License</dt>
-                    <dd>{{ network.licenses }}</dd>
-
-                    <dt>Copyright</dt>
-                    <dd>{{ network.copyright }}</dd>
-                </dl>
             </div>
         </div>
 

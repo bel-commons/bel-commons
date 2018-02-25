@@ -33,15 +33,152 @@
 {% block content %}
     <a id="top"></a>
     <div class="container">
+        {{ util.flashed_messages(dismissible=True, container=False) }}
+
+        <ol class="breadcrumb">
+            <li><a href="{{ url_for('ui.home') }}">Catalog</a></li>
+            <li><a href="{{ url_for('ui.view_networks') }}">Networks</a></li>
+            <li class="active">{{ network }}</li>
+        </ol>
+
         <div class="page-header">
-            <h1>Statistics over {{ network.name }}
+            <h1>{{ network.name }}
                 <small class="text-muted">{{ network.version }}</small>
             </h1>
         </div>
 
-        {{ util.flashed_messages(dismissible=True, container=False) }}
+        <div class="panel panel-default">
+            <div class="panel-body">
+                <div class="btn-group">
+                    <a class="btn btn-default" href="{{ url_for('ui.view_network', network_id=network.id) }}"
+                       title="Summary of the Network"
+                       data-content="Access the statisics summary of the network.">
+                        <span class="glyphicon glyphicon-signal" aria-hidden="true"></span> Statistics
+                    </a>
+                    <a class="btn btn-default"
+                       href="{{ url_for('ui.view_summarize_compilation', network_id=network.id) }}"
+                       data-toggle="popright" title="Summary of the Network"
+                       data-content="Access the compilation summary of the network.">
+                        <span class="glyphicon glyphicon-warning-sign" aria-hidden="true"></span> Compilation
+                    </a>
+                    <a class="btn btn-default"
+                       href="{{ url_for('ui.view_summarize_biogrammar', network_id=network.id) }}"
+                       data-toggle="popright" title="Summary of the Network"
+                       data-content="Access the biogrammar summary of the network.">
+                        <span class="glyphicon glyphicon-apple" aria-hidden="true"></span> Biogrammar
+                    </a>
+                </div>
 
-        {% include "summary_header.html" %}
+                {% if network.report and network.report.is_displayable %}
+                    <a href="{{ url_for('ui.view_explore_network', network_id=network.id) }}"
+                       class="btn btn-default" data-toggle="popover" title="Explore this Network"
+                       data-content="This network has {{ network.report.number_nodes }} nodes so it can be directly shown in the Biological Network Explorer.">
+                        <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
+                        Explore
+                    </a>
+                {% else %}
+                    <a href="{{ url_for('ui.build_subsample_query', network_id=network.id) }}"
+                       class="btn btn-default" data-toggle="popover"
+                       title="Sample this Network"
+                       data-content="This network is too large to explore directly, so view a random sample of 250 edges.">
+                        <span class="glyphicon glyphicon-filter" aria-hidden="true"></span>
+                        Explore
+                    </a>
+                {% endif %}
+
+                <a href="{{ url_for('ui.view_query_builder', start=network.id) }}"
+                   class="btn btn-default" data-toggle="popover"
+                   title="Perform a Query on this Network"
+                   data-content="You can ask specific questions to your network using the Query Builder.">
+                    <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
+                    Query
+                </a>
+
+                <div class="btn-group">
+                    <a href="{{ url_for('analysis.view_network_uploader', network_id=network.id) }}"
+                       class="btn btn-default" data-toggle="popover"
+                       title="Analyze this Network"
+                       data-content="Upload your experiments and run algorithms on your network.">
+                        <span class="glyphicon glyphicon-flash" aria-hidden="true"></span>
+                        Analyze
+                    </a>
+                    <a class="btn btn-default" href="{{ url_for('analysis.view_experiments', network_id=network_id) }}"
+                       role="button">
+                        <span class="glyphicon glyphicon-tasks" aria-hidden="true"></span>
+                        Results
+                    </a>
+                </div>
+
+                {% if current_user.is_authenticated %}
+                    <!-- Single button -->
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown"
+                                aria-haspopup="true" aria-expanded="false">
+                            Download
+                            <span class="caret"></span>
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
+                            <li>
+                                <a href="{{ url_for('dbs.export_network', network_id=network_id, serve_format='bel') }}">
+                                    <span class="glyphicon glyphicon-download" aria-hidden="true"></span> BEL Script
+                                </a>
+
+                            <li>
+                                <a href="{{ url_for('dbs.export_network', network_id=network_id, serve_format='nodelink') }}">
+                                    <span class="glyphicon glyphicon-download" aria-hidden="true"></span> Node-Link JSON
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ url_for('dbs.export_network', network_id=network_id, serve_format='cx') }}">
+                                    <span class="glyphicon glyphicon-download" aria-hidden="true"></span> CX JSON
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ url_for('dbs.export_network', network_id=network_id, serve_format='json') }}">
+                                    <span class="glyphicon glyphicon-download" aria-hidden="true"></span> Compact JSON
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ url_for('dbs.export_network', network_id=network_id, serve_format='bytes') }}">
+                                    <span class="glyphicon glyphicon-download" aria-hidden="true"></span> Pickle</a>
+                            </li>
+                            <li>
+                                <a href="{{ url_for('dbs.export_network', network_id=network_id, serve_format='sif') }}">
+                                    <span class="glyphicon glyphicon-download" aria-hidden="true"></span> SIF
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ url_for('dbs.export_network', network_id=network_id, serve_format='graphml') }}">
+                                    <span class="glyphicon glyphicon-download" aria-hidden="true"></span> GraphML
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ url_for('dbs.export_network', network_id=network_id, serve_format='csv') }}">
+                                    <span class="glyphicon glyphicon-download" aria-hidden="true"></span> CSV</a>
+                            </li>
+                            <li>
+                                <a href="{{ url_for('dbs.export_network', network_id=network_id, serve_format='gsea') }}">
+                                    <span class="glyphicon glyphicon-download" aria-hidden="true"></span> GSEA
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ url_for('dbs.export_network', network_id=network_id, serve_format='citations') }}">
+                                    <span class="glyphicon glyphicon-download" aria-hidden="true"></span> Citations
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                {% endif %}
+
+                {% if current_user.is_admin %}
+                    <a class="btn btn-danger" role="button"
+                       href="{{ url_for('dbs.drop_network', network_id=network_id, next=url_for('ui.home')) }}">
+                        <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
+                        Drop
+                    </a>
+                {% endif %}
+            </div>
+        </div>
 
         {% if network_versions is defined and network_versions|length > 1 %}
             <div class="panel panel-default">
@@ -59,12 +196,12 @@
                             {% if network_version.id == network_id %}
                                 <li>
                                     <a class="btn btn-info" role="button"
-                                       href="{{ url_for('ui.view_summarize_statistics', network_id=network_version.id) }}">{{ network_version.version }}</a>
+                                       href="{{ url_for('ui.view_network', network_id=network_version.id) }}">{{ network_version.version }}</a>
                                 </li>
                             {% else %}
                                 <li>
                                     <a class="btn btn-default" role="button"
-                                       href="{{ url_for('ui.view_summarize_statistics', network_id=network_version.id) }}">{{ network_version.version }}</a>
+                                       href="{{ url_for('ui.view_network', network_id=network_version.id) }}">{{ network_version.version }}</a>
                                 </li>
                             {% endif %}
                         {% endfor %}
@@ -75,27 +212,7 @@
 
         <div class="panel panel-default">
             <div class="panel-heading">
-                <h3 class="panel-title">Table of Contents</h3>
-            </div>
-            <div class="panel-body">
-                <ol>
-                    <li><a href="#provenance">Provenance</a></li>
-                    <li><a href="#network-statistics">Network Statistics</a></li>
-                    <li><a href="#content-statistics">Content Statistics</a></li>
-                    <li><a href="#overlap">Network Overlap</a></li>
-
-                </ol>
-            </div>
-        </div>
-
-        <a id="provenance"></a>
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                <h3 class="panel-title">Provenance
-                    <a class="pull-right" href="#top">
-                        <span class="glyphicon glyphicon-arrow-up"></span>
-                    </a>
-                </h3>
+                <h3 class="panel-title">Provenance</h3>
             </div>
             <div class="panel-body">
                 <dl class="dl-horizontal">
@@ -126,6 +243,20 @@
                 </dl>
             </div>
         </div>
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Table of Contents</h3>
+            </div>
+            <div class="panel-body">
+                <ol>
+                    <li><a href="#network-statistics">Network Statistics</a></li>
+                    <li><a href="#content-statistics">Content Statistics</a></li>
+                    <li><a href="#overlap">Network Overlap</a></li>
+                </ol>
+            </div>
+        </div>
+
 
         <a id="network-statistics"></a>
         <div class="panel panel-default">
@@ -234,7 +365,7 @@
                     {% if other_network %}
                         <tr>
                             <td>
-                                <a href="{{ url_for('ui.view_summarize_statistics', network_id=other_network.id) }}">{{ other_network }}</a>
+                                <a href="{{ url_for('ui.view_network', network_id=other_network.id) }}">{{ other_network }}</a>
                             </td>
                             <td>
                                 {{ (100 * tanimoto)|round|int }}%

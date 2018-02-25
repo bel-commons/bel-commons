@@ -118,6 +118,12 @@
     <div class="container">
         {{ util.flashed_messages(dismissible=True, container=False) }}
 
+        <ol class="breadcrumb">
+            <li><a href="{{ url_for('ui.home') }}">Catalog</a></li>
+            <li><a href="{{ url_for('analysis.view_experiments') }}">Experiment</a></li>
+            <li class="active">{{ experiment.id }}</li>
+        </ol>
+
         <div class="panel panel-default">
             <div class="panel-heading">
                 <h3 class="panel-title">Experiment {{ experiment.id }}
@@ -147,11 +153,14 @@
                     <dt>Omic Description</dt>
                     <dd>{{ experiment.omic.description }}</dd>
                     <dt>Query Identifier</dt>
-                    <dd>{{ experiment.query.id }} (<a
-                            href="{{ url_for('ui.view_explorer_query', query_id=experiment.query.id) }}">
-                        <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
-                        Explore
-                    </a>)
+                    <dd>{{ experiment.query.id }} (
+                        <a href="{{ url_for('ui.view_query', query_id=experiment.query.id) }}">
+                            <span class="glyphicon glyphicon-signal" aria-hidden="true"></span> Summarize
+                        </a> |
+                        <a href="{{ url_for('ui.view_explorer_query', query_id=experiment.query.id) }}">
+                            <span class="glyphicon glyphicon-search" aria-hidden="true"></span> Explore
+                        </a>
+                        )
                     </dd>
                     <dt>Query Networks</dt>
                     <dd>{{ experiment.query.networks | join(',') }}</dd>

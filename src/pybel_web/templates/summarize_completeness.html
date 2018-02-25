@@ -15,10 +15,19 @@
     </script>
 {% endblock %}
 
-{% block title %}Knowledge Completeness Summary{% endblock %}
+{% block title %}{{ network  }} Summary: Completeness{% endblock %}
 
 {% block content %}
     <div class="container">
+        {{ util.flashed_messages(dismissible=True, container=False) }}
+
+        <ol class="breadcrumb">
+            <li><a href="{{ url_for('ui.home') }}">Catalog</a></li>
+            <li><a href="{{ url_for('ui.view_networks') }}">Networks</a></li>
+            <li><a href="{{ url_for('ui.view_network', network_id=network.id) }}">{{ network }}</a></li>
+            <li class="active">Completeness</li>
+        </ol>
+
         <div class="page-header">
             <h1>Knowledge Completeness Summary of {{ network.name }}
                 <small class="text-muted">{{ network.version }}</small>

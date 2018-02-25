@@ -3,11 +3,19 @@
 {% import "bootstrap/wtf.html" as wtf %}
 {% import "bootstrap/fixes.html" as fixes %}
 {% import "bootstrap/utils.html" as util %}
+{% import "macros.html" as pbw %}
 
 {% block title %}Citation{% endblock %}
 
 {% block content %}
     <div class="container">
+
+        <ol class="breadcrumb">
+            <li><a href="{{ url_for('ui.home') }}">Catalog</a></li>
+            <li><a href="{{ url_for('ui.view_citations') }}">Citations</a></li>
+            <li class="active">{{ citation }}</li>
+        </ol>
+
         <div class="panel panel-default">
             <div class="panel-heading">
                 <h3 class="panel-title">
@@ -35,15 +43,18 @@
                 <div class="panel-heading">
                     <h3 class="panel-title">
                         Evidence {{ evidence.sha512[:10] }}
+
+                        <div class="pull-right">
+                            <a href="{{ url_for('dbs.get_evidence_by_id', evidence_id=evidence.id) }}">JSON</a>
+                        </div>
                     </h3>
                 </div>
                 <div class="panel-body">
                     <p>{{ evidence.text }}</p>
                 </div>
+
                 <div class="list-group">
-                    {% for edge in evidence.edges %}
-                        {% include 'edge_macro.html' %}
-                    {% endfor %}
+                    {{ pbw.render_edge_list(evidence.edges) }}
                 </div>
             </div>
         {% endfor %}

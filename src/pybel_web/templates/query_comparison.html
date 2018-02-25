@@ -13,13 +13,13 @@
                 <h3 class="panel-title">Query Comparison</h3>
             </div>
             <div class="panel-body">
-                <p>This page provides a comparison between
-                    <a href="{{ url_for('ui.view_explorer_query', query_id=query_1_id) }}">Query {{ query_1_id }}</a> and
-                    <a href="{{ url_for('ui.view_explorer_query', query_id=query_2_id) }}">Query {{ query_2_id }}.</a>
+                <p>
+                    This page provides a comparison between
+                    <a href="{{ url_for('ui.view_explorer_query', query_id=query_1.id) }}">Query {{ query_1.id }}</a> and
+                    <a href="{{ url_for('ui.view_explorer_query', query_id=query_2.id) }}">Query {{ query_2.id }}.</a>
                 </p>
-
                 <div class="row">
-                    <div class="col-sm-6 col-md-6">
+                    <div class="col-sm-4 col-md-4">
                         <div class="thumbnail">
                             <img src="data:image/png;base64,{{ data['nodes'] }}">
                             <div class="caption">
@@ -28,7 +28,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-sm-6 col-md-6">
+                    <div class="col-sm-4 col-md-4">
                         <div class="thumbnail">
                             <img src="data:image/png;base64,{{ data['edges'] }}">
                             <div class="caption">
@@ -37,20 +37,11 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-sm-6 col-md-6">
+                    <div class="col-sm-4 col-md-4">
                         <div class="thumbnail">
                             <img src="data:image/png;base64,{{ data['citations'] }}">
                             <div class="caption">
                                 <h3>Citation Overlap</h3>
-                                <p>...</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-sm-6 col-md-6">
-                        <div class="thumbnail">
-                            <img src="data:image/png;base64,{{ data['annotations'] }}">
-                            <div class="caption">
-                                <h3>Annotation Overlap</h3>
                                 <p>...</p>
                             </div>
                         </div>

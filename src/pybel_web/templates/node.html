@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% import "bootstrap/wtf.html" as wtf %}
+{% import "bootstrap/fixes.html" as fixes %}
+{% import "bootstrap/utils.html" as util %}
+{% import "macros.html" as pbw %}
+
+{% block title %}Node Catalog{% endblock %}
+
+{% block content %}
+    <div class="container">
+        {{ util.flashed_messages(dismissible=True, container=False) }}
+
+        <ol class="breadcrumb">
+            <li><a href="{{ url_for('ui.home') }}">Catalog</a></li>
+            <li><a href="{{ url_for('ui.view_nodes') }}">Nodes</a></li>
+            <li class="active"><code>{{ node.bel }}</code></li>
+        </ol>
+
+        <div class="page-header">
+            <h1><code>{{ node.bel }}</code></h1>
+        </div>
+
+        <div class="panel panel-default">
+            <div class="list-group" id="edge-list">
+                <div class="list-group-item">
+                    <h4 class="list-group-item-heading">
+                        <div class="pull-right">
+                            <small class="text-muted">
+                                {% if node.type == 'Gene' %}
+                                    Orthologies: {{ node.out_edges.filter_by(relation='orthologous').count() }} |
+                                {% endif %}
+
+                                Equivalencies: {{ node.out_edges.filter_by(relation='equivalentTo').count() }} |
+                                Classes: {{ node.out_edges.filter_by(relation='isA').count() }} |
+                                Children: {{ node.in_edges.filter_by(relation='isA').count() }} |
+
+                                <a href="{{ url_for('ui.view_explorer_node', node_hash=node.sha512) }}">Explore</a>
+
+                                {% if current_user.is_admin %}
+                                    |
+                                    <a href="{{ url_for('dbs.get_node_by_hash', node_hash=node.sha512) }}">JSON</a>
+                                    |
+                                    <a href="{{ url_for('dbs.drop_node', node_hash=node.sha512, next=url_for('ui.view_nodes')) }}">Drop</a>
+                                {% endif %}
+                            </small>
+                        </div>
+                    </h4>
+                    <div class="list-group-item-text">
+                        {% set node_members = node.out_edges.filter_by(relation='hasComponent').all() %}
+                        {% if node_members %}
+                            <h4>Components</h4>
+                            <ul>
+                                {% for node_member in node_members %}
+                                    <li>
+                                        <a href="{{ url_for('ui.view_node', node_hash=node_member.target.sha512) }}">
+                                            {{ node_member.target.bel }}
+                                        </a>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+
+                        {% if node.namespace_entry %}
+                            <h4>Entity</h4>
+                            <dl class="dl-horizontal">
+                                <dt>Name</dt>
+                                <dd>{{ node.namespace_entry.name }}</dd>
+                                <dt>Namespace</dt>
+                                <dd>{{ node.namespace_entry.namespace.keyword }}</dd>
+                                <dt>Namespace Version</dt>
+                                <dd>{{ node.namespace_entry.namespace.version }}</dd>
+                                {% if node.namespace_entry.namespace.url %}
+                                    <dt>Namespace URL</dt>
+                                    <dd>
+                                        <a href="{{ node.namespace_entry.namespace.url }}">
+                                            {{ node.namespace_entry.namespace.url }}
+                                        </a>
+                                    </dd>
+                                {% else %}
+                                    <dt>Pattern</dt>
+                                    <dd>{{ node.namespace_entry.namespace.pattern }}</dd>
+                                {% endif %}
+                            </dl>
+
+                            {% if hgnc_manager and node.namespace_entry.namespace.keyword == 'HGNC' %}
+                                {{ pbw.render_node_hgnc_enrichment(hgnc_manager, node) }}
+                            {% elif entrez_manager and node.namespace_entry.namespace.keyword in ['EGID', 'EG', 'ENTREZ'] %}
+                                {{ pbw.render_node_entrez_enrichment(entrez_manager, node) }}
+                            {% elif chebi_manager and node.namespace_entry.namespace.keyword in ['CHEBI', 'CHEBIID'] %}
+                                {{ pbw.render_node_chebi_enrichment(chebi_manager, node) }}
+                            {% elif go_manager and node.namespace_entry.namespace.keyword in ['GO', 'GOBP', 'GOBPID'] %}
+                                {{ pbw.render_node_go_enrichment(go_manager, node) }}
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{ pbw.render_networks_panel(node.networks) }}
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">In-Edges <span class="badge">{{ node.in_edges.count() }}</span></h3>
+
+            </div>
+            {{ pbw.render_edge_list(node.in_edges) }}
+        </div>
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Out-Edges <span class="badge">{{ node.out_edges.count() }}</span></h3>
+
+            </div>
+            {{ pbw.render_edge_list(node.out_edges) }}
+        </div>
+
+    </div>
+
+    {% include "footer.html" %}
+{% endblock %}

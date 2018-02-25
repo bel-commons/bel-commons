@@ -3,6 +3,7 @@
 {% import "bootstrap/wtf.html" as wtf %}
 {% import "bootstrap/fixes.html" as fixes %}
 {% import "bootstrap/utils.html" as util %}
+{% import "macros.html" as pbw %}
 
 {% block title %}Query Catalog{% endblock %}
 
@@ -23,6 +24,11 @@
     <div class="container">
         {{ util.flashed_messages(dismissible=True, container=False) }}
 
+        <ol class="breadcrumb">
+            <li><a href="{{ url_for('ui.home') }}">Catalog</a></li>
+            <li class="active">Queries</li>
+        </ol>
+
         <div class="panel panel-default">
             <div class="panel-heading">
                 <div class="btn-group pull-right">
@@ -41,22 +47,8 @@
                     Each entry is a query.
                 </p>
             </div>
-            <table class="table table-hover table-striped">
-                <thead>
-                <tr>
-                    <th></th>
-                    <th>Networks</th>
-                    <th>Seeding</th>
-                    <th>Pipeline</th>
-                    <th>Actions</th>
-                </tr>
-                </thead>
-                <tbody>
-                {% for query in queries %}
-                    {% include "query_macro.html" %}
-                {% endfor %}
-                </tbody>
-            </table>
+
+            {{ pbw.render_query_table(queries) }}
         </div>
     </div>
 

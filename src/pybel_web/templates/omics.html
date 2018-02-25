@@ -23,6 +23,11 @@
     <div class="container">
         {{ util.flashed_messages(dismissible=True, container=False) }}
 
+        <ol class="breadcrumb">
+            <li><a href="{{ url_for('ui.home') }}">Catalog</a></li>
+            <li class="active">Omics</li>
+        </ol>
+
         <div class="panel panel-default">
             <div class="panel-heading">
                 <div class="btn-group pull-right">

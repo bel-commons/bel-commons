@@ -3,6 +3,7 @@
 {% import "bootstrap/wtf.html" as wtf %}
 {% import "bootstrap/fixes.html" as fixes %}
 {% import "bootstrap/utils.html" as util %}
+{% import "macros.html" as pbw %}
 
 {% block title %}Experiment Catalog{% endblock %}
 
@@ -22,6 +23,11 @@
 {% block content %}
     <div class="container">
         {{ util.flashed_messages(dismissible=True, container=False) }}
+
+        <ol class="breadcrumb">
+            <li><a href="{{ url_for('ui.home') }}">Catalog</a></li>
+            <li class="active">Experiments</li>
+        </ol>
 
         <div class="panel panel-default">
             <div class="panel-heading">
@@ -47,67 +53,8 @@
                     Alzheimer's Disease Knowledge Assembly.
                 </p>
             </div>
-            <table class="table table-striped table-responsive">
-                <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Created</th>
-                    <th>Permutations</th>
-                    <th>Type</th>
-                    <th>Query</th>
-                    <th>Omic</th>
-                    <th>Omic Name</th>
-                    <th>Omic Description</th>
-                    <th>Public</th>
-                    <th>Completed</th>
-                    <th></th>
-                </tr>
-                </thead>
-                <tbody>
-                {% for experiment in experiments if experiment.query is not none %}
-                    <tr>
-                        <td>{{ experiment.id }} </td>
-                        <td>{{ experiment.created }}</td>
-                        <td>{{ experiment.type }} </td>
-                        <td>{{ experiment.permutations }}</td>
-                        <td>{{ experiment.query.id }}</td>
-                        <td>{{ experiment.omic.id }}</td>
-                        <td>{{ experiment.omic.pretty_source_name }}</td>
-                        <td>{{ experiment.omic.description }}</td>
 
-
-                        <td>
-                            {% if experiment.public %}
-                                <span class="glyphicon glyphicon-ok-circle" aria-hidden="true"></span>
-                            {% else %}
-                                <span class="glyphicon glyphicon glyphicon-remove-circle" aria-hidden="true"></span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            {% if experiment.completed %}
-                                <span class="glyphicon glyphicon-ok-circle" aria-hidden="true"></span>
-                            {% else %}
-                                <span class="glyphicon glyphicon glyphicon-remove-circle" aria-hidden="true"></span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            {% if experiment.completed %}
-                                <div class="pull-right">
-                                    <a href="{{ url_for('dbs.download_analysis', experiment_id=experiment.id) }}"
-                                       class="btn btn-default btn-xs">
-                                        <span class="glyphicon glyphicon-download" aria-hidden="true"></span>
-                                    </a>
-                                    <a href="{{ url_for('analysis.view_experiment', experiment_id=experiment.id) }}"
-                                       class="btn btn-default btn-xs">
-                                        <span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span>
-                                    </a>
-                                </div>
-                            {% endif %}
-                        </td>
-                    </tr>
-                {% endfor %}
-                </tbody>
-            </table>
+            {{ pbw.render_experiment_table(experiments) }}
         </div>
     </div>
 

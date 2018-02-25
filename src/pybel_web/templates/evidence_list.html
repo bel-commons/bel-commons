@@ -8,6 +8,13 @@
 
 {% block content %}
     <div class="container">
+        {{ util.flashed_messages(dismissible=True, container=False) }}
+
+        <ol class="breadcrumb">
+            <li><a href="{{ url_for('ui.home') }}">Catalog</a></li>
+            <li class="active">Evidences</li>
+        </ol>
+
         <div class="page-header">
             <h1>Evidences
 
@@ -67,7 +74,7 @@
                                     <ul class="list-inline">
                                         {% for edge_network in em.networks %}
                                             <li class="list-inline-item">
-                                                <a href="{{ url_for('ui.view_summarize_statistics', network_id=edge_network.id) }}">{{ edge_network }}</a>
+                                                <a href="{{ url_for('ui.view_network', network_id=edge_network.id) }}">{{ edge_network }}</a>
                                             </li>
                                         {% endfor %}
                                     </ul>

@@ -19,7 +19,7 @@ from sqlalchemy import func
 import pybel
 from pybel.constants import NAME, NAMESPACE, NAMESPACE_DOMAIN_OTHER
 from pybel.manager.models import (
-    Annotation, AnnotationEntry, Author, Citation, Edge, Namespace, Network, Node, network_edge,
+    Annotation, AnnotationEntry, Author, Citation, Edge, Evidence, Namespace, Network, Node, network_edge,
 )
 from pybel.resources.definitions import write_annotation, write_namespace
 from pybel.struct import union
@@ -1241,6 +1241,14 @@ def list_citations():
     ])
 
 
+@api_blueprint.route('/api/citation/<int:citation_id>')
+def get_citation_by_id(citation_id):
+    citation = manager.session.query(Citation).get(citation_id)
+    if citation is None:
+        abort(404)
+    return jsonify(citation.to_json(include_id=True))
+
+
 @api_blueprint.route('/api/author/<author>/citations')
 def list_citations_by_author(author):
     """Gets all citations from the given author
@@ -1291,6 +1299,15 @@ def get_pubmed_suggestion():
         }
         for citation in citations
     ])
+
+
+@api_blueprint.route('/api/evidence/<int:evidence_id>')
+def get_evidence_by_id(evidence_id):
+    """Gets an evidence by its identifier as JSON"""
+    evidence = manager.session.query(Evidence).get(evidence_id)
+    if evidence is None:
+        abort(404)
+    return jsonify(evidence.to_json(include_id=True))
 
 
 ####################################

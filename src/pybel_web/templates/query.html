@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+
+{% import "bootstrap/wtf.html" as wtf %}
+{% import "bootstrap/fixes.html" as fixes %}
+{% import "bootstrap/utils.html" as util %}
+{% import "macros.html" as pbw %}
+
+{% block title %}Query {{ query.id }}{% endblock %}
+
+{% block content %}
+    <div class="container">
+        {{ util.flashed_messages(dismissible=True, container=False) }}
+
+        <ol class="breadcrumb">
+            <li><a href="{{ url_for('ui.home') }}">Catalog</a></li>
+            <li><a href="{{ url_for('ui.view_queries') }}">Queries</a></li>
+            <li class="active">{{ query.id }}</li>
+        </ol>
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Query {{ query.id }}
+
+                    {% if current_user.is_admin %}
+                        <div class="pull-right">
+                            <a href="{{ url_for('dbs.drop_query_by_id', query_id=query.id, next=url_for('ui.home')) }}">
+                                <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
+                                Delete
+                            </a>
+                        </div>
+                    {% endif %}
+                </h3>
+            </div>
+
+            <div class="panel-body">
+                <dl class="dl-horizontal">
+                    <dt>Created</dt>
+                    <dd>{{ query.created }}</dd>
+                    {% if query.parent %}
+                        <dt>Parent</dt>
+                        <dd>
+                            <a href="{{ url_for('ui.view_query', query_id=query.parent_id) }}">{{ query.parent_id }}</a>
+                        </dd>
+                    {% endif %}
+
+                    {% if query.children %}
+                        <dt>Children</dt>
+                        <dd>
+                            {% for child in query.children %}
+                                <a href="{{ url_for('ui.view_query', query_id=child.id) }}">{{ child.id }}</a>
+                            {% endfor %}
+                        </dd>
+                    {% endif %}
+                </dl>
+
+                <a class="btn btn-default" href="{{ url_for('ui.view_explorer_query', query_id=query.id) }}">
+                    <span class="glyphicon glyphicon-search"></span> Explore
+                </a>
+                <a class="btn btn-default" href="{{ url_for('dbs.download_query_json', query_id=query.id) }}">
+                    <span class="glyphicon glyphicon-download"></span> Download Transaction
+                </a>
+
+                {% if current_user.is_admin %}
+                    <a class="btn btn-warning"
+                       href="{{ url_for('dbs.drop_query_by_id', query_id=query.id, next=url_for('ui.view_current_user_activity')) }}">
+                        <span class="glyphicon glyphicon-remove"></span> Delete
+                    </a>
+                {% endif %}
+
+            </div>
+        </div>
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Networks</h3>
+            </div>
+
+            <div class="panel-body">
+                <ul>
+                    {% for network in query.assembly.networks %}
+                        <li>
+                            <a href="{{ url_for('ui.view_network', network_id=network.id) }}">{{ network }}</a>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        {% set seeding = query.seeding_to_json() %}
+        {% if seeding %}
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Seeding <span class="badge">{{ seeding|length }}</span></h3>
+                </div>
+
+                <div class="panel-body">
+                    <ul>
+                        {% for seed in seeding %}
+                            <li>
+                                <span>{{ seed['type']|title }}</span>
+                                <ul>
+                                    {% if seed['type'] == 'annotation' %}
+                                        {% if seed['data']['or'] %}
+                                            <li>
+                                                Query type: OR
+                                            </li>
+                                        {% else %}
+                                            <li>
+                                                Query type: AND
+                                            </li>
+                                        {% endif %}
+                                        {% for annotation, value in seed['data']['annotations'].items() %}
+                                            <li>
+                                                {{ annotation }}: {{ value }}
+                                            </li>
+                                        {% endfor %}
+                                    {% elif seed['type'] in ['induction'] %}
+                                        {% for node_tuple in seed['data'] %}
+                                            <li>
+                                                <code>{{ manager.get_node_by_tuple(node_tuple) }}</code>
+                                            </li>
+                                        {% endfor %}
+                                    {% else %}
+                                        {% for seed_data in seed['data'] %}
+                                            <li>
+                                                {{ seed_data }}
+                                            </li>
+                                        {% endfor %}
+                                    {% endif %}
+                                </ul>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        {% endif %}
+
+        {% set pipeline = query.pipeline_to_json() %}
+        {% if pipeline %}
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Pipeline <span class="badge">{{ pipeline|length }}</span></h3>
+                </div>
+
+                <div class="panel-body">
+                    <ul>
+                        {% for protocol_entry in pipeline %}
+                            <li>
+                                {{ protocol_entry['function']|replace('_', ' ')|title }}
+                                {% if protocol_entry['args'] or protocol_entry['kwargs'] %}
+                                    <ul>
+                                        {% if protocol_entry['args'] %}
+                                            {% for arg in protocol_entry['args'] %}
+                                                <li><code>
+                                                    {% if protocol_entry['function'] in ['delete_node_by_id', 'expand_node_neighborhood_by_id', 'propagate_node_by_hash'] %}
+                                                        {{ manager.get_node_by_hash(arg) }}
+                                                    {% else %}
+                                                        {{ arg }}
+                                                    {% endif %}
+                                                </code></li>
+                                            {% endfor %}
+                                        {% endif %}
+                                        {% if protocol_entry['kwargs'] %}
+                                            {% for kwarg_key, kwarg_value in protocol_entry['kwargs'].items() %}
+                                                <li><code>{{ kwarg_key }}={{ kwarg_value }}</code></li>
+                                            {% endfor %}
+                                        {% endif %}
+                                    </ul>
+                                {% endif %}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        {% endif %}
+
+        {% set experiments = query.experiments %}
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Experiments <span class="badge">{{ query.experiments.count() }}</span></h3>
+            </div>
+
+            <div class="panel-body">
+                {% if experiments.count() %}
+                    <a href="{{ url_for('analysis.view_query_experiment_comparison', query_id=query.id) }}">
+                        <span class="glyphicon glyphicon-eye-open"></span> Compare with Parallel Line Plot
+                    </a> |
+                {% else %}
+                    No experiments exist yet.
+                {% endif %}
+                <a href="{{ url_for('analysis.view_query_uploader', query_id=query.id) }}">
+                    <span class="glyphicon glyphicon-upload"></span> Upload
+                </a>
+            </div>
+
+            {% if experiments.count() %}
+                {{ pbw.render_experiment_table(experiments) }}
+            {% endif %}
+        </div>
+
+    </div>
+{% endblock %}

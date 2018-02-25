@@ -200,11 +200,7 @@ class Experiment(Base):
 
         :rtype: str
         """
-        for ext in ('.tsv', '.csv'):
-            if self.omic.source_name.endswith(ext):
-                return self.omic.source_name[:-len(ext)]
-
-        return self.omic.source_name
+        return self.omic.pretty_source_name
 
 class Report(Base):
     """Stores information about compilation and uploading events"""

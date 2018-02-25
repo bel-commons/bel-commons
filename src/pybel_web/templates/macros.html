@@ -1,0 +1,373 @@
+{% macro render_edge_list_item(edge, show_evidence=True) -%}
+    <div class="list-group-item">
+        <h4 class="list-group-item-heading">
+            <a href="{{ url_for('ui.view_edge', edge_hash=edge.sha512) }}">{{ edge.bel }}</a>
+
+            <div class="pull-right">
+                <small class="text-muted">
+                    <a href="{{ url_for('ui.view_node', node_hash=edge.source.sha512) }}">
+                        Source <span class="glyphicon glyphicon-new-window"></span>
+                    </a> |
+                    <a href="{{ url_for('ui.view_node', node_hash=edge.target.sha512) }}">
+                        Target <span class="glyphicon glyphicon-new-window"></span>
+                    </a>
+                </small>
+            </div>
+        </h4>
+        <div class="list-group-item-text">
+
+            {% if show_evidence and edge.evidence %}
+                <p>{{ edge.evidence.text }} <code>{{ edge.evidence.citation }}</code></p>
+            {% endif %}
+
+            <div class="row">
+                {% set edge_networks = edge.networks.all() %}
+                {% if edge_networks %}
+                    <div class="col-lg-6">
+                        <h5>Appears in Networks:</h5>
+                        <ul>
+                            {% for network in edge_networks %}
+                                <li>
+                                    <a href="{{ url_for('ui.view_network', network_id=network.id) }}">
+                                        {{ network }}
+                                    </a>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                {% endif %}
+
+                {% set annotation_entries = edge.annotations.all() %}
+                {% if annotation_entries %}
+                    <div class="col-lg-6">
+                        <h5>Annotations</h5>
+                        <dl class="dl-horizontal">
+                            {% for annotation_entry in annotation_entries %}
+                                <dt>{{ annotation_entry.annotation.name }}</dt>
+                                <dd>{{ annotation_entry.name }}</dd>
+                            {% endfor %}
+                        </dl>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{%- endmacro %}
+
+{% macro render_edge_list(edges, show_evidence=True) -%}
+    <div class="list-group">
+        {% for edge in edges %}
+            {{ render_edge_list_item(edge, show_evidence=show_evidence) }}
+        {% endfor %}
+    </div>
+{%- endmacro %}
+
+{% macro render_query_row(query) -%}
+    <tr>
+        <td>
+            <a href="{{ url_for('ui.view_query', query_id=query.id) }}">{{ query.id }}</a>
+
+            {% if query.parent_id %}
+                / <a href="{{ url_for('ui.view_query', query_id=query.parent_id) }}">{{ query.parent_id }}</a>
+            {% endif %}
+        </td>
+        <td>
+            <ul>
+                {% for network in query.networks %}
+                    <li>
+                        <a href="{{ url_for('ui.view_network', network_id=network.id) }}">{{ network }}</a>
+                    </li>
+                {% endfor %}
+            </ul>
+        </td>
+        <td>
+            {{ query.seeding_to_json()|length }}
+        </td>
+        <td>
+            {{ query.pipeline_to_json()|length }}
+        </td>
+        <td>
+            <div class="dropdown">
+                <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown"
+                        aria-haspopup="true"
+                        aria-expanded="true">
+                    Actions
+                    <span class="caret"></span>
+                </button>
+                <ul class="dropdown-menu">
+                    <li>
+                        <a href="{{ url_for('ui.view_explorer_query', query_id=query.id) }}">
+                            <span class="glyphicon glyphicon-search"></span> Explore
+                        </a>
+
+                    </li>
+                    <li>
+                        <a href="{{ url_for('dbs.download_query_json', query_id=query.id) }}">
+                            <span class="glyphicon glyphicon-download"></span> Download Transaction
+                        </a>
+                    </li>
+
+                    {% if current_user.is_admin %}
+                        <li>
+                            <a href="{{ url_for('dbs.drop_query_by_id', query_id=query.id, next=url_for('ui.view_current_user_activity')) }}">
+                                <span class="glyphicon glyphicon-remove"></span> Delete
+                            </a>
+                        </li>
+                    {% endif %}
+
+                </ul>
+            </div>
+        </td>
+        <td>
+            <div class="dropdown">
+                <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown"
+                        aria-haspopup="true" aria-expanded="true">
+                    Experiments <span class="badge">{{ query.experiments.count() }}</span>
+                    <span class="caret"></span>
+                </button>
+                <ul class="dropdown-menu">
+                    <li>
+                        <a href="{{ url_for('analysis.view_query_uploader', query_id=query.id) }}">
+                            <span class="glyphicon glyphicon-upload"></span> Upload
+                        </a>
+                    </li>
+
+                    {% if query.experiments.count() %}
+                        <li>
+                            <a href="{{ url_for('analysis.view_experiments', query_id=query.id) }}">
+                                <span class="glyphicon glyphicon-stats" aria-hidden="true"></span> View
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ url_for('analysis.view_query_experiment_comparison', query_id=query.id) }}">
+                                <span class="glyphicon glyphicon-eye-open"></span> Compare
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </td>
+    </tr>
+{%- endmacro %}
+
+
+
+{% macro render_experiment_row(experiment) -%}
+    <tr>
+        <td>
+            <a href="{{ url_for('analysis.view_experiment', experiment_id=experiment.id) }}">
+                {{ experiment.id }}
+            </a>
+        </td>
+        <td>{{ experiment.created }}</td>
+        <td>{{ experiment.permutations }}</td>
+        <td>
+            <a href="{{ url_for('ui.view_explorer_query', query_id=experiment.query.id) }}">
+                {{ experiment.query.id }}
+            </a>
+        </td>
+        <td>{{ experiment.omic.id }}</td>
+        <td>{{ experiment.omic.pretty_source_name }}</td>
+        <td>{{ experiment.omic.description }}</td>
+        <td>
+            {% if experiment.public %}
+                <span class="glyphicon glyphicon-ok-circle" aria-hidden="true"></span>
+            {% else %}
+                <span class="glyphicon glyphicon glyphicon-remove-circle" aria-hidden="true"></span>
+            {% endif %}
+        </td>
+        <td>
+            {% if experiment.completed %}
+                <span class="glyphicon glyphicon-ok-circle" aria-hidden="true"></span>
+            {% else %}
+                <span class="glyphicon glyphicon glyphicon-remove-circle" aria-hidden="true"></span>
+            {% endif %}
+        </td>
+        <td>
+            {% if experiment.completed %}
+                <div class="pull-right">
+                    <a href="{{ url_for('analysis.view_experiment', experiment_id=experiment.id) }}"
+                       class="btn btn-default btn-xs">
+                        <span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span>
+                    </a>
+                    <a class="btn btn-default btn-xs"
+                       href="{{ url_for('dbs.download_analysis', experiment_id=experiment.id) }}">
+                        <span class="glyphicon glyphicon-download" aria-hidden="true"></span>
+                    </a>
+                    <a class="btn btn-default btn-xs"
+                       href="{{ url_for('ui.view_explorer_query', query_id=experiment.query.id) }}">
+                        <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
+                    </a>
+                    <a class="btn btn-default btn-xs"
+                       href="{{ url_for('dbs.drop_experiment_by_id', experiment_id=experiment.id, next=url_for('ui.view_current_user_activity')) }}">
+                        <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
+                    </a>
+                </div>
+            {% endif %}
+        </td>
+    </tr>
+{%- endmacro %}
+
+{% macro render_query_table(queries) -%}
+    <table class="table table-striped table-responsive">
+        <thead>
+        <tr>
+            <th></th>
+            <th>Networks</th>
+            <th>Seeding</th>
+            <th>Pipeline</th>
+            <th>Actions</th>
+            <th>Experiments</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for query in queries %}
+            {{ render_query_row(query) }}
+        {% endfor %}
+        </tbody>
+    </table>
+{%- endmacro %}
+
+{% macro render_experiment_table(experiments) -%}
+    <table class="table table-striped table-responsive">
+        <thead>
+        <tr>
+            <th>Identifier</th>
+            <th>Created</th>
+            <th>Permutations</th>
+            <th>Query</th>
+            <th>Omic</th>
+            <th>Omic Name</th>
+            <th>Omic Description</th>
+            <th>Public</th>
+            <th>Complete</th>
+            <th></th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for experiment in experiments %}
+            {{ render_experiment_row(experiment) }}
+        {% endfor %}
+        </tbody>
+    </table>
+{%- endmacro %}
+
+
+{% macro render_node_hgnc_enrichment(hgnc_manager, node) -%}
+    {% set gene =  hgnc_manager.get_gene_by_hgnc_symbol(node.namespace_entry.name) %}
+
+    <h4>HGNC</h4>
+    <dl class="dl-horizontal">
+        <dt>Identifier</dt>
+        <dd>{{ gene.identifier }}</dd>
+        <dt>Symbol</dt>
+        <dd>{{ gene.symbol }}</dd>
+        <dt>Name</dt>
+        <dd>{{ gene.name }}</dd>
+        <dt>Locus Group</dt>
+        <dd>{{ gene.locus_group }}</dd>
+        <dt>Locus Type</dt>
+        <dd>{{ gene.locus_type }}</dd>
+        <dt>Synonyms</dt>
+        <dd>{{ gene.alias_names|join(' | ') }}</dd>
+    </dl>
+{%- endmacro %}
+
+{% macro render_node_entrez_enrichment(entrez_manager, node) -%}
+    {% set gene =  entrez_manager.get_gene_by_entrez_id(node.namespace_entry.name) %}
+
+    <h4>Entrez</h4>
+    <dl class="dl-horizontal">
+        <dt>Identifier</dt>
+        <dd>{{ gene.entrez_id }}</dd>
+        <dt>Name</dt>
+        <dd>{{ gene.name }}</dd>
+        <dt>Description</dt>
+        <dd>{{ gene.description }}</dd>
+        <dt>Type of Gene</dt>
+        <dd>{{ gene.type_of_gene }}</dd>
+        <dt>Species</dt>
+        <dd>{{ gene.species }}</dd>
+    </dl>
+{%- endmacro %}
+
+{% macro render_node_chebi_enrichment(chebi_manager, node) -%}
+    {% if node.namespace_entry.namespace.keyword == 'CHEBI' %}
+        {% set chemical= chebi_manager.get_chemical_by_chebi_name(node.namespace_entry.name) %}
+    {% else %}
+        {% set chemical= chebi_manager.get_chemical_by_chebi_id(node.namespace_entry.name) %}
+    {% endif %}
+
+    <h4>ChEBI</h4>
+    <dl class="dl-horizontal">
+        <dt>Identifier</dt>
+        <dd>{{ chemical.chebi_id }}</dd>
+        <dt>Name</dt>
+        <dd>{{ chemical.name }}</dd>
+        {% if chemical.inchi %}
+            <dt>InChI</dt>
+            <dd>{{ chemical.inchi }}</dd>
+        {% endif %}
+        {% if chemical.definition %}
+            <dt>Description</dt>
+            <dd>{{ chemical.definition }}</dd>
+        {% endif %}
+        <dt>Synonyms</dt>
+        <dd>{{ chemical.synonyms|join(' | ') }}</dd>
+    </dl>
+{%- endmacro %}
+
+{% macro render_node_go_enrichment(go_manager, node) -%}
+    {% if node.namespace_entry.namespace.keyword in ['GO', 'GOBP'] %}
+        {% set go = go_manager.get_go_by_name(node.namespace_entry.name) %}
+    {% else %}
+        {% set go = go_manager.get_go_by_id(node.namespace_entry.name) %}
+    {% endif %}
+
+    <h4>Gene Ontology</h4>
+    <dl class="dl-horizontal">
+        <dt>Identifier</dt>
+        <dd>{{ go['id'] }}</dd>
+        <dt>Name</dt>
+        <dd>{{ go['name'] }}</dd>
+        <dt>Definition</dt>
+        <dd>{{ go['def'] }}</dd>
+        {% if go['xref'] %}
+            <dt>Cross References</dt>
+            <dd>
+                <ul>
+                    {% for go_xref in go['xref'] %}
+                        <li>{{ go_xref }}</li>
+                    {% endfor %}
+                </ul>
+            </dd>
+        {% endif %}
+        {% if go['synonym'] %}
+            <dt>Synonyms</dt>
+            <dd>{{ go['synonym']|join(' | ') }}</dd>
+        {% endif %}
+    </dl>
+{%- endmacro %}
+
+
+{% macro render_networks_panel(networks) -%}
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h3 class="panel-title">Appears in Networks <span class="badge">{{ networks.count() }}</span></h3>
+        </div>
+        <div class="list-group">
+            {% for network in networks %}
+                <div class="list-group-item">
+                    <h4 class="list-group-item-heading">
+                        <a href="{{ url_for('ui.view_network', network_id=network.id) }}">
+                            {{ network }}
+                        </a>
+                    </h4>
+                    <div class="list-group-item-text">
+                        {{ network.description }}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+{%- endmacro %}
