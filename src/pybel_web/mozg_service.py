@@ -19,14 +19,14 @@ from flask import (
 from flask_cors import cross_origin
 
 from pybel import from_pickle
+from pybel.constants import ANNOTATIONS
 from pybel_tools.mutation import add_canonical_names
 from pybel_tools.selection import get_subgraph_by_edge_filter, get_subgraph_by_neighborhood, search_node_names
-from .graph_utils import build_annotation_search_filter
 from .send_utils import serve_network
 
 log = logging.getLogger(__name__)
 
-mozg_blueprint = Blueprint('mozg', __name__)
+mozg_blueprint = Blueprint('mozg', __name__, url_prefix='/api/external/mozg')
 
 #: Loads the folder where the projections and anhedonia pickle are
 data_path = os.environ.get('BEL4IMOCEDE_DATA_PATH')
@@ -47,11 +47,48 @@ MAPPING = {
 }
 
 
-@mozg_blueprint.route('/api/external/mozg/network/<network_name>')
-@cross_origin()
-def get_mozg_query(network_name):
+def _annotation_dict_filter_helper(data, annotations, values):
+    """Returns if any of the annotations and values match up
+
+    :param dict data:
+    :param list[str] annotations: A list of the annotations to search
+    :param list[str] values: A list of values to match against any annotations
+    :rtype: bool
     """
-    This endpoint receives a network name, annotation(s) and a related query term(s), prepares a network
+    if ANNOTATIONS not in data:
+        return False
+
+    data_annotations = data[ANNOTATIONS]
+
+    for annotation in annotations:
+        if annotation not in data_annotations:
+            continue
+
+        if any(value in data_annotations[annotation] for value in values):
+            return True
+
+    return False
+
+
+def build_annotation_search_filter(annotations, values):
+    """Builds an annotation search filter for Mozg
+
+    :param list[str] annotations: A list of the annotations to search
+    :param list[str] values: A list of values to match against any annotations
+    :return: Edge filter function
+    """
+
+    def annotation_dict_filter(graph, u, v, k, d):
+        """Returns if any of the annotations and values match up"""
+        return _annotation_dict_filter_helper(d, annotations, values)
+
+    return annotation_dict_filter
+
+
+@mozg_blueprint.route('/network/<name>')
+@cross_origin()
+def get_mozg_query(name):
+    """This endpoint receives a network name, annotation(s) and a related query term(s), prepares a network
     matching the induction over nodes and edges that match the given annotations and values and sends
     a combined BEL network as the response.
 
@@ -59,7 +96,7 @@ def get_mozg_query(network_name):
     tags:
         - mozg
     parameters:
-      - name: network_name
+      - name: name
         in: path
         description: A name of a network
         required: true
@@ -83,13 +120,15 @@ def get_mozg_query(network_name):
       200:
         description: A BEL network with requested node(s) and its(their) neighborhood
     """
-    log.debug('Network name: %s', network_name)
+    log.debug('Network name: %s', name)
+
     annotations = request.args.getlist('annotation[]')
     log.debug('Annotations: %s', annotations)
+
     values = request.args.getlist('value[]')
     log.debug('Values: %s', values)
 
-    graph = MAPPING[network_name]
+    graph = MAPPING[name]
 
     nodes = list(search_node_names(graph, values))
 
@@ -104,7 +143,7 @@ def get_mozg_query(network_name):
     else:
         result = neighborhoods + filtered_graph
 
-    log.debug('Number of returned nodes: %d', len(result.nodes()))
+    log.debug('Number of returned nodes: %d', result.number_of_nodes())
 
     add_canonical_names(result)
     return serve_network(result)

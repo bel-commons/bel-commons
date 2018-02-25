@@ -4,7 +4,20 @@
 {% import "bootstrap/fixes.html" as fixes %}
 {% import "bootstrap/utils.html" as util %}
 
-{% block title %}Results{% endblock %}
+{% block title %}Experiment Catalog{% endblock %}
+
+{% block scripts %}
+    {{ super() }}
+    {% if current_user.is_admin %}
+        <script src="{{ url_for('static', filename='js/bootstrap-confirmation.min.js') }}"></script>
+        <script>
+            $('[data-toggle=confirmation]').confirmation({
+                rootSelector: '[data-toggle=confirmation]'
+                // other options
+            });
+        </script>
+    {% endif %}
+{% endblock %}
 
 {% block content %}
     <div class="container">
@@ -12,6 +25,15 @@
 
         <div class="panel panel-default">
             <div class="panel-heading">
+                <div class="btn-group pull-right">
+                    <a class="btn btn-danger btn-xs"
+                       href="{{ url_for('analysis.drop_experiments', next=url_for('ui.home')) }}"
+                       role="button" data-toggle="confirmation" data-btn-ok-icon="glyphicon glyphicon-share-alt"
+                       data-btn-ok-class="btn-success" data-btn-cancel-icon="glyphicon glyphicon-ban-circle"
+                       data-btn-cancel-class="btn-danger">
+                        Drop All
+                    </a>
+                </div>
                 <h3 class="panel-title">Experiment Catalog</h3>
             </div>
             <div class="panel-body">
@@ -29,13 +51,14 @@
                 <thead>
                 <tr>
                     <th>ID</th>
+                    <th>Created</th>
+                    <th>Permutations</th>
                     <th>Type</th>
                     <th>Query</th>
                     <th>Omic</th>
                     <th>Omic Name</th>
-                    <th>Description</th>
-                    <th>Permutations</th>
-                    <th>Created</th>
+                    <th>Omic Description</th>
+                    <th>Public</th>
                     <th>Completed</th>
                     <th></th>
                 </tr>
@@ -44,13 +67,15 @@
                 {% for experiment in experiments if experiment.query is not none %}
                     <tr>
                         <td>{{ experiment.id }} </td>
+                        <td>{{ experiment.created }}</td>
                         <td>{{ experiment.type }} </td>
+                        <td>{{ experiment.permutations }}</td>
                         <td>{{ experiment.query.id }}</td>
                         <td>{{ experiment.omic.id }}</td>
-                        <td>{{ experiment.omic }}</td>
-                        <td>{{ experiment.description }}</td>
-                        <td>{{ experiment.permutations }}</td>
-                        <td>{{ experiment.created }}</td>
+                        <td>{{ experiment.omic.pretty_source_name }}</td>
+                        <td>{{ experiment.omic.description }}</td>
+
+
                         <td>
                             {% if experiment.public %}
                                 <span class="glyphicon glyphicon-ok-circle" aria-hidden="true"></span>
@@ -72,7 +97,7 @@
                                        class="btn btn-default btn-xs">
                                         <span class="glyphicon glyphicon-download" aria-hidden="true"></span>
                                     </a>
-                                    <a href="{{ url_for('analysis.view_analysis_results', experiment_id=experiment.id) }}"
+                                    <a href="{{ url_for('analysis.view_experiment', experiment_id=experiment.id) }}"
                                        class="btn btn-default btn-xs">
                                         <span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span>
                                     </a>

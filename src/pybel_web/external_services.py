@@ -16,11 +16,11 @@ from .utils import manager
 
 log = logging.getLogger(__name__)
 
-belief_blueprint = Blueprint('belief', __name__)
-external_blueprint = Blueprint('external', __name__)
+belief_blueprint = Blueprint('belief', __name__, url_prefix='/api/external/belief')
+external_blueprint = Blueprint('external', __name__, url_prefix='/api/external/neurommsig')
 
 
-@belief_blueprint.route('/api/external/belief/merge', methods=["POST"])
+@belief_blueprint.route('merge', methods=["POST"])
 def semantic_merge():
     """Performs a semantic merge on BEL documents
 
@@ -53,7 +53,7 @@ def semantic_merge():
     return serve_network(super_graph, serve_format='bel')
 
 
-@external_blueprint.route('/api/external/neurommsig/list_alzheimers_subgraphs/')
+@external_blueprint.route('/list_alzheimers_subgraphs/')
 @cross_origin()
 def list_neurommsig_ad_subgraph_names():
     """Returns a list of Alzheimer's Disease NeuroMMSigs
@@ -67,7 +67,7 @@ def list_neurommsig_ad_subgraph_names():
     return jsonify(sorted(values))
 
 
-@external_blueprint.route('/api/external/neurommsig/get_alzheimers_subgraphs/')
+@external_blueprint.route('/get_alzheimers_subgraphs/')
 @cross_origin()
 def get_neurommsig_ad_subgraph():
     """Returns Alzheimer's Disease NeuroMMSigs

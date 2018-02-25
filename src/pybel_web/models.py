@@ -59,10 +59,29 @@ class Omic(Base):
     user = relationship('User', backref=backref('omics', lazy='dynamic'))
 
     def __repr__(self):
-        return '<Omic id={}, source_name={}>'.format(self.id, self.source_Name)
+        return '<Omic id={}, source_name={}>'.format(self.id, self.source_name)
 
     def __str__(self):
         return str(self.source_name)
+
+    @property
+    def pretty_source_name(self):
+        """Gets a pretty version of the source data's name
+
+        :rtype: str
+        """
+        for ext in ('.tsv', '.csv'):
+            if self.source_name.endswith(ext):
+                return self.source_name[:-len(ext)]
+
+        return self.source_name
+
+    def set_source_df(self, df):
+        """Sets the source with a DataFrame by picklying it
+
+        :param pandas.DataFrame df:
+        """
+        self.source = dumps(df)
 
     def get_source_df(self):
         """Loads the pickled pandas DataFrame from the source file
@@ -123,7 +142,7 @@ class Experiment(Base):
     public = Column(Boolean, nullable=False, default=False, doc='Should the experimental results be public?')
 
     query_id = Column(Integer, ForeignKey('{}.id'.format(QUERY_TABLE_NAME)), nullable=False, index=True)
-    query = relationship('Query', backref=backref("experiments"))
+    query = relationship('Query', backref=backref("experiments", lazy='dynamic'))
 
     user_id = Column(Integer, ForeignKey('{}.id'.format(USER_TABLE_NAME)))
     user = relationship('User', backref=backref('experiments', lazy='dynamic'))
@@ -177,24 +196,15 @@ class Experiment(Base):
 
     @property
     def source_name(self):
+        """Gets a pretty version of the source data's name
+
+        :rtype: str
+        """
         for ext in ('.tsv', '.csv'):
             if self.omic.source_name.endswith(ext):
                 return self.omic.source_name[:-len(ext)]
 
         return self.omic.source_name
-
-    @property
-    def gene_column(self):
-        return self.omic.gene_column
-
-    @property
-    def data_column(self):
-        return self.omic.data_column
-
-    @property
-    def description(self):
-        return self.omic.description
-
 
 class Report(Base):
     """Stores information about compilation and uploading events"""
@@ -673,6 +683,9 @@ class Query(Base):
     __tablename__ = QUERY_TABLE_NAME
 
     id = Column(Integer, primary_key=True)
+    created = Column(DateTime, default=datetime.datetime.utcnow, doc='The date and time of upload')
+    public = Column(Boolean, nullable=False, default=False, doc='Should the query be public? Note: users still need'
+                                                                'appropriate rights to all networks in assembly')
 
     user_id = Column(Integer, ForeignKey('{}.id'.format(USER_TABLE_NAME)), doc='The user who created the query')
     user = relationship('User', backref=backref('queries', lazy='dynamic'))
@@ -681,11 +694,8 @@ class Query(Base):
                          doc='The network assembly used in this query')
     assembly = relationship('Assembly')
 
-    created = Column(DateTime, default=datetime.datetime.utcnow, doc='The date and time of upload')
-
     seeding = Column(Text, doc="The stringified JSON of the list representation of the seeding")
-
-    pipeline_protocol = Column(Text, doc="Protocol list")
+    pipeline = Column(Text, doc="Protocol list")
 
     parent_id = Column(Integer, ForeignKey('{}.id'.format(QUERY_TABLE_NAME)), nullable=True)
     parent = relationship('Query', remote_side=[id],
@@ -694,8 +704,7 @@ class Query(Base):
     def __repr__(self):
         return '<Query id={}>'.format(self.id)
 
-    @property
-    def data(self):
+    def _get_query(self):
         """Converts this object to a :class:`pybel_tools.query.Query` object
 
         :rtype: pybel_tools.query.Query
@@ -706,10 +715,18 @@ class Query(Base):
             if self.seeding:
                 self._query.seeding = self.seeding_to_json()
 
-            if self.pipeline_protocol:
-                self._query.pipeline.protocol = self.protocol_to_json()
+            if self.pipeline:
+                self._query.pipeline.protocol = self.pipeline_to_json()
 
         return self._query
+
+    @property
+    def networks(self):
+        """Gets the networks from the contained assembly
+
+        :rtype: list[Network]
+        """
+        return self.assembly.networks
 
     def to_json(self, include_id=True):
         """Serializes this object to JSON
@@ -717,13 +734,15 @@ class Query(Base):
         :param bool include_id: Should the identifier be included?
         :rtype: dict
         """
-        result = self.data.to_json()
+        result = self._get_query().to_json()
+
         if include_id:
             result['id'] = self.id
+
         return result
 
     def seeding_to_json(self):
-        """Returns seeding json. It's also possible to get Query.data.seeding as well.
+        """Returns seeding json
 
         :rtype: list[dict]
         """
@@ -740,15 +759,15 @@ class Query(Base):
 
         return result
 
-    def protocol_to_json(self):
+    def pipeline_to_json(self):
         """Returns the pipeline as json
 
         :rtype: list[dict]
         """
-        if self.pipeline_protocol is None:
+        if self.pipeline is None:
             return []
 
-        return json.loads(self.pipeline_protocol)
+        return json.loads(self.pipeline)
 
     def run(self, manager):
         """A wrapper around the :meth:`pybel_tools.query.Query.run` function of the enclosed
@@ -758,7 +777,8 @@ class Query(Base):
         :return: The result of this query
         :rtype: Optional[pybel.BELGraph]
         """
-        return self.data.run(manager)
+        _query = self._get_query()
+        return _query.run(manager)
 
     @staticmethod
     def from_assembly(assembly, user=None):
@@ -810,7 +830,7 @@ class Query(Base):
 
         result = Query.from_assembly(assembly, user=user)
         result.seeding = query.seeding_to_jsons()
-        result.pipeline_protocol = query.pipeline.to_jsons()
+        result.pipeline = query.pipeline.to_jsons()
 
         return result
 
@@ -836,14 +856,14 @@ class Query(Base):
         :param kwargs: Append function keyword arguments
         :rtype: Query
         """
-        _query = self.data
+        _query = self._get_query()
         _query.pipeline.append(name, *args, **kwargs)
 
         return Query(
             parent_id=self.id,
             assembly=self.assembly,
             seeding=self.seeding,
-            pipeline_protocol=_query.pipeline.to_jsons(),
+            pipeline=_query.pipeline.to_jsons(),
         )
 
     def add_seed_neighbors(self, nodes):
@@ -852,14 +872,14 @@ class Query(Base):
         :param list[pybel.manager.models.Node] nodes: A list of nodes
         :rtype: Query
         """
-        _query = self.data
+        _query = self._get_query()
         _query.append_seeding_neighbors([node.to_tuple() for node in nodes])
 
         return Query(
             parent_id=self.id,
             assembly=self.assembly,
             seeding=_query.seeding_to_jsons(),
-            pipeline_protocol=self.pipeline_protocol,
+            pipeline=self.pipeline,
         )
 
 

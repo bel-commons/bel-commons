@@ -1,0 +1,45 @@
+<tr>
+    <td>
+        <a href="{{ url_for('analysis.view_experiment', experiment_id=experiment.id) }}">
+            {{ experiment.id }}
+        </a>
+    </td>
+    <td>{{ experiment.permutations }}</td>
+    <td>
+        <a href="{{ url_for('ui.view_explorer_query', query_id=experiment.query.id) }}">
+            {{ experiment.query.id }}
+        </a>
+    </td>
+    <td>{{ experiment.omic.id }}</td>
+    <td>{{ experiment.omic.pretty_short_name }}</td>
+    <td>{{ experiment.omic.description }}</td>
+    <td>
+        {% if experiment.completed %}
+            <span class="glyphicon glyphicon-ok-circle" aria-hidden="true"></span>
+        {% else %}
+            <span class="glyphicon glyphicon glyphicon-remove-circle" aria-hidden="true"></span>
+        {% endif %}
+    </td>
+    <td>
+        {% if experiment.completed %}
+            <div class="pull-right">
+                <a href="{{ url_for('analysis.view_experiment', experiment_id=experiment.id) }}"
+                   class="btn btn-default btn-xs">
+                    <span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span>
+                </a>
+                <a class="btn btn-default btn-xs"
+                   href="{{ url_for('dbs.download_analysis', experiment_id=experiment.id) }}">
+                    <span class="glyphicon glyphicon-download" aria-hidden="true"></span>
+                </a>
+                <a class="btn btn-default btn-xs"
+                   href="{{ url_for('ui.view_explorer_query', query_id=experiment.query.id) }}">
+                    <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
+                </a>
+                <a class="btn btn-default btn-xs"
+                   href="{{ url_for('dbs.drop_experiment_by_id', experiment_id=experiment.id, next=url_for('ui.view_current_user_activity')) }}">
+                    <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
+                </a>
+            </div>
+        {% endif %}
+    </td>
+</tr>

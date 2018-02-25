@@ -7,7 +7,7 @@ import time
 from collections import Counter, defaultdict
 from io import BytesIO
 
-from flask import abort, flash, jsonify, redirect, render_template, request
+from flask import abort, render_template
 from flask_security import current_user
 from sqlalchemy import and_, func
 
@@ -545,29 +545,6 @@ def get_or_create_vote(manager_, edge, user, agreed=None):
         manager_.session.commit()
 
     return vote
-
-
-def next_or_jsonify(message, *args, status=200, category='message', **kwargs):
-    """Neatly wraps a redirect if the ``next`` argument is set in the request otherwise sends JSON
-    feedback.
-
-    :param str message: The message to send
-    :param int status: The status to send
-    :param str category: An optional category for the :func:`flask.flash`
-    :return: A Flask Response object
-    """
-    if args:
-        raise ValueError("don't give args to this function")
-
-    if 'next' in request.args:
-        flash(message, category=category)
-        return redirect(request.args['next'])
-
-    return jsonify(
-        status=status,
-        message=message,
-        **kwargs
-    )
 
 
 def get_node_by_hash_or_404(node_hash):

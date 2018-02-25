@@ -33,7 +33,7 @@ from pybel.manager import Manager
 from pybel.manager.models import Network
 from pybel.utils import get_version as pybel_version
 from pybel_tools.utils import enable_cool_mode, get_version as pybel_tools_get_version
-from .analysis_service import analysis_blueprint
+from .analysis_service import experiment_blueprint
 from .application import create_application
 from .bms_service import bms_blueprint
 from .constants import CHARLIE_EMAIL
@@ -166,7 +166,7 @@ def run(host, port, default_config, debug, config, examples, with_gunicorn, work
     app.register_blueprint(curation_blueprint)
     app.register_blueprint(parser_async_blueprint)
     app.register_blueprint(api_blueprint)
-    app.register_blueprint(analysis_blueprint)
+    app.register_blueprint(experiment_blueprint)
     app.register_blueprint(belief_blueprint)
     app.register_blueprint(external_blueprint)
 

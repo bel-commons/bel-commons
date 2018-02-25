@@ -21,3 +21,11 @@ matplotlib_venn
 matplotlib
 gitpython
 wtforms
+sklearn
+bio2bel_hgnc[bio2bel]
+bio2bel_chebi[bio2bel]
+bio2bel_expasy[bio2bel]
+bio2bel_entrez[bio2bel]
+bio2bel_go[bio2bel]
+bio2bel_interpro[bio2bel]
+bio2bel_mirtarbase[bio2bel]

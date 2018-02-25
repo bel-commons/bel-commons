@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% import "bootstrap/wtf.html" as wtf %}
+{% import "bootstrap/fixes.html" as fixes %}
+{% import "bootstrap/utils.html" as util %}
+
+{% block title %}Query Catalog{% endblock %}
+
+{% block scripts %}
+    {{ super() }}
+    {% if current_user.is_admin %}
+        <script src="{{ url_for('static', filename='js/bootstrap-confirmation.min.js') }}"></script>
+        <script>
+            $('[data-toggle=confirmation]').confirmation({
+                rootSelector: '[data-toggle=confirmation]'
+                // other options
+            });
+        </script>
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+    <div class="container">
+        {{ util.flashed_messages(dismissible=True, container=False) }}
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <div class="btn-group pull-right">
+                    <a class="btn btn-danger btn-xs"
+                       href="{{ url_for('dbs.drop_queries', next=url_for('ui.home')) }}"
+                       role="button" data-toggle="confirmation" data-btn-ok-icon="glyphicon glyphicon-share-alt"
+                       data-btn-ok-class="btn-success" data-btn-cancel-icon="glyphicon glyphicon-ban-circle"
+                       data-btn-cancel-class="btn-danger">
+                        Drop All
+                    </a>
+                </div>
+                <h3 class="panel-title">Query Catalog</h3>
+            </div>
+            <div class="panel-body">
+                <p>
+                    Each entry is a query.
+                </p>
+            </div>
+            <table class="table table-hover table-striped">
+                <thead>
+                <tr>
+                    <th></th>
+                    <th>Networks</th>
+                    <th>Seeding</th>
+                    <th>Pipeline</th>
+                    <th>Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for query in queries %}
+                    {% include "query_macro.html" %}
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {% include "footer.html" %}
+{% endblock %}

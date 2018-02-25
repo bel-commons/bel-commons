@@ -10,7 +10,7 @@ How to run this web application
 
 import logging
 
-from pybel_web.analysis_service import analysis_blueprint
+from pybel_web.analysis_service import experiment_blueprint
 from pybel_web.application import create_application
 from pybel_web.bms_service import bms_blueprint
 from pybel_web.curation_service import curation_blueprint
@@ -41,7 +41,7 @@ app.register_blueprint(ui_blueprint)
 app.register_blueprint(curation_blueprint)
 app.register_blueprint(parser_async_blueprint)
 app.register_blueprint(api_blueprint)
-app.register_blueprint(analysis_blueprint)
+app.register_blueprint(experiment_blueprint)
 app.register_blueprint(external_blueprint)
 
 if app.config.get('BMS_BASE'):

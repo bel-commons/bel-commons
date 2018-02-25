@@ -10,35 +10,49 @@ from operator import itemgetter
 import flask
 import pandas as pd
 from flask import Blueprint, abort, current_app, make_response, redirect, render_template, request, url_for
-from flask_security import current_user, login_required
+from flask_security import current_user, login_required, roles_required
+from sklearn.cluster import KMeans
 
 from pybel_tools.analysis.cmpa import RESULT_LABELS
 from .forms import DifferentialGeneExpressionForm
-from .manager_utils import create_omic
+from .manager_utils import create_omic, next_or_jsonify, safe_get_experiment
 from .models import Experiment, Omic, Query
 from .utils import get_network_ids_with_permission_helper, manager, safe_get_query
 
 log = logging.getLogger(__name__)
 
-analysis_blueprint = Blueprint('analysis', __name__)
+experiment_blueprint = Blueprint('analysis', __name__, url_prefix='/experiment')
 
 
-@analysis_blueprint.route('/omics/')
+@experiment_blueprint.route('/omics/')
 def view_omics():
     """Views a list of all omics data sets"""
     query = manager.session.query(Omic).filter(Omic.public)
     return render_template('omics.html', omics=query.all(), current_user=current_user)
 
 
-@analysis_blueprint.route('/experiments/')
-@analysis_blueprint.route('/query/<int:query_id>/experiments/')
+@experiment_blueprint.route('/omics/drop')
+@roles_required('admin')
+def drop_omics():
+    """Drop all Omic models"""
+    manager.session.query(Omic).delete()
+    manager.session.commit()
+    return next_or_jsonify('Dropped all Omic models')
+
+
+@experiment_blueprint.route('/')
+@experiment_blueprint.route('/from_query/<int:query_id>')
+@experiment_blueprint.route('/from_omic/<int:omic_id>')
 @login_required
-def view_analyses(query_id=None):
+def view_experiments(query_id=None, omic_id=None):
     """Views a list of all analyses, with optional filter by network id"""
     experiment_query = manager.session.query(Experiment)
 
     if query_id is not None:
         experiment_query = experiment_query.filter(Experiment.query_id == query_id)
+
+    if omic_id is not None:
+        experiment_query = experiment_query.filter(Experiment.omic_id == omic_id)
 
     return render_template(
         'experiments.html',
@@ -47,33 +61,23 @@ def view_analyses(query_id=None):
     )
 
 
-def safe_get_experiment(manager_, experiment_id):
-    """Safely gets an experiment
-
-    :param pybel.manager.Manager manager_:
-    :param int experiment_id:
-    :rtype: Experiment
-    :raises: werkzeug.exceptions.HTTPException
-    """
-    experiment = manager_.session.query(Experiment).get(experiment_id)
-
-    if experiment is None:
-        abort(404, 'Experiment {} does not exist'.format(experiment_id))
-
-    if not current_user.is_admin and (current_user != experiment.user):
-        abort(403, 'You do not have rights to drop this experiment')
-
-    return experiment
+@experiment_blueprint.route('/drop')
+@roles_required('admin')
+def drop_experiments():
+    """Drops all Experiment models"""
+    manager.session.query(Experiment).delete()
+    manager.session.commit()
+    return next_or_jsonify('Dropped all Experiment models')
 
 
-@analysis_blueprint.route('/experiment/<int:experiment_id>')
+@experiment_blueprint.route('/<int:experiment_id>')
 @login_required
-def view_analysis_results(experiment_id):
+def view_experiment(experiment_id):
     """View the results of a given analysis
 
     :param int experiment_id: The identifier of the experiment whose results to view
     """
-    experiment = safe_get_experiment(manager, experiment_id)
+    experiment = safe_get_experiment(manager, experiment_id, current_user)
 
     data = experiment.get_data_list()
 
@@ -87,9 +91,18 @@ def view_analysis_results(experiment_id):
     )
 
 
-@analysis_blueprint.route('/query/<int:query_id>/experiment/upload', methods=('GET', 'POST'))
+@experiment_blueprint.route('/<int:experiment_id>/drop')
+@roles_required('admin')
+def drop_experiment(experiment_id):
+    """Drops an Experiment model"""
+    manager.session.query(Experiment).get(experiment_id).delete()
+    manager.session.commit()
+    return next_or_jsonify('Dropped Experiment {}'.format(experiment_id))
+
+
+@experiment_blueprint.route('/from_query/<int:query_id>/upload', methods=('GET', 'POST'))
 @login_required
-def view_query_analysis_uploader(query_id):
+def view_query_uploader(query_id):
     """Renders the asynchronous analysis page
 
     :param int query_id: The identifier of the query to upload against
@@ -141,9 +154,9 @@ def view_query_analysis_uploader(query_id):
     return redirect(url_for('ui.home'))
 
 
-@analysis_blueprint.route('/network/<int:network_id>/experiment/upload/', methods=('GET', 'POST'))
+@experiment_blueprint.route('/from_network/<int:network_id>/upload/', methods=('GET', 'POST'))
 @login_required
-def view_network_analysis_uploader(network_id):
+def view_network_uploader(network_id):
     """Views the results of analysis on a given graph
 
     :param int network_id: The identifier ot the network to query against
@@ -161,7 +174,7 @@ def view_network_analysis_uploader(network_id):
 def get_dataframe_from_experiments(experiments, clusters=None):
     """Builds a Pandas DataFrame from the list of experiments
 
-    :param iter[Experiment] experiments:
+    :param iter[Experiment] experiments: Experiments to work on
     :param Optional[int] clusters: Number of clusters to use in k-means
     :rtype: pandas.DataFrame
     """
@@ -188,21 +201,38 @@ def get_dataframe_from_experiments(experiments, clusters=None):
     df = df.fillna(0).round(4)
 
     if clusters is not None:
-        log.warning('clustering not yet implemented')
+        km = KMeans(n_clusters=clusters)
+        km.fit(df[x_label[3:]])
+        df['Group'] = km.labels_
 
     return df
 
 
-@analysis_blueprint.route('/api/experiment/comparison/<list:experiment_ids>.tsv')
+def safe_get_experiments(experiment_ids):
+    """Safely gets a list of experiments
+
+    :param list[int] experiment_ids:
+    :rtype: list[Experiment]
+    """
+    return [
+        safe_get_experiment(manager, experiment_id, current_user)
+        for experiment_id in experiment_ids
+    ]
+
+
+@experiment_blueprint.route('/comparison/<list:experiment_ids>.tsv')
 @login_required
-def calculate_comparison(experiment_ids):
+def download_experiment_comparison(experiment_ids):
     """Different data analyses on same query
 
     :param list[int] experiment_ids: The identifiers of experiments to compare
     :return: flask.Response
     """
+    log.info('working on experiments: %s', experiment_ids)
     clusters = request.args.get('clusters', type=int)
-    experiments = [safe_get_experiment(manager, experiment_id) for experiment_id in experiment_ids]
+    if clusters:
+        log.info('using %d-means clustering')
+    experiments = safe_get_experiments(experiment_ids)
 
     df = get_dataframe_from_experiments(experiments, clusters=clusters)
 
@@ -213,24 +243,34 @@ def calculate_comparison(experiment_ids):
     return output
 
 
-@analysis_blueprint.route('/experiments/comparison/<list:experiment_ids>')
+@experiment_blueprint.route('/comparison/<list:experiment_ids>')
 @login_required
-def view_results_comparison(experiment_ids):
+def view_experiment_comparison(experiment_ids):
     """Different data analyses on same query
 
     :param list[int] experiment_ids: The identifiers of experiments to compare
     """
-    experiments = [safe_get_experiment(manager, experiment_id) for experiment_id in experiment_ids]
-    return render_template('experiments_compare.html', experiment_ids=experiment_ids, experiments=experiments)
+    experiments = safe_get_experiments(experiment_ids)
+    return render_template(
+        'experiments_compare.html',
+        experiment_ids=experiment_ids,
+        experiments=experiments,
+        clusters=request.args.get('clusters', type=int),
+    )
 
 
-@analysis_blueprint.route('/experiments/comparison/query/<int:query_id>')
+@experiment_blueprint.route('/comparison/query/<int:query_id>')
 @login_required
-def view_results_comparison_by_query(query_id):
+def view_query_experiment_comparison(query_id):
     """Different data analyses on same query
 
     :param int query_id: The query identifier whose related experiments to compare
     """
     query = safe_get_query(query_id)
     experiment_ids = [experiment.id for experiment in query.experiments]
-    return render_template('experiments_compare.html', experiment_ids=experiment_ids, experiments=query.experiments)
+    return render_template(
+        'experiments_compare.html',
+        experiment_ids=experiment_ids,
+        experiments=query.experiments,
+        clusters=request.args.get('clusters', type=int),
+    )

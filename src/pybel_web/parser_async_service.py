@@ -9,8 +9,7 @@ import time
 from flask import Blueprint, current_app, flash, redirect, render_template, url_for
 from flask_security import current_user, login_required
 
-from pybel.constants import PYBEL_CONNECTION
-from .forms import ParseUrlForm, ParserForm
+from .forms import ParserForm
 from .models import Report
 from .utils import manager
 
@@ -19,7 +18,7 @@ log = logging.getLogger(__name__)
 parser_async_blueprint = Blueprint('parser', __name__)
 
 
-@parser_async_blueprint.route('/parse/upload', methods=['GET', 'POST'])
+@parser_async_blueprint.route('/upload', methods=['GET', 'POST'])
 @login_required
 def view_parser():
     """Renders the form for asynchronous parsing"""

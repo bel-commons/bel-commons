@@ -10,10 +10,12 @@ from pybel import Manager
 from pybel.constants import INCREASES, PROTEIN
 from pybel.examples import sialic_acid_graph
 from pybel.manager.models import Edge, Node
-from pybel_web.models import EdgeComment, EdgeVote, Query, User, Assembly
+from pybel_web.models import Assembly, EdgeComment, EdgeVote, Query, User
 from pybel_web.utils import get_or_create_vote
 
 log = logging.getLogger(__name__)
+
+test_connection = os.environ.get('PYBEL_TEST_CONNECTION')
 
 
 class TemporaryCacheInstanceMixin(unittest.TestCase):
@@ -21,17 +23,24 @@ class TemporaryCacheInstanceMixin(unittest.TestCase):
         """Creates a temporary file to use as a persistent database throughout tests in this class. Subclasses of
         :class:`TemporaryCacheClsMixin` can extend :func:`TemporaryCacheClsMixin.setUpClass` to populate the database
         """
-        self.fd, self.path = tempfile.mkstemp()
-        self.connection = 'sqlite:///' + self.path
-        log.info('test database at %s', self.connection)
+        if test_connection:
+            self.connection = test_connection
+        else:
+            self.fd, self.path = tempfile.mkstemp()
+            self.connection = 'sqlite:///' + self.path
+            log.info('Test generated connection string %s', self.connection)
+
         self.manager = Manager(connection=self.connection)
         self.manager.create_all()
 
     def tearDown(self):
-        """Closes the connection to the database and removes the files created for it"""
         self.manager.session.close()
-        os.close(self.fd)
-        os.remove(self.path)
+
+        if not test_connection:
+            os.close(self.fd)
+            os.remove(self.path)
+        else:
+            self.manager.drop_all()
 
 
 class TemporaryCacheClsMixin(unittest.TestCase):
@@ -163,6 +172,22 @@ class TestDropInstance(TemporaryCacheInstanceMixin):
         self.assertIsNone(self.manager.session.query(Query).get(q3.id))
         self.assertIsNotNone(self.manager.session.query(Query).get(q4.id))
 
+    def test_drop_all_queries(self):
+        q1 = Query()
+        q2 = Query(parent=q1)
+        q3 = Query(parent=q1)
+        q4 = Query(parent=q3)
+        q5 = Query()
+        self.manager.session.add_all([q1, q2, q3, q4, q5])
+        self.manager.session.commit()
+
+        self.assertEqual(5, self.manager.session.query(Query).count())
+
+        self.manager.session.query(Query).delete()
+        self.manager.session.commit()
+
+        self.assertEqual(0, self.manager.session.query(Query).count())
+
     def test_drop_assembly_cascade_query(self):
         a1 = Assembly()
         a2 = Assembly()
@@ -181,5 +206,3 @@ class TestDropInstance(TemporaryCacheInstanceMixin):
 
         self.assertEqual(1, self.manager.session.query(Assembly).count())
         self.assertEqual(1, self.manager.session.query(Query).count(), msg='Cascade to queries did not work')
-
-

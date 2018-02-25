@@ -1,15 +1,27 @@
 sudo: false
 cache: pip
 
+services:
+  - mysql
+
 language: python
 
 python:
     - 3.6
+
 env:
+  global:
+    - PYBEL_TEST_CONNECTOR=pymysql
+    - PYBEL_TEST_CONNECTION=mysql+pymysql://travis@localhost/test?charset=utf8
+  matrix:
     - TOXENV=py
     - TOXENV=docs
     - TOXENV=manifest
     - TOXENV=rst-lint
+
+before_script:
+  - mysql -e 'CREATE DATABASE test CHARACTER SET utf8 COLLATE utf8_general_ci;'
+  - mysql -e "GRANT ALL PRIVILEGES ON test.* to 'travis'@'%' WITH GRANT OPTION;"
 
 before_install:
     - pip install --upgrade pip

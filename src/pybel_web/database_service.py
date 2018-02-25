@@ -38,13 +38,13 @@ from . import models
 from .constants import *
 from .external_managers import *
 from .main_service import BLACK_LIST, PATHS_METHOD, UNDIRECTED
-from .manager_utils import fill_out_report, make_graph_summary
+from .manager_utils import fill_out_report, make_graph_summary, next_or_jsonify
 from .models import EdgeComment, Experiment, Project, Report, User
 from .send_utils import serve_network, to_json_custom
 from .utils import (
     current_user_has_query_rights, get_edge_by_hash_or_404, get_network_ids_with_permission_helper, get_network_or_404,
     get_node_by_hash_or_404, get_node_overlaps, get_or_create_vote, get_query_ancestor_id, get_recent_reports,
-    help_get_edge_entry, manager, next_or_jsonify, safe_get_network, safe_get_project, safe_get_query, user_datastore,
+    help_get_edge_entry, manager, safe_get_network, safe_get_project, safe_get_query, user_datastore,
 )
 
 log = logging.getLogger(__name__)
@@ -1979,8 +1979,7 @@ def query_to_network(query_id):
     """
     query = safe_get_query(query_id)
 
-    rv = query.data.to_json()
-    rv['id'] = query.id
+    rv = query.to_json(include_id=True)
 
     if query.user:
         rv['creator'] = str(query.user)

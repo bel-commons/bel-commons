@@ -1,0 +1,149 @@
+<tr>
+    <td>{{ query.id }}
+
+        {% if query.parent_id %}
+            / {{ query.parent_id }}
+        {% endif %}
+    </td>
+    <td>
+
+        <p>{{ query.networks.count() }} Networks</p>
+
+        <ul>
+            {% for network in query.networks %}
+                <li>
+                    <a href="{{ url_for('ui.view_summarize_statistics', network_id=network.id) }}">{{ network }}</a>
+                </li>
+            {% endfor %}
+        </ul>
+    </td>
+    <td>
+        <ul>
+            {% for seed in query.seeding_to_json() %}
+                <li>
+                    <span>{{ seed['type']|title }}</span>
+                    <ul>
+                        {% if seed['type'] == 'annotation' %}
+                            {% if seed['data']['or'] %}
+                                <li>
+                                    Query type: OR
+                                </li>
+                            {% else %}
+                                <li>
+                                    Query type: AND
+                                </li>
+                            {% endif %}
+                            {% for annotation, value in seed['data']['annotations'].items() %}
+                                <li>
+                                    {{ annotation }}: {{ value }}
+                                </li>
+                            {% endfor %}
+                        {% elif seed['type'] in ['induction'] %}
+                            {% for node_tuple in seed['data'] %}
+                                <li>
+                                    <code>{{ manager.get_node_by_tuple(node_tuple) }}</code>
+                                </li>
+                            {% endfor %}
+                        {% else %}
+                            {% for seed_data in seed['data'] %}
+                                <li>
+                                    {{ seed_data }}
+                                </li>
+                            {% endfor %}
+                        {% endif %}
+                    </ul>
+                </li>
+            {% endfor %}
+        </ul>
+    </td>
+    <td>
+        <ul>
+            {% for protocol_entry in query.pipeline_to_json() %}
+                <li>
+                    {{ protocol_entry['function']|replace('_', ' ')|title }}
+                    {% if protocol_entry['args'] or protocol_entry['kwargs'] %}
+                        <ul>
+                            {% if protocol_entry['args'] %}
+                                {% for arg in protocol_entry['args'] %}
+                                    <li><code>
+                                        {% if protocol_entry['function'] in ['delete_node_by_id', 'expand_node_neighborhood_by_id', 'propagate_node_by_hash'] %}
+                                            {{ manager.get_node_by_hash(arg) }}
+                                        {% else %}
+                                            {{ arg }}
+                                        {% endif %}
+                                    </code></li>
+                                {% endfor %}
+                            {% endif %}
+                            {% if protocol_entry['kwargs'] %}
+                                {% for kwarg_key, kwarg_value in protocol_entry['kwargs'].items() %}
+                                    <li><code>{{ kwarg_key }}={{ kwarg_value }}</code></li>
+                                {% endfor %}
+                            {% endif %}
+                        </ul>
+                    {% endif %}
+                </li>
+            {% endfor %}
+        </ul>
+    </td>
+    <td>
+
+        <div class="dropdown">
+            <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true"
+                    aria-expanded="true">
+                Actions
+                <span class="caret"></span>
+            </button>
+            <ul class="dropdown-menu">
+                <li>
+                    <a href="{{ url_for('ui.view_explorer_query', query_id=query.id) }}">
+                        <span class="glyphicon glyphicon-search"></span> Explore
+                    </a>
+
+                </li>
+                <li>
+                    <a href="{{ url_for('dbs.download_query_json', query_id=query.id) }}">
+                        <span class="glyphicon glyphicon-download"></span> Download Transaction
+                    </a>
+                </li>
+
+                {% if current_user.is_admin %}
+                    <li>
+                        <a href="{{ url_for('dbs.drop_query_by_id', query_id=query.id, next=url_for('ui.view_current_user_activity')) }}">
+                            <span class="glyphicon glyphicon-remove"></span> Delete
+                        </a>
+                    </li>
+                {% endif %}
+
+            </ul>
+        </div>
+
+
+        <div class="dropdown">
+            <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown"
+                    aria-haspopup="true" aria-expanded="true">
+                Experiments <span class="badge">{{ query.experiments.count() }}</span>
+                <span class="caret"></span>
+            </button>
+            <ul class="dropdown-menu">
+                <li>
+                    <a href="{{ url_for('analysis.view_query_uploader', query_id=query.id) }}">
+                        <span class="glyphicon glyphicon-upload"></span> Upload
+                    </a>
+                </li>
+
+                {% if query.experiments.count() %}
+                    <li>
+                        <a href="{{ url_for('analysis.view_experiments', query_id=query.id) }}">
+                            <span class="glyphicon glyphicon-stats" aria-hidden="true"></span> View
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('analysis.view_query_experiment_comparison', query_id=query.id) }}">
+                            <span class="glyphicon glyphicon-eye-open"></span> Compare
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </div>
+    </td>
+</tr>

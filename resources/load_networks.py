@@ -143,14 +143,15 @@ def upload_jgf_directory(directory, connection=None):
 
         if os.path.exists(gpickle_path):
             graph = from_pickle(gpickle_path)
+            strip_annotations(graph)
         else:
             with open(path) as f:
                 cbn_jgif_dict = json.load(f)
 
             graph = pybel.from_cbn_jgif(cbn_jgif_dict)
+            strip_annotations(graph)
             to_pickle(graph, gpickle_path)
 
-        strip_annotations(graph)
         insert_graph(manager, graph, public=True)
 
     log.info('done in %.2f', time.time() - t)

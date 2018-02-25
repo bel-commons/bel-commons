@@ -6,12 +6,34 @@
 
 {% block title %}Omic Catalog{% endblock %}
 
+{% block scripts %}
+    {{ super() }}
+    {% if current_user.is_admin %}
+        <script src="{{ url_for('static', filename='js/bootstrap-confirmation.min.js') }}"></script>
+        <script>
+            $('[data-toggle=confirmation]').confirmation({
+                rootSelector: '[data-toggle=confirmation]'
+                // other options
+            });
+        </script>
+    {% endif %}
+{% endblock %}
+
 {% block content %}
     <div class="container">
         {{ util.flashed_messages(dismissible=True, container=False) }}
 
         <div class="panel panel-default">
             <div class="panel-heading">
+                <div class="btn-group pull-right">
+                    <a class="btn btn-danger btn-xs"
+                       href="{{ url_for('analysis.drop_omics', next=url_for('ui.home')) }}"
+                       role="button" data-toggle="confirmation" data-btn-ok-icon="glyphicon glyphicon-share-alt"
+                       data-btn-ok-class="btn-success" data-btn-cancel-icon="glyphicon glyphicon-ban-circle"
+                       data-btn-cancel-class="btn-danger">
+                        Drop All
+                    </a>
+                </div>
                 <h3 class="panel-title">Omic Catalog</h3>
             </div>
             <div class="panel-body">
@@ -26,6 +48,7 @@
                     <th>Created</th>
                     <th>Description</th>
                     <th>Public</th>
+                    <th></th>
                 </tr>
                 </thead>
                 <tbody>
@@ -39,6 +62,16 @@
                                 <span class="glyphicon glyphicon-ok-circle" aria-hidden="true"></span>
                             {% else %}
                                 <span class="glyphicon glyphicon glyphicon-remove-circle" aria-hidden="true"></span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if omic.experiments %}
+                                <a class="btn btn-default btn-xs"
+                                   href="{{ url_for('analysis.view_experiments', omic_id=omic.id) }}">
+                                    <span class="badge">{{ omic.experiments.count() }}</span>
+                                    <span class="glyphicon glyphicon-flash"></span>
+                                    <span class="glyphicon glyphicon-stats" aria-hidden="true"></span>
+                                </a>
                             {% endif %}
                         </td>
                     </tr>

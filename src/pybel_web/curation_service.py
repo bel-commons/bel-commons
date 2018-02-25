@@ -7,13 +7,13 @@ import time
 from io import StringIO
 
 from flask import Blueprint, make_response, render_template, request
-from flask_security import current_user, login_required
+from flask_security import current_user, login_required, roles_required
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileAllowed, FileField
-from ols_client import OlsClient
 from wtforms import fields
 from wtforms.validators import DataRequired
 
+from ols_client import OlsClient
 from pybel.constants import NAMESPACE_DOMAIN_TYPES
 from pybel.resources.definitions import parse_bel_resource, write_namespace
 from pybel.utils import get_version as get_pybel_version
@@ -21,7 +21,7 @@ from pybel_tools.document_utils import write_boilerplate
 
 log = logging.getLogger(__name__)
 
-curation_blueprint = Blueprint('curation', __name__)
+curation_blueprint = Blueprint('curation', __name__, url_prefix='/curation')
 
 
 class BoilerplateForm(FlaskForm):
@@ -73,7 +73,7 @@ class ValidateResourceForm(FlaskForm):
     submit = fields.SubmitField('Validate')
 
 
-@curation_blueprint.route('/curation/bel/template', methods=['GET', 'POST'])
+@curation_blueprint.route('/bel/template', methods=['GET', 'POST'])
 @login_required
 def get_boilerplate():
     """Serves the form for building a template BEL script"""
@@ -107,7 +107,7 @@ def get_boilerplate():
     return output
 
 
-@curation_blueprint.route('/curation/namespace/merge', methods=['GET', 'POST'])
+@curation_blueprint.route('/namespace/merge', methods=['GET', 'POST'])
 @login_required
 def merge_namespaces():
     """Serves the page for merging bel namespaces"""
@@ -151,7 +151,7 @@ def merge_namespaces():
     return output
 
 
-@curation_blueprint.route('/curation/namespace/validate', methods=['GET', 'POST'])
+@curation_blueprint.route('/namespace/validate', methods=['GET', 'POST'])
 def validate_resource():
     """Provides suggestions for namespace and annotation curation"""
     form = ValidateResourceForm()
@@ -192,3 +192,10 @@ def validate_resource():
         timer=round(time.time() - t),
         namespace_name=resource['Namespace']['NameString']
     )
+
+
+@curation_blueprint.route('/interface')
+@roles_required('admin')
+def view_curation_interface():
+    """View the curation interface prototype"""
+    return render_template('curate.html')

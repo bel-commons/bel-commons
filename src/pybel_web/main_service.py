@@ -28,11 +28,12 @@ from . import models
 from .constants import *
 from .external_managers import *
 from .external_managers import manager_dict
-from .models import Project, Query, Report, User
+from .models import Experiment, Omic, Project, Query, Report, User
 from .utils import (
-    calculate_overlap_dict, get_networks_with_permission, manager, next_or_jsonify, query_form_to_dict,
+    calculate_overlap_dict, get_networks_with_permission, manager, query_form_to_dict,
     query_from_network, render_network_summary_safe, safe_get_network, safe_get_node, safe_get_query,
 )
+from pybel_web.manager_utils import next_or_jsonify
 
 log = logging.getLogger(__name__)
 
@@ -104,6 +105,9 @@ def home():
     number_networks = manager.count_networks()
     number_edges = manager.count_edges()
     number_nodes = manager.count_nodes()
+    number_queries = manager.session.query(Query).count()
+    number_omics = manager.session.query(Omic).count()
+    number_experiments = manager.session.query(Experiment).count()
 
     return render_template(
         'index.html',
@@ -111,6 +115,9 @@ def home():
         number_networks=format_big_number(number_networks),
         number_edges=format_big_number(number_edges),
         number_nodes=format_big_number(number_nodes),
+        number_queries=format_big_number(number_queries),
+        number_omics=number_omics,
+        number_experiments=number_experiments,
         manager=manager,
     )
 
@@ -234,6 +241,20 @@ def view_edge(edge_hash):
     :param str edge_hash: The identifier of the edge to display
     """
     return render_template('edges.html', edges=[manager.get_edge_by_hash(edge_hash)], current_user=current_user)
+
+
+@ui_blueprint.route('/query')
+@roles_required('admin')
+def view_queries():
+    """Renders the query page"""
+    q = manager.session.query(Query)
+
+    if not current_user.is_admin:
+        q = q.filter(Query.public)
+
+    q = q.order_by(Query.created.desc())
+
+    return render_template('queries.html', queries=q.all(), manager=manager, current_user=current_user)
 
 
 @ui_blueprint.route('/network/<int:network_id>/explore')
@@ -364,8 +385,12 @@ def view_about():
 def view_current_user_activity():
     """Returns the current user's history."""
     pending_reports = current_user.pending_reports()
-    return render_template('user_activity.html', user=current_user, pending_reports=pending_reports,
-                           manager=manager)
+    return render_template(
+        'user_activity.html',
+        user=current_user,
+        pending_reports=pending_reports,
+        manager=manager
+    )
 
 
 @ui_blueprint.route('/summary/<int:network_id>')
@@ -624,13 +649,6 @@ def nuke():
 def view_config():
     """Render the configuration"""
     return render_template('deployment.html', config=current_app.config)
-
-
-@ui_blueprint.route('/curate')
-@roles_required('admin')
-def view_curation_interface():
-    """View the curation interface prototype"""
-    return render_template('curate.html')
 
 
 #######################################

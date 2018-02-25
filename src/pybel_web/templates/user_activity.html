@@ -233,9 +233,10 @@
                 <thead>
                 <tr>
                     <th>Identifier</th>
+                    <th>Permutations</th>
                     <th>Query</th>
                     <th>Omic</th>
-                    <th>Permutations</th>
+
                     <th>Description</th>
                     <th>Complete</th>
                     <th></th>
@@ -243,50 +244,7 @@
                 </thead>
                 <tbody>
                 {% for experiment in user.experiments %}
-                    <tr>
-                        <td>
-                            <a href="{{ url_for('analysis.view_analysis_results', experiment_id=experiment.id) }}">
-                                {{ experiment.id }}
-                            </a>
-                        </td>
-                        <td>
-                            <a href="{{ url_for('ui.view_explorer_query', query_id=experiment.query.id) }}">
-                                {{ experiment.query.id }}
-                            </a>
-                        </td>
-                        <td>{{ experiment.omic.id }}</td>
-                        <td>{{ experiment.permutations }}</td>
-                        <td>{{ experiment.description }}</td>
-                        <td>
-                            {% if experiment.completed %}
-                                <span class="glyphicon glyphicon-ok-circle" aria-hidden="true"></span>
-                            {% else %}
-                                <span class="glyphicon glyphicon glyphicon-remove-circle" aria-hidden="true"></span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            {% if experiment.completed %}
-                                <div class="pull-right">
-                                    <a href="{{ url_for('analysis.view_analysis_results', experiment_id=experiment.id) }}"
-                                       class="btn btn-default btn-xs">
-                                        <span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span>
-                                    </a>
-                                    <a class="btn btn-default btn-xs"
-                                       href="{{ url_for('dbs.download_analysis', experiment_id=experiment.id) }}">
-                                        <span class="glyphicon glyphicon-download" aria-hidden="true"></span>
-                                    </a>
-                                    <a class="btn btn-default btn-xs"
-                                       href="{{ url_for('ui.view_explorer_query', query_id=experiment.query.id) }}">
-                                        <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
-                                    </a>
-                                    <a class="btn btn-default btn-xs"
-                                       href="{{ url_for('dbs.drop_experiment_by_id', experiment_id=experiment.id, next=url_for('ui.view_current_user_activity')) }}">
-                                        <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
-                                    </a>
-                                </div>
-                            {% endif %}
-                        </td>
-                    </tr>
+                    {% include "experiment_macro.html" %}
                 {% endfor %}
                 </tbody>
             </table>
@@ -308,126 +266,7 @@
                 </thead>
                 <tbody>
                 {% for query in user.get_sorted_queries() %}
-                    <tr>
-                        <td>{{ query.id }}</td>
-                        <td>
-                            <ul>
-                                {% for network in query.assembly.networks %}
-                                    <li>
-                                        <a href="{{ url_for('ui.view_summarize_statistics', network_id=network.id) }}">{{ network }}</a>
-                                    </li>
-                                {% endfor %}
-                            </ul>
-                        </td>
-                        <td>
-                            <ul>
-                                {% for seed in query.seeding_to_json() %}
-                                    <li>
-                                        <span>{{ seed['type']|title }}</span>
-                                        <ul>
-                                            {% if seed['type'] == 'annotation' %}
-                                                {% if seed['data']['or'] %}
-                                                    <li>
-                                                        Query type: OR
-                                                    </li>
-                                                {% else %}
-                                                    <li>
-                                                        Query type: AND
-                                                    </li>
-                                                {% endif %}
-                                                {% for annotation, value in seed['data']['annotations'].items() %}
-                                                    <li>
-                                                        {{ annotation }}: {{ value }}
-                                                    </li>
-                                                {% endfor %}
-                                            {% elif seed['type'] in ['induction'] %}
-                                                {% for node_tuple in seed['data'] %}
-                                                    <li>
-                                                        <code>{{ manager.get_node_by_tuple(node_tuple) }}</code>
-                                                    </li>
-                                                {% endfor %}
-                                            {% else %}
-                                                {% for seed_data in seed['data'] %}
-                                                    <li>
-                                                        {{ seed_data }}
-                                                    </li>
-                                                {% endfor %}
-                                            {% endif %}
-                                        </ul>
-                                    </li>
-                                {% endfor %}
-                            </ul>
-                        </td>
-                        <td>
-                            <ul>
-                                {% for protocol_entry in query.protocol_to_json() %}
-                                    <li>
-                                        {{ protocol_entry['function']|replace('_', ' ')|title }}
-                                        {% if protocol_entry['args'] or protocol_entry['kwargs'] %}
-                                            <ul>
-                                                {% if protocol_entry['args'] %}
-                                                    {% for arg in protocol_entry['args'] %}
-                                                        <li><code>
-                                                            {% if protocol_entry['function'] in ['delete_node_by_id', 'expand_node_neighborhood_by_id', 'propagate_node_by_hash'] %}
-                                                                {{ manager.get_node_by_hash(arg) }}
-                                                            {% else %}
-                                                                {{ arg }}
-                                                            {% endif %}
-                                                        </code></li>
-                                                    {% endfor %}
-                                                {% endif %}
-                                                {% if protocol_entry['kwargs'] %}
-                                                    {% for kwarg_key, kwarg_value in protocol_entry['kwargs'].items() %}
-                                                        <li><code>{{ kwarg_key }}={{ kwarg_value }}</code></li>
-                                                    {% endfor %}
-                                                {% endif %}
-                                            </ul>
-                                        {% endif %}
-                                    </li>
-                                {% endfor %}
-                            </ul>
-                        </td>
-                        <td>
-                            <div class="pull-right">
-                                <a class="btn btn-default btn-xs"
-                                   href="{{ url_for('ui.view_explorer_query', query_id=query.id) }}">
-                                    <span class="glyphicon glyphicon-search"></span>
-                                </a>
-                                <a class="btn btn-default btn-xs"
-                                   href="{{ url_for('analysis.view_query_analysis_uploader', query_id=query.id) }}">
-                                    <span class="glyphicon glyphicon-flash"></span>
-                                    <span class="glyphicon glyphicon-upload"></span>
-                                </a>
-                                {% if current_user.is_admin %}
-                                    <a class="btn btn-warning btn-xs"
-                                       href="{{ url_for('dbs.drop_query_by_id', query_id=query.id, next=url_for('ui.view_current_user_activity')) }}">
-                                        <span class="glyphicon glyphicon-remove"></span>
-                                    </a>
-                                {% endif %}
-                                {% if current_user.is_beta_tester %}
-
-                                    {% if query.experiments %}
-                                        <a class="btn btn-warning btn-xs"
-                                           href="{{ url_for('analysis.view_results_comparison_query_csv', query_id=query.id) }}">
-                                            <span class="glyphicon glyphicon-flash"></span>
-                                            <span class="glyphicon glyphicon-download"></span>
-                                        </a>
-                                        <a class="btn btn-warning btn-xs"
-                                           href="{{ url_for('analysis.view_results_comparison_by_query', query_id=query.id) }}">
-                                            <span class="glyphicon glyphicon-flash"></span>
-                                            <span class="glyphicon glyphicon-eye-open"></span>
-                                        </a>
-                                    {% endif %}
-
-                                    <a class="btn btn-warning btn-xs"
-                                       href="{{ url_for('dbs.download_query_json', query_id=query.id) }}">
-                                        <span class="glyphicon glyphicon-download"></span>
-                                    </a>
-
-                                {% endif %}
-                            </div>
-                        </td>
-                    </tr>
+                    {% include "query_macro.html" %}
                 {% endfor %}
                 </tbody>
             </table>

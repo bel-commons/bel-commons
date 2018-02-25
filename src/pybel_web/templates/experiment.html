@@ -4,7 +4,7 @@
 {% import "bootstrap/fixes.html" as fixes %}
 {% import "bootstrap/utils.html" as util %}
 
-{% block title %}Results{% endblock %}
+{% block title %}Experiment {{ experiment.id }}{% endblock %}
 
 {% block styles %}
     {{ super() }}
@@ -138,8 +138,6 @@
                     <dd>{{ experiment.created }}</dd>
                     <dt>Type</dt>
                     <dd>{{ experiment.type }}</dd>
-                    <dt>Experiment Description</dt>
-                    <dd>{{ experiment.description }}</dd>
                     <dt>Permutations</dt>
                     <dd>{{ experiment.permutations }}</dd>
                     <dt>Omic Identifier</dt>

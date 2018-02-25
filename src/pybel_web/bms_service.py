@@ -10,11 +10,12 @@ from flask_security import current_user, roles_required
 from pybel_tools.ioutils import get_paths_recursive
 from .constants import *
 from .models import Report
-from .utils import manager, next_or_jsonify
+from .utils import manager
+from pybel_web.manager_utils import next_or_jsonify
 
 log = logging.getLogger(__name__)
 
-bms_blueprint = Blueprint('bms', __name__)
+bms_blueprint = Blueprint('bms', __name__, url_prefix='/admin/bms')
 
 
 def make_folder_queue(folder_path, allow_nested=False, citation_clearing=True, infer_origin=False):
@@ -54,7 +55,7 @@ def make_folder_queue(folder_path, allow_nested=False, citation_clearing=True, i
             manager.session.rollback()
             log.exception('Unable to upload BEL document')
             flash('Unable to upload BEL document')
-            return redirect(url_for('home'))
+            return redirect(url_for('ui.home'))
 
         report_id, report_name = report.id, report.source_name
         manager.session.close()
@@ -65,7 +66,7 @@ def make_folder_queue(folder_path, allow_nested=False, citation_clearing=True, i
     return tasks
 
 
-@bms_blueprint.route('/admin/bms/meta/git-update')
+@bms_blueprint.route('/pull')
 def git_pull():
     """Updates the Biological Model Store git repository"""
     g = git.cmd.Git(current_app.config.get('BMS_BASE'))
@@ -74,7 +75,7 @@ def git_pull():
     return next_or_jsonify(res)
 
 
-@bms_blueprint.route('/admin/bms/parse/all')
+@bms_blueprint.route('/parse/all')
 @roles_required('admin')
 def ensure_bms():
     """Parses and stores the entire Biological Model Store repository"""
@@ -82,7 +83,7 @@ def ensure_bms():
     return next_or_jsonify('Queued tasks to parse the BMS: {}'.format(tasks))
 
 
-@bms_blueprint.route('/admin/bms/parse/aetionomy')
+@bms_blueprint.route('/parse/aetionomy')
 @roles_required('admin')
 def ensure_aetionomy():
     """Parses and stores the AETIONOMY resources from the Biological Model Store repository"""
@@ -91,7 +92,7 @@ def ensure_aetionomy():
     return next_or_jsonify('Queued task to parse the AETIONOMY folder: {}'.format(tasks))
 
 
-@bms_blueprint.route('/admin/bms/parse/selventa')
+@bms_blueprint.route('/parse/selventa')
 @roles_required('admin')
 def ensure_selventa():
     """Parses and stores the Selventa resources from the Biological Model Store repository"""
@@ -100,7 +101,7 @@ def ensure_selventa():
     return next_or_jsonify('Queued task to parse the Selventa folder: {}'.format(tasks))
 
 
-@bms_blueprint.route('/admin/bms/parse/ptsd')
+@bms_blueprint.route('/parse/ptsd')
 @roles_required('admin')
 def ensure_ptsd():
     """Parses and stores the PTSD resources from the Biological Model Store repository"""
@@ -109,7 +110,7 @@ def ensure_ptsd():
     return next_or_jsonify('Queued task to parse the PTSD folder: {}'.format(tasks))
 
 
-@bms_blueprint.route('/admin/bms/parse/tbi')
+@bms_blueprint.route('/parse/tbi')
 @roles_required('admin')
 def ensure_tbi():
     """Parses and stores the TBI resources from the Biological Model Store repository"""
@@ -118,7 +119,7 @@ def ensure_tbi():
     return next_or_jsonify('Queued task to parse the TBI folder: {}'.format(tasks))
 
 
-@bms_blueprint.route('/admin/bms/parse/bel4imocede')
+@bms_blueprint.route('/parse/bel4imocede')
 @roles_required('admin')
 def ensure_bel4imocede():
     """Parses and stores the BEL4IMOCEDE resources from the Biological Model Store repository"""
@@ -127,7 +128,7 @@ def ensure_bel4imocede():
     return next_or_jsonify('Queued task to parse the BEL4IMOCEDE folder: {}'.format(tasks))
 
 
-@bms_blueprint.route('/admin/bms/parse/cbn')
+@bms_blueprint.route('/parse/cbn')
 def send_async_upload_cbn():
     """A helper endpoint to submit the parsing job for the CBN"""
     folder = os.path.join(current_app.config.get('BMS_BASE'), 'cbn')

@@ -64,6 +64,7 @@ def build_query(directory, connection=None):
     ]
 
     query = Query.from_query_args(manager=manager, network_ids=network_ids)
+    query.public = True
     manager.session.add(query)
     manager.session.commit()
 
@@ -135,10 +136,15 @@ def run_experiments(experiments, connection=None):
         manager.session.commit()
 
 
-def work_directory(network_directory, omic_directory, connection=None, permutations=None):
-    query = build_query(directory=network_directory, connection=connection)
-    log.info('made query %s for %s', query, network_directory)
+def work_directory(query, omic_directory, connection=None, permutations=None):
+    """
 
+    :param Query query:
+    :param str omic_directory:
+    :param connection: database connection string to cache, pre-built :class:`Manager`, or None to use default cache
+    :type connection: Optional[str or pybel.manager.Manager]
+    :param Optional[int] permutations: Number of permutations to run (defaults to 200)
+    """
     log.info('making experiments for directory: %s', omic_directory)
     experiments = create_experiment(query, directory=omic_directory, connection=connection, permutations=permutations)
 
@@ -149,6 +155,27 @@ def work_directory(network_directory, omic_directory, connection=None, permutati
     run_experiments(experiments, connection=connection)
 
 
+def work_group(network_directory, omics_directories, connection=None, permutations=None):
+    """
+
+    :param str network_directory:
+    :param iter[str] omics_directories:
+    :param connection: database connection string to cache, pre-built :class:`Manager`, or None to use default cache
+    :type connection: Optional[str or pybel.manager.Manager]
+    :param Optional[int] permutations: Number of permutations to run (defaults to 200)
+    """
+    query = build_query(directory=network_directory, connection=connection)
+    log.info('made query %s for %s', query, network_directory)
+
+    for omic_directory in omics_directories:
+        work_directory(
+            query=query,
+            omic_directory=omic_directory,
+            connection=connection,
+            permutations=permutations,
+        )
+
+
 def main(permutations=25):
     """Runs the experiments and uploads them"""
     manager = Manager()
@@ -157,18 +184,11 @@ def main(permutations=25):
     gse1297_directory = os.path.join(dir_path, 'GSE1297')
     gse28146_directory = os.path.join(dir_path, 'GSE28146')
 
-    work_directory(
+    work_group(
         network_directory=alzheimer_directory,
-        omic_directory=gse1297_directory,
+        omics_directories=(gse1297_directory, gse28146_directory),
         connection=manager,
-        permutations=permutations,
-    )
-
-    work_directory(
-        network_directory=alzheimer_directory,
-        omic_directory=gse28146_directory,
-        connection=manager,
-        permutations=permutations,
+        permutations=permutations
     )
 
 

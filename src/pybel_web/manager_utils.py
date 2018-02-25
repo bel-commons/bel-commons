@@ -2,12 +2,12 @@
 
 import itertools as itt
 import logging
-import pickle
 import time
 from collections import Counter
 
 import networkx as nx
 import pandas as pd
+from flask import abort, request, flash, redirect, jsonify
 
 import pybel
 from pybel.canonicalize import calculate_canonical_name
@@ -34,7 +34,7 @@ from pybel_tools.summary import (
     get_unused_list_annotation_values,
 )
 from .constants import LABEL
-from .models import Omic, Report
+from .models import Experiment, Omic, Report
 
 log = logging.getLogger(__name__)
 
@@ -280,11 +280,12 @@ def create_omic(data, gene_column, data_column, description, source_name, public
     result = Omic(
         description=description,
         source_name=source_name,
-        source=pickle.dumps(df),
         gene_column=gene_column,
         data_column=data_column,
         public=public,
     )
+
+    result.set_source_df(df)
 
     if user is not None:
         result.user = user
@@ -333,3 +334,59 @@ def run_cmpa_helper(manager, experiment, use_tqdm=False):
     experiment.dump_results(scores)
 
     experiment.time = time.time() - t
+
+
+def get_experiment(manager, experiment_id):
+    """Gets an experiment
+
+    :param pybel.manager.Manager manager:
+    :param int experiment_id:
+    :rtype: Optional[Experiment]
+    """
+    return manager.session.query(Experiment).get(experiment_id)
+
+
+def safe_get_experiment(manager, experiment_id, user):
+    """Safely gets an experiment
+
+    :param pybel.manager.Manager manager:
+    :param int experiment_id:
+    :param User user:
+    :rtype: Experiment
+    :raises: werkzeug.exceptions.HTTPException
+    """
+    experiment = get_experiment(manager, experiment_id)
+
+    if experiment is None:
+        abort(404, 'Experiment {} does not exist'.format(experiment_id))
+
+    if experiment.public:
+        return experiment
+
+    if not user.is_admin and (user != experiment.user):
+        abort(403, 'You do not have rights to drop this experiment')
+
+    return experiment
+
+
+def next_or_jsonify(message, *args, status=200, category='message', **kwargs):
+    """Neatly wraps a redirect if the ``next`` argument is set in the request otherwise sends JSON
+    feedback.
+
+    :param str message: The message to send
+    :param int status: The status to send
+    :param str category: An optional category for the :func:`flask.flash`
+    :return: A Flask Response object
+    """
+    if args:
+        raise ValueError("don't give args to this function")
+
+    if 'next' in request.args:
+        flash(message, category=category)
+        return redirect(request.args['next'])
+
+    return jsonify(
+        status=status,
+        message=message,
+        **kwargs
+    )

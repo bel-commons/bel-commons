@@ -41,8 +41,19 @@ CHARLIE_EMAIL = 'charles.hoyt@scai.fraunhofer.de'
 DANIEL_EMAIL = 'daniel.domingo.fernandez@scai.fraunhofer.de'
 ALEX_EMAIL = 'aliaksandr.masny@scai.fraunhofer.de'
 
-merged_document_folder = os.path.join(PYBEL_DIR, 'pbw_merged_documents')
+SWAGGER_CONFIG = {
+    'title': 'BEL Commons API',
+    'description': 'This exposes the functions of PyBEL as a RESTful API',
+    'contact': {
+        'responsibleOrganization': 'Fraunhofer SCAI',
+        'responsibleDeveloper': 'Charles Tapley Hoyt',
+        'email': 'charles.hoyt@scai.fraunhofer.de',
+        'url': 'https://www.scai.fraunhofer.de/de/geschaeftsfelder/bioinformatik.html',
+    },
+    'version': '0.1.0',
+}
 
+merged_document_folder = os.path.join(PYBEL_DIR, 'pbw_merged_documents')
 if not os.path.exists(merged_document_folder):
     os.mkdir(merged_document_folder)
 

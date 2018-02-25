@@ -44,9 +44,18 @@ INSTALL_REQUIRES = [
     'matplotlib_venn',
     'matplotlib',
     'gitpython',
+    'sklearn',
 ]
 EXTRAS_REQUIRE = {
-    'bio2bel': ['bio2bel_hgnc', 'bio2bel_chebi', 'bio2bel_mirtarbase'],
+    'bio2bel': [
+        'bio2bel_hgnc',
+        'bio2bel_chebi',
+        'bio2bel_mirtarbase',
+        'bio2bel_entrez',
+        'bio2bel_expasy',
+        'bio2bel_interpro',
+        'bio2bel_go',
+    ],
 }
 TESTS_REQUIRE = []
 ENTRY_POINTS = {

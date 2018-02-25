@@ -3,7 +3,7 @@
 import unittest
 
 from pybel.constants import ANNOTATIONS
-from pybel_web.graph_utils import _annotation_dict_filter_helper
+from pybel_web.mozg_service import _annotation_dict_filter_helper
 
 
 class TestMozgFilter(unittest.TestCase):

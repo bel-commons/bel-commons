@@ -120,7 +120,7 @@
                                 <p>
                                     View summaries and statistics over curated networks and as a first step towards
                                     exploration, visualization, and
-                                    <a href="{{ url_for('analysis.view_analyses') }}">analysis</a>.
+                                    <a href="{{ url_for('analysis.view_experiments') }}">analysis</a>.
                                 </p>
                                 <p>
                                     {% if current_user.is_admin %}
@@ -150,8 +150,27 @@
                                 <h3>Query</h3>
                                 <p>Build a network by investigating the knowledge related to interesting biological
                                     entities, chemical matter, authors, or publications.</p>
-                                <a href="{{ url_for('ui.view_query_builder') }}"
+
+
+                                {% if current_user.is_admin %}
+                                    <a href="{{ url_for('ui.view_query_builder') }}"
+                                   class="btn btn-primary" role="button">Build</a>
+                                    <a href="{{ url_for('ui.view_queries') }}"
+                                   class="btn btn-warning" role="button">
+                                        Queries <span class="badge">{{ number_queries }}</span>
+                                    </a>
+                                    <a href="{{ url_for('analysis.view_omics') }}"
+                                   class="btn btn-warning" role="button">
+                                        Omics <span class="badge">{{ number_omics }}</span>
+                                    </a>
+                                    <a href="{{ url_for('analysis.view_experiments') }}"
+                                   class="btn btn-warning" role="button">
+                                        Experiments <span class="badge">{{ number_experiments }}</span>
+                                    </a>
+                                {% else %}
+                                    <a href="{{ url_for('ui.view_query_builder') }}"
                                    class="btn btn-primary btn-block" role="button">Build Query</a>
+                                {% endif %}
                             </div>
                         </div>
                     </div>
@@ -181,7 +200,8 @@
                                         Validate</a>
 
                                     {% if current_user.is_admin %}
-                                        <a href="{{ url_for('ui.view_curation_interface') }}" class="btn btn-warning">
+                                        <a href="{{ url_for('curation.view_curation_interface') }}"
+                                           class="btn btn-warning">
                                             Curate
                                         </a>
                                     {% endif %}

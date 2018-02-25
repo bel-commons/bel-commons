@@ -29,16 +29,22 @@ from pybel.constants import PYBEL_CONNECTION, config as pybel_config, get_cache_
 from pybel.manager import BaseManager, Manager
 from .application_utils import FlaskPyBEL
 from .celery_utils import create_celery
-from .constants import VERSION
+from .constants import SWAGGER_CONFIG, VERSION
 from .forms import ExtendedRegisterForm
 
 log = logging.getLogger(__name__)
+
+_default_config_location = 'pybel_web.config.Config'
 
 bootstrap = Bootstrap()
 pbx = FlaskPyBEL()
 mail = Mail()
 security = Security()
 swagger = Swagger()
+
+# TODO upgrade to jQuery 2?
+# See: https://pythonhosted.org/Flask-Bootstrap/faq.html#why-are-you-shipping-jquery-1-instead-of-jquery-2
+# app.extensions['bootstrap']['cdns']['jquery'] = jquery2_cdn
 jquery2_cdn = WebCDN('//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/')
 
 
@@ -56,34 +62,25 @@ class IntListConverter(ListConverter):
 
 
 def get_config_location(config_location=None):
+    """Get the application configuration
+
+    :param Optional[str] config_location:
+    :rtype: str
+    """
     if config_location is not None:
-        log.info('Getting configuration from user supplied argument: %s', config_location)
+        log.info('using configuration from user supplied argument: %s', config_location)
         return config_location
 
-    if 'PYBEL_WEB_CONFIG_OBJECT' in os.environ:
-        log.info('Getting configuration from environment PYBEL_WEB_CONFIG_OBJECT=%s',
-                 os.environ['PYBEL_WEB_CONFIG_OBJECT'])
-        return os.environ['PYBEL_WEB_CONFIG_OBJECT']
+    pbw_conf_obj = os.environ.get('PYBEL_WEB_CONFIG_OBJECT')
+    if pbw_conf_obj is not None:
+        log.info('using configuration from environment: %s', pbw_conf_obj)
+        return pbw_conf_obj
 
-    config_location = 'pybel_web.config.Config'
-    log.info('Getting configuration from default %s', config_location)
-    return config_location
-
-
-swagger_config = {
-    'title': 'BEL Commons API',
-    'description': 'This exposes the functions of PyBEL as a RESTful API',
-    'contact': {
-        'responsibleOrganization': 'Fraunhofer SCAI',
-        'responsibleDeveloper': 'Charles Tapley Hoyt',
-        'email': 'charles.hoyt@scai.fraunhofer.de',
-        'url': 'https://www.scai.fraunhofer.de/de/geschaeftsfelder/bioinformatik.html',
-    },
-    'version': '0.1.0',
-}
+    log.info('using configuration from default %s', _default_config_location)
+    return _default_config_location
 
 
-def create_application(get_mail=False, config_location=None, examples=None, **kwargs):
+def create_application(config_location=None, examples=None, **kwargs):
     """Builds a Flask app
     
     1. Loads default config
@@ -100,22 +97,17 @@ def create_application(get_mail=False, config_location=None, examples=None, **kw
     app.config.from_object(get_config_location(config_location))
     app.config.update(pybel_config)
 
-    if 'PYBEL_WEB_CONFIG_JSON' in os.environ:
-        env_conf_path = os.path.expanduser(os.environ['PYBEL_WEB_CONFIG_JSON'])
-
-        if not os.path.exists(env_conf_path):
-            log.warning('configuration from environment at %s does not exist', env_conf_path)
-
+    pbw_conf_json = os.environ.get('PYBEL_WEB_CONFIG_JSON')
+    if pbw_conf_json is not None:
+        if os.path.exists(pbw_conf_json):
+            log.info('importing config from %s', pbw_conf_json)
+            app.config.from_json(pbw_conf_json)
         else:
-            log.info('importing config from %s', env_conf_path)
-            app.config.from_json(env_conf_path)
+            log.warning('configuration from environment at %s does not exist', pbw_conf_json)
 
     app.config.update(kwargs)
-    app.config.setdefault('SWAGGER', swagger_config)
-
-    if not app.config.get(PYBEL_CONNECTION):
-        app.config[PYBEL_CONNECTION] = get_cache_connection()
-
+    app.config.setdefault('SWAGGER', SWAGGER_CONFIG)
+    app.config.setdefault(PYBEL_CONNECTION, get_cache_connection())
     app.config['SQLALCHEMY_DATABASE_URI'] = app.config[PYBEL_CONNECTION]
     app.config.setdefault('SQLALCHEMY_TRACK_MODIFICATIONS', False)
 
@@ -128,19 +120,22 @@ def create_application(get_mail=False, config_location=None, examples=None, **kw
     # Initialize extensions
     db = SQLAlchemy(app=app)
     bootstrap.init_app(app)
-    create_celery(app)
+    swagger.init_app(app)
 
-    # TODO upgrade to jQuery 2?
-    # See: https://pythonhosted.org/Flask-Bootstrap/faq.html#why-are-you-shipping-jquery-1-instead-of-jquery-2
-    # app.extensions['bootstrap']['cdns']['jquery'] = jquery2_cdn
+    celery_broker_url = app.config.get('CELERY_BROKER_URL')
+    if celery_broker_url is not None:
+        log.info('using celery broker: %s', celery_broker_url)
+        create_celery(app)
 
-    if app.config.get('MAIL_SERVER'):
+    app.config.setdefault('MAIL_DEFAULT_SENDER', ("PyBEL Web", 'pybel@scai.fraunhofer.de'))
+    mail_server = app.config.get('MAIL_SERVER')
+    if mail_server:
+        log.info('using mail server: %s', mail_server)
         mail.init_app(app)
-        log.info('connected to mail server: %s', mail)
 
         notify = app.config.get('PYBEL_WEB_STARTUP_NOTIFY')
-
         if notify:
+            log.info('sending startup notification to %s', notify)
             with app.app_context():
                 mail.send_message(
                     subject="BEL Commons Startup",
@@ -151,7 +146,7 @@ def create_application(get_mail=False, config_location=None, examples=None, **kw
                         time.asctime(),
                         app.config.get('SERVER_NAME')
                     ),
-                    sender=app.config.get('MAIL_DEFAULT_SENDER', ("PyBEL Web", 'pybel@scai.fraunhofer.de')),
+                    sender=app.config['MAIL_DEFAULT_SENDER'],
                     recipients=[notify]
                 )
             log.info('notified %s', notify)
@@ -168,9 +163,5 @@ def create_application(get_mail=False, config_location=None, examples=None, **kw
 
     pbx.init_app(app, manager, examples=examples)
     security.init_app(app, pbx.user_datastore, register_form=ExtendedRegisterForm)
-    swagger.init_app(app)
 
-    if not get_mail:
-        return app
-
-    return app, mail
+    return app

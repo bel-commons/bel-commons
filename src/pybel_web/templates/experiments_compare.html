@@ -34,11 +34,15 @@
                 <tbody>
                 {% for experiment in experiments %}
                     <tr>
-                        <td>{{ experiment.id }}</td>
+                        <td>
+                            <a href="{{ url_for('analysis.view_experiment', experiment_id=experiment.id) }}">
+                                {{ experiment.id }}
+                            </a>
+                        </td>
                         <td>{{ experiment.query.id }}</td>
                         <td>{{ experiment.omic.id }}</td>
                         <td>{{ experiment.omic.source_name }}</td>
-                        <td>{{ experiment.description }}</td>
+                        <td>{{ experiment.omic.description }}</td>
                     </tr>
                 {% endfor %}
                 </tbody>
@@ -52,7 +56,7 @@
 
                     <div class="pull-right">
                         <small class="text-muted">
-                            <a href="{{ url_for('analysis.calculate_comparison', experiment_ids=experiment_ids) }}">
+                            <a href="{{ url_for('analysis.download_experiment_comparison', experiment_ids=experiment_ids, clusters=clusters) }}">
                                 Download Data as TSV
                             </a>
                         </small>
@@ -73,11 +77,19 @@
     <script src="http://d3js.org/d3.v3.min.js"></script>
     <script src="{{ url_for('static', filename='js/d3.parcoords.js') }}"></script>
     <script>
-        d3.tsv("{{ url_for('analysis.calculate_comparison', experiment_ids=experiment_ids) }}", function (data) {
+        d3.tsv("{{ url_for('analysis.download_experiment_comparison', experiment_ids=experiment_ids, clusters=clusters) }}", function (data) {
+
+            {% if clusters %}
+                var c10 = d3.scale.category10();
+            {% endif %}
+
             var parcoords = d3.parcoords()("#example")
                 .data(data)
                 .hideAxis(["Type", "Namespace", "Name"])
                 .alpha(0.35)
+                {% if clusters %}.color(function (d) {
+                    return c10(d.Group);
+                }){% endif %}
                 .composite("darken")
                 .mode("queue")
                 .render()
