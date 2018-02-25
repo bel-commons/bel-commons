@@ -19,6 +19,10 @@ from pybel.manager import Manager
 from pybel.struct.mutation import strip_annotations
 from pybel_tools.io import get_corresponding_gpickle_path, iter_from_pickles_from_directory, iter_paths_from_directory
 from pybel_tools.utils import enable_cool_mode
+from pybel_web.external_managers import (
+    chebi_manager, entrez_manager, expasy_manager, go_manager, hgnc_manager,
+    interpro_manager, mirtarbase_manager,
+)
 from pybel_web.manager_utils import insert_graph
 
 log = logging.getLogger(__name__)
@@ -154,7 +158,35 @@ def upload_jgf_directory(directory, connection=None):
 
         insert_graph(manager, graph, public=True)
 
-    log.info('done in %.2f', time.time() - t)
+    log.info('done in %.2f seconds', time.time() - t)
+
+
+def upload_with_manager(external_manager, connection=None):
+    if external_manager is None:
+        log.info('no %s', external_manager)
+        return
+
+    manager = Manager.ensure(connection=connection)
+
+    try:
+        graph = external_manager.to_bel()
+    except AttributeError:
+        log.warning('%s has no to_bel function', external_manager)
+        return
+    except Exception:
+        log.exception('error with %s', external_manager)
+        return
+
+    insert_graph(manager, graph)
+
+
+def upload_managers(connection=None):
+    managers = (
+        chebi_manager, entrez_manager, expasy_manager, go_manager, hgnc_manager,
+        interpro_manager, mirtarbase_manager,
+    )
+    for manager in managers:
+        upload_with_manager(manager, connection=connection)
 
 
 def main(connection=None):
@@ -169,6 +201,8 @@ def main(connection=None):
     upload_jgf_directory(cbn_human, connection=connection)
     upload_jgf_directory(cbn_mouse, connection=connection)
     upload_jgf_directory(cbn_rat, connection=connection)
+
+    upload_managers(connection=connection)
 
 
 if __name__ == '__main__':
