@@ -32,9 +32,7 @@
             </div>
         </div>
 
-
         {{ pbw.render_networks_panel(edge.networks) }}
-
 
         {% if edge.evidence %}
             <div class="panel panel-default">
@@ -83,6 +81,48 @@
                             <dd>{{ annotation_entry.name }}</dd>
                         {% endfor %}
                     </dl>
+                </div>
+            </div>
+        {% endif %}
+
+        {% if current_user.is_authenticated %}
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Voting</h3>
+                </div>
+                <div class="panel-body">
+
+                    {% set vote = current_user.get_vote(edge) %}
+
+                    {% if vote is none or vote.agreed is none %}
+                        <a class="btn btn-default" href="{{ url_for('ui.vote_edge', edge_hash=edge.sha512, vote=1) }}">
+                            <span class="glyphicon glyphicon-thumbs-up"></span> Agree <span
+                                class="badge">{{ edge.votes.filter_by(agreed=True).count() }}</span>
+                        </a>
+                        <a class="btn btn-default" href="{{ url_for('ui.vote_edge', edge_hash=edge.sha512, vote=0) }}">
+                            <span class="glyphicon glyphicon glyphicon-thumbs-down"></span> Disagree <span
+                                class="badge">{{ edge.votes.filter_by(agreed=False).count() }}</span>
+                        </a>
+                    {% elif vote.agreed %}
+                        <a class="btn btn-primary">
+                            <span class="glyphicon glyphicon-thumbs-up"></span> Agree <span
+                                class="badge">{{ edge.votes.filter_by(agreed=True).count() }}</span>
+                        </a>
+                        <a class="btn btn-default" href="{{ url_for('ui.vote_edge', edge_hash=edge.sha512, vote=0) }}">
+                            <span class="glyphicon glyphicon glyphicon-thumbs-down"></span> Disagree <span
+                                class="badge">{{ edge.votes.filter_by(agreed=False).count() }}</span>
+                        </a>
+                    {% else %}
+                        <a class="btn btn-default" href="{{ url_for('ui.vote_edge', edge_hash=edge.sha512, vote=1) }}">
+                            <span class="glyphicon glyphicon-thumbs-up"></span> Agree <span
+                                class="badge">{{ edge.votes.filter_by(agreed=True).count() }}</span>
+                        </a>
+                        <a class="btn btn-warning">
+                            <span class="glyphicon glyphicon glyphicon-thumbs-down"></span> Disagree <span
+                                class="badge">{{ edge.votes.filter_by(agreed=False).count() }}</span>
+                        </a>
+                    {% endif %}
+
                 </div>
             </div>
         {% endif %}

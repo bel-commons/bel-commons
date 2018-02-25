@@ -31,7 +31,7 @@ from .external_managers import *
 from .external_managers import manager_dict
 from .models import Experiment, Omic, Project, Query, Report, User
 from .utils import (
-    calculate_overlap_dict, get_networks_with_permission, manager, query_form_to_dict,
+    calculate_overlap_dict, get_networks_with_permission, get_or_create_vote, manager, query_form_to_dict,
     query_from_network, render_network_summary_safe, safe_get_network, safe_get_node, safe_get_query,
 )
 
@@ -282,6 +282,19 @@ def view_edge(edge_hash):
     :param str edge_hash: The identifier of the edge to display
     """
     return render_template('edge.html', edge=manager.get_edge_by_hash(edge_hash), current_user=current_user)
+
+
+@ui_blueprint.route('/edge/<edge_hash>/vote/<int:vote>')
+@login_required
+def vote_edge(edge_hash, vote):
+    """Renders a page viewing a single edges
+
+    :param str edge_hash: The identifier of the edge to display
+    :param int vote:
+    """
+    edge = manager.get_edge_by_hash(edge_hash)
+    get_or_create_vote(manager, edge, current_user, agreed=(vote != 0))
+    return redirect(url_for('.view_edge', edge_hash=edge_hash))
 
 
 @ui_blueprint.route('/query/<int:query_id>')

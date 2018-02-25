@@ -539,6 +539,14 @@ class User(Base, UserMixin):
             if report.incomplete
         ]
 
+    def get_vote(self, edge):
+        """Gets the vote that goes with this edge
+
+        :param Edge edge:
+        :rtype: Optional[EdgeVote]
+        """
+        return self.votes.filter(EdgeVote.edge == edge).one_or_none()
+
     def __str__(self):
         return self.email
 
