@@ -209,6 +209,7 @@ def get_dataframe_from_experiments(experiments, clusters=None):
         km = KMeans(n_clusters=clusters)
         km.fit(df[x_label[3:]])
         df['Group'] = km.labels_
+        df = df.sort_values('Group')
 
     return df
 
