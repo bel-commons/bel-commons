@@ -407,7 +407,7 @@
     </script>
 
     <script>
-        var chart1 = c3.generate({
+        c3.generate({
             padding: {
                 top: 15,
                 left: 100
@@ -435,7 +435,7 @@
             }
         });
 
-        var chart2 = c3.generate({
+        c3.generate({
             padding: {
                 top: 15,
                 left: 100
@@ -464,7 +464,7 @@
         });
 
         {% if chart_4_data %}
-            var chart4 = c3.generate({
+            c3.generate({
                 padding: {
                     top: 15,
                     left: 100
@@ -494,7 +494,7 @@
         {% endif %}
 
         {% if chart_5_data %}
-            var chart5 = c3.generate({
+            c3.generate({
                 padding: {
                     top: 15,
                     left: 100
@@ -523,7 +523,7 @@
             });
         {% endif %}
 
-        var chart6 = c3.generate({
+        c3.generate({
             padding: {
                 top: 15,
                 left: 100
@@ -551,7 +551,7 @@
             }
         });
 
-        var chart7 = c3.generate({
+        c3.generate({
             padding: {
                 top: 15,
                 left: 100
@@ -580,7 +580,7 @@
         });
 
         {% if chart_9_data %}
-            var chart9 = c3.generate({
+            c3.generate({
                 padding: {
                     top: 15,
                     left: 100
@@ -610,8 +610,7 @@
         {% endif %}
 
         {% if chart_10_data %}
-
-            var chart10 = c3.generate({
+            c3.generate({
                 padding: {
                     top: 15
                 },
