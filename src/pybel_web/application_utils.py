@@ -338,6 +338,8 @@ class FlaskPyBEL(object):
         admin = Admin(self.app, template_mode='bootstrap3')
         manager = self.manager
 
+        ProjectView = build_project_view(self.manager, self.user_datastore)
+
         admin.add_view(UserView(User, manager.session))
         admin.add_view(ModelView(Role, manager.session))
         admin.add_view(NamespaceView(Namespace, manager.session))
@@ -357,7 +359,7 @@ class FlaskPyBEL(object):
         admin.add_view(ModelView(EdgeVote, manager.session))
         admin.add_view(ModelView(EdgeComment, manager.session))
         admin.add_view(ModelView(NetworkOverlap, manager.session))
-        admin.add_view(build_project_view(self.manager, self.user_datastore)(Project, manager.session))
+        admin.add_view(ProjectView(Project, manager.session))
 
         return admin
 
