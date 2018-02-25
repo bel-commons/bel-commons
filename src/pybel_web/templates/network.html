@@ -50,11 +50,6 @@
         <div class="panel panel-default">
             <div class="panel-body">
                 <div class="btn-group">
-                    <a class="btn btn-default" href="{{ url_for('ui.view_network', network_id=network.id) }}"
-                       title="Summary of the Network"
-                       data-content="Access the statisics summary of the network.">
-                        <span class="glyphicon glyphicon-signal" aria-hidden="true"></span> Statistics
-                    </a>
                     <a class="btn btn-default"
                        href="{{ url_for('ui.view_summarize_compilation', network_id=network.id) }}"
                        data-toggle="popright" title="Summary of the Network"
