@@ -157,19 +157,21 @@ def upload_jgf_directory(directory, connection=None):
     log.info('done in %.2f', time.time() - t)
 
 
-def main():
-    """Load BEL"""
-    manager = Manager()
+def main(connection=None):
+    """Load BEL
 
-    upload_bel_directory(alzheimer_directory, connection=manager)
+    :param connection: database connection string to cache, pre-built :class:`Manager`, or None to use default cache
+    :type connection: Optional[str or pybel.manager.Manager]
+    """
+    upload_bel_directory(alzheimer_directory, connection=connection)
     #upload_bel_directory(selventa_directory, connection=manager)
 
-    upload_jgf_directory(cbn_human, connection=manager)
-    upload_jgf_directory(cbn_mouse, connection=manager)
-    upload_jgf_directory(cbn_rat, connection=manager)
+    upload_jgf_directory(cbn_human, connection=connection)
+    upload_jgf_directory(cbn_mouse, connection=connection)
+    upload_jgf_directory(cbn_rat, connection=connection)
 
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(name)s - %(message)s")
     log.setLevel(logging.INFO)
-    main()
+    main(Manager())

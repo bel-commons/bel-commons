@@ -104,15 +104,17 @@ def write_manifest(directory, omics):
         json.dump(manifest_data, file, indent=2)
 
 
-def main():
-    """Loads omics models to database"""
-    manager = Manager()
+def main(connection=None):
+    """Loads omics models to database
 
-    work_omics(directory=os.path.join(dir_path, 'GSE28146'), connection=manager)
-    work_omics(directory=os.path.join(dir_path, 'GSE1297'), connection=manager)
+    :param connection: database connection string to cache, pre-built :class:`Manager`, or None to use default cache
+    :type connection: Optional[str or pybel.manager.Manager]
+    """
+    work_omics(directory=os.path.join(dir_path, 'GSE28146'), connection=connection)
+    work_omics(directory=os.path.join(dir_path, 'GSE1297'), connection=connection)
 
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(name)s - %(message)s")
     log.setLevel(logging.INFO)
-    main()
+    main(Manager())

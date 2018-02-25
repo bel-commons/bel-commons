@@ -176,10 +176,13 @@ def work_group(network_directory, omics_directories, connection=None, permutatio
         )
 
 
-def main(permutations=25):
-    """Runs the experiments and uploads them"""
-    manager = Manager()
+def main(connection=None, permutations=25):
+    """Runs the experiments and uploads them
 
+    :param connection: database connection string to cache, pre-built :class:`Manager`, or None to use default cache
+    :type connection: Optional[str or pybel.manager.Manager]
+    :param int permutations:
+    """
     alzheimer_directory = os.path.join(BMS_BASE, 'aetionomy', 'alzheimers')
     gse1297_directory = os.path.join(dir_path, 'GSE1297')
     gse28146_directory = os.path.join(dir_path, 'GSE28146')
@@ -187,7 +190,7 @@ def main(permutations=25):
     work_group(
         network_directory=alzheimer_directory,
         omics_directories=(gse1297_directory, gse28146_directory),
-        connection=manager,
+        connection=connection,
         permutations=permutations
     )
 
@@ -195,4 +198,4 @@ def main(permutations=25):
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(name)s - %(message)s")
     log.setLevel(logging.INFO)
-    main()
+    main(Manager())

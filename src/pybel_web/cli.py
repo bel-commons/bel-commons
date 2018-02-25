@@ -586,5 +586,47 @@ def summarize(manager):
     click.echo('Experiments: {}'.format(manager.session.query(Experiment).count()))
 
 
+@manage.group()
+def resources():
+    """Resource loading"""
+
+
+@resources.command()
+@click.pass_obj
+def load(manager):
+    """Load omics, networks, and experiments"""
+    from .resources.load_omics import main as load_omics_main
+    from .resources.load_networks import main as load_networks_main
+    from .resources.load_experiments import main as load_experiments_main
+
+    load_omics_main(manager)
+    load_networks_main(manager)
+    load_experiments_main(manager)
+
+
+@resources.command()
+@click.pass_obj
+def load_omics(manager):
+    """Load omics"""
+    from .resources.load_omics import main
+    main(manager)
+
+
+@resources.command()
+@click.pass_obj
+def load_networks(manager):
+    """Load networks"""
+    from .resources.load_networks import main
+    main(manager)
+
+
+@resources.command()
+@click.pass_obj
+def load_experiments(manager):
+    """Load experiments"""
+    from .resources.load_experiments import main
+    main(manager)
+
+
 if __name__ == '__main__':
     main()
