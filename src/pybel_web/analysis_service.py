@@ -43,7 +43,6 @@ def drop_omics():
 @experiment_blueprint.route('/')
 @experiment_blueprint.route('/from_query/<int:query_id>')
 @experiment_blueprint.route('/from_omic/<int:omic_id>')
-@login_required
 def view_experiments(query_id=None, omic_id=None):
     """Views a list of all analyses, with optional filter by network id"""
     experiment_query = manager.session.query(Experiment)
@@ -71,7 +70,6 @@ def drop_experiments():
 
 
 @experiment_blueprint.route('/<int:experiment_id>')
-@login_required
 def view_experiment(experiment_id):
     """View the results of a given analysis
 
@@ -221,7 +219,6 @@ def safe_get_experiments(experiment_ids):
 
 
 @experiment_blueprint.route('/comparison/<list:experiment_ids>.tsv')
-@login_required
 def download_experiment_comparison(experiment_ids):
     """Different data analyses on same query
 
@@ -244,7 +241,6 @@ def download_experiment_comparison(experiment_ids):
 
 
 @experiment_blueprint.route('/comparison/<list:experiment_ids>')
-@login_required
 def view_experiment_comparison(experiment_ids):
     """Different data analyses on same query
 
@@ -260,7 +256,6 @@ def view_experiment_comparison(experiment_ids):
 
 
 @experiment_blueprint.route('/comparison/query/<int:query_id>')
-@login_required
 def view_query_experiment_comparison(query_id):
     """Different data analyses on same query
 
