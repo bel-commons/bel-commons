@@ -24,11 +24,18 @@ log = logging.getLogger(__name__)
 experiment_blueprint = Blueprint('analysis', __name__, url_prefix='/experiment')
 
 
-@experiment_blueprint.route('/omics/')
+@experiment_blueprint.route('/omic/')
 def view_omics():
     """Views a list of all omics data sets"""
     query = manager.session.query(Omic).filter(Omic.public)
     return render_template('omics.html', omics=query.all(), current_user=current_user)
+
+
+@experiment_blueprint.route('/omic/<int:omic_id>')
+def view_omic(omic_id):
+    """Views an Omic model"""
+    omic = manager.session.query(Omic).get(omic_id)
+    return render_template('omic.html', omic=omic, current_user=current_user)
 
 
 @experiment_blueprint.route('/omics/drop')

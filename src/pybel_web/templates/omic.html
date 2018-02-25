@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% import "bootstrap/wtf.html" as wtf %}
+{% import "bootstrap/fixes.html" as fixes %}
+{% import "bootstrap/utils.html" as util %}
+{% import "macros.html" as pbw %}
+
+{% block title %}Omic {{ omic.id }}{% endblock %}
+
+{% block content %}
+    <div class="container">
+        {{ util.flashed_messages(dismissible=True, container=False) }}
+
+        <ol class="breadcrumb">
+            <li><a href="{{ url_for('ui.home') }}">Catalog</a></li>
+            <li><a href="{{ url_for('analysis.view_omics') }}">Omics</a></li>
+            <li class="active">{{ omic.id }}</li>
+        </ol>
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Omic {{ omic.id }}</h3>
+            </div>
+            <div class="panel-body">
+                <dl>
+                    <dt>Identifier</dt>
+                    <dd>{{ omic.id }}</dd>
+                    <dt>Created</dt>
+                    <dd>{{ omic.created }}</dd>
+                    <dt>Description</dt>
+                    <dd>{{ omic.description }}</dd>
+                    <dt>Public</dt>
+                    <dd>{% if omic.public %}
+                        <span class="glyphicon glyphicon-ok-circle" aria-hidden="true"></span>
+                    {% else %}
+                        <span class="glyphicon glyphicon glyphicon-remove-circle" aria-hidden="true"></span>
+                    {% endif %}</dd>
+                </dl>
+            </div>
+        </div>
+
+        {% set experiments = omic.experiments %}
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Experiments <span class="badge">{{ experiments.count() }}</span></h3>
+            </div>
+
+            {% if experiments.count() %}
+                {{ pbw.render_experiment_table(experiments) }}
+            {% endif %}
+        </div>
+    </div>
+
+    {% include "footer.html" %}
+{% endblock %}

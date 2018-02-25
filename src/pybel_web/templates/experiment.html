@@ -147,7 +147,11 @@
                     <dt>Permutations</dt>
                     <dd>{{ experiment.permutations }}</dd>
                     <dt>Omic Identifier</dt>
-                    <dd>{{ experiment.omic.id }}</dd>
+                    <dd>
+                        <a href="{{ url_for('analysis.view_omic', omic_id=experiment.omic_id) }}">
+                            {{ experiment.omic.id }}
+                        </a>
+                    </dd>
                     <dt>Omic Source File</dt>
                     <dd>{{ experiment.omic.source_name }}</dd>
                     <dt>Omic Description</dt>

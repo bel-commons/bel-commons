@@ -59,7 +59,11 @@
                 <tbody>
                 {% for omic in omics %}
                     <tr>
-                        <td>{{ omic.id }}</td>
+                        <td>
+                            <a href="{{ url_for('analysis.view_omic', omic_id=omic.id) }}">
+                                {{ omic.id }}
+                            </a>
+                        </td>
                         <td>{{ omic.created }}</td>
                         <td>{{ omic.description }}</td>
                         <td>
