@@ -29,7 +29,7 @@
     </div>
 {%- endmacro %}
 
-{% macro render_edge_list_item(edge, show_evidence=True) -%}
+{% macro render_edge_list_item(edge, show_evidence=True, show_networks=True) -%}
     <div class="list-group-item">
         <h4 class="list-group-item-heading">
             <a href="{{ url_for('ui.view_edge', edge_hash=edge.sha512) }}">{{ edge.bel }}</a>
@@ -53,7 +53,7 @@
 
             <div class="row">
                 {% set edge_networks = edge.networks.all() %}
-                {% if edge_networks %}
+                {% if edge_networks and show_networks %}
                     <div class="col-lg-6">
                         <h5>Appears in Networks:</h5>
                         <ul>
@@ -85,10 +85,10 @@
     </div>
 {%- endmacro %}
 
-{% macro render_edge_list(edges, show_evidence=True) -%}
+{% macro render_edge_list(edges, show_evidence=True, show_networks=True) -%}
     <div class="list-group">
         {% for edge in edges %}
-            {{ render_edge_list_item(edge, show_evidence=show_evidence) }}
+            {{ render_edge_list_item(edge, show_evidence=show_evidence, show_networks=show_networks) }}
         {% endfor %}
     </div>
 {%- endmacro %}
