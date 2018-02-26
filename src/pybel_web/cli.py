@@ -600,6 +600,8 @@ def load(manager, permutations):
     from .resources.load_networks import main as load_networks_main
     from .resources.load_experiments import main as load_experiments_main
 
+    set_debug(logging.INFO)
+
     load_omics_main(manager)
     load_networks_main(manager)
     load_experiments_main(manager, permutations=permutations)
