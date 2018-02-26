@@ -173,7 +173,7 @@ def view_network_uploader(network_id):
     manager.session.add(query)
     manager.session.commit()
 
-    return redirect(url_for('.view_query_analysis_uploader', query_id=query.id))
+    return redirect(url_for('.view_query_uploader', query_id=query.id))
 
 
 def get_dataframe_from_experiments(experiments, clusters=None):
