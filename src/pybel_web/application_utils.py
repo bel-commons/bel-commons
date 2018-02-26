@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 
 import datetime
+import json
 import logging
+import os
 from itertools import chain
 
 from flask import g, redirect, render_template, request
@@ -24,11 +26,12 @@ from .admin_model_views import (
     AnnotationView, CitationView, EdgeView, EvidenceView, ExperimentView, ModelView,
     ModelViewBase, NamespaceView, NetworkView, NodeView, QueryView, ReportView, UserView,
 )
-from .constants import ALEX_EMAIL, CHARLIE_EMAIL, DANIEL_EMAIL, PYBEL_WEB_EXAMPLES
+from .constants import PYBEL_WEB_EXAMPLES
 from .manager_utils import insert_graph
 from .models import (
     Assembly, Base, EdgeComment, EdgeVote, Experiment, NetworkOverlap, Project, Query, Report, Role, User,
 )
+from .resources.users import default_users_path
 
 log = logging.getLogger(__name__)
 logging.getLogger('urllib3.connectionpool').setLevel(logging.WARNING)
@@ -166,7 +169,7 @@ class FlaskPyBEL(object):
         self.sentry_dsn = None
         self.sentry = None
 
-    def init_app(self, app, manager, examples=None):
+    def init_app(self, app, manager, examples=None, register_mutators=True, register_users=True, register_admin=True):
         """
         :param flask.Flask app: A Flask app
         :param pybel.manager.Manager manager: A thing that has an engine and a session object
@@ -190,24 +193,17 @@ class FlaskPyBEL(object):
 
         self.user_datastore = SQLAlchemyUserDatastore(self.manager, User, Role)
 
-        self.user_datastore.find_or_create_role(
-            name='admin',
-            description='Admin of the web application'
-        )
-        self.user_datastore.find_or_create_role(
-            name='scai',
-            description='Users from Fraunhofer SCAI'
-        )
-
-        self.user_datastore.commit()
-
         self.app.extensions = getattr(app, 'extensions', {})
         self.app.extensions[self.APP_NAME] = self
 
         self._register_error_handlers()
-        self._register_mutators()
-        self._prepare_service()
-        self._build_admin_service()
+
+        if register_mutators:
+            self._register_mutators()
+        if register_users:
+            self._register_users()
+        if register_admin:
+            self._build_admin_service()
 
         examples = examples if examples is not None else app.config.get(PYBEL_WEB_EXAMPLES, False)
         if examples:
@@ -298,35 +294,34 @@ class FlaskPyBEL(object):
             node = self.manager.get_node_tuple_by_hash(node_hash)
             infer_child_relations(graph, node)
 
-    def _prepare_service(self):
+    def _register_users(self):
         """Adds the default users to the user datastore"""
-        if self.app is None or self.manager is None:
-            raise ValueError('not initialized')
+        if not os.path.exists(default_users_path):
+            return
 
-        for email in (CHARLIE_EMAIL, DANIEL_EMAIL, ALEX_EMAIL):
-            admin_user = self.user_datastore.find_user(email=email)
+        with open(default_users_path) as f:
+            default_users_manifest = json.load(f)
 
-            if admin_user is None:
-                admin_user = self.user_datastore.create_user(
-                    email=email,
-                    password='pybeladmin',
+        for role_manifest in default_users_manifest['roles']:
+            self.user_datastore.find_or_create_role(**role_manifest)
+
+        for user_manifest in default_users_manifest['users']:
+            email = user_manifest['email']
+            u = self.user_datastore.find_user(email=email)
+            if u is None:
+                log.info('creating user: %s', email)
+                u = self.user_datastore.create_user(
                     confirmed_at=datetime.datetime.now(),
+                    email=email,
+                    password=user_manifest['password'],
+                    name=user_manifest['name']
                 )
 
-            self.user_datastore.add_role_to_user(admin_user, 'admin')
-            self.user_datastore.add_role_to_user(admin_user, 'scai')
-            self.manager.session.add(admin_user)
+            for user_role in user_manifest.get('roles', []):
+                if self.user_datastore.add_role_to_user(u, user_role):
+                    log.info('registered %s as %s', u, user_role)
 
-        test_scai_user = self.user_datastore.find_user(email='test@scai.fraunhofer.de')
-
-        if test_scai_user is None:
-            test_scai_user = self.user_datastore.create_user(
-                email='test@scai.fraunhofer.de',
-                password='pybeltest',
-                confirmed_at=datetime.datetime.now(),
-            )
-            self.user_datastore.add_role_to_user(test_scai_user, 'scai')
-            self.manager.session.add(test_scai_user)
+            self.manager.session.add(u)
 
         self.manager.session.commit()
 

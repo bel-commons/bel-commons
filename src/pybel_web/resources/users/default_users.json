@@ -1,0 +1,41 @@
+{
+  "users": [
+    {
+      "email": "charles.hoyt@scai.fraunhofer.de",
+      "password": "pybeladmin",
+      "name": "Charles Tapley Hoyt",
+      "roles": [
+        "admin",
+        "scai",
+        "beta"
+      ]
+    },
+    {
+      "email": "test@scai.fraunhofer.de",
+      "password": "pybeltest",
+      "name": "Internal Test User",
+      "roles": [
+        "scai"
+      ]
+    },
+    {
+      "email": "test@example.com",
+      "password": "pybeltest",
+      "name": "External Test User"
+    }
+  ],
+  "roles": [
+    {
+      "name": "admin",
+      "description": "application administrators"
+    },
+    {
+      "name": "scai",
+      "description": "scai internal"
+    },
+    {
+      "name": "beta",
+      "description": "beta feature tester"
+    }
+  ]
+}
