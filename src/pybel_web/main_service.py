@@ -487,19 +487,6 @@ def view_about():
     return render_template('about.html', metadata=metadata, managers=manager_dict)
 
 
-@ui_blueprint.route('/user')
-@login_required
-def view_current_user_activity():
-    """Returns the current user's history."""
-    pending_reports = current_user.pending_reports()
-    return render_template(
-        'user_activity.html',
-        user=current_user,
-        pending_reports=pending_reports,
-        manager=manager
-    )
-
-
 @ui_blueprint.route('/network/<int:network_id>')
 def view_network(network_id):
     """Renders a page with the statistics of the contents of a BEL script
@@ -690,23 +677,30 @@ def download_saved_file(fid):
 # The following endpoints are admin only #
 ##########################################
 
-@ui_blueprint.route('/users')
+@ui_blueprint.route('/user')
 @roles_required('admin')
 def view_users():
     """Renders a list of users"""
-    return render_template('view_users.html', users=manager.session.query(User))
+    return render_template('users.html', users=manager.session.query(User))
+
+
+@ui_blueprint.route('/user/current')
+@login_required
+def view_current_user_activity():
+    """Returns the current user's history."""
+    return redirect(url_for('.view_user', user_id=current_user.id))
 
 
 @ui_blueprint.route('/user/<int:user_id>')
 @roles_required('admin')
-def view_user_activity(user_id):
+def view_user(user_id):
     """Returns the given user's history
 
     :param int user_id: The identifier of the user to summarize
     """
     user = manager.session.query(User).get(user_id)
     pending_reports = user.pending_reports()
-    return render_template('user_activity.html', user=user, pending_reports=pending_reports, manager=manager)
+    return render_template('user.html', user=user, pending_reports=pending_reports, manager=manager)
 
 
 @ui_blueprint.route('/reporting', methods=['GET'])

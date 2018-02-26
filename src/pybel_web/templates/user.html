@@ -5,7 +5,7 @@
 {% import "bootstrap/utils.html" as util %}
 {% import "macros.html" as pbw %}
 
-{% block title %}My Activity{% endblock %}
+{% block title %}User {{ user.id }}{% endblock %}
 
 {% block scripts %}
     {{ super() }}
@@ -19,16 +19,30 @@
 
 {% block content %}
     <div class="container">
-        <div class="page-header">
-            <h1>My Activity</h1>
-        </div>
-
         {{ util.flashed_messages(dismissible=True, container=False) }}
+
+    {% if current_user.is_admin %}
+        <ol class="breadcrumb">
+            <li><a href="{{ url_for('ui.home') }}">Catalog</a></li>
+            <li><a href="{{ url_for('ui.view_users') }}">Users</a></li>
+            <li class="active">{{ user }}</li>
+        </ol>
+    {% endif %}
+
+        <div class="page-header">
+            <h1>
+                {% if user == current_user %}
+                    My Activity
+                {% else %}
+                    {{ user }}
+                {% endif %}
+            </h1>
+        </div>
 
         {% if pending_reports|length > 0 %}
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <h3 class="panel-title">My Pending Jobs</h3>
+                    <h3 class="panel-title">{% if user == current_user %}My {% endif %}Pending Jobs</h3>
                 </div>
                 <ul class="list-group">
                     {% for report in pending_reports %}
@@ -47,7 +61,7 @@
 
         <div class="panel panel-default">
             <div class="panel-heading">
-                <h3 class="panel-title">My Projects</h3>
+                <h3 class="panel-title">{% if user == current_user %}My {% endif %}Projects</h3>
             </div>
             <div class="list-group">
                 {% for project in user.projects %}
@@ -120,7 +134,7 @@
                                     <ul>
                                         {% for project_network in project.networks %}
                                             <li>
-                                                <a href="{{ url_for('ui.view_summarize_statistics', network_id=project_network.id) }}">
+                                                <a href="{{ url_for('ui.view_network', network_id=project_network.id) }}">
                                                     {{ project_network }}
                                                 </a>
                                             </li>
@@ -146,7 +160,7 @@
 
         <div class="panel panel-default">
             <div class="panel-heading">
-                <h3 class="panel-title">My Uploaded Networks</h3>
+                <h3 class="panel-title">{% if user == current_user %}My {% endif %}Uploaded Networks</h3>
             </div>
             <table class="table table-striped table-responsive">
                 <thead>
@@ -167,7 +181,7 @@
                             <td>
                                 <div class="pull-right">
                                     <a class="btn btn-default btn-xs"
-                                       href="{{ url_for('ui.view_summarize_statistics', network_id=report.network.id) }}">
+                                       href="{{ url_for('ui.view_network', network_id=report.network.id) }}">
                                         <span class="glyphicon glyphicon-signal" aria-hidden="true"></span>
                                     </a>
                                     <a class="btn btn-default btn-xs"
@@ -189,7 +203,7 @@
 
         <div class="panel panel-default">
             <div class="panel-heading">
-                <h3 class="panel-title">My Omics</h3>
+                <h3 class="panel-title">{% if user == current_user %}My {% endif %}Omics</h3>
             </div>
             <table class="table table-striped table-responsive">
                 <thead>
@@ -222,7 +236,7 @@
 
         <div class="panel panel-default">
             <div class="panel-heading">
-                <h3 class="panel-title">My Experiments</h3>
+                <h3 class="panel-title">{% if user == current_user %}My {% endif %}Experiments</h3>
             </div>
             <div class="panel-body">
                 <p>As an example pipeline, we recommend using the data from GEO experiment <a
@@ -236,7 +250,7 @@
 
         <div class="panel panel-default">
             <div class="panel-heading">
-                <h3 class="panel-title">My Queries</h3>
+                <h3 class="panel-title">{% if user == current_user %}My {% endif %}Queries</h3>
             </div>
 
             {{ pbw.render_query_table(user.get_sorted_queries()) }}
