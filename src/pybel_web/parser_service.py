@@ -15,10 +15,10 @@ from .utils import manager
 
 log = logging.getLogger(__name__)
 
-parser_async_blueprint = Blueprint('parser', __name__)
+parser_blueprint = Blueprint('parser', __name__)
 
 
-@parser_async_blueprint.route('/upload', methods=['GET', 'POST'])
+@parser_blueprint.route('/upload', methods=['GET', 'POST'])
 @login_required
 def view_parser():
     """Renders the form for asynchronous parsing"""

@@ -17,8 +17,8 @@ from pybel_web.curation_service import curation_blueprint
 from pybel_web.database_service import api_blueprint
 from pybel_web.external_services import external_blueprint
 from pybel_web.main_service import ui_blueprint
-from pybel_web.parser_async_service import parser_async_blueprint
 from pybel_web.parser_endpoint import build_parser_service
+from pybel_web.parser_service import parser_blueprint
 
 datefmt = '%H:%M:%S'
 fmt = "%(asctime)s - %(levelname)s - %(name)s - %(message)s"
@@ -39,7 +39,7 @@ app = create_application()
 
 app.register_blueprint(ui_blueprint)
 app.register_blueprint(curation_blueprint)
-app.register_blueprint(parser_async_blueprint)
+app.register_blueprint(parser_blueprint)
 app.register_blueprint(api_blueprint)
 app.register_blueprint(experiment_blueprint)
 app.register_blueprint(external_blueprint)

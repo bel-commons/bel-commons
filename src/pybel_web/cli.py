@@ -43,8 +43,8 @@ from .external_services import belief_blueprint, external_blueprint
 from .main_service import ui_blueprint
 from .manager_utils import insert_graph
 from .models import Assembly, Base, EdgeComment, EdgeVote, Experiment, Omic, Project, Query, Report, Role, User
-from .parser_async_service import parser_async_blueprint
 from .parser_endpoint import build_parser_service
+from .parser_service import parser_blueprint
 from .utils import iterate_user_strings
 
 log = logging.getLogger('pybel_web')
@@ -164,7 +164,7 @@ def run(host, port, default_config, debug, config, examples, with_gunicorn, work
 
     app.register_blueprint(ui_blueprint)
     app.register_blueprint(curation_blueprint)
-    app.register_blueprint(parser_async_blueprint)
+    app.register_blueprint(parser_blueprint)
     app.register_blueprint(api_blueprint)
     app.register_blueprint(experiment_blueprint)
     app.register_blueprint(belief_blueprint)
