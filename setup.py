@@ -45,6 +45,7 @@ INSTALL_REQUIRES = [
     'matplotlib',
     'gitpython',
     'sklearn',
+    'numpy',
 ]
 EXTRAS_REQUIRE = {
     'bio2bel': [

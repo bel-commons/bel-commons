@@ -8,6 +8,7 @@ from io import StringIO
 from operator import itemgetter
 
 import flask
+import numpy as np
 import pandas as pd
 from flask import Blueprint, abort, current_app, make_response, redirect, render_template, request, url_for
 from flask_security import current_user, login_required, roles_required
@@ -176,11 +177,13 @@ def view_network_uploader(network_id):
     return redirect(url_for('.view_query_uploader', query_id=query.id))
 
 
-def get_dataframe_from_experiments(experiments, clusters=None):
+def get_dataframe_from_experiments(experiments, *, normalize=False, clusters=None):
     """Builds a Pandas DataFrame from the list of experiments
 
     :param iter[Experiment] experiments: Experiments to work on
+    :param bool normalize:
     :param Optional[int] clusters: Number of clusters to use in k-means
+
     :rtype: pandas.DataFrame
     """
     x_label = ['Type', 'Namespace', 'Name']
@@ -205,9 +208,14 @@ def get_dataframe_from_experiments(experiments, clusters=None):
     df = pd.DataFrame(result, columns=x_label)
     df = df.fillna(0).round(4)
 
+    data_columns = x_label[3:]
+
+    if normalize:
+        df[data_columns] = df[data_columns].apply(lambda x: (x - np.min(x)) / (np.max(x) - np.min(x)))
+
     if clusters is not None:
         km = KMeans(n_clusters=clusters)
-        km.fit(df[x_label[3:]])
+        km.fit(df[data_columns])
         df['Group'] = km.labels_
         df = df.sort_values('Group')
 
@@ -235,11 +243,12 @@ def download_experiment_comparison(experiment_ids):
     """
     log.info('working on experiments: %s', experiment_ids)
     clusters = request.args.get('clusters', type=int)
+    normalize = 'normalize' in request.args
     if clusters:
         log.info('using %d-means clustering')
     experiments = safe_get_experiments(experiment_ids)
 
-    df = get_dataframe_from_experiments(experiments, clusters=clusters)
+    df = get_dataframe_from_experiments(experiments, normalize=normalize, clusters=clusters)
 
     si = StringIO()
     df.to_csv(si, index=False, sep='\t')
@@ -275,5 +284,6 @@ def view_query_experiment_comparison(query_id):
         'experiments_compare.html',
         experiment_ids=experiment_ids,
         experiments=query.experiments,
+        normalize=('normalize' in request.args),
         clusters=request.args.get('clusters', type=int),
     )

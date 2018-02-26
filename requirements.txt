@@ -22,6 +22,7 @@ matplotlib
 gitpython
 wtforms
 sklearn
+numpy
 bio2bel_hgnc[bio2bel]
 bio2bel_chebi[bio2bel]
 bio2bel_expasy[bio2bel]

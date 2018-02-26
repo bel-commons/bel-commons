@@ -48,7 +48,7 @@
                         <td>{{ experiment.omic.source_name }}</td>
                         <td>{{ experiment.omic.description }}</td>
                         <td>
-                            <a href="{{ url_for('analysis.view_experiment_comparison', experiment_ids=(experiments|rejectattr('id', 'equalto', experiment.id)|map(attribute='id')), clusters=clusters) }}">
+                            <a href="{{ url_for('analysis.view_experiment_comparison', experiment_ids=(experiments|rejectattr('id', 'equalto', experiment.id)|map(attribute='id')), clusters=clusters, normalize=normalize) }}">
                                 Delete
                             </a>
                         </td>
@@ -65,7 +65,7 @@
 
                     <div class="pull-right">
                         <small class="text-muted">
-                            <a href="{{ url_for('analysis.download_experiment_comparison', experiment_ids=experiment_ids, clusters=clusters) }}">
+                            <a href="{{ url_for('analysis.download_experiment_comparison', experiment_ids=experiment_ids, clusters=clusters, normalize=normalize) }}">
                                 Download Data as TSV
                             </a>
                         </small>
@@ -80,6 +80,11 @@
                         K-Means clustering with <code>K={{ clusters }}</code> is enabled. Be aware that this is a
                         randomized algorithm and results
                         may not be consistent.
+                    </p>
+                {% endif %}
+                {% if normalize %}
+                    <p>
+                        Data have been normalized by min/max.
                     </p>
                 {% endif %}
             </div>
