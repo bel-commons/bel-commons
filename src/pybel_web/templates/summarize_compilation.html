@@ -61,7 +61,7 @@
                 <div class="panel-body">
                     <ul class="list-inline">
                         {% for network_version in network_versions %}
-                            {% if network_version.id == network_id %}
+                            {% if network_version.id == network.id %}
                                 <li>
                                     <a class="btn btn-info" role="button"
                                        href="{{ url_for('ui.view_summarize_compilation', network_id=network_version.id) }}">{{ network_version.version }}</a>
@@ -443,7 +443,7 @@
                 <div class="panel-body">
                     <p>Names referenced without a namespace are antithetical to reproducible science and data
                         integration practices. The list of "naked names" can be downloaded
-                        <a href="{{ url_for('dbs.download_naked_names', network_id=network_id) }}">here</a>
+                        <a href="{{ url_for('dbs.download_naked_names', network_id=network.id) }}">here</a>
                         for further use with tools to help find the appropriate names.</p>
                 </div>
             </div>
@@ -467,7 +467,7 @@
                     <ul class="row">
                         {% for undefined_namespace in undefined_namespaces|sort %}
                             <li class="col-lg-3 col-md-4 col-sm-6">
-                                <a href="{{ url_for('dbs.download_undefined_namespace', network_id=network_id, namespace=undefined_namespace) }}">
+                                <a href="{{ url_for('dbs.download_undefined_namespace', network_id=network.id, namespace=undefined_namespace) }}">
                                     {{ undefined_namespace }}
                                 </a>
                             </li>
@@ -518,7 +518,7 @@
                     <ul class="row">
                         {% for namespace in namespaces_with_incorrect_names %}
                             <li class="col-lg-3 col-md-4 col-sm-6">
-                                <a href="{{ url_for('dbs.download_missing_namespace', network_id=network_id, namespace=namespace) }}">
+                                <a href="{{ url_for('dbs.download_missing_namespace', network_id=network.id, namespace=namespace) }}">
                                     {{ namespace }}
                                 </a>
                             </li>

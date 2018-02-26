@@ -177,13 +177,13 @@ def view_network_uploader(network_id):
     return redirect(url_for('.view_query_uploader', query_id=query.id))
 
 
-def get_dataframe_from_experiments(experiments, *, normalize=False, clusters=None):
+def get_dataframe_from_experiments(experiments, *, normalize=None, clusters=None, seed=None):
     """Builds a Pandas DataFrame from the list of experiments
 
     :param iter[Experiment] experiments: Experiments to work on
     :param bool normalize:
     :param Optional[int] clusters: Number of clusters to use in k-means
-
+    :param Optional[int] seed: Random number seed
     :rtype: pandas.DataFrame
     """
     x_label = ['Type', 'Namespace', 'Name']
@@ -214,7 +214,9 @@ def get_dataframe_from_experiments(experiments, *, normalize=False, clusters=Non
         df[data_columns] = df[data_columns].apply(lambda x: (x - np.min(x)) / (np.max(x) - np.min(x)))
 
     if clusters is not None:
-        km = KMeans(n_clusters=clusters)
+        log.info('using %d-means clustering', clusters)
+        log.info('using seed: %s', seed)
+        km = KMeans(n_clusters=clusters, random_state=seed)
         km.fit(df[data_columns])
         df['Group'] = km.labels_
         df = df.sort_values('Group')
@@ -242,19 +244,30 @@ def download_experiment_comparison(experiment_ids):
     :return: flask.Response
     """
     log.info('working on experiments: %s', experiment_ids)
-    clusters = request.args.get('clusters', type=int)
-    normalize = 'normalize' in request.args
-    if clusters:
-        log.info('using %d-means clustering')
-    experiments = safe_get_experiments(experiment_ids)
 
-    df = get_dataframe_from_experiments(experiments, normalize=normalize, clusters=clusters)
+    clusters = request.args.get('clusters', type=int)
+    normalize = request.args.get('normalize', type=int, default=0)
+    seed = request.args.get('seed', type=int)
+
+    experiments = safe_get_experiments(experiment_ids)
+    df = get_dataframe_from_experiments(experiments, normalize=normalize, clusters=clusters, seed=seed)
 
     si = StringIO()
     df.to_csv(si, index=False, sep='\t')
     output = make_response(si.getvalue())
     output.headers["Content-type"] = "text/tab-separated-values"
     return output
+
+
+def render_experiment_comparison(experiment_ids, experiments):
+    return render_template(
+        'experiments_compare.html',
+        experiment_ids=experiment_ids,
+        experiments=experiments,
+        normalize=request.args.get('normalize', type=int, default=0),
+        clusters=request.args.get('clusters', type=int),
+        seed=request.args.get('seed', type=int),
+    )
 
 
 @experiment_blueprint.route('/comparison/<list:experiment_ids>')
@@ -264,12 +277,7 @@ def view_experiment_comparison(experiment_ids):
     :param list[int] experiment_ids: The identifiers of experiments to compare
     """
     experiments = safe_get_experiments(experiment_ids)
-    return render_template(
-        'experiments_compare.html',
-        experiment_ids=experiment_ids,
-        experiments=experiments,
-        clusters=request.args.get('clusters', type=int),
-    )
+    return render_experiment_comparison(experiment_ids, experiments)
 
 
 @experiment_blueprint.route('/comparison/query/<int:query_id>')
@@ -280,10 +288,4 @@ def view_query_experiment_comparison(query_id):
     """
     query = safe_get_query(query_id)
     experiment_ids = [experiment.id for experiment in query.experiments]
-    return render_template(
-        'experiments_compare.html',
-        experiment_ids=experiment_ids,
-        experiments=query.experiments,
-        normalize=('normalize' in request.args),
-        clusters=request.args.get('clusters', type=int),
-    )
+    return render_experiment_comparison(experiment_ids, query.experiments)

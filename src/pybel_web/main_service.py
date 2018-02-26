@@ -684,11 +684,16 @@ def view_users():
     return render_template('users.html', users=manager.session.query(User))
 
 
+def render_user(user):
+    pending_reports = user.pending_reports()
+    return render_template('user.html', user=user, pending_reports=pending_reports, manager=manager)
+
+
 @ui_blueprint.route('/user/current')
 @login_required
 def view_current_user_activity():
     """Returns the current user's history."""
-    return redirect(url_for('.view_user', user_id=current_user.id))
+    return render_user(current_user)
 
 
 @ui_blueprint.route('/user/<int:user_id>')
@@ -699,8 +704,7 @@ def view_user(user_id):
     :param int user_id: The identifier of the user to summarize
     """
     user = manager.session.query(User).get(user_id)
-    pending_reports = user.pending_reports()
-    return render_template('user.html', user=user, pending_reports=pending_reports, manager=manager)
+    return render_user(user)
 
 
 @ui_blueprint.route('/reporting', methods=['GET'])

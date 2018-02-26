@@ -48,7 +48,7 @@
                         <td>{{ experiment.omic.source_name }}</td>
                         <td>{{ experiment.omic.description }}</td>
                         <td>
-                            <a href="{{ url_for('analysis.view_experiment_comparison', experiment_ids=(experiments|rejectattr('id', 'equalto', experiment.id)|map(attribute='id')), clusters=clusters, normalize=normalize) }}">
+                            <a href="{{ url_for('analysis.view_experiment_comparison', experiment_ids=(experiments|rejectattr('id', 'equalto', experiment.id)|map(attribute='id')), clusters=clusters, normalize=normalize, seed=seed) }}">
                                 Delete
                             </a>
                         </td>
@@ -65,7 +65,7 @@
 
                     <div class="pull-right">
                         <small class="text-muted">
-                            <a href="{{ url_for('analysis.download_experiment_comparison', experiment_ids=experiment_ids, clusters=clusters, normalize=normalize) }}">
+                            <a href="{{ url_for('analysis.download_experiment_comparison', experiment_ids=experiment_ids, clusters=clusters, normalize=normalize, seed=seed) }}">
                                 Download Data as TSV
                             </a>
                         </small>
@@ -98,7 +98,7 @@
     <script src="http://d3js.org/d3.v3.min.js"></script>
     <script src="{{ url_for('static', filename='js/d3.parcoords.js') }}"></script>
     <script>
-        d3.tsv("{{ url_for('analysis.download_experiment_comparison', experiment_ids=experiment_ids, clusters=clusters) }}", function (data) {
+        d3.tsv("{{ url_for('analysis.download_experiment_comparison', experiment_ids=experiment_ids, clusters=clusters, normalize=normalize, seed=seed) }}", function (data) {
 
             {% if clusters %}
                 var c10 = d3.scale.category10();
