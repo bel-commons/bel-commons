@@ -98,7 +98,7 @@
                         <span class="glyphicon glyphicon-flash" aria-hidden="true"></span>
                         Analyze
                     </a>
-                    <a class="btn btn-default" href="{{ url_for('analysis.view_experiments', network_id=network_id) }}"
+                    <a class="btn btn-default" href="{{ url_for('analysis.view_experiments', network_id=network.id) }}"
                        role="button">
                         <span class="glyphicon glyphicon-tasks" aria-hidden="true"></span>
                         Results
@@ -115,50 +115,50 @@
                         </button>
                         <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
                             <li>
-                                <a href="{{ url_for('dbs.export_network', network_id=network_id, serve_format='bel') }}">
+                                <a href="{{ url_for('dbs.export_network', network_id=network.id, serve_format='bel') }}">
                                     <span class="glyphicon glyphicon-download" aria-hidden="true"></span> BEL Script
                                 </a>
 
                             <li>
-                                <a href="{{ url_for('dbs.export_network', network_id=network_id, serve_format='nodelink') }}">
+                                <a href="{{ url_for('dbs.export_network', network_id=network.id, serve_format='nodelink') }}">
                                     <span class="glyphicon glyphicon-download" aria-hidden="true"></span> Node-Link JSON
                                 </a>
                             </li>
                             <li>
-                                <a href="{{ url_for('dbs.export_network', network_id=network_id, serve_format='cx') }}">
+                                <a href="{{ url_for('dbs.export_network', network_id=network.id, serve_format='cx') }}">
                                     <span class="glyphicon glyphicon-download" aria-hidden="true"></span> CX JSON
                                 </a>
                             </li>
                             <li>
-                                <a href="{{ url_for('dbs.export_network', network_id=network_id, serve_format='json') }}">
+                                <a href="{{ url_for('dbs.export_network', network_id=network.id, serve_format='json') }}">
                                     <span class="glyphicon glyphicon-download" aria-hidden="true"></span> Compact JSON
                                 </a>
                             </li>
                             <li>
-                                <a href="{{ url_for('dbs.export_network', network_id=network_id, serve_format='bytes') }}">
+                                <a href="{{ url_for('dbs.export_network', network_id=network.id, serve_format='bytes') }}">
                                     <span class="glyphicon glyphicon-download" aria-hidden="true"></span> Pickle</a>
                             </li>
                             <li>
-                                <a href="{{ url_for('dbs.export_network', network_id=network_id, serve_format='sif') }}">
+                                <a href="{{ url_for('dbs.export_network', network_id=network.id, serve_format='sif') }}">
                                     <span class="glyphicon glyphicon-download" aria-hidden="true"></span> SIF
                                 </a>
                             </li>
                             <li>
-                                <a href="{{ url_for('dbs.export_network', network_id=network_id, serve_format='graphml') }}">
+                                <a href="{{ url_for('dbs.export_network', network_id=network.id, serve_format='graphml') }}">
                                     <span class="glyphicon glyphicon-download" aria-hidden="true"></span> GraphML
                                 </a>
                             </li>
                             <li>
-                                <a href="{{ url_for('dbs.export_network', network_id=network_id, serve_format='csv') }}">
+                                <a href="{{ url_for('dbs.export_network', network_id=network.id, serve_format='csv') }}">
                                     <span class="glyphicon glyphicon-download" aria-hidden="true"></span> CSV</a>
                             </li>
                             <li>
-                                <a href="{{ url_for('dbs.export_network', network_id=network_id, serve_format='gsea') }}">
+                                <a href="{{ url_for('dbs.export_network', network_id=network.id, serve_format='gsea') }}">
                                     <span class="glyphicon glyphicon-download" aria-hidden="true"></span> GSEA
                                 </a>
                             </li>
                             <li>
-                                <a href="{{ url_for('dbs.export_network', network_id=network_id, serve_format='citations') }}">
+                                <a href="{{ url_for('dbs.export_network', network_id=network.id, serve_format='citations') }}">
                                     <span class="glyphicon glyphicon-download" aria-hidden="true"></span> Citations
                                 </a>
                             </li>
@@ -168,7 +168,7 @@
 
                 {% if current_user.is_admin %}
                     <a class="btn btn-danger" role="button"
-                       href="{{ url_for('dbs.drop_network', network_id=network_id, next=url_for('ui.home')) }}">
+                       href="{{ url_for('dbs.drop_network', network_id=network.id, next=url_for('ui.home')) }}">
                         <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
                         Drop
                     </a>
@@ -189,7 +189,7 @@
                 <div class="panel-body">
                     <ul class="list-inline">
                         {% for network_version in network_versions %}
-                            {% if network_version.id == network_id %}
+                            {% if network_version.id == network.id %}
                                 <li>
                                     <a class="btn btn-info" role="button"
                                        href="{{ url_for('ui.view_network', network_id=network_version.id) }}">{{ network_version.version }}</a>

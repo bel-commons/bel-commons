@@ -75,12 +75,12 @@ def render_network_summary(network_id, template):
     network_versions = manager.get_networks_by_name(graph.name)
     variants_count = count_variants(graph)
     namespaces_count = count_namespaces(graph)
+
     return render_template(
         template,
         current_user=current_user,
         network=network,
         graph=graph,
-        network_id=network_id,
         network_versions=network_versions,
         overlaps=overlaps,
         chart_1_data=prepare_c3(function_count, 'Entity Type'),
