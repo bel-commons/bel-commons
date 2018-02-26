@@ -150,20 +150,21 @@
             </div>
         </td>
         <td>
-            <div class="dropdown">
-                <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown"
-                        aria-haspopup="true" aria-expanded="true">
-                    Experiments <span class="badge">{{ query.experiments.count() }}</span>
-                    <span class="caret"></span>
-                </button>
-                <ul class="dropdown-menu">
-                    <li>
-                        <a href="{{ url_for('analysis.view_query_uploader', query_id=query.id) }}">
-                            <span class="glyphicon glyphicon-upload"></span> Upload
-                        </a>
-                    </li>
+            {% if query.experiments.count() %}
+                <div class="dropdown">
+                    <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown"
+                            aria-haspopup="true" aria-expanded="true">
+                        Experiments <span class="badge">{{ query.experiments.count() }}</span>
+                        <span class="caret"></span>
+                    </button>
 
-                    {% if query.experiments.count() %}
+
+                    <ul class="dropdown-menu">
+                        <li>
+                            <a href="{{ url_for('analysis.view_query_uploader', query_id=query.id) }}">
+                                <span class="glyphicon glyphicon-upload"></span> Upload
+                            </a>
+                        </li>
                         <li>
                             <a href="{{ url_for('analysis.view_experiments', query_id=query.id) }}">
                                 <span class="glyphicon glyphicon-stats" aria-hidden="true"></span> View
@@ -174,9 +175,13 @@
                                 <span class="glyphicon glyphicon-eye-open"></span> Compare
                             </a>
                         </li>
-                    {% endif %}
-                </ul>
-            </div>
+                    </ul>
+                </div>
+            {% else %}
+                <a class="btn btn-default" href="{{ url_for('analysis.view_query_uploader', query_id=query.id) }}">
+                    <span class="glyphicon glyphicon-upload"></span> Upload
+                </a>
+            {% endif %}
         </td>
     </tr>
 {%- endmacro %}
