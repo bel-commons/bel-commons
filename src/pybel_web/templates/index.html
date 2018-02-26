@@ -109,6 +109,9 @@
                        class="btn btn-warning" role="button">
                         Evidences <span class="badge">{{ number_evidences }}</span>
                     </a>
+                    <span class="btn btn-warning" role="button">
+                        Assemblies <span class="badge">{{ number_assemblies }}</span>
+                    </span>
                     <a href="{{ url_for('ui.view_queries') }}"
                        class="btn btn-warning" role="button">
                         Queries <span class="badge">{{ number_queries }}</span>
@@ -121,6 +124,12 @@
                        class="btn btn-warning" role="button">
                         Experiments <span class="badge">{{ number_experiments }}</span>
                     </a>
+                    <span class="btn btn-warning" role="button">
+                        Votes <span class="badge">{{ number_votes }}</span>
+                    </span>
+                    <span class="btn btn-warning" role="button">
+                        Comments <span class="badge">{{ number_comments }}</span>
+                    </span>
                 </div>
             {% endif %}
         </div>

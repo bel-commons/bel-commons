@@ -29,7 +29,7 @@ from . import models
 from .constants import *
 from .external_managers import *
 from .external_managers import manager_dict
-from .models import Experiment, Omic, Project, Query, Report, User
+from .models import Assembly, EdgeComment, EdgeVote, Experiment, Omic, Project, Query, Report, User
 from .utils import (
     calculate_overlap_dict, get_networks_with_permission, get_or_create_vote, manager, query_form_to_dict,
     query_from_network, render_network_summary_safe, safe_get_network, safe_get_node, safe_get_query,
@@ -79,11 +79,14 @@ def home():
     number_networks = manager.count_networks()
     number_edges = manager.count_edges()
     number_nodes = manager.count_nodes()
+    number_assemblies = manager.session.query(Assembly).count()
     number_queries = manager.session.query(Query).count()
     number_omics = manager.session.query(Omic).count()
     number_experiments = manager.session.query(Experiment).count()
     number_citations = manager.session.query(Citation).count()
     number_evidences = manager.session.query(Evidence).count()
+    number_votes = manager.session.query(EdgeVote).count()
+    number_comments = manager.session.query(EdgeComment).count()
 
     return render_template(
         'index.html',
@@ -91,11 +94,14 @@ def home():
         number_networks=format_big_number(number_networks),
         number_edges=format_big_number(number_edges),
         number_nodes=format_big_number(number_nodes),
+        number_assemblies=format_big_number(number_assemblies),
         number_queries=format_big_number(number_queries),
         number_omics=number_omics,
         number_experiments=number_experiments,
         number_citations=format_big_number(number_citations),
         number_evidences=format_big_number(number_evidences),
+        number_votes=format_big_number(number_votes),
+        number_comments=format_big_number(number_comments),
         manager=manager,
     )
 
