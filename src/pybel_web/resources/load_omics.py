@@ -14,6 +14,8 @@ log = logging.getLogger(__name__)
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
+MANIFEST_FILE_NAME = 'manifest.json'
+
 
 def load_metadata(directory):
     """Loads the manifest JSON file from this folder
@@ -27,16 +29,16 @@ def load_metadata(directory):
         return json.load(f)
 
 
-def create_omics_models(directory, manifest):
+def create_omics_models(directory, metadata):
     """Creates multiple omics models
 
     :param str directory:
-    :param list[dict[str,str]] manifest:
+    :param list[dict[str,str]] metadata:
     :rtype: list[pybel_web.models.Omic]
     """
     results = []
 
-    for omics_info in manifest:
+    for omics_info in metadata:
         omics_path = os.path.join(directory, omics_info['source_name'])
 
         if not os.path.exists(omics_path):
@@ -70,28 +72,12 @@ def upload_omics_models(omics, connection=None):
     manager.session.commit()
 
 
-def work_omics(directory, connection=None):
-    """
-    :param str directory: Directory containing omics data and a manifest
-    :param connection: database connection string to cache, pre-built :class:`Manager`, or None to use default cache
-    :type connection: Optional[str or pybel.manager.Manager]
-    """
-    if not (os.path.exists(directory) and os.path.isdir(directory)):
-        log.warning('directory does not exist: %s', directory)
-        return
-
-    manifest = load_metadata(directory)
-    omics = create_omics_models(directory, manifest)
-    upload_omics_models(omics, connection=connection)
-    write_manifest(directory, omics)
-
-
 def write_manifest(directory, omics):
     """
     :param str directory:
     :param list[Omics] omics:
     """
-    manifest_path = os.path.join(directory, 'manifest.json')
+    manifest_path = os.path.join(directory, MANIFEST_FILE_NAME)
 
     log.info('generating manifest for %s', directory)
     manifest_data = [
@@ -102,6 +88,26 @@ def write_manifest(directory, omics):
     log.info('writing manifest to %s', manifest_path)
     with open(manifest_path, 'w') as file:
         json.dump(manifest_data, file, indent=2)
+
+
+def work_omics(directory, connection=None):
+    """
+    :param str directory: Directory containing omics data and a manifest
+    :param connection: database connection string to cache, pre-built :class:`Manager`, or None to use default cache
+    :type connection: Optional[str or pybel.manager.Manager]
+    """
+    if not (os.path.exists(directory) and os.path.isdir(directory)):
+        log.warning('directory does not exist: %s', directory)
+        return
+
+    if os.path.exists(os.path.join(directory, MANIFEST_FILE_NAME)):
+        log.info('omics data already built for %s', directory)
+        return
+
+    metadata = load_metadata(directory)
+    omics = create_omics_models(directory, metadata)
+    upload_omics_models(omics, connection=connection)
+    write_manifest(directory, omics)
 
 
 def main(connection=None):

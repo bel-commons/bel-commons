@@ -23,6 +23,7 @@ from pybel_web.external_managers import (
     chebi_manager, entrez_manager, expasy_manager, go_manager, hgnc_manager,
     interpro_manager, mirtarbase_manager,
 )
+from sqlalchemy.exc import OperationalError
 from pybel_web.manager_utils import insert_graph
 
 log = logging.getLogger(__name__)
@@ -156,7 +157,12 @@ def upload_jgf_directory(directory, connection=None):
             strip_annotations(graph)
             to_pickle(graph, gpickle_path)
 
-        insert_graph(manager, graph, public=True)
+
+        try:
+            insert_graph(manager, graph, public=True)
+        except OperationalError:
+            manager.session.rollback()
+            log.info('could not insert %s', graph)
 
     log.info('done in %.2f seconds', time.time() - t)
 
