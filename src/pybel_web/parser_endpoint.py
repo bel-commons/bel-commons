@@ -78,8 +78,9 @@ def build_parser_service(app, conversion_function=None):
                 'exception': str(e)
             })
 
+    @app.route('/api/parser/download/')
     @app.route('/api/parser/download/<serve_format>')
-    def download(serve_format):
+    def download(serve_format=None):
         """Downloads the internal graph"""
         return serve_network(graph, serve_format)
 
