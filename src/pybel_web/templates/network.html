@@ -29,7 +29,7 @@
     </script>
 {% endblock %}
 
-{% block title %}Statistics{% endblock %}
+{% block title %}Network {{ network.id }}{% endblock %}
 
 {% block content %}
     <a id="top"></a>
@@ -211,75 +211,56 @@
                 <h3 class="panel-title">Provenance</h3>
             </div>
             <div class="panel-body">
-                <dl class="dl-horizontal">
-                    {% if network.report %}
-                        <dt>Uploader</dt>
-                        <dd>{{ network.report.user.email }}</dd>
-                        <dt>Upload Time</dt>
-                        <dd>{{ network.report.created }}</dd>
-                    {% endif %}
+                <div class="row">
+                    <div class="col-lg-6">
+                        <dl class="dl-horizontal">
+                            {% if network.report %}
+                                <dt>Upload</dt>
+                                <dd>{{ network.report.user.email }} at {{ network.report.created }}</dd>
+                            {% endif %}
 
-                    <dt>Authors</dt>
-                    <dd>{{ network.authors }}</dd>
+                            <dt>Authors</dt>
+                            <dd>{{ network.authors }}</dd>
 
-                    <dt>Contact</dt>
-                    <dd>{{ network.contact }}</dd>
+                            <dt>Contact</dt>
+                            <dd>{{ network.contact }}</dd>
 
-                    {% if network.description %}
-                        <dt>Description</dt>
+                            {% if network.description %}
+                                <dt>Description</dt>
 
-                        <dd>{{ network.description }}</dd>
-                    {% endif %}
+                                <dd>{{ network.description }}</dd>
+                            {% endif %}
 
-                    <dt>License</dt>
-                    <dd>{{ network.licenses }}</dd>
+                            {% if network.licenses %}
+                                <dt>License</dt>
+                                <dd>{{ network.licenses }}</dd>
+                            {% endif %}
 
-                    <dt>Copyright</dt>
-                    <dd>{{ network.copyright }}</dd>
-                </dl>
-            </div>
-        </div>
-
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                <h3 class="panel-title">Table of Contents</h3>
-            </div>
-            <div class="panel-body">
-                <ol>
-                    <li><a href="#network-statistics">Network Statistics</a></li>
-                    <li><a href="#content-statistics">Content Statistics</a></li>
-                    <li><a href="#overlap">Network Overlap</a></li>
-                </ol>
-            </div>
-        </div>
-
-
-        <a id="network-statistics"></a>
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                <h3 class="panel-title">Network Statistics
-                    <a class="pull-right" href="#top">
-                        <span class="glyphicon glyphicon-arrow-up"></span>
-                    </a>
-                </h3>
-            </div>
-            <div class="panel-body">
-                <dl class="dl-horizontal">
-                    <dt>Number Nodes</dt>
-                    <dd>{{ network.report.number_nodes }}</dd>
-                    <dt>Number Edges</dt>
-                    <dd>{{ network.report.number_edges }}</dd>
-                    <dt>Number Components</dt>
-                    <dd>{{ network.report.number_components }}</dd>
-                    <dt>Network Density</dt>
-                    <dd>{{ network.report.network_density }}</dd>
-                    <dt>Average Degree</dt>
-                    <dd>{{ network.report.average_degree }}</dd>
-                    <dt>Number Citations</dt>
-                    <dd>{{ network.report.number_citations }}</dd>
-                    <dt>Number BEL Errors</dt>
-                    <dd>{{ network.report.number_warnings }}</dd>
-                </dl>
+                            {% if network.copyright %}
+                                <dt>Copyright</dt>
+                                <dd>{{ network.copyright }}</dd>
+                            {% endif %}
+                        </dl>
+                    </div>
+                    <div class="col-lg-6">
+                        <dl class="dl-horizontal">
+                            <dt>Number Nodes</dt>
+                            <dd>{{ network.report.number_nodes }}</dd>
+                            <dt>Number Edges</dt>
+                            <dd>{{ network.report.number_edges }}</dd>
+                            <dt>Number Components</dt>
+                            <dd>{{ network.report.number_components }}</dd>
+                            <dt>Network Density</dt>
+                            <dd>{{ network.report.network_density }}</dd>
+                            <dt>Average Degree</dt>
+                            <dd>{{ network.report.average_degree }}</dd>
+                            <dt>Number Citations</dt>
+                            <dd>{{ network.report.number_citations }}</dd>
+                            <dt>Number BEL Errors</dt>
+                            <dd>{{ network.report.number_warnings }}</dd>
+                        </dl>
+                    </div>
+                </div>
             </div>
         </div>
 
