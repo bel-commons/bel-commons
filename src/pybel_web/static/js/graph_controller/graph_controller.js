@@ -474,8 +474,8 @@ function networkSizeChecking(data, tree) {
 
         alert("The network you are trying to render contains: " + data.nodes.length + " nodes and " +
             data.links.length + " edges. To avoid crashing your browser, this network will only be rendered " +
-            "after you click in refresh network. Please consider giving a more specific query or applying some " +
-            "filters using the right-hand tree navigator.")
+            "after you give a more specific query or apply some filters with the right-hand tree navigator and" +
+            "click in refresh network.")
     } else {
         initD3Force(data, tree);
     }
