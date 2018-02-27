@@ -13,6 +13,9 @@ const nominalBaseNodeSize = 10; // Default node radius
 var edgeStroke = 3.5;  // Edge width
 var minZoom = 0.1, maxZoom = 10; // Zoom variables
 
+// The maximum number of nodes that can be rendered in the explorer
+const maximumNodesToRender = 1500;
+
 /**
  * Spinner on Ajax call
  */
@@ -466,7 +469,7 @@ function doAjaxCallWithCallback(url, callback) {
 }
 
 function networkSizeChecking(data, tree) {
-    if (data.nodes.length > 1500) {// Network bigger than 1500 nodes wont be render
+    if (data.nodes.length > maximumNodesToRender) { // Network bigger than 1500 nodes wont be rendered
         renderEmptyFrame();
 
         alert("The network you are trying to render contains: " + data.nodes.length + " nodes and " +
