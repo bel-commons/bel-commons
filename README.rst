@@ -3,23 +3,12 @@ BEL Commons
 An environment for curating, validating, and exploring knowledge assemblies encoded in Biological Expression Language
 (BEL) to support elucidating disease-specific, mechanistic insight.
 
-This package was originally developed as part of the master's work of
-`Charles Tapley Hoyt <https://github.com/cthoyt>`_ at `Fraunhofer SCAI <https://www.scai.fraunhofer.de/>`_ with
-partial support from the `IMI <https://www.imi.europa.eu/>`_ projects: `AETIONOMY <http://www.aetionomy.eu/>`_ and
-`PHAGO <http://www.phago.eu/>`_.
-
-Roles
------
-- Code Owner: Charles Tapley Hoyt
-- Project Owner: Alpha Tom Kodamullil
-- Support: Daniel Domingo Fernández
-
 System Requirements
 -------------------
-- python3
-- MySQL
-- RabbitMQ (or other message queue supported by `Celery <https://pypi.python.org/pypi/celery>`_)
-- uwsgi
+- `Python <https://www.python.org/>`_ 3.4+
+- `MySQL <https://www.mysql.com/>`_
+- `RabbitMQ <https://www.rabbitmq.com>`_ (or other message queue supported by `Celery <https://pypi.python.org/pypi/celery>`_)
+- `uWSGI <https://uwsgi-docs.readthedocs.io/en/latest/>`_
 
 At least 2GB RAM for parsing. Multiple users are expected per day, likely concurrently.
 
@@ -59,6 +48,7 @@ For the times when you just have to burn it down and start over
 
 1. ``pybel_web manage drop`` will nuke the database and output a user list
 2. ``pybel_web manage load`` will automatically add the most recently exported user list
+3. ``pybel_web manage examples load`` will automatically load some example networks and data sets
 
 Configuration
 -------------
@@ -100,6 +90,13 @@ Input
 ~~~~~
 This service accepts BEL Scripts as input through an HTML form. It also has a user registration page that tracks
 email addresses and names of users. Its underlying database is populated accordingly.
+
+Acknowledgement
+---------------
+This package was originally developed with the results from the master's work of
+`Charles Tapley Hoyt <https://github.com/cthoyt>`_ at `Fraunhofer SCAI <https://www.scai.fraunhofer.de/>`_ with
+partial support from the `IMI <https://www.imi.europa.eu/>`_ projects: `AETIONOMY <http://www.aetionomy.eu/>`_ and
+`PHAGO <http://www.phago.eu/>`_.
 
 .. |license| image:: https://img.shields.io/badge/License-Apache%202.0-blue.svg
     :alt: Apache 2.0 License
