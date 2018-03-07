@@ -76,11 +76,12 @@ def build_annotation_search_filter(annotations, values):
     :param list[str] annotations: A list of the annotations to search
     :param list[str] values: A list of values to match against any annotations
     :return: Edge filter function
+    :rtype: (pybel.BELGraph, tuple, tuple, int) -> bool
     """
 
-    def annotation_dict_filter(graph, u, v, k, d):
+    def annotation_dict_filter(graph, u, v, k):
         """Returns if any of the annotations and values match up"""
-        return _annotation_dict_filter_helper(d, annotations, values)
+        return _annotation_dict_filter_helper(graph.edge[u][v][k], annotations, values)
 
     return annotation_dict_filter
 
