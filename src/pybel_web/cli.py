@@ -592,7 +592,7 @@ def examples():
 
 
 @examples.command()
-@click.option('-p', '--permutations', type=int, default=25)
+@click.option('-p', '--permutations', type=int, help='Number of permutations to run. Defaults to 25.', default=25)
 @click.pass_obj
 def load(manager, permutations):
     """Load omics, networks, and experiments"""
@@ -626,7 +626,7 @@ def load_networks(manager):
 
 
 @examples.command()
-@click.option('-p', '--permutations', type=int, default=25)
+@click.option('-p', '--permutations', type=int, help='Number of permutations to run. Defaults to 25.', default=25)
 @click.pass_obj
 def load_experiments(manager, permutations):
     """Load experiments"""

@@ -59,7 +59,7 @@ MAPPING = {
 def _annotation_dict_filter_helper(data, annotations, values):
     """Returns if any of the annotations and values match up
 
-    :param dict data:
+    :param dict data: The data dictionary coming from a PyBEL edge data dictionary
     :param list[str] annotations: A list of the annotations to search
     :param list[str] values: A list of values to match against any annotations
     :rtype: bool
