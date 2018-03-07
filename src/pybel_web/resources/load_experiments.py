@@ -183,12 +183,12 @@ def main(connection=None, permutations=25):
     :type connection: Optional[str or pybel.manager.Manager]
     :param int permutations:
     """
-    alzheimer_directory = os.path.join(BMS_BASE, 'aetionomy', 'alzheimers')
+    network_directory = os.path.join(BMS_BASE, 'aetionomy', 'neurommsig')
     gse1297_directory = os.path.join(dir_path, 'GSE1297')
     gse28146_directory = os.path.join(dir_path, 'GSE28146')
 
     work_group(
-        network_directory=alzheimer_directory,
+        network_directory=network_directory,
         omics_directories=(gse1297_directory, gse28146_directory),
         connection=connection,
         permutations=permutations
