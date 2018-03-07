@@ -179,8 +179,8 @@ def run(host, port, default_config, debug, config, examples, with_gunicorn, work
     if 'BEL4IMOCEDE_DATA_PATH' in os.environ:
         try:
             from . import mozg_service
-        except Exception:
-            log.info('unable to load mozg service')
+        except RuntimeError:
+            log.exception('missing mozg service required data')
         else:
             app.register_blueprint(mozg_service.mozg_blueprint)
 

@@ -13,9 +13,7 @@ Combined network is returned as a result.
 import logging
 import os
 
-from flask import (
-    Blueprint, request,
-)
+from flask import Blueprint, request
 from flask_cors import cross_origin
 
 from pybel import from_pickle
@@ -38,8 +36,19 @@ data_path = os.path.expanduser(data_path)
 
 # Initial BEL Networks are parsed, preprocessed and additional information
 # is added to related nodes. Preprocessing is done in the Jupyter Notebook.
-projection_graph = from_pickle(os.path.join(data_path, 'projections.gpickle'))
-anhedonia_graph = from_pickle(os.path.join(data_path, 'anhedonia.gpickle'))
+projection_graph_path = os.path.join(data_path, 'projections.gpickle')
+
+if not os.path.exists(projection_graph_path):
+    raise RuntimeError('Projection graph missing from {}'.format(projection_graph_path))
+
+projection_graph = from_pickle(projection_graph_path)
+
+anhedonia_graph_path = os.path.join(data_path, 'anhedonia.gpickle')
+
+if not os.path.exists(anhedonia_graph_path):
+    raise RuntimeError('Anhedonia graph missing from {}'.format(anhedonia_graph_path))
+
+anhedonia_graph = from_pickle(anhedonia_graph_path)
 
 MAPPING = {
     'projections': projection_graph,
