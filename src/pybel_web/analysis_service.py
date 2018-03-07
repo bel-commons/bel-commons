@@ -218,7 +218,7 @@ def get_dataframe_from_experiments(experiments, *, normalize=None, clusters=None
         log.info('using seed: %s', seed)
         km = KMeans(n_clusters=clusters, random_state=seed)
         km.fit(df[data_columns])
-        df['Group'] = km.labels_
+        df['Group'] = km.labels_ + 1
         df = df.sort_values('Group')
 
     return df
