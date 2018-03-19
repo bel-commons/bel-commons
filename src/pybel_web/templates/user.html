@@ -21,13 +21,13 @@
     <div class="container">
         {{ util.flashed_messages(dismissible=True, container=False) }}
 
-    {% if current_user.is_admin %}
-        <ol class="breadcrumb">
-            <li><a href="{{ url_for('ui.home') }}">Catalog</a></li>
-            <li><a href="{{ url_for('ui.view_users') }}">Users</a></li>
-            <li class="active">{{ user }}</li>
-        </ol>
-    {% endif %}
+        {% if current_user.is_admin %}
+            <ol class="breadcrumb">
+                <li><a href="{{ url_for('ui.home') }}">Catalog</a></li>
+                <li><a href="{{ url_for('ui.view_users') }}">Users</a></li>
+                <li class="active">{{ user }}</li>
+            </ol>
+        {% endif %}
 
         <div class="page-header">
             <h1>
