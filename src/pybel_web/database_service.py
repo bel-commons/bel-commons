@@ -27,7 +27,7 @@ from pybel.struct import union
 from pybel.struct.summary import get_annotation_values_by_annotation, get_pubmed_identifiers
 from pybel.utils import get_version as get_pybel_version, hash_node
 from pybel_tools import pipeline
-from pybel_tools.analysis.cmpa import RESULT_LABELS
+from pybel_tools.analysis.ucmpa import RESULT_LABELS
 from pybel_tools.filters.node_filters import exclude_pathology_filter
 from pybel_tools.mutation import add_canonical_names
 from pybel_tools.query import Query
