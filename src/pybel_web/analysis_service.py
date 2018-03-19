@@ -14,7 +14,7 @@ from flask import Blueprint, abort, current_app, make_response, redirect, render
 from flask_security import current_user, login_required, roles_required
 from sklearn.cluster import KMeans
 
-from pybel_tools.analysis.cmpa import RESULT_LABELS
+from pybel_tools.analysis.ucmpa import RESULT_LABELS
 from .forms import DifferentialGeneExpressionForm
 from .manager_utils import create_omic, next_or_jsonify, safe_get_experiment
 from .models import Experiment, Omic, Query
