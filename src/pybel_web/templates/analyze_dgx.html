@@ -18,7 +18,8 @@
             <div class="panel-body">
                 <p>This form will run an analysis on <code>Query {{ query.id }}</code> using a variant of the
                     <a href="https://bmcsystbiol.biomedcentral.com/articles/10.1186/1752-0509-6-54">Network Perturbation
-                        Amplitude</a> algorithm called Candidate Mechanism Perturbation Amplitude to
+                        Amplitude</a> algorithm called <a href="http://pybel-tools.readthedocs.io/en/latest/cmpa.html">Candidate
+                        Mechanism Perturbation Amplitude</a> to
                     prioritize biological processes in the context of a differential gene expression experiment.
                 </p>
             </div>
@@ -59,6 +60,12 @@
                 <h3 class="panel-title">Input</h3>
             </div>
             <div class="panel-body">
+                <p>
+                    Differential gene expression data can be created easily with GEO2R by following <a
+                        href="{{ url_for('ui.view_dgx_tutorial') }}">this
+                    tutorial</a>.
+                </p>
+
                 {{ wtf.quick_form(form, form_type='horizontal', button_map={'submit_button': 'btn btn-primary'}) }}
             </div>
         </div>

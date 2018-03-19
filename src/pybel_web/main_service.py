@@ -487,6 +487,12 @@ def view_about():
     return render_template('about.html', metadata=metadata, managers=manager_dict)
 
 
+@ui_blueprint.route('/dgx_tutorial')
+def view_dgx_tutorial():
+    """Sends the differential gene expression tutorial page"""
+    return render_template('analyze_dgx_tutorial.html')
+
+
 @ui_blueprint.route('/network/<int:network_id>')
 def view_network(network_id):
     """Renders a page with the statistics of the contents of a BEL script
