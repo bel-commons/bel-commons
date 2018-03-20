@@ -118,6 +118,7 @@ def main(connection=None):
     """
     work_omics(directory=os.path.join(dir_path, 'GSE28146'), connection=connection)
     work_omics(directory=os.path.join(dir_path, 'GSE1297'), connection=connection)
+    work_omics(directory=os.path.join(dir_path, 'GSE63063'), connection=connection)
 
 
 if __name__ == '__main__':

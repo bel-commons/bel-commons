@@ -187,10 +187,12 @@ def main(connection=None, permutations=25):
 
     gse1297_directory = os.path.join(dir_path, 'GSE1297')
     gse28146_directory = os.path.join(dir_path, 'GSE28146')
+    gse63063_directory = os.path.join(dir_path, 'GSE63063')
 
     omics_directories = [
         gse1297_directory,
         gse28146_directory,
+        gse63063_directory
     ]
 
     work_group(
