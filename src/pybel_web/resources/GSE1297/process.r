@@ -1,21 +1,8 @@
 # Version info: R 3.2.3, Biobase 2.30.0, GEOquery 2.40.0, limma 3.26.8
 
-## Uncomment to install the packages needed to run the code
-## Tutorial how to install packages -> https://www.bioconductor.org/install/
-
-#source("https://bioconductor.org/biocLite.R")
-#biocLite(c("Biobase", "GEOquery", "limma"))
-
-## If it does not work try:
-# install.packages('Biobase')
-# install.packages('GEOquery')
-# install.packages('limma')
-
 library(Biobase)
 library(GEOquery)
 library(limma)
-
-# load series and platform data from GEO
 
 ################################################################
 # Create incipient versus control comparison

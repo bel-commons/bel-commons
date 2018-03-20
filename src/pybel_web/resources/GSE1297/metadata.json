@@ -1,7 +1,7 @@
 [
   {
     "source_name": "incipient.tsv",
-    "description": "Patients from GSE1297 with early Alzheimer's disease",
+    "description": "Patients from GSE1297 with incipient Alzheimer's disease",
     "gene_column": "Gene.symbol",
     "data_column": "logFC",
     "public": true

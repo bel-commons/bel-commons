@@ -12,12 +12,20 @@ Unfortunately, R is not the most reproducible language. These scripts were run w
 
 Requirements
 ************
-Install the bioconductor dependencies with
+Install the bioconductor dependencies based on the tutorial from https://www.bioconductor.org/install/. First, try:
 
 .. code-block::r
 
     source("https://bioconductor.org/biocLite.R")
     biocLite(c("Biobase", "GEOquery", "limma"))
+
+If that doesn't work, try:
+
+.. code-block::r
+
+    install.packages('Biobase')
+    install.packages('GEOquery')
+    install.packages('limma')
 
 Execute
 *******
