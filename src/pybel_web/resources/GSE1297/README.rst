@@ -1,10 +1,27 @@
 GSE1297
 =======
-This folder contains the results from differential gene expression analysis performed by Reagon Karki and provided
-through NeuroMMSig using the GEO experiment `GSE1297 <https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE1297>`_.
+This folder contains the results from differential gene expression analysis performed using the attached R script,
+which is slightly modified from the output from GEO2R on experiment for `GSE1297 <https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE1297>`_.
 It contains results for three different stages of Alzheimer's disease patients - incipient, moderate, and severe.
 
 The metadata associated with these three files is stored in ``metadata.json``.
+
+How to Run
+----------
+Unfortunately, R is not the most reproducible language. These scripts were run with R version 3.4.2.
+
+Requirements
+************
+Install the bioconductor dependencies with
+
+.. code-block::r
+
+    source("https://bioconductor.org/biocLite.R")
+    biocLite(c("Biobase", "GEOquery", "limma"))
+
+Execute
+*******
+``cd`` into the directory and user ``rscript process.r``
 
 Reference
 ---------
