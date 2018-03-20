@@ -184,12 +184,18 @@ def main(connection=None, permutations=25):
     :param int permutations:
     """
     network_directory = os.path.join(BMS_BASE, 'aetionomy', 'neurommsig')
+
     gse1297_directory = os.path.join(dir_path, 'GSE1297')
     gse28146_directory = os.path.join(dir_path, 'GSE28146')
 
+    omics_directories = [
+        gse1297_directory,
+        gse28146_directory,
+    ]
+
     work_group(
         network_directory=network_directory,
-        omics_directories=(gse1297_directory, gse28146_directory),
+        omics_directories=omics_directories,
         connection=connection,
         permutations=permutations
     )
