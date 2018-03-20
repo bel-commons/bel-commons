@@ -1,0 +1,30 @@
+[
+  {
+    "source_name": "AD_GSE63063_c.tsv",
+    "description": "Patients from GSE63063 with mild cognitive impairment (batch 1/GPL10558)",
+    "gene_column": "Gene.symbol",
+    "data_column": "logFC",
+    "public": true
+  },
+  {
+    "source_name": "MCI_GSE63063_GPL6947.tsv",
+    "description": "Patients from GSE63063 with Alzheimer's disease (batch 1/GPL10558)",
+    "gene_column": "Gene.symbol",
+    "data_column": "logFC",
+    "public": true
+  },
+  {
+    "source_name": "AD_GSE63063_GPL10558.tsv",
+    "description": "Patients from GSE63063 with mild cognitive impairment (batch 2/GPL10558)",
+    "gene_column": "Gene.symbol",
+    "data_column": "logFC",
+    "public": true
+  },
+  {
+    "source_name": "MCI_GSE63063_GPL10558.tsv",
+    "description": "Patients from GSE63063 with Alzheimer's disease (batch 2/GPL10558)",
+    "gene_column": "Gene.symbol",
+    "data_column": "logFC",
+    "public": true
+  }
+]
