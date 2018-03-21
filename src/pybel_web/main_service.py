@@ -13,7 +13,7 @@ from flask import Blueprint, abort, current_app, flash, redirect, render_templat
 from flask_security import current_user, login_required, roles_required
 
 import pybel_tools.query
-from pybel.manager.models import Annotation, Citation, Edge, Evidence, Namespace, Node
+from pybel.manager.models import Annotation, AnnotationEntry, Citation, Edge, Evidence, Namespace, Node
 from pybel.utils import get_version as get_pybel_version
 from pybel_tools.biogrammar.double_edges import summarize_competeness
 from pybel_tools.mutation import (
@@ -210,6 +210,21 @@ def view_node(node_hash):
         go_manager=go_manager,
         entrez_manager=entrez_manager,
         interpro_manager=interpro_manager,
+    )
+
+
+@ui_blueprint.route('/annotation_entry/<int:annotation_entry_id>')
+def view_annotation_entry(annotation_entry_id):
+    """
+
+    :param int annotation_entry_id: The annotation entry id
+    """
+    annotation_entry = manager.session.query(AnnotationEntry).get(annotation_entry_id)
+
+    return render_template(
+        'annotation_entry.html',
+        annotation_entry=annotation_entry,
+        current_user=current_user,
     )
 
 

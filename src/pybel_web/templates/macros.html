@@ -75,7 +75,11 @@
                         <dl class="dl-horizontal">
                             {% for annotation_entry in annotation_entries %}
                                 <dt>{{ annotation_entry.annotation.name }}</dt>
-                                <dd>{{ annotation_entry.name }}</dd>
+                                <dd>
+                                    <a href="{{ url_for('ui.view_annotation_entry', annotation_entry_id=annotation_entry.id) }}">
+                                        {{ annotation_entry.name }}
+                                    </a>
+                                </dd>
                             {% endfor %}
                         </dl>
                     </div>
