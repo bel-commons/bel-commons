@@ -168,6 +168,7 @@ def view_nodes():
 
     search = request.args.get('search')
     if search:
+        flask.flash('Searched for "{}"'.format(search))
         nodes = nodes.filter(Node.bel.contains(search))
 
     count = nodes.count()
