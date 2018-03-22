@@ -172,7 +172,7 @@
                 </tr>
                 </thead>
                 <tbody>
-                {% for report in user.reports %}
+                {% for report in user.reports | reverse %}
                     {% if report.network is not none %}
                         <tr>
                             <td>{{ report.network.name }}</td>
