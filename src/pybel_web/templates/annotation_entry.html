@@ -13,9 +13,11 @@
 
         <ol class="breadcrumb">
             <li><a href="{{ url_for('ui.home') }}">Catalog</a></li>
-            <li><a href="{{ url_for('ui.view_annotations') }}">Annotation</a></li>
-            <li><a href="#">{{ annotation_entry.annotation.name }}</a></li>
-            <li class="active"><code>{{ annotation_entry.name }}</code></li>
+            <li><a href="{{ url_for('ui.view_annotations') }}">Annotations</a></li>
+            <li>
+                <a href="{{ url_for('ui.view_annotation', annotation_id=annotation_entry.annotation.id) }}">{{ annotation_entry.annotation.name }}</a>
+            </li>
+            <li class="active">{{ annotation_entry.name }}</li>
         </ol>
 
         <div class="page-header">
@@ -30,11 +32,15 @@
                     <dt>Annospace Keyword</dt>
                     <dd>{{ annotation_entry.annotation.keyword }}</dd>
                     <dt>Annospace Name</dt>
-                    <dd>{{ annotation_entry.annotation.name }}</dd>
+                    <dd>
+                        <a href="{{ url_for('ui.view_annotation', annotation_id=annotation_entry.annotation.id) }}">
+                            {{ annotation_entry.annotation.name }}
+                        </a>
+                    </dd>
                     <dt>Annospace Version</dt>
                     <dd>{{ annotation_entry.annotation.version }}</dd>
                     {% if annotation_entry.annotation.url %}
-                        <dt>Namespace URL</dt>
+                        <dt>Annospace URL</dt>
                         <dd>
                             <a href="{{ annotation_entry.annotation.url }}">
                                 {{ annotation_entry.annotation.url }}
