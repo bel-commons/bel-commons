@@ -165,8 +165,7 @@
             <table class="table table-striped table-responsive">
                 <thead>
                 <tr>
-                    <th>Name</th>
-                    <th>Version</th>
+                    <th>Network</th>
                     <th>Date of Upload</th>
                     <th></th>
                 </tr>
@@ -175,8 +174,11 @@
                 {% for report in user.reports | reverse %}
                     {% if report.network is not none %}
                         <tr>
-                            <td>{{ report.network.name }}</td>
-                            <td>{{ report.network.version }}</td>
+                            <td>
+                                <a href="{{ url_for('ui.view_network', network_id=report.network.id) }}">
+                                    {{ report.network }}
+                                </a>
+                            </td>
                             <td>{{ report.created }}</td>
                             <td>
                                 <div class="pull-right">
