@@ -37,6 +37,8 @@ if BMS_BASE is None:
     raise RuntimeError('BMS_BASE is not set in the environment')
 
 alzheimer_directory = os.path.join(BMS_BASE, 'aetionomy', 'alzheimers')
+parkinsons_directory = os.path.join(BMS_BASE, 'aetionomy', 'parkinsons')
+epilepsy_directory = os.path.join(BMS_BASE, 'aetionomy', 'epilepsy')
 neurommsig_directory = os.path.join(BMS_BASE, 'aetionomy', 'neurommsig')
 selventa_directory = os.path.join(BMS_BASE, 'selventa')
 cbn_human = os.path.join(BMS_BASE, 'cbn', 'Human-2.0')
@@ -53,30 +55,45 @@ neurommsig_sample_networks = [
 _jgf_extension = '.jgf'
 
 
-def ensure_pickles(directory, connection=None, **kwargs):
+def _ensure_pickle(path, manager, **kwargs):
+    gpickle_path = get_corresponding_gpickle_path(path)
+
+    if not os.path.exists(gpickle_path):
+        graph = from_path(path, manager=manager, **kwargs)
+        to_pickle(graph, gpickle_path)
+    else:
+        graph = from_pickle(gpickle_path)
+
+    return insert_graph(manager, graph, public=True)
+
+
+def ensure_pickles(directory, connection=None, blacklist=None, **kwargs):
     """
     :param str directory:
     :param connection: database connection string to cache, pre-built :class:`Manager`, or None to use default cache
     :type connection: Optional[str or pybel.manager.Manager]
+    :param Optional[list[str]] blacklist: An optional list of file names not to use
     """
     log.info('ensuring pickles in %s', directory)
     manager = Manager.ensure(connection=connection)
 
     for filename in iter_paths_from_directory(directory):
         path = os.path.join(directory, filename)
-        gpickle_path = get_corresponding_gpickle_path(path)
-        if os.path.exists(gpickle_path):
+
+        if blacklist and filename in blacklist:
+            log.info('skipping %s', path)
             continue
 
-        graph = from_path(path, manager=manager, **kwargs)
-        to_pickle(graph, gpickle_path)
+        _ensure_pickle(path, manager, **kwargs)
 
 
-def upload_pickles(directory, connection=None):
-    """
+def upload_pickles(directory, connection=None, blacklist=None):
+    """Uploads all of the pickles in a given directory
+
     :param str directory:
     :param connection: database connection string to cache, pre-built :class:`Manager`, or None to use default cache
     :type connection: Optional[str or pybel.manager.Manager]
+    :param Optional[list[str]] blacklist: An optional list of file names not to use
     :rtype: list[Network]
     """
     log.info('loading pickles in %s', directory)
@@ -85,7 +102,7 @@ def upload_pickles(directory, connection=None):
 
     results = []
 
-    for graph in iter_from_pickles_from_directory(directory):
+    for graph in iter_from_pickles_from_directory(directory, blacklist=blacklist):
         network = insert_graph(manager, graph, public=True)
         results.append(network)
 
@@ -111,19 +128,32 @@ def write_manifest(directory, networks):
         json.dump(manifest_data, file, indent=2)
 
 
-def upload_bel_directory(directory, connection=None):
+def upload_bel_directory(directory, connection=None, blacklist=None):
     """Handles parsing, pickling, then uploading all BEL files in a given directory
 
     :param str directory:
     :param connection: database connection string to cache, pre-built :class:`Manager`, or None to use default cache
     :type connection: Optional[str or pybel.manager.Manager]
+    :param Optional[list[str]] blacklist: An optional list of file names not to use. NO FILE EXTENSIONS
     """
     if not (os.path.exists(directory) and os.path.isdir(directory)):
         log.warning('directory does not exist: %s', directory)
         return
 
-    ensure_pickles(directory, connection=connection)
-    networks = upload_pickles(directory, connection=connection)
+    if blacklist is not None and not isinstance(blacklist, (set, tuple, list)):
+        raise TypeError('blacklist is wrong type: {}'.format(blacklist.__class__.__name__))
+
+    ensure_pickles(
+        directory,
+        connection=connection,
+        blacklist=[e + '.bel' for e in blacklist] if blacklist is not None else None
+    )
+    networks = upload_pickles(
+        directory,
+        connection=connection,
+        blacklist=[e + '.gpickle' for e in blacklist] if blacklist is not None else None
+    )
+
     write_manifest(directory, networks)
 
 
@@ -255,6 +285,8 @@ def main(connection=None):
     """
     upload_neurommsig_graphs(connection=connection)
     upload_bel_directory(selventa_directory, connection=connection)
+    upload_bel_directory(alzheimer_directory, connection=connection, blacklist=['alzheimers'])
+    upload_bel_directory(parkinsons_directory, connection=connection, blacklist=['parkinsons'])
 
     upload_jgf_directory(cbn_human, connection=connection)
     upload_jgf_directory(cbn_mouse, connection=connection)
