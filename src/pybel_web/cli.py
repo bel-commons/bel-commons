@@ -675,5 +675,19 @@ def load_experiments(manager, permutations):
     main(manager, permutations=permutations)
 
 
+@manage.command()
+@click.pass_obj
+def wasteland(manager):
+    """Drop a lot"""
+    manager.session.query(Experiment).delete()
+    manager.session.commit()
+    manager.session.query(Query).delete()
+    manager.session.commit()
+    manager.session.query(Assembly).delete()
+    manager.session.commit()
+    manager.session.query(Network).delete()
+    manager.session.commit()
+
+
 if __name__ == '__main__':
     main()
