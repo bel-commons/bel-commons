@@ -488,6 +488,46 @@ def export(manager, output):
 
 
 @manage.group()
+def query():
+    """Manage queries"""
+
+
+@query.command()
+@click.option('--query-id', type=int)
+@click.option('-y', '--yes', is_flag=True)
+@click.pass_obj
+def drop(manager, query_id, yes):
+    """Drops either a single or all Experiment models"""
+    if query_id:
+        manager.session.query(query_id).get(query_id).delete()
+        manager.session.commit()
+
+    elif yes or click.confirm('Drop all Query models at {}?'.format(manager.connection)):
+        manager.session.query(Query).delete()
+        manager.session.commit()
+
+
+@manage.group()
+def assembly():
+    """Manage assemblies"""
+
+
+@assembly.command()
+@click.option('--assembly-id', type=int)
+@click.option('-y', '--yes', is_flag=True)
+@click.pass_obj
+def drop(manager, assembly_id, yes):
+    """Drops either a single or all Experiment models"""
+    if assembly_id:
+        manager.session.query(assembly_id).get(assembly_id).delete()
+        manager.session.commit()
+
+    elif yes or click.confirm('Drop all Assembly models at {}?'.format(manager.connection)):
+        manager.session.query(Assembly).delete()
+        manager.session.commit()
+
+
+@manage.group()
 def experiments():
     """Manage experiments"""
 
