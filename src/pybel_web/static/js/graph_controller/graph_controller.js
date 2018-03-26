@@ -2141,7 +2141,7 @@ function initD3Force(graph, tree) {
         window.location.href = '/api/query/' + window.query + '/export/' + $(this).data('format');
     });
 
-    $("#analyze-button").click(function () {
-        window.location.href = '/query/' + window.query + '/analysis/upload'
-    });
+    $('#analysis-upload-button').click(function () {
+        window.location.href = '/experiment/from_query/' + window.query + '/upload';
+    })
 }
