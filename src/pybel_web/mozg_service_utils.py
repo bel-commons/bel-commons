@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from random import getrandbits
+import pandas as pd
 
 from pybel.constants import ANNOTATIONS
 from pybel.struct.summary import get_annotation_values_by_annotation
@@ -140,3 +140,22 @@ def get_rc_tree_annotations(graph):
         }
         for annotation, values in sorted(annotations.items())
     ]
+
+def xsls_to_dct(file_name):
+    """Creates a data dictionary from xlsx files, where keys are indexes, and values are columns
+
+    :param file_name: xlsx file
+    :rtype: dict
+    """
+
+    df = pd.read_excel(file_name)
+    return df.set_index('ROIs').T.to_dict()
+
+def get_mapping_dct(file_name, index_col, acronym_col):
+    """Creates a mapping dictionary
+
+    :param file_name: csv file
+    :rtype: dict
+    """
+    df = pd.read_csv('./mapping_npao_to_aba.csv', index_col=index_col)
+    return df.to_dict()[acronym_col]
