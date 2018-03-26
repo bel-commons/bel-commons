@@ -14,7 +14,7 @@ import flask
 import networkx as nx
 from flask import Blueprint, abort, current_app, flash, jsonify, make_response, redirect, request
 from flask_security import current_user, login_required, roles_required
-from sqlalchemy import func
+from sqlalchemy import func, or_
 
 import pybel
 from pybel.constants import NAME, NAMESPACE, NAMESPACE_DOMAIN_OTHER
@@ -411,6 +411,35 @@ def get_network_metadata(network_id):
 
     return jsonify(**network.to_json(include_id=True))
 
+
+@api_blueprint.route('/api/network/suggestion/')
+def suggest_network():
+    """Creates a suggestion for networks
+
+    ---
+    tags:
+        - network
+    parameters:
+      - name: q
+        in: query
+        description: The search term
+        default: Sialic Acid
+        required: true
+        type: string
+    """
+    q = request.args.get('q')
+
+    if not q:
+        return jsonify([])
+
+    network_query = manager.session.query(Network)
+
+    network_query = network_query.filter(or_(Network.name.contains(q), Network.description.contains(q)))
+
+    return jsonify([
+        network.to_json(include_id=True)
+        for network in network_query
+    ])
 
 @api_blueprint.route('/api/network/<int:network_id>/namespaces')
 def namespaces_by_network(network_id):
