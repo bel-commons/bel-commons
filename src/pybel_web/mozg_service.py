@@ -45,7 +45,7 @@ if not os.path.exists(xlsx_dir):
 xlsx_data_stucture = {}
 for path in os.listdir(xlsx_dir):
     absolute_path = os.path.join(xlsx_dir, path)
-    xlsx_data_stucture[path] = xlsx_to_dict(path)
+    xlsx_data_stucture[path] = xlsx_to_dict(absolute_path)
 
 mapping_dct_path = os.path.join(data_dir, 'mapping_npao_to_aba.csv')
 NPAO_ABA_MAPPING = get_npao_aba_mapping_dict(mapping_dct_path)
