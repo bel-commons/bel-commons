@@ -83,7 +83,6 @@ def do_simple_complicated_filter(fd, data):
     return get_subgraph_by_edge_filter(data, build_annotation_search_filter(annotation, value))
 
 
-
 def do_more_complicated_filter(data, fdl):
     """Builds an annotation search filter for Mozg that takes a list of dicts with annotations/values
         build_more_complicated_filter
@@ -141,21 +140,24 @@ def get_rc_tree_annotations(graph):
         for annotation, values in sorted(annotations.items())
     ]
 
-def xsls_to_dct(file_name):
+
+def xlsx_to_dict(file_name):
     """Creates a data dictionary from xlsx files, where keys are indexes, and values are columns
 
     :param file_name: xlsx file
     :rtype: dict
     """
-
     df = pd.read_excel(file_name)
     return df.set_index('ROIs').T.to_dict()
 
-def get_mapping_dct(file_name, index_col, acronym_col):
+
+def get_npao_aba_mapping_dict(file_name, key_column='npao', value_column='acronym'):
     """Creates a mapping dictionary
 
-    :param file_name: csv file
-    :rtype: dict
+    :param str file_name: Path to CSV file
+    :param str key_column: The name of the column to use as keys (defaults to ``npao``)
+    :param str value_column: The name of the column to use as values (defaults to ``acronym``)
+    :rtype: dict[str,str]
     """
-    df = pd.read_csv('./mapping_npao_to_aba.csv', index_col=index_col)
-    return df.to_dict()[acronym_col]
+    df = pd.read_csv(file_name, index_col=key_column)
+    return df.to_dict()[value_column]
