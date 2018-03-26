@@ -257,7 +257,7 @@ def insert_graph(manager, graph, user_id=1, public=False):
     return network
 
 
-def create_omic(data, gene_column, data_column, description, source_name, public=False, user=None):
+def create_omic(data, gene_column, data_column, description, source_name, sep, public=False, user=None):
     """Creates an omics model
 
     :param str or file data:
@@ -269,7 +269,7 @@ def create_omic(data, gene_column, data_column, description, source_name, public
     :param Optional[User] user:
     :rtype: Omic
     """
-    df = pd.read_csv(data)
+    df = pd.read_csv(data, sep=sep)
 
     if gene_column not in df.columns:
         raise ValueError('{} not a column in document'.format(gene_column))

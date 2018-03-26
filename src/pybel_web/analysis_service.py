@@ -10,6 +10,7 @@ from operator import itemgetter
 import flask
 import numpy as np
 import pandas as pd
+import pandas.errors
 from flask import Blueprint, abort, current_app, make_response, redirect, render_template, request, url_for
 from flask_security import current_user, login_required, roles_required
 from sklearn.cluster import KMeans
@@ -128,15 +129,22 @@ def view_query_uploader(query_id):
         form.permutations.data,
     )
 
-    omic = create_omic(
-        data=form.file.data,
-        gene_column=form.gene_symbol_column.data,
-        data_column=form.log_fold_change_column.data,
-        source_name=form.file.data.filename,
-        description=form.description.data,
-        public=form.omics_public.data,
-        user=current_user
-    )
+    try:
+        omic = create_omic(
+            data=form.file.data,
+            gene_column=form.gene_symbol_column.data,
+            data_column=form.log_fold_change_column.data,
+            source_name=form.file.data.filename,
+            description=form.description.data,
+            sep=form.separator.data,
+            public=form.omics_public.data,
+            user=current_user
+        )
+    except pandas.errors.ParserError:
+        flask.flash('Malformed differential gene expression file. Check it is formatted consistently.',
+                    category='warning')
+        log.exception('Malformed differential gene expression file.')
+        return redirect(url_for('.view_query_uploader', query_id=query_id))
 
     experiment = Experiment(
         user=current_user,
@@ -156,8 +164,10 @@ def view_query_uploader(query_id):
         experiment.id
     ])
 
-    flask.flash('Queued Experiment {} with task {}'.format(experiment.id, task))
-    return redirect(url_for('ui.home'))
+    flask.flash('Queued Experiment {} with task {}. You can now upload another experiment for Query {}'.format(
+        experiment.id, task, query_id)
+    )
+    return redirect(url_for('.view_query_uploader', query_id=query_id))
 
 
 @experiment_blueprint.route('/from_network/<int:network_id>/upload/', methods=('GET', 'POST'))
