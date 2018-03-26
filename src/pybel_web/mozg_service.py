@@ -14,8 +14,6 @@ import logging
 from copy import deepcopy
 import os
 
-import pandas as pd
-
 from flask import Blueprint, request, jsonify, redirect, url_for, abort
 from flask_cors import cross_origin
 from pybel import from_pickle
@@ -25,7 +23,7 @@ from pybel_tools.dict_manager import DictManager
 from pybel_tools.pipeline import mutator, function_is_registered
 from pybel_tools.selection import get_subgraph_by_annotations
 
-from .mozg_service_utils import get_rc_tree_annotations, make_graph
+from .mozg_service_utils import get_rc_tree_annotations, make_graph, xsls_to_dct, get_mapping_dct
 from .send_utils import to_json_custom
 from pybel_tools.query import Query
 
@@ -78,13 +76,11 @@ MAPPING = {
     'anhedonia': anhedonia_metadata.id
 }
 
-def xsls_to_dct(file_name):
-    df = pd.read_excel(file_name)
-    return df.set_index('ROIs').T.to_dict()
+bi_data_path = os.path.join(data_path, 'vehicle.haloperidol-1.right_summary.xlsx')
+BI_DATA = xsls_to_dct(bi_data_path)
 
-BI_DATA = xsls_to_dct("/Users/alex/dev/mozg/data/preliminary_data_non_conf/vehicle.haloperidol-1.right_summary.xlsx")
-
-MAPPING_DICT = ...
+mapping_dct_path = os.path.join(data_path, 'mapping_npao_to_aba.csv')
+MAPPING_DICT = get_mapping_dct(mapping_dct_path)
 
 def get_query_or_404(query_id):
     """Get a query if it exists
