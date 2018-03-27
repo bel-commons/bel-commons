@@ -23,7 +23,7 @@ from pybel_tools.mutation import add_canonical_names
 from pybel_tools.pipeline import function_is_registered, mutator
 from pybel_tools.query import Query
 from pybel_tools.selection import get_subgraph_by_annotations
-from .mozg_service_utils import get_npao_aba_mapping_dict, get_rc_tree_annotations, make_graph, xlsx_to_dict
+from .mozg_service_utils import get_npao_aba_mapping_dict, get_rc_tree_annotations, make_graph, csv_to_dict
 from .send_utils import to_json_custom
 
 AND = 'and'
@@ -37,18 +37,6 @@ data_dir = os.environ.get('BEL4IMOCEDE_DATA_PATH')
 if data_dir is None:
     raise RuntimeError('BEL4IMOCEDE_DATA_PATH not in environment')
 data_dir = os.path.expanduser(data_dir)
-
-xlsx_dir = os.path.join(data_dir, 'xlsx')
-if not os.path.exists(xlsx_dir):
-    raise RuntimeError('Missing xlsx directory: {}'.format(xlsx_dir))
-
-xlsx_data_stucture = {}
-for path in os.listdir(xlsx_dir):
-    absolute_path = os.path.join(xlsx_dir, path)
-    xlsx_data_stucture[path] = xlsx_to_dict(absolute_path)
-
-mapping_dct_path = os.path.join(data_dir, 'mapping_npao_to_aba.csv')
-NPAO_ABA_MAPPING = get_npao_aba_mapping_dict(mapping_dct_path)
 
 gpickle_dir = os.path.join(data_dir, 'gpickle')
 if not os.path.exists(gpickle_dir):
@@ -66,6 +54,11 @@ if not os.path.exists(anhedonia_graph_path):
     raise RuntimeError('Anhedonia graph missing from {}'.format(anhedonia_graph_path))
 anhedonia_graph = from_pickle(anhedonia_graph_path)
 
+alzheimer_graph_path = os.path.join(gpickle_dir, 'alzheimer.gpickle')
+if not os.path.exists(alzheimer_graph_path):
+    raise RuntimeError('Anhedonia graph missing from {}'.format(alzheimer_graph_path))
+alzheimer_graph = from_pickle(alzheimer_graph_path)
+
 # Registers this function so we can look it up later
 mutator(make_graph)
 
@@ -75,41 +68,71 @@ queries = {}
 
 projection_metadata = manager.insert_graph(projection_graph)
 anhedonia_metadata = manager.insert_graph(anhedonia_graph)
+alzheimer_metadata = manager.insert_graph(alzheimer_graph)
 
 GRAPH_MAPPING = {
     'projections': projection_metadata.id,
-    'anhedonia': anhedonia_metadata.id
+    'anhedonia': anhedonia_metadata.id,
+    'alzheimer': alzheimer_metadata.id
 }
 
+# Prepare pharmacomap data structure
+pharmacomap_dir = os.path.join(data_dir, 'pharmacomap')
+if not os.path.exists(pharmacomap_dir):
+    raise RuntimeError('Missing data tables directory: {}'.format(pharmacomap_dir))
 
-def get_roi_data(key, roi):
+pharmacomap_temporal_structure = {}
+for path in os.listdir(pharmacomap_dir):
+    absolute_path = os.path.join(pharmacomap_dir, path)
+    pharmacomap_temporal_structure[path] = csv_to_dict(absolute_path)
+
+
+def get_roi_set(pharmacomap_temporal_structure):
+    """Prepares a set of unique regions of interests from all files
+
+    :rtype: set
+    """
+
+    roi_set = set()
+    for dct in pharmacomap_temporal_structure.values():
+        roi_set.update(dct.keys())
+
+    return roi_set
+
+def build_resulting_data_structure(pharmacomap_temporal_structure):
+    """
+
+    :rtype: dct[dct[dct]]]
+    """
+    rv = {}
+
+    roi_set = get_roi_set(pharmacomap_temporal_structure)
+    for roi in roi_set:
+        for dct_name, dct in pharmacomap_temporal_structure.items():
+            if not rv.get(roi):
+                rv[roi] = {}
+            rv[roi][dct_name] = dct.get(roi)
+
+    return rv
+
+pharmacomap_data_structure = build_resulting_data_structure(pharmacomap_temporal_structure)
+
+# Prepare a mapping dict
+mapping_dct_path = os.path.join(data_dir, 'mapping_npao_to_aba.csv')
+NPAO_ABA_MAPPING = get_npao_aba_mapping_dict(mapping_dct_path)
+
+
+def get_roi_data(roi):
     """
 
     :param str key: The name of the file to get the data from
     :param str roi: The name of the ROI which is the index of the dataframe
     """
-    df = xlsx_data_stucture.get(key)
-    if df is None:
-        abort(404, '{} was not loaded'.format(key))
-
-    result = df.get(roi)
+    result = pharmacomap_data_structure.get(roi)
     if result is None:
         abort(404, 'Invalid ROI: {}'.format(roi))
 
     return result
-
-
-def build_result_for_roi(roi):
-    rv = ...
-
-    for key, df in xlsx_data_stucture.items():
-        res = get_roi_data(key, roi)
-        ...  # add res to rv in the right format
-
-    ...  # post-process rv
-
-    return rv
-
 
 def get_query_or_404(query_id):
     """Get a query if it exists, else aborts
@@ -139,7 +162,7 @@ def get_mozg_initial_query(name):
         description: A name of a network
         required: true
         type: string
-        enum: [projections, anhedonia]
+        enum: [projections, anhedonia, alzheimer]
       - name: annotation[]
         in: query
         description: A network annotation
@@ -282,12 +305,12 @@ def get_mozg_query_by_id(query_id):
 
 @mozg_blueprint.route('/data/roi/<roi>')
 @cross_origin()
-def get_bi_data_by_roi(roi):
-    """Returns BI data based on Region of Interest (roi)
+def get_pharmacomap_data_by_roi(roi):
+    """Returns Pharmacomap data based on Region of Interest (roi)
 
     :param str roi: region of interest
     """
-    return jsonify(build_result_for_roi(roi))
+    return jsonify(get_roi_data(roi))
 
 
 @mozg_blueprint.route('/mapping/<npao_region>')
@@ -307,5 +330,5 @@ def npao_to_aba(npao_region):
 
     return jsonify({
         'mapping': True,
-        'data': roi_region
+        'roi': roi_region
     })
