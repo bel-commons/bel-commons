@@ -141,14 +141,14 @@ def get_rc_tree_annotations(graph):
     ]
 
 
-def xlsx_to_dict(file_name):
+def csv_to_dict(file_name):
     """Creates a data dictionary from xlsx files, where keys are indexes, and values are columns
 
     :param file_name: xlsx file
     :rtype: dict
     """
-    df = pd.read_excel(file_name)
-    return df.set_index('ROIs').T.to_dict()
+    df = pd.read_csv(file_name, sep=';')
+    return df.set_index('Acronym').T.to_dict()
 
 
 def get_npao_aba_mapping_dict(file_name, key_column='npao', value_column='acronym'):
