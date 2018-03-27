@@ -95,4 +95,3 @@ scratch/*
 
 .pytest_cache
 manifest.json
-.DS_Store

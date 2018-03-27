@@ -13,7 +13,7 @@ from flask import Blueprint, abort, current_app, flash, redirect, render_templat
 from flask_security import current_user, login_required, roles_required
 
 import pybel_tools.query
-from pybel.manager.models import Annotation, AnnotationEntry, Citation, Edge, Evidence, Namespace, Node
+from pybel.manager.models import Annotation, Citation, Edge, Evidence, Namespace, Node
 from pybel.utils import get_version as get_pybel_version
 from pybel_tools.biogrammar.double_edges import summarize_competeness
 from pybel_tools.mutation import (
@@ -168,7 +168,6 @@ def view_nodes():
 
     search = request.args.get('search')
     if search:
-        flask.flash('Searched for "{}"'.format(search))
         nodes = nodes.filter(Node.bel.contains(search))
 
     count = nodes.count()
@@ -448,7 +447,7 @@ def get_pipeline():
     return redirect_to_view_explorer_query(query)
 
 
-@ui_blueprint.route('/namespace')
+@ui_blueprint.route('/namespaces')
 def view_namespaces():
     """Displays a page listing the namespaces."""
     return render_template(
@@ -458,41 +457,12 @@ def view_namespaces():
     )
 
 
-@ui_blueprint.route('/annotation')
+@ui_blueprint.route('/annotations')
 def view_annotations():
     """Displays a page listing the annotations."""
     return render_template(
         'annotations.html',
         annotations=manager.session.query(Annotation).order_by(Annotation.keyword).all(),
-        current_user=current_user,
-    )
-
-
-@ui_blueprint.route('/annotation/<annotation_id>')
-def view_annotation(annotation_id):
-    """View an annotation namespace
-
-    :param int annotation_id: The annospace id
-    """
-    annotation = manager.session.query(Annotation).get(annotation_id)
-
-    return render_template(
-        'annotation.html',
-        annotation=annotation,
-    )
-
-
-@ui_blueprint.route('/annotation_entry/<int:annotation_entry_id>')
-def view_annotation_entry(annotation_entry_id):
-    """View an annotation entry
-
-    :param int annotation_entry_id: The annotation entry id
-    """
-    annotation_entry = manager.session.query(AnnotationEntry).get(annotation_entry_id)
-
-    return render_template(
-        'annotation_entry.html',
-        annotation_entry=annotation_entry,
         current_user=current_user,
     )
 
@@ -515,12 +485,6 @@ def view_about():
     ]
 
     return render_template('about.html', metadata=metadata, managers=manager_dict)
-
-
-@ui_blueprint.route('/dgx_tutorial')
-def view_dgx_tutorial():
-    """Sends the differential gene expression tutorial page"""
-    return render_template('analyze_dgx_tutorial.html')
 
 
 @ui_blueprint.route('/network/<int:network_id>')

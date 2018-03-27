@@ -50,7 +50,7 @@
     <script type="text/javascript"
             src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.16.0/jquery.validate.min.js"></script>
     <script type="text/javascript"
-            src="{{ url_for('static', filename='js/graph_controller/graph_controller.js', version='20180326') }}"></script>
+            src="{{ url_for('static', filename='js/graph_controller/graph_controller.js', version='20171207') }}"></script>
     <script type="text/javascript"
             src="{{ url_for('static', filename='js/d3-context-menu/js/d3-context-menu.js') }}"></script>
     <script type="text/javascript"
@@ -74,6 +74,10 @@
                 trigger: 'hover'
             })
         });
+
+        $('#analysis-upload-button').click(function () {
+            window.location.href = '/query/' + window.query + '/analysis/upload';
+        })
     </script>
 {% endblock %}
 

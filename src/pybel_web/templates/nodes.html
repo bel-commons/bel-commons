@@ -29,14 +29,12 @@
                 <h3 class="panel-title">Nodes</h3>
             </div>
             <div class="panel-body">
-                <form action="{{ url_for('ui.view_nodes') }}">
-                    <div class="input-group">
-                        <input type="text" class="form-control" placeholder="Search for nodes..." name="search">
-                        <span class="input-group-btn">
-                    <input class="btn btn-default" type="submit">
+                <div class="input-group">
+                    <input type="text" class="form-control" placeholder="Search for nodes...">
+                    <span class="input-group-btn">
+                    <button class="btn btn-default" type="button">Go!</button>
                 </span>
-                    </div>
-                </form>
+                </div>
             </div>
         </div>
 

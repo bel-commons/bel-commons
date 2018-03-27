@@ -1,20 +1,20 @@
 [
   {
-    "source_name": "GSE1297_incipient.tsv",
-    "description": "Patients from GSE1297 with incipient Alzheimer's disease",
+    "source_name": "IncipientAD.csv",
+    "description": "Patients from GSE1297 with early Alzheimer's disease",
     "gene_column": "Gene.symbol",
     "data_column": "logFC",
     "public": true
   },
   {
-    "source_name": "GSE1297_moderate.tsv",
+    "source_name": "ModerateAD.csv",
     "description": "Patients from GSE1297 with moderate Alzheimer's disease",
     "gene_column": "Gene.symbol",
     "data_column": "logFC",
     "public": true
   },
   {
-    "source_name": "GSE1297_severe.tsv",
+    "source_name": "SevereAD.csv",
     "description": "Patients from GSE1297 with severe Alzheimer's disease",
     "gene_column": "Gene.symbol",
     "data_column": "logFC",

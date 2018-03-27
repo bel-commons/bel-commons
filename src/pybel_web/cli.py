@@ -488,46 +488,6 @@ def export(manager, output):
 
 
 @manage.group()
-def query():
-    """Manage queries"""
-
-
-@query.command()
-@click.option('--query-id', type=int)
-@click.option('-y', '--yes', is_flag=True)
-@click.pass_obj
-def drop(manager, query_id, yes):
-    """Drops either a single or all Experiment models"""
-    if query_id:
-        manager.session.query(query_id).get(query_id).delete()
-        manager.session.commit()
-
-    elif yes or click.confirm('Drop all Query models at {}?'.format(manager.connection)):
-        manager.session.query(Query).delete()
-        manager.session.commit()
-
-
-@manage.group()
-def assembly():
-    """Manage assemblies"""
-
-
-@assembly.command()
-@click.option('--assembly-id', type=int)
-@click.option('-y', '--yes', is_flag=True)
-@click.pass_obj
-def drop(manager, assembly_id, yes):
-    """Drops either a single or all Experiment models"""
-    if assembly_id:
-        manager.session.query(assembly_id).get(assembly_id).delete()
-        manager.session.commit()
-
-    elif yes or click.confirm('Drop all Assembly models at {}?'.format(manager.connection)):
-        manager.session.query(Assembly).delete()
-        manager.session.commit()
-
-
-@manage.group()
 def experiments():
     """Manage experiments"""
 
@@ -632,7 +592,7 @@ def examples():
 
 
 @examples.command()
-@click.option('-p', '--permutations', type=int, help='Number of permutations to run. Defaults to 25.', default=25)
+@click.option('-p', '--permutations', type=int, default=25)
 @click.pass_obj
 def load(manager, permutations):
     """Load omics, networks, and experiments"""
@@ -666,27 +626,13 @@ def load_networks(manager):
 
 
 @examples.command()
-@click.option('-p', '--permutations', type=int, help='Number of permutations to run. Defaults to 25.', default=25)
+@click.option('-p', '--permutations', type=int, default=25)
 @click.pass_obj
 def load_experiments(manager, permutations):
     """Load experiments"""
     from .resources.load_experiments import main
     set_debug(logging.INFO)
     main(manager, permutations=permutations)
-
-
-@manage.command()
-@click.pass_obj
-def wasteland(manager):
-    """Drop a lot"""
-    manager.session.query(Experiment).delete()
-    manager.session.commit()
-    manager.session.query(Query).delete()
-    manager.session.commit()
-    manager.session.query(Assembly).delete()
-    manager.session.commit()
-    manager.session.query(Network).delete()
-    manager.session.commit()
 
 
 if __name__ == '__main__':

@@ -22,7 +22,7 @@ from pybel_web.application import FlaskPyBEL, create_application
 from pybel_web.curation_service import curation_blueprint
 from pybel_web.database_service import api_blueprint
 from pybel_web.main_service import ui_blueprint
-from pybel_web.parser_service import parser_blueprint
+from pybel_web.parser_async_service import parser_async_blueprint
 
 log = logging.getLogger(__name__)
 log.setLevel(10)
@@ -36,7 +36,6 @@ def has_no_empty_params(rule):
     defaults = rule.defaults if rule.defaults is not None else ()
     arguments = rule.arguments if rule.arguments is not None else ()
     return len(defaults) >= len(arguments)
-
 
 class WebTest(unittest.TestCase):
     def setUp(self):
@@ -73,7 +72,7 @@ class WebTest(unittest.TestCase):
 
         self.app_instance.register_blueprint(ui_blueprint)
         self.app_instance.register_blueprint(api_blueprint)
-        self.app_instance.register_blueprint(parser_blueprint)
+        self.app_instance.register_blueprint(parser_async_blueprint)
         self.app_instance.register_blueprint(curation_blueprint)
 
         self.pybel = FlaskPyBEL.get_state(self.app_instance)

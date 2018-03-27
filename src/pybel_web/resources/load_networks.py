@@ -13,19 +13,17 @@ import logging
 import os
 import time
 
-from sqlalchemy.exc import OperationalError
-
 import pybel
 from pybel import from_path, from_pickle, to_pickle
 from pybel.manager import Manager
 from pybel.struct.mutation import strip_annotations
 from pybel_tools.io import get_corresponding_gpickle_path, iter_from_pickles_from_directory, iter_paths_from_directory
-from pybel_tools.selection import get_subgraphs_by_annotation_filtered
 from pybel_tools.utils import enable_cool_mode
 from pybel_web.external_managers import (
     chebi_manager, entrez_manager, expasy_manager, go_manager, hgnc_manager,
     interpro_manager, mirtarbase_manager,
 )
+from sqlalchemy.exc import OperationalError
 from pybel_web.manager_utils import insert_graph
 
 log = logging.getLogger(__name__)
@@ -37,63 +35,36 @@ if BMS_BASE is None:
     raise RuntimeError('BMS_BASE is not set in the environment')
 
 alzheimer_directory = os.path.join(BMS_BASE, 'aetionomy', 'alzheimers')
-parkinsons_directory = os.path.join(BMS_BASE, 'aetionomy', 'parkinsons')
-epilepsy_directory = os.path.join(BMS_BASE, 'aetionomy', 'epilepsy')
-neurommsig_directory = os.path.join(BMS_BASE, 'aetionomy', 'neurommsig')
 selventa_directory = os.path.join(BMS_BASE, 'selventa')
 cbn_human = os.path.join(BMS_BASE, 'cbn', 'Human-2.0')
 cbn_mouse = os.path.join(BMS_BASE, 'cbn', 'Mouse-2.0')
 cbn_rat = os.path.join(BMS_BASE, 'cbn', 'Rat-2.0')
 
-neurommsig_sample_networks = [
-    'Low density lipoprotein subgraph',
-    'GABA subgraph',
-    'Notch signaling subgraph',
-    'Reactive oxygen species subgraph',
-]
 
-_jgf_extension = '.jgf'
-
-
-def _ensure_pickle(path, manager, **kwargs):
-    gpickle_path = get_corresponding_gpickle_path(path)
-
-    if not os.path.exists(gpickle_path):
-        graph = from_path(path, manager=manager, **kwargs)
-        to_pickle(graph, gpickle_path)
-    else:
-        graph = from_pickle(gpickle_path)
-
-    return insert_graph(manager, graph, public=True)
-
-
-def ensure_pickles(directory, connection=None, blacklist=None, **kwargs):
+def ensure_pickles(directory, connection=None, **kwargs):
     """
     :param str directory:
     :param connection: database connection string to cache, pre-built :class:`Manager`, or None to use default cache
     :type connection: Optional[str or pybel.manager.Manager]
-    :param Optional[list[str]] blacklist: An optional list of file names not to use
     """
     log.info('ensuring pickles in %s', directory)
     manager = Manager.ensure(connection=connection)
 
     for filename in iter_paths_from_directory(directory):
         path = os.path.join(directory, filename)
-
-        if blacklist and filename in blacklist:
-            log.info('skipping %s', path)
+        gpickle_path = get_corresponding_gpickle_path(path)
+        if os.path.exists(gpickle_path):
             continue
 
-        _ensure_pickle(path, manager, **kwargs)
+        graph = from_path(path, manager=manager, **kwargs)
+        to_pickle(graph, gpickle_path)
 
 
-def upload_pickles(directory, connection=None, blacklist=None):
-    """Uploads all of the pickles in a given directory
-
+def upload_pickles(directory, connection=None):
+    """
     :param str directory:
     :param connection: database connection string to cache, pre-built :class:`Manager`, or None to use default cache
     :type connection: Optional[str or pybel.manager.Manager]
-    :param Optional[list[str]] blacklist: An optional list of file names not to use
     :rtype: list[Network]
     """
     log.info('loading pickles in %s', directory)
@@ -102,7 +73,7 @@ def upload_pickles(directory, connection=None, blacklist=None):
 
     results = []
 
-    for graph in iter_from_pickles_from_directory(directory, blacklist=blacklist):
+    for graph in iter_from_pickles_from_directory(directory):
         network = insert_graph(manager, graph, public=True)
         results.append(network)
 
@@ -128,77 +99,23 @@ def write_manifest(directory, networks):
         json.dump(manifest_data, file, indent=2)
 
 
-def upload_bel_directory(directory, connection=None, blacklist=None):
-    """Handles parsing, pickling, then uploading all BEL files in a given directory
+def upload_bel_directory(directory, connection=None):
+    """
 
     :param str directory:
     :param connection: database connection string to cache, pre-built :class:`Manager`, or None to use default cache
     :type connection: Optional[str or pybel.manager.Manager]
-    :param Optional[list[str]] blacklist: An optional list of file names not to use. NO FILE EXTENSIONS
     """
     if not (os.path.exists(directory) and os.path.isdir(directory)):
         log.warning('directory does not exist: %s', directory)
         return
 
-    if blacklist is not None and not isinstance(blacklist, (set, tuple, list)):
-        raise TypeError('blacklist is wrong type: {}'.format(blacklist.__class__.__name__))
-
-    ensure_pickles(
-        directory,
-        connection=connection,
-        blacklist=[e + '.bel' for e in blacklist] if blacklist is not None else None
-    )
-    networks = upload_pickles(
-        directory,
-        connection=connection,
-        blacklist=[e + '.gpickle' for e in blacklist] if blacklist is not None else None
-    )
-
+    ensure_pickles(directory, connection=connection)
+    networks = upload_pickles(directory, connection=connection)
     write_manifest(directory, networks)
 
 
-def upload_neurommsig_graphs(connection=None):
-    """Only upload NeuroMMSig Sample Networks
-
-    :param connection: database connection string to cache, pre-built :class:`Manager`, or None to use default cache
-    :type connection: Optional[str or pybel.manager.Manager]
-    """
-    manager = Manager.ensure(connection=connection)
-
-    if not (os.path.exists(alzheimer_directory) and os.path.isdir(alzheimer_directory)):
-        log.warning('directory does not exist: %s', alzheimer_directory)
-        return
-
-    if not os.path.exists(neurommsig_directory):
-        log.info('created neurommsig directory: %s', neurommsig_directory)
-        os.makedirs(neurommsig_directory)
-
-    path = os.path.join(alzheimer_directory, 'alzheimers.bel')
-    gpickle_path = os.path.join(alzheimer_directory, 'alzheimers.gpickle')
-
-    if os.path.exists(gpickle_path):
-        graph = from_pickle(gpickle_path)
-    elif os.path.exists(path):
-        graph = from_path(path, manager=manager)
-    else:
-        raise RuntimeError('missing NeuroMMSig source file: {}'.format(path))
-
-    subgraphs = get_subgraphs_by_annotation_filtered(graph, annotation='Subgraph', values=neurommsig_sample_networks)
-    networks = []
-
-    for subgraph_name, subgraph in subgraphs.items():
-        subgraph.name = 'NeuroMMSig AD {}'.format(subgraph_name)
-        subgraph.authors = 'Daniel Domingo-Fernandez et. al'
-        subgraph.version = graph.version
-        subgraph.license = graph.license
-
-        # output to directory as gpickle
-        to_pickle(subgraph, os.path.join(neurommsig_directory, '{}.gpickle'.format(subgraph_name)))
-
-        network = insert_graph(manager, subgraph, public=True)
-        networks.append(network)
-
-    write_manifest(neurommsig_directory, networks)
+_jgf_extension = '.jgf'
 
 
 def iter_jgf(directory):
@@ -239,6 +156,7 @@ def upload_jgf_directory(directory, connection=None):
             graph = pybel.from_cbn_jgif(cbn_jgif_dict)
             strip_annotations(graph)
             to_pickle(graph, gpickle_path)
+
 
         try:
             insert_graph(manager, graph, public=True)
@@ -283,10 +201,8 @@ def main(connection=None):
     :param connection: database connection string to cache, pre-built :class:`Manager`, or None to use default cache
     :type connection: Optional[str or pybel.manager.Manager]
     """
-    upload_neurommsig_graphs(connection=connection)
+    upload_bel_directory(alzheimer_directory, connection=connection)
     upload_bel_directory(selventa_directory, connection=connection)
-    upload_bel_directory(alzheimer_directory, connection=connection, blacklist=['alzheimers'])
-    upload_bel_directory(parkinsons_directory, connection=connection, blacklist=['parkinsons'])
 
     upload_jgf_directory(cbn_human, connection=connection)
     upload_jgf_directory(cbn_mouse, connection=connection)

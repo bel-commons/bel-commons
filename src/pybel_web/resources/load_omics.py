@@ -116,17 +116,8 @@ def main(connection=None):
     :param connection: database connection string to cache, pre-built :class:`Manager`, or None to use default cache
     :type connection: Optional[str or pybel.manager.Manager]
     """
-    directories = [
-        os.path.join(dir_path, 'GSE28146'),
-        os.path.join(dir_path, 'GSE1297'),
-        os.path.join(dir_path, 'GSE63063'),
-    ]
-
-    for directory in directories:
-        try:
-            work_omics(directory=directory, connection=connection)
-        except Exception:
-            log.exception('failed for directory %s', directory)
+    work_omics(directory=os.path.join(dir_path, 'GSE28146'), connection=connection)
+    work_omics(directory=os.path.join(dir_path, 'GSE1297'), connection=connection)
 
 
 if __name__ == '__main__':

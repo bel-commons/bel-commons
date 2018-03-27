@@ -21,13 +21,13 @@
     <div class="container">
         {{ util.flashed_messages(dismissible=True, container=False) }}
 
-        {% if current_user.is_admin %}
-            <ol class="breadcrumb">
-                <li><a href="{{ url_for('ui.home') }}">Catalog</a></li>
-                <li><a href="{{ url_for('ui.view_users') }}">Users</a></li>
-                <li class="active">{{ user }}</li>
-            </ol>
-        {% endif %}
+    {% if current_user.is_admin %}
+        <ol class="breadcrumb">
+            <li><a href="{{ url_for('ui.home') }}">Catalog</a></li>
+            <li><a href="{{ url_for('ui.view_users') }}">Users</a></li>
+            <li class="active">{{ user }}</li>
+        </ol>
+    {% endif %}
 
         <div class="page-header">
             <h1>
@@ -165,20 +165,18 @@
             <table class="table table-striped table-responsive">
                 <thead>
                 <tr>
-                    <th>Network</th>
+                    <th>Name</th>
+                    <th>Version</th>
                     <th>Date of Upload</th>
                     <th></th>
                 </tr>
                 </thead>
                 <tbody>
-                {% for report in user.reports | reverse %}
+                {% for report in user.reports %}
                     {% if report.network is not none %}
                         <tr>
-                            <td>
-                                <a href="{{ url_for('ui.view_network', network_id=report.network.id) }}">
-                                    {{ report.network }}
-                                </a>
-                            </td>
+                            <td>{{ report.network.name }}</td>
+                            <td>{{ report.network.version }}</td>
                             <td>{{ report.created }}</td>
                             <td>
                                 <div class="pull-right">
@@ -241,11 +239,9 @@
                 <h3 class="panel-title">{% if user == current_user %}My {% endif %}Experiments</h3>
             </div>
             <div class="panel-body">
-                <p>
-                    Differential gene expression data can be created easily with GEO2R by following <a
-                        href="{{ url_for('ui.view_dgx_tutorial') }}">this
-                    tutorial</a>. As an example pipeline, we recommend using the data from GEO Experiment GSE28146
-                    with the available NeuroMMSig subgraphs.
+                <p>As an example pipeline, we recommend using the data from GEO experiment <a
+                        href="https://owncloud.scai.fraunhofer.de/index.php/s/1kbzCIhbfZLauuJ">GSE28146</a> with the
+                    Alzheimer's Disease Knowledge Assembly.
                 </p>
             </div>
 

@@ -7,7 +7,7 @@ from collections import Counter
 
 import networkx as nx
 import pandas as pd
-from flask import abort, flash, jsonify, redirect, request
+from flask import abort, request, flash, redirect, jsonify
 
 import pybel
 from pybel.canonicalize import calculate_canonical_name
@@ -17,12 +17,12 @@ from pybel.struct.filters import filter_edges
 from pybel.struct.summary import count_functions, get_syntax_errors, get_unused_namespaces
 from pybel.tokens import node_to_tuple
 from pybel.utils import hash_node
+from pybel_tools.analysis.cmpa import calculate_average_scores_on_subgraphs as calculate_average_cmpa_on_subgraphs
 from pybel_tools.analysis.stability import (
     get_chaotic_pairs, get_chaotic_triplets, get_contradiction_summary, get_dampened_pairs, get_dampened_triplets,
     get_decrease_mismatch_triplets, get_increase_mismatch_triplets, get_jens_unstable,
     get_mutually_unstable_correlation_triples, get_regulatory_pairs, get_separate_unstable_correlation_triples,
 )
-from pybel_tools.analysis.ucmpa import calculate_average_scores_on_subgraphs
 from pybel_tools.filters import has_pathology_causal, iter_undefined_families, remove_nodes_by_namespace
 from pybel_tools.generation import generate_bioprocess_mechanisms
 from pybel_tools.integration import overlay_type_data
@@ -257,7 +257,7 @@ def insert_graph(manager, graph, user_id=1, public=False):
     return network
 
 
-def create_omic(data, gene_column, data_column, description, source_name, sep, public=False, user=None):
+def create_omic(data, gene_column, data_column, description, source_name, public=False, user=None):
     """Creates an omics model
 
     :param str or file data:
@@ -269,7 +269,7 @@ def create_omic(data, gene_column, data_column, description, source_name, sep, p
     :param Optional[User] user:
     :rtype: Omic
     """
-    df = pd.read_csv(data, sep=sep)
+    df = pd.read_csv(data)
 
     if gene_column not in df.columns:
         raise ValueError('{} not a column in document'.format(gene_column))
@@ -299,7 +299,6 @@ def calculate_scores(graph, data, runs, use_tqdm=False):
     :param pybel.BELGraph graph: A BEL graph
     :param dict[str,float] data: A dictionary of {name: data}
     :param int runs: The number of permutations
-    :param bool use_tqdm:
     :return: A dictionary of {pybel node tuple: results tuple} from :func:`calculate_average_cmpa_on_subgraphs`
     :rtype: dict[tuple,tuple]
     """
@@ -310,7 +309,7 @@ def calculate_scores(graph, data, runs, use_tqdm=False):
     overlay_type_data(graph, data, LABEL, GENE, 'HGNC', overwrite=False, impute=0)
 
     candidate_mechanisms = generate_bioprocess_mechanisms(graph, LABEL)
-    scores = calculate_average_scores_on_subgraphs(candidate_mechanisms, LABEL, runs=runs, use_tqdm=use_tqdm)
+    scores = calculate_average_cmpa_on_subgraphs(candidate_mechanisms, LABEL, runs=runs, use_tqdm=use_tqdm)
 
     return scores
 
@@ -320,7 +319,6 @@ def run_cmpa_helper(manager, experiment, use_tqdm=False):
 
     :param pybel.manager.Manager manager:
     :param pybel_web.models.Experiment experiment:
-    :param bool use_tqdm:
     """
     t = time.time()
 

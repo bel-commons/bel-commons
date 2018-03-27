@@ -4,7 +4,6 @@
 
 import logging
 
-from pybel.constants import get_cache_connection
 from pybel_tools.pipeline import in_place_mutator
 
 __all__ = [
@@ -19,15 +18,13 @@ __all__ = [
 
 log = logging.getLogger(__name__)
 
-connection = get_cache_connection()
-
 try:
     import bio2bel_chebi
 except ImportError:
     chebi_manager = None
 else:
     log.info('Using Bio2BEL ChEBI')
-    chebi_manager = bio2bel_chebi.Manager(connection=connection)
+    chebi_manager = bio2bel_chebi.Manager()
     chebi_manager.create_all()
     in_place_mutator(chebi_manager.enrich_chemical_hierarchy)
 
@@ -37,7 +34,7 @@ except ImportError:
     hgnc_manager = None
 else:
     log.info('Using Bio2BEL HGNC')
-    hgnc_manager = bio2bel_hgnc.Manager(connection=connection)
+    hgnc_manager = bio2bel_hgnc.Manager()
     hgnc_manager.create_all()
     in_place_mutator(hgnc_manager.enrich_genes_with_families)
     in_place_mutator(hgnc_manager.enrich_families_with_genes)
@@ -48,7 +45,7 @@ except ImportError:
     mirtarbase_manager = None
 else:
     log.info('Using Bio2BEL miRTarBase')
-    mirtarbase_manager = bio2bel_mirtarbase.Manager(connection=connection)
+    mirtarbase_manager = bio2bel_mirtarbase.Manager()
     mirtarbase_manager.create_all()
     in_place_mutator(mirtarbase_manager.enrich_mirnas)
     in_place_mutator(mirtarbase_manager.enrich_rnas)
@@ -59,7 +56,7 @@ except ImportError:
     expasy_manager = None
 else:
     log.info('Using Bio2BEL ExPASy')
-    expasy_manager = bio2bel_expasy.Manager(connection=connection)
+    expasy_manager = bio2bel_expasy.Manager()
     expasy_manager.create_all()
     in_place_mutator(expasy_manager.enrich_proteins_with_enzyme_families)
     in_place_mutator(expasy_manager.enrich_enzymes)
@@ -79,7 +76,7 @@ except ImportError:
     entrez_manager = None
 else:
     log.info('Using Bio2BEL Entrez')
-    entrez_manager = bio2bel_entrez.Manager(connection=connection)
+    entrez_manager = bio2bel_entrez.Manager()
     entrez_manager.create_all()
 
 try:
@@ -88,7 +85,7 @@ except ImportError:
     interpro_manager = None
 else:
     log.info('Using Bio2BEL Interpro')
-    interpro_manager = bio2bel_interpro.Manager(connection=connection)
+    interpro_manager = bio2bel_interpro.Manager()
     interpro_manager.create_all()
 
 manager_dict = {

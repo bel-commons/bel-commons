@@ -26,16 +26,16 @@
                 <h3 class="panel-title">About</h3>
             </div>
             <div class="panel-body">
-                <p>
-                    BEL Commons is developed and maintained by <a href="https://github.com/cthoyt">Charles Tapley
-                    Hoyt</a> and <a href="https://github.com/ddomingof">Daniel Domingo-Fernandez</a> at <a
-                        href="https://www.scai.fraunhofer.de/en/business-research-areas/bioinformatics.html">Fraunhofer
-                    SCAI</a> with partial support from the <a href="https://www.imi.europa.eu/">IMI</a> projects, <a
-                        href="http://www.aetionomy.eu/">AETIONOMY</a> and <a href="http://www.phago.eu/">PHAGO</a>.
+                <p>BEL Commons is developed and maintained by <a href="https://github.com/cthoyt">Charles Tapley Hoyt</a>
+                    and
+                    <a href="https://github.com/ddomingof">Daniel Domingo-Fernandez</a> at <a
+                            href="https://www.scai.fraunhofer.de/en/business-research-areas/bioinformatics.html">Fraunhofer
+                        SCAI</a> with partial support from the <a href="https://www.imi.europa.eu/">IMI</a> projects, <a
+                            href="http://www.aetionomy.eu/">AETIONOMY</a> and <a href="http://www.phago.eu/">PHAGO</a>.
 
                     It is built on top of the open source project, <a href="https://github.com/pybel/pybel">PyBEL</a>.
-                    Please feel free to contact us <a href="mailto:charles.hoyt@scai.fraunhofer.de">here</a> to give us
-                    feedback or report any issues.
+                    Please feel free to contact us
+                    <a href="mailto:charles.hoyt@scai.fraunhofer.de">here</a> to give us feedback or report any issues.
                 </p>
                 <p>
                     If you use BEL Commons, please cite us:
@@ -152,7 +152,7 @@
                         </a>
                     </div>
                     <div>
-                        AETIONOMY is a project aimed to develop a mechanism-based taxonomy of Alzheimer's disease and
+                        AETIONOMY is a project aimed to develop a mechanism-base taxonomy of Alzheimer's disease and
                         Parkinson's disease in order to support stratifying patients.
                     </div>
                 </div>
@@ -196,9 +196,6 @@
                         <div class="list-group-item">
                             <h4 class="list-group-item-heading">
                                 <a href="https://github.com/bio2bel/{{ name[:-8] }}">{{ name[:-8] }}</a>
-                                {% if current_user.is_admin %}
-                                    {{ m }}
-                                {% endif %}
                             </h4>
                             <div class="list-group-item-text">
                                 {% if m.summarize %}
