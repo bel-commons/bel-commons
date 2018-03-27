@@ -164,7 +164,7 @@ def serve_network(graph, serve_format=None):
     elif serve_format == 'citations':
         bio = StringIO()
 
-        for pubmed_identifier in get_pubmed_identifiers(graph):
+        for pubmed_identifier in sorted(get_pubmed_identifiers(graph)):
             print(pubmed_identifier, file=bio)
 
         bio.seek(0)
