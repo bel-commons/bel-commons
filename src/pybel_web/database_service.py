@@ -1314,8 +1314,8 @@ def enrich_citation_by_id(pubmed_identifier):
     )
 
 
-@api_blueprint.route('/api/author/<author>/citations')
-def list_citations_by_author(author):
+@api_blueprint.route('/api/author/<name>/citations')
+def list_citations_by_author(name):
     """Gets all citations from the given author
 
     ---
@@ -1328,7 +1328,10 @@ def list_citations_by_author(author):
         required: true
         type: string
     """
-    author = manager.session.query(Author).filter(Author.name == author)
+    author = manager.get_author_by_name(name)
+
+    if author is None:
+        return abort(404)
 
     return jsonify([
         citation.to_json(include_id=True)
