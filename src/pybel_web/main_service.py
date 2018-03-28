@@ -282,7 +282,6 @@ def view_edges():
 
 
 @ui_blueprint.route('/edge/<edge_hash>')
-@roles_required('admin')
 def view_edge(edge_hash):
     """Renders a page viewing a single edges
 
