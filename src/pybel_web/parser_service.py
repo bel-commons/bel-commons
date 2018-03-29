@@ -7,7 +7,7 @@ import logging
 import time
 
 from flask import Blueprint, current_app, flash, redirect, render_template, url_for
-from flask_security import current_user, login_required
+from flask_security import current_user, login_required, roles_required
 
 from .forms import ParserForm
 from .models import Report
@@ -16,6 +16,16 @@ from .utils import manager
 log = logging.getLogger(__name__)
 
 parser_blueprint = Blueprint('parser', __name__)
+
+
+@parser_blueprint.route('/run-debug-celery', methods=['GET', 'POST'])
+@roles_required('admin')
+def run_debug():
+    """Runs the debug task"""
+    task = current_app.celery.send_task('debug-task')
+    log.info('Parse task from %s', task.id)
+    flash('Queued parsing task{}.'.format(task.id))
+    return redirect(url_for('ui.home'))
 
 
 @parser_blueprint.route('/upload', methods=['GET', 'POST'])

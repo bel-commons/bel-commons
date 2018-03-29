@@ -56,6 +56,13 @@ dumb_belief_stuff = {
 pbw_sender = ("PyBEL Web", 'pybel@scai.fraunhofer.de')
 
 
+@celery.task(name='debug-task')
+def run_debug_task():
+    """Runts a debug task"""
+    log.info('running celery debug task')
+    return 6 + 2
+
+
 @celery.task(name='summarize-bel')
 def summarize_bel(connection, report_id):
     """Asynchronously parses a BEL script and emails feedback
