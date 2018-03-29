@@ -43,7 +43,7 @@ log = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
 enable_cool_mode()  # turn off warnings for compilation
 celery_logger.setLevel(logging.DEBUG)
-log.setLevel(logging.debug)
+log.setLevel(logging.DEBUG)
 
 app = create_application()
 mail = app.extensions.get('mail')
