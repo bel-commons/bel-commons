@@ -37,11 +37,13 @@ from pybel_web.manager_utils import fill_out_report, make_graph_summary, run_cmp
 from pybel_web.models import Experiment, Project, User
 from pybel_web.utils import get_network_summary_dict, safe_get_report
 
-log = get_task_logger(__name__)
+celery_logger = get_task_logger(__name__)
+log = logging.getLogger(__name__)
 
 logging.basicConfig(level=logging.DEBUG)
 enable_cool_mode()  # turn off warnings for compilation
-log.setLevel(logging.DEBUG)
+celery_logger.setLevel(logging.DEBUG)
+log.setLevel(logging.debug)
 
 app = create_application()
 mail = app.extensions.get('mail')
@@ -59,6 +61,7 @@ pbw_sender = ("PyBEL Web", 'pybel@scai.fraunhofer.de')
 @celery.task(name='debug-task')
 def run_debug_task():
     """Runts a debug task"""
+    celery_logger.info('running celery debug task')
     log.info('running celery debug task')
     return 6 + 2
 
@@ -126,7 +129,7 @@ def summarize_bel(connection, report_id):
     manager.session.add(report)
     manager.session.commit()
 
-    log.info('finished in %.2f seconds', time.time() - t)
+    celery_logger.info('finished in %.2f seconds', time.time() - t)
 
     manager.session.close()
 
@@ -148,7 +151,7 @@ def upload_bel(connection, report_id, enrich_citations=False):
     report_id = report.id
     source_name = report.source_name
 
-    log.info('Starting parse task for %s (report %s)', source_name, report_id)
+    celery_logger.info('Starting parse task for %s (report %s)', source_name, report_id)
 
     def make_mail(subject, body):
         if not mail:
@@ -168,7 +171,7 @@ def upload_bel(connection, report_id, enrich_citations=False):
         manager.session.commit()
         return body
 
-    log.info('parsing graph')
+    celery_logger.info('parsing graph')
 
     try:
         graph = report.parse_graph(manager=manager)
@@ -237,7 +240,7 @@ def upload_bel(connection, report_id, enrich_citations=False):
         message = 'Granted rights for {} to {} after parsing {}'.format(network, report.user, source_name)
         return finish_parsing('Granted Rights from {}'.format(source_name), message)
 
-    log.info('enriching graph')
+    celery_logger.info('enriching graph')
     add_canonical_names(graph)
     add_identifiers(graph)
 
@@ -250,20 +253,20 @@ def upload_bel(connection, report_id, enrich_citations=False):
 
         except (IntegrityError, OperationalError):  # just skip this if there's a problem
             manager.session.rollback()
-            log.exception('problem with database while fixing citations')
+            celery_logger.exception('problem with database while fixing citations')
 
         except Exception:
-            log.exception('problem fixing citations')
+            celery_logger.exception('problem fixing citations')
 
     upload_failed_text = 'Upload Failed for {}'.format(source_name)
 
     try:
-        log.info('inserting %s with %s', graph, manager.engine.url)
+        celery_logger.info('inserting %s with %s', graph, manager.engine.url)
         network = manager.insert_graph(graph, store_parts=app.config.get("PYBEL_USE_EDGE_STORE", True))
 
     except IntegrityError as e:
         manager.session.rollback()
-        log.exception('Integrity error')
+        celery_logger.exception('Integrity error')
         return finish_parsing(upload_failed_text, str(e))
 
     except OperationalError:
@@ -275,7 +278,7 @@ def upload_bel(connection, report_id, enrich_citations=False):
         manager.session.rollback()
         return finish_parsing(upload_failed_text, str(e))
 
-    log.info('done storing [%d]. starting to make report.', network.id)
+    celery_logger.info('done storing [%d]. starting to make report.', network.id)
 
     graph_summary = make_graph_summary(graph)
 
@@ -286,7 +289,7 @@ def upload_bel(connection, report_id, enrich_citations=False):
         manager.session.add(report)
         manager.session.commit()
 
-        log.info('report #%d complete [%d]', report.id, network.id)
+        celery_logger.info('report #%d complete [%d]', report.id, network.id)
         make_mail('Uploaded succeeded for {} ({})'.format(graph, source_name),
                   '{} ({}) is done parsing. Check the network list page.'.format(source_name, graph))
 
@@ -295,7 +298,7 @@ def upload_bel(connection, report_id, enrich_citations=False):
     except Exception as e:
         manager.session.rollback()
         make_mail('Report unsuccessful for {}'.format(source_name), str(e))
-        log.exception('Problem filling out report')
+        celery_logger.exception('Problem filling out report')
         return -1
 
     finally:
@@ -326,13 +329,13 @@ def merge_project(connection, user_id, project_id):
     url_link = '{}/download/bel/{}'.format(app.config['PYBEL_MERGE_SERVER_PREFIX'], graph.name)
 
     if os.path.exists(path):
-        log.warning('Already merged in: %s', path)
-        log.warning('Download from: %s', url_link)
+        celery_logger.warning('Already merged in: %s', path)
+        celery_logger.warning('Download from: %s', url_link)
     else:
         to_bel_path(graph, path)
-        log.info('Merge took %.2f seconds to %s', time.time() - t, path)
+        celery_logger.info('Merge took %.2f seconds to %s', time.time() - t, path)
 
-    log.info('Download from: %s', url_link)
+    celery_logger.info('Download from: %s', url_link)
 
     if mail is not None:
         mail.send_message(
@@ -410,7 +413,7 @@ def upload_json(connection, payload):
         manager.session.rollback()
         return -1
     except Exception:
-        log.exception('Upload error')
+        celery_logger.exception('Upload error')
         manager.session.rollback()
         return -1
 
@@ -431,7 +434,7 @@ def upload_cbn(connection, dir_path):
     for jfg_path in os.listdir(dir_path):
         path = os.path.join(dir_path, jfg_path)
 
-        log.info('opening %s', path)
+        celery_logger.info('opening %s', path)
 
         with open(path) as f:
             cbn_jgif_dict = json.load(f)
@@ -441,7 +444,7 @@ def upload_cbn(connection, dir_path):
             enrich_pubmed_citations(manager, graph)
             to_database(graph, connection=manager)
 
-    log.info('done in %.2f', time.time() - t)
+    celery_logger.info('done in %.2f', time.time() - t)
 
     return 0
 
@@ -476,4 +479,4 @@ def send_summary_mail(graph, report, t):
             with open(path, 'w') as file:
                 print(html, file=file)
 
-            log.info('HTML printed to file at: %s', path)
+            celery_logger.info('HTML printed to file at: %s', path)
