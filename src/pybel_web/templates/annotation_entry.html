@@ -54,17 +54,20 @@
             </div>
         </div>
 
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                <h3 class="panel-title">Sample Edges</h3>
-            </div>
-            {{ pbw.render_edge_list(annotation_entry.edges.limit(5)) }}
+        {% set edges = annotation_entry.edges.limit(5).all() %}
+        {% if edges|length > 0 %}
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Sample Edges <span class="badge">{{ edges|length }}</span></h3>
+                </div>
 
-            <div class="panel-footer">
-                <p>Showing 5 of {{ annotation_entry.edges.count() }} edges</p>
-            </div>
-        </div>
+                {{ pbw.render_edge_list(edges) }}
 
+                <div class="panel-footer">
+                    <p>Showing {{ edges|length }} of {{ annotation_entry.edges.count() }} edges</p>
+                </div>
+            </div>
+        {% endif %}
 
     </div>
     {% include "footer.html" %}
