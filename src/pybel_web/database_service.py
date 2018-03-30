@@ -249,7 +249,7 @@ def _build_annotation_helper(graph, annotation, values):
         author_name=graph.authors,
         author_contact=graph.contact,
         citation_name=graph.name,
-        description='This annotation was serialize by PyBEL v{} from {}'.format(get_pybel_version(), graph),
+        description='This annotation was serialized by PyBEL v{} from {}'.format(get_pybel_version(), graph),
         file=si,
     )
 
