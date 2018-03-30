@@ -481,6 +481,24 @@ def view_annotation(annotation_id):
     )
 
 
+@ui_blueprint.route('/annotation_entry/')
+@roles_required('admin')
+def view_annotation_entries():
+    """View a summary of all annotation entries"""
+    # TODO get annotation entries with most edges
+    # TODO get annotations with least edges (non-zero)
+    # TODO get co-occurrence of annotation entries
+
+    annotation_entries = manager.session.query(AnnotationEntry).limit(10).all()
+    annotation_entry_count = manager.count_annotation_entries()
+
+    return render_template(
+        'annotation_entries.html',
+        annotation_entries=annotation_entries,
+        annotation_entry_count=annotation_entry_count,
+    )
+
+
 @ui_blueprint.route('/annotation_entry/<int:annotation_entry_id>')
 def view_annotation_entry(annotation_entry_id):
     """View an annotation entry

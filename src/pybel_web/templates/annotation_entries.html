@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% import "bootstrap/wtf.html" as wtf %}
+{% import "bootstrap/fixes.html" as fixes %}
+{% import "bootstrap/utils.html" as util %}
+{% import "macros.html" as pbw %}
+
+{% block title %}Annotation Entry Catalog{% endblock %}
+
+{% block content %}
+    <div class="container">
+        {{ util.flashed_messages(dismissible=True, container=False) }}
+
+        <ol class="breadcrumb">
+            <li><a href="{{ url_for('ui.home') }}">Catalog</a></li>
+            <li class="active"><a href="{{ url_for('ui.view_annotations') }}">Annotation Entries</a></li>
+        </ol>
+
+        <div class="panel panel-default">
+            <div class="list-group">
+                {% for annotation_entry in annotation_entries %}
+                    <div class="list-group-item">
+                        <h4 class="list-group-item-heading">
+                            {{ annotation_entry.annotation.name }}:{{ annotation_entry.name }}
+                        </h4>
+                        <div class="list-group-item-text">
+                            Count: {{ annotation_entry.edges.count() }}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+            <div class="panel-footer">
+                <p>Showing {{ annotation_entries|length }} of {{ annotation_entry_count }} annotation entries</p>
+            </div>
+        </div>
+
+    </div>
+    {% include "footer.html" %}
+{% endblock %}
