@@ -91,6 +91,43 @@ else:
     interpro_manager = bio2bel_interpro.Manager(connection=connection)
     interpro_manager.create_all()
 
+try:
+    import bio2bel_ctd
+except ImportError:
+    ctd_manager = None
+else:
+    log.info('Using Bio2BEL CTD')
+    ctd_manager = bio2bel_ctd.Manager(connection=connection)
+    ctd_manager.create_all()
+    in_place_mutator(ctd_manager.enrich_graph_genes)
+
+try:
+    import bio2bel_hmdb
+except ImportError:
+    hmdb_manager = None
+else:
+    log.info('Using Bio2BEL HMDB')
+    hmdb_manager = bio2bel_hmdb.Manager(connection=connection)
+    hmdb_manager.create_all()
+
+try:
+    import bio2bel_hmdd
+except ImportError:
+    hmdd_manager = None
+else:
+    log.info('Using Bio2BEL HMDD')
+    hmdd_manager = bio2bel_hmdb.Manager(connection=connection)
+    hmdd_manager.create_all()
+
+try:
+    import bio2bel_mir2disease
+except ImportError:
+    mir2disease_manager = None
+else:
+    log.info('Using Bio2BEL mir2diseaes')
+    mir2disease_manager = bio2bel_mir2disease.Manager(connection=connection)
+    mir2disease_manager.create_all()
+
 manager_dict = {
     name: manager
     for name, manager in locals().items()
