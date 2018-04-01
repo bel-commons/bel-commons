@@ -28,10 +28,9 @@
             <div class="panel-body">
                 <p>
                     BEL Commons is developed and maintained by <a href="https://github.com/cthoyt">Charles Tapley
-                    Hoyt</a> and <a href="https://github.com/ddomingof">Daniel Domingo-Fernandez</a> at <a
+                    Hoyt</a> and <a href="https://github.com/ddomingof">Daniel Domingo-Fernández</a> at the <a
                         href="https://www.scai.fraunhofer.de/en/business-research-areas/bioinformatics.html">Fraunhofer
-                    SCAI</a> with partial support from the <a href="https://www.imi.europa.eu/">IMI</a> projects, <a
-                        href="http://www.aetionomy.eu/">AETIONOMY</a> and <a href="http://www.phago.eu/">PHAGO</a>.
+                    SCAI Department of Bioinformatics</a>.
 
                     It is built on top of the open source project, <a href="https://github.com/pybel/pybel">PyBEL</a>.
                     Please feel free to contact us <a href="mailto:charles.hoyt@scai.fraunhofer.de">here</a> to give us
@@ -42,9 +41,15 @@
                 </p>
                 <ul>
                     <li>
-                        Hoyt, C. T., <i>et al.</i> (2018). <a href="https://doi.org/10.1093/bioinformatics/btx660">
-                        PyBEL: a computational framework for Biological Expression Language</a>. <i>Bioinformatics</i>
-                        (Oxford, England), <strong>34</strong>(4), 703–704.
+                        Hoyt, C. T., Domingo-Fernández, D., & Hofmann-Apitius, M. (2018). <a
+                            href="https://doi.org/10.1101/288274">BEL Commons: an environment for exploration and
+                        analysis of networks encoded in Biological Expression Language</a>. <i>bioRxiv</i>.
+                    </li>
+                    <li>
+                        Hoyt, C. T., Konotopez, A., & Ebeling, C. (2018). <a
+                            href="https://doi.org/10.1093/bioinformatics/btx660">PyBEL: a computational framework for
+                        Biological Expression Language</a>. <i>Bioinformatics</i> (Oxford, England), <strong>34</strong>(4),
+                        703–704.
                     </li>
                 </ul>
             </div>
@@ -205,7 +210,7 @@
                     <h3 class="panel-title">Bio2BEL Managers</h3>
                 </div>
                 <div class="list-group">
-                    {% for name, m in managers.items() %}
+                    {% for name, m in managers.items()|sort %}
                         <div class="list-group-item">
                             <h4 class="list-group-item-heading">
                                 <a href="https://github.com/bio2bel/{{ name[:-8] }}">{{ name[:-8] }}</a>

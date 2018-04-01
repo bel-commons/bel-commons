@@ -33,14 +33,16 @@
             </div>
             <div class="panel-body">
                 <dl class="dl-horizontal">
-                    <dt>Creator</dt>
-                    <dd>{{ query.user }}</dd>
+                    {% if query.user %}
+                        <dt>Creator</dt>
+                        <dd>{{ query.user }}</dd>
+                    {% endif %}
                     <dt>Assembly</dt>
                     <dd>
                         <ul>
                             {% for network in query.assembly.networks %}
                                 <li>
-                                    {{ network }}
+                                    <a href="{{ url_for('ui.view_network', network_id=network.id) }}">{{ network }}</a>
                                 </li>
                             {% endfor %}
                         </ul>
