@@ -7,16 +7,27 @@
             In-Edges: {{ node.in_edges.count() }} |
             Out-Edges: {{ node.out_edges.count() }} |
 
-            {% if node.type == 'Gene' %}
-                Orthologies: {{ node.out_edges.filter_by(relation='orthologous').count() }} |
+
+            {% set node_equivalence_count =  node.out_edges.filter_by(relation='equivalentTo').count() %}
+            {% set node_orthology_count =  node.out_edges.filter_by(relation='orthologous').count() %}
+            {% set node_class_count =  node.out_edges.filter_by(relation='isA').count() %}
+            {% set node_children_count =  node.in_edges.filter_by(relation='isA').count() %}
+
+            {% if node.type == 'Gene' and node_orthology_count%}
+                Orthologies: {{ node_orthology_count }} |
+            {% endif %}
+            {% if node_equivalence_count %}
+                Equivalencies: {{ node_equivalence_count }} |
+            {% endif %}
+            {% if node_class_count %}
+                Classes: {{ node_class_count }} |
+            {% endif %}
+            {% if node_children_count %}
+                Children: {{ node_children_count }} |
             {% endif %}
 
-            Equivalencies: {{ node.out_edges.filter_by(relation='equivalentTo').count() }} |
-            Classes: {{ node.out_edges.filter_by(relation='isA').count() }} |
-            Children: {{ node.in_edges.filter_by(relation='isA').count() }} |
-
-            <a href="{{ url_for('ui.view_explorer_node', node_hash=node.sha512) }}">Explore</a> |
-            <a href="{{ url_for('dbs.get_node_by_hash', node_hash=node.sha512) }}">JSON</a>
+            <a href="{{ url_for('ui.view_explorer_node', node_hash=node.sha512) }}">Explore Neighborhood</a> |
+            <a href="{{ url_for('dbs.get_node_by_hash', node_hash=node.sha512) }}">Download JSON</a>
         </div>
     </div>
 {%- endmacro %}
