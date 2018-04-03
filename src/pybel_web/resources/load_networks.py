@@ -10,7 +10,6 @@ Prerequisites
 
 import json
 import logging
-import os
 import time
 
 from sqlalchemy.exc import OperationalError
@@ -19,31 +18,18 @@ import pybel
 from pybel import from_path, from_pickle, to_pickle
 from pybel.manager import Manager
 from pybel.struct.mutation import strip_annotations
+from pybel_tools.grouping import get_subgraphs_by_annotation_filtered
 from pybel_tools.io import get_corresponding_gpickle_path, iter_from_pickles_from_directory, iter_paths_from_directory
-from pybel_tools.selection import get_subgraphs_by_annotation_filtered
 from pybel_tools.utils import enable_cool_mode
 from pybel_web.external_managers import (
     chebi_manager, entrez_manager, expasy_manager, go_manager, hgnc_manager,
     interpro_manager, mirtarbase_manager,
 )
 from pybel_web.manager_utils import insert_graph
+from pybel_web.resources.constants import *
 
 log = logging.getLogger(__name__)
 enable_cool_mode()
-
-BMS_BASE = os.environ.get('BMS_BASE')
-
-if BMS_BASE is None:
-    raise RuntimeError('BMS_BASE is not set in the environment')
-
-alzheimer_directory = os.path.join(BMS_BASE, 'aetionomy', 'alzheimers')
-parkinsons_directory = os.path.join(BMS_BASE, 'aetionomy', 'parkinsons')
-epilepsy_directory = os.path.join(BMS_BASE, 'aetionomy', 'epilepsy')
-neurommsig_directory = os.path.join(BMS_BASE, 'aetionomy', 'neurommsig')
-selventa_directory = os.path.join(BMS_BASE, 'selventa')
-cbn_human = os.path.join(BMS_BASE, 'cbn', 'Human-2.0')
-cbn_mouse = os.path.join(BMS_BASE, 'cbn', 'Mouse-2.0')
-cbn_rat = os.path.join(BMS_BASE, 'cbn', 'Rat-2.0')
 
 neurommsig_sample_networks = [
     'Low density lipoprotein subgraph',

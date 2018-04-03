@@ -17,16 +17,10 @@ from pybel.manager import Manager
 from pybel_tools.utils import enable_cool_mode
 from pybel_web.manager_utils import run_cmpa_helper
 from pybel_web.models import Experiment, Omic, Query
+from pybel_web.resources.constants import BMS_BASE
 
 log = logging.getLogger(__name__)
 enable_cool_mode()
-
-dir_path = os.path.dirname(os.path.realpath(__file__))
-
-BMS_BASE = os.environ.get('BMS_BASE')
-
-if BMS_BASE is None:
-    raise RuntimeError('BMS_BASE is not set in the environment')
 
 
 # 1. build query from all of alzheimer's disease using manifest from AD folder

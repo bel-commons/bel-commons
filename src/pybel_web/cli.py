@@ -28,7 +28,7 @@ import click
 from flask_security import SQLAlchemyUserDatastore
 
 import pybel
-from pybel.constants import PYBEL_CONNECTION, get_cache_connection
+from pybel.constants import get_cache_connection
 from pybel.manager import Manager
 from pybel.manager.models import Network
 from pybel.utils import get_version as pybel_version
@@ -115,7 +115,7 @@ _config_map = {
     'prod': 'pybel_web.config.ProductionConfig'
 }
 
-_main_help = "PyBEL-Tools Command Line Interface on {}\n with " \
+_main_help = "BEL Commons Command Line Interface on {}\n with " \
              "PyBEL v{} and PyBEL Tools v{}".format(sys.executable,
                                                     pybel_version(),
                                                     pybel_tools_get_version())
@@ -214,16 +214,10 @@ def worker(concurrency, debug):
 
 @main.group()
 @click.option('-c', '--connection', help='Cache connection. Defaults to {}'.format(get_cache_connection()))
-@click.option('--config', type=click.File('r'), help='Specify configuration JSON file')
 @click.pass_context
-def manage(ctx, connection, config):
+def manage(ctx, connection):
     """Manage the database"""
-    if config:
-        file = json.load(config)
-        ctx.obj = Manager.ensure(file.get(PYBEL_CONNECTION, get_cache_connection()))
-    else:
-        ctx.obj = Manager.ensure(connection)
-
+    ctx.obj = Manager.ensure(connection)
     Base.metadata.bind = ctx.obj.engine
     Base.query = ctx.obj.session.query_property()
 
@@ -626,53 +620,57 @@ def summarize(manager):
     click.echo('Experiments: {}'.format(manager.session.query(Experiment).count()))
 
 
-@manage.group()
-def examples():
-    """Load examples"""
+omics_dir = os.environ.get('BEL_COMMONS_EXAMPLES_OMICS_DATA_DIR')
+bms = os.environ.get('BMS_BASE')
+
+if omics_dir is not None or bms is not None:
+    @manage.group()
+    def examples():
+        """Load examples"""
+
+    if omics_dir:
+        @examples.command()
+        @click.pass_obj
+        def load_omics(manager):
+            """Load omics"""
+            from .resources.load_omics import main
+            set_debug(logging.INFO)
+            main(manager)
+
+    if bms:
+        @examples.command()
+        @click.pass_obj
+        def load_networks(manager):
+            """Load networks"""
+            from .resources.load_networks import main
+            set_debug(logging.INFO)
+            main(manager)
+
+    if omics_dir and bms:
+        @examples.command()
+        @click.option('-p', '--permutations', type=int, help='Number of permutations to run. Defaults to 25.', default=25)
+        @click.pass_obj
+        def load(manager, permutations):
+            """Load omics, networks, and experiments"""
+            from .resources.load_omics import main as load_omics_main
+            from .resources.load_networks import main as load_networks_main
+            from .resources.load_experiments import main as load_experiments_main
+
+            set_debug(logging.INFO)
+
+            load_omics_main(manager)
+            load_networks_main(manager)
+            load_experiments_main(manager, permutations=permutations)
 
 
-@examples.command()
-@click.option('-p', '--permutations', type=int, help='Number of permutations to run. Defaults to 25.', default=25)
-@click.pass_obj
-def load(manager, permutations):
-    """Load omics, networks, and experiments"""
-    from .resources.load_omics import main as load_omics_main
-    from .resources.load_networks import main as load_networks_main
-    from .resources.load_experiments import main as load_experiments_main
-
-    set_debug(logging.INFO)
-
-    load_omics_main(manager)
-    load_networks_main(manager)
-    load_experiments_main(manager, permutations=permutations)
-
-
-@examples.command()
-@click.pass_obj
-def load_omics(manager):
-    """Load omics"""
-    from .resources.load_omics import main
-    set_debug(logging.INFO)
-    main(manager)
-
-
-@examples.command()
-@click.pass_obj
-def load_networks(manager):
-    """Load networks"""
-    from .resources.load_networks import main
-    set_debug(logging.INFO)
-    main(manager)
-
-
-@examples.command()
-@click.option('-p', '--permutations', type=int, help='Number of permutations to run. Defaults to 25.', default=25)
-@click.pass_obj
-def load_experiments(manager, permutations):
-    """Load experiments"""
-    from .resources.load_experiments import main
-    set_debug(logging.INFO)
-    main(manager, permutations=permutations)
+        @examples.command()
+        @click.option('-p', '--permutations', type=int, help='Number of permutations to run. Defaults to 25.', default=25)
+        @click.pass_obj
+        def load_experiments(manager, permutations):
+            """Load experiments"""
+            from .resources.load_experiments import main
+            set_debug(logging.INFO)
+            main(manager, permutations=permutations)
 
 
 @manage.command()

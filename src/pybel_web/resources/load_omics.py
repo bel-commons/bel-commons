@@ -9,10 +9,9 @@ import os
 
 from pybel.manager import Manager
 from pybel_web.manager_utils import create_omic
+from pybel_web.resources.constants import dir_path
 
 log = logging.getLogger(__name__)
-
-dir_path = os.path.dirname(os.path.realpath(__file__))
 
 MANIFEST_FILE_NAME = 'manifest.json'
 
