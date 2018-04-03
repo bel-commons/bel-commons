@@ -635,12 +635,13 @@ if omics_dir is not None or bms is not None:
 
     if omics_dir:
         @examples.command(help='Load omics from {}'.format(omics_dir))
+        @click.option('-r', '--reload', is_flag=True, help='Reload')
         @click.pass_obj
-        def load_omics(manager):
+        def load_omics(manager, reload):
             """Load omics"""
             from .resources.load_omics import main
             set_debug(logging.INFO)
-            main(manager)
+            main(manager, reload=reload)
 
     if bms:
         @examples.command()
@@ -653,9 +654,10 @@ if omics_dir is not None or bms is not None:
 
     if omics_dir and bms:
         @examples.command()
+        @click.option('--reload-omics', is_flag=True, help='Reload')
         @click.option('-p', '--permutations', type=int, help='Number of permutations to run. Defaults to 25.', default=25)
         @click.pass_obj
-        def load(manager, permutations):
+        def load(manager, reload_omics, permutations):
             """Load omics, networks, and experiments"""
             from .resources.load_omics import main as load_omics_main
             from .resources.load_networks import main as load_networks_main
@@ -663,7 +665,7 @@ if omics_dir is not None or bms is not None:
 
             set_debug(logging.INFO)
 
-            load_omics_main(manager)
+            load_omics_main(manager, reload=reload_omics)
             load_networks_main(manager)
             load_experiments_main(manager, permutations=permutations)
 

@@ -89,17 +89,18 @@ def write_manifest(directory, omics):
         json.dump(manifest_data, file, indent=2)
 
 
-def work_omics(directory, connection=None):
+def work_omics(directory, connection=None, reload=False):
     """
     :param str directory: Directory containing omics data and a manifest
     :param connection: database connection string to cache, pre-built :class:`Manager`, or None to use default cache
     :type connection: Optional[str or pybel.manager.Manager]
+    :param bool reload: Should the experiments be reloaded?
     """
     if not (os.path.exists(directory) and os.path.isdir(directory)):
         log.warning('directory does not exist: %s', directory)
         return
 
-    if os.path.exists(os.path.join(directory, MANIFEST_FILE_NAME)):
+    if not reload and os.path.exists(os.path.join(directory, MANIFEST_FILE_NAME)):
         log.info('omics data already built for %s', directory)
         return
 
@@ -109,11 +110,12 @@ def work_omics(directory, connection=None):
     write_manifest(directory, omics)
 
 
-def main(connection=None):
+def main(connection=None, reload=False):
     """Loads omics models to database
 
     :param connection: database connection string to cache, pre-built :class:`Manager`, or None to use default cache
     :type connection: Optional[str or pybel.manager.Manager]
+    :param bool reload: Should the experiments be reloaded?
     """
     directories = [
         os.path.join(OMICS_DATA_DIR, 'GSE28146'),
@@ -123,7 +125,7 @@ def main(connection=None):
 
     for directory in directories:
         try:
-            work_omics(directory=directory, connection=connection)
+            work_omics(directory=directory, connection=connection, reload=reload)
         except Exception:
             log.exception('failed for directory %s', directory)
 
