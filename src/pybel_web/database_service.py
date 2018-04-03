@@ -6,7 +6,6 @@ import csv
 import logging
 import pickle
 import time
-from functools import lru_cache
 from io import StringIO
 from operator import itemgetter
 
@@ -24,7 +23,7 @@ from pybel.manager.models import (
 )
 from pybel.resources.definitions import write_annotation, write_namespace
 from pybel.struct import union
-from pybel.struct.summary import get_annotation_values_by_annotation, get_pubmed_identifiers
+from pybel.struct.summary import get_pubmed_identifiers
 from pybel.utils import get_version as get_pybel_version, hash_node
 from pybel_tools import pipeline
 from pybel_tools.analysis.ucmpa import RESULT_LABELS
@@ -37,15 +36,19 @@ from pybel_tools.summary import (
 )
 from . import models
 from .constants import *
+from .content import (
+    get_edge_by_hash_or_404, get_network_or_404, get_node_by_hash_or_404, get_query_or_404,
+    safe_get_network, safe_get_project, safe_get_query, user_missing_query_rights,
+)
 from .external_managers import *
 from .main_service import BLACK_LIST, PATHS_METHOD, UNDIRECTED
 from .manager_utils import fill_out_report, make_graph_summary, next_or_jsonify
 from .models import EdgeComment, Experiment, Project, Report, User
 from .send_utils import serve_network, to_json_custom
 from .utils import (
-    current_user_has_query_rights, get_edge_by_hash_or_404, get_network_ids_with_permission_helper, get_network_or_404,
-    get_node_by_hash_or_404, get_node_overlaps, get_or_create_vote, get_query_ancestor_id, get_recent_reports,
-    help_get_edge_entry, manager, safe_get_network, safe_get_project, safe_get_query, user_datastore,
+    get_graph_from_request, get_network_ids_with_permission_helper, get_node_overlaps,
+    get_or_create_vote, get_query_ancestor_id, get_recent_reports, get_tree_from_query, help_get_edge_entry, manager,
+    user_datastore,
 )
 
 log = logging.getLogger(__name__)
@@ -53,25 +56,14 @@ log = logging.getLogger(__name__)
 api_blueprint = Blueprint('dbs', __name__)
 
 
-@lru_cache(maxsize=64)
-def get_graph_from_request(query_id):
-    """Process the GET request returning the filtered network.
-
-    :param int query_id: The database query identifier
-    :rtype: Optional[pybel.BELGraph]
-    :raises: werkzeug.exceptions.HTTPException
-    """
-    query = safe_get_query(query_id)
-    return query.run(manager)
-
-
 @api_blueprint.route('/api/receive', methods=['POST'])
+@login_required
 def receive():
     """Receives a JSON serialized BEL graph"""
     # TODO assume https authentication and use this to assign user to receive network function
     payload = request.get_json()
     task = current_app.celery.send_task('upload-json', args=[current_app.config['SQLALCHEMY_DATABASE_URI'], payload])
-    return next_or_jsonify('Sent async receive task', network_id=task.id)
+    return next_or_jsonify('Sent async receive task', task_id=task.id)
 
 
 ####################################
@@ -898,41 +890,6 @@ def make_network_private(network_id):
 # NETWORK QUERIES
 ####################################
 
-def get_tree_annotations(graph):
-    """Builds tree structure with annotation for a given graph
-
-    :param pybel.BELGraph graph: A BEL Graph
-    :return: The JSON structure necessary for building the tree box
-    :rtype: list[dict]
-    """
-    annotations = get_annotation_values_by_annotation(graph)
-    return [
-        {
-            'text': annotation,
-            'children': [
-                {'text': value}
-                for value in sorted(values)
-            ]
-        }
-        for annotation, values in sorted(annotations.items())
-    ]
-
-
-@lru_cache(maxsize=64)
-def get_tree_from_query(query_id):
-    """Gets the tree json for a given network
-
-    :param int query_id:
-    :rtype: dict
-    """
-    graph = get_graph_from_request(query_id)
-
-    if graph is None:
-        return
-
-    return get_tree_annotations(graph)
-
-
 @api_blueprint.route('/api/query/<int:query_id>.json')
 def download_query_json(query_id):
     """Downloads the query"""
@@ -985,10 +942,12 @@ def check_query_rights(query_id):
         required: true
         type: integer
     """
+    query = get_query_or_404(query_id)
+
     return jsonify({
         'status': 200,
         'query_id': query_id,
-        'allowed': current_user_has_query_rights(query_id)
+        'allowed': (not user_missing_query_rights(current_user, query))
     })
 
 
@@ -2136,6 +2095,7 @@ def add_pipeline_entry(query_id, name, *args, **kwargs):
 
     :param int query_id: The identifier of the query
     :param str name: The name of the function to append
+    :rtype: flask.Response
     """
     query = safe_get_query(query_id)
 

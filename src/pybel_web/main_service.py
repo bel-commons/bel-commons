@@ -16,23 +16,24 @@ import pybel_tools.query
 from pybel.manager.models import Annotation, AnnotationEntry, Citation, Edge, Evidence, Namespace, Node
 from pybel.utils import get_version as get_pybel_version
 from pybel_tools.biogrammar.double_edges import summarize_competeness
+from pybel_tools.grouping import get_subgraphs_by_annotation
 from pybel_tools.mutation import (
     collapse_by_central_dogma_to_genes, remove_associations, remove_isolated_nodes,
     remove_pathologies,
 )
 from pybel_tools.pipeline import Pipeline, no_arguments_map
-from pybel_tools.selection import get_subgraphs_by_annotation
 from pybel_tools.summary import info_json
 from pybel_tools.utils import get_version as get_pybel_tools_version
-from pybel_web.manager_utils import next_or_jsonify
 from . import models
 from .constants import *
+from .content import safe_get_network, safe_get_query
 from .external_managers import *
 from .external_managers import manager_dict
+from .manager_utils import next_or_jsonify
 from .models import Assembly, EdgeComment, EdgeVote, Experiment, Omic, Project, Query, Report, User
 from .utils import (
-    calculate_overlap_dict, get_networks_with_permission, get_or_create_vote, manager, query_form_to_dict,
-    query_from_network, render_network_summary_safe, safe_get_network, safe_get_node, safe_get_query,
+    calculate_overlap_dict, get_graph_from_request, get_networks_with_permission, get_or_create_vote, manager,
+    query_form_to_dict, query_from_network_with_current_user, render_network_summary_safe, safe_get_node,
 )
 
 log = logging.getLogger(__name__)
@@ -371,7 +372,7 @@ def view_explore_network(network_id):
     :param int network_id: The identifier of the network to explore
     """
     network = safe_get_network(network_id)
-    query = query_from_network(network)
+    query = query_from_network_with_current_user(current_user, network)
     return redirect_to_view_explorer_query(query)
 
 
@@ -686,12 +687,8 @@ def view_query_comparison(query_1_id, query_2_id):
     :param int query_1_id: The identifier of the first query
     :param int query_2_id: The identifier of the second query
     """
-
-    query_1 = safe_get_query(query_1_id)
-    query_2 = safe_get_query(query_2_id)
-
-    query_1_result = query_1.run(manager)
-    query_2_result = query_2.run(manager)
+    query_1_result = get_graph_from_request(query_1_id)
+    query_2_result = get_graph_from_request(query_2_id)
 
     data = calculate_overlap_dict(
         g1=query_1_result,
@@ -702,8 +699,8 @@ def view_query_comparison(query_1_id, query_2_id):
 
     return render_template(
         'query_comparison.html',
-        query_1=query_1,
-        query_2=query_2,
+        query_1_id=query_1_id,
+        query_2_id=query_2_id,
         data=data,
     )
 

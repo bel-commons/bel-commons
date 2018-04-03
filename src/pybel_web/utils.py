@@ -5,6 +5,7 @@ import datetime
 import logging
 import time
 from collections import Counter, defaultdict
+from functools import lru_cache
 from io import BytesIO
 
 from flask import abort, render_template
@@ -13,12 +14,16 @@ from sqlalchemy import and_, func
 
 import pybel
 from pybel.manager import Network
-from pybel.struct.summary import count_namespaces, get_pubmed_identifiers
+from pybel.struct.summary import count_namespaces, get_annotation_values_by_annotation, get_pubmed_identifiers
 from pybel_tools.summary import count_variants, get_annotations
 from pybel_tools.utils import min_tanimoto_set_similarity, prepare_c3, prepare_c3_time_series
 from .constants import AND
-from .manager_utils import get_network_summary_dict
-from .models import EdgeComment, EdgeVote, NetworkOverlap, Project, Query, Report, User
+from .content import safe_get_query
+from .manager_utils import (
+    get_network_ids_with_permission_helper, get_network_summary_dict, iter_public_networks,
+    networks_with_permission_iter_helper,
+)
+from .models import EdgeComment, EdgeVote, NetworkOverlap, Query, Report, User
 from .proxies import manager, user_datastore
 
 log = logging.getLogger(__name__)
@@ -35,7 +40,7 @@ def sanitize_list_of_str(l):
 
 def get_top_overlaps(network_id, number=10):
     overlap_counter = get_node_overlaps(network_id)
-    allowed_network_ids = get_network_ids_with_permission_helper(current_user, manager)
+    allowed_network_ids = get_network_ids_with_permission_helper(current_user, manager, user_datastore)
     overlaps = [
         (manager.get_network_by_id(network_id), v)
         for network_id, v in overlap_counter.most_common()
@@ -356,19 +361,6 @@ def calculate_overlap_dict(g1, g2, g1_label=None, g2_label=None):
     }
 
 
-def iter_public_networks(manager_):
-    """Lists the recent networks from :meth:`pybel.manager.Manager.list_recent_networks()` that have been made public
-
-    :param pybel.manager.Manager manager_:
-    :rtype: iter[Network]
-    """
-    return (
-        network
-        for network in manager_.list_recent_networks()
-        if network.report and network.report.public
-    )
-
-
 def unique_networks(networks):
     """Only yields unique networks
 
@@ -387,31 +379,6 @@ def unique_networks(networks):
             yield network
 
 
-def networks_with_permission_iter_helper(user, manager_):
-    """Gets an iterator over all the networks from all the sources
-
-    :param models.User user:
-    :param pybel.manager.Manager manager_:
-    :rtype: iter[Network]
-    """
-    if not user.is_authenticated:
-        yield from iter_public_networks(manager_)
-
-    elif user.is_admin:
-        yield from manager_.list_recent_networks()
-
-    else:
-        yield from iter_public_networks(manager_)
-        yield from user.get_owned_networks()
-        yield from user.get_shared_networks()
-        yield from user.get_project_networks()
-
-        if user.is_scai:
-            role = user_datastore.find_or_create_role(name='scai')
-            for user in role.users:
-                yield from user.get_owned_networks()
-
-
 def get_networks_with_permission(manager_):
     """Gets all networks tagged as public or uploaded by the current user
 
@@ -425,85 +392,60 @@ def get_networks_with_permission(manager_):
     if current_user.is_admin:
         return manager_.list_recent_networks()
 
-    return list(unique_networks(networks_with_permission_iter_helper(current_user, manager_)))
+    return list(unique_networks(networks_with_permission_iter_helper(current_user, manager_, user_datastore)))
 
 
-def get_network_ids_with_permission_helper(user, manager_):
-    """Gets the set of networks ids tagged as public or uploaded by the current user
+@lru_cache(maxsize=256)
+def get_graph_from_request(query_id):
+    """Process the GET request returning the filtered network.
 
-    :param User user:
-    :param pybel.manager.Manager manager_: The database service
-    :return: A list of all networks tagged as public or uploaded by the current user
-    :rtype: set[int]
-    """
-    return {
-        network.id
-        for network in networks_with_permission_iter_helper(user, manager_)
-    }
-
-
-def user_has_query_rights(user, query):
-    """Checks if the user has rights to run the given query
-
-    :param models.User user: A user object
-    :param models.Query query: A query object
-    :rtype: bool
-    """
-    if user.is_authenticated and user.is_admin:
-        return True
-
-    permissive_network_ids = get_network_ids_with_permission_helper(user, manager)
-
-    return all(
-        network.id in permissive_network_ids
-        for network in query.assembly.networks
-    )
-
-
-def current_user_has_query_rights(query_id):
-    """Checks if the current user has rights to run the given query
-
-    :param int query_id: The database identifier for a query
-    :rtype: bool
-    """
-    if current_user.is_authenticated and current_user.is_admin:
-        return True
-
-    query = manager.session.query(Query).get(query_id)
-
-    return user_has_query_rights(current_user, query)
-
-
-def get_query_or_404(query_id):
-    """Gets a query or returns a HTTPException with 404 message if it does not exist
-
-    :param int query_id: The database identifier for a query
-    :rtype: Query
+    :param int query_id: The database query identifier
+    :rtype: Optional[pybel.BELGraph]
     :raises: werkzeug.exceptions.HTTPException
     """
-    query = manager.session.query(Query).get(query_id)
+    log.debug('getting query [id=%d] from database', query_id)
+    query = safe_get_query(query_id)
 
-    if query is None:
-        abort(404, 'Missing query: {}'.format(query_id))
+    log.debug('running query [id=%d]', query_id)
+    result = query.run(manager)
 
-    return query
+    return result
 
 
-def safe_get_query(query_id):
-    """Gets a query by ite database identifier. Raises an HTTPException with 404 if the query does not exist or
-    raises an HTTPException with 403 if the user does not have the appropriate permissions for all networks in the
-    query's assembly
+def get_tree_annotations(graph):
+    """Builds tree structure with annotation for a given graph
 
-    :param int query_id: The database identifier for a query
-    :rtype: Query
+    :param pybel.BELGraph graph: A BEL Graph
+    :return: The JSON structure necessary for building the tree box
+    :rtype: list[dict]
+    """
+    annotations = get_annotation_values_by_annotation(graph)
+    return [
+        {
+            'text': annotation,
+            'children': [
+                {'text': value}
+                for value in sorted(values)
+            ]
+        }
+        for annotation, values in sorted(annotations.items())
+    ]
+
+
+@lru_cache(maxsize=256)
+def get_tree_from_query(query_id):
+    """Gets the tree json for a given network
+
+    :param int query_id: The database query identifier
+    :rtype: Optional[dict]
     :raises: werkzeug.exceptions.HTTPException
     """
-    query = get_query_or_404(query_id)
+    graph = get_graph_from_request(query_id)
 
-    if not user_has_query_rights(current_user, query):
-        abort(403, 'Insufficient rights to run query {}'.format(query_id))
+    if graph is None:
+        return
 
-    return query
+    return get_tree_annotations(graph)
 
 
 def get_edge_vote_by_user(manager_, edge, user):
@@ -547,36 +489,6 @@ def get_or_create_vote(manager_, edge, user, agreed=None):
     return vote
 
 
-def get_node_by_hash_or_404(node_hash):
-    """Gets a node's hash or sends a 404 missing message
-
-    :param str node_hash: A PyBEL node hash
-    :rtype: pybel.manager.models.Node
-    :raises: werkzeug.exceptions.HTTPException
-    """
-    node = manager.get_node_by_hash(node_hash)
-
-    if node is None:
-        abort(404, 'Node not found: {}'.format(node_hash))
-
-    return node
-
-
-def get_edge_by_hash_or_404(edge_hash):
-    """Gets an edge if it exists or sends a 404
-
-    :param str edge_hash: A PyBEL edge hash
-    :rtype: Edge
-    :raises: werkzeug.exceptions.HTTPException
-    """
-    edge = manager.get_edge_by_hash(edge_hash)
-
-    if edge is None:
-        abort(404, 'Edge not found: {}'.format(edge_hash))
-
-    return edge
-
-
 def get_node_overlaps(network_id):
     """Calculates overlaps to all other networks in the database
 
@@ -601,6 +513,8 @@ def get_node_overlaps(network_id):
     )
 
     if uncached_networks:
+        log.debug('caching overlaps for network [id=%d]', network_id)
+
         for other_network in uncached_networks:
             other_network_nodes = set(node.id for node in other_network.nodes)
 
@@ -613,7 +527,7 @@ def get_node_overlaps(network_id):
 
         manager.session.commit()
 
-        log.debug('Cached node overlaps for network %s in %.2f seconds', network_id, time.time() - t)
+        log.debug('cached overlaps for network [id=%s] in %.2f seconds', network_id, time.time() - t)
 
     return rv
 
@@ -655,95 +569,23 @@ def render_network_summary_safe(manager_, network_id, template):
     :param str template: The name of the template to render
     :rtype: flask.Response
     """
-    if network_id not in get_network_ids_with_permission_helper(current_user, manager_):
+    if network_id not in get_network_ids_with_permission_helper(current_user, manager_, user_datastore):
         abort(403, 'Insufficient rights for network {}'.format(network_id))
 
     return render_network_summary(network_id, template=template)
 
 
-def get_project_or_404(project_id):
-    """Get a project by id and aborts 404 if doesn't exist
 
-    :param int project_id: The identifier of the project
-    :rtype: Project
-    :raises: HTTPException
-    """
-    project = manager.session.query(Project).get(project_id)
-
-    if project is None:
-        abort(404, 'Project {} does not exist'.format(project_id))
-
-    return project
-
-
-def user_has_project_rights(user, project):
-    """Returns if the given user has rights to the given project
-
-    :type user: User
-    :type project: Project
-    :rtype: bool
-    """
-    return user.is_authenticated and (user.is_admin or project.has_user(current_user))
-
-
-def safe_get_project(project_id):
-    """Gets a project by identifier, aborts 404 if doesn't exist and aborts 403 if current user does not have rights
-
-    :param int project_id: The identifier of the project
-    :rtype: Project
-    :raises: HTTPException
-    """
-    project = get_project_or_404(project_id)
-
-    if not user_has_project_rights(current_user, project):
-        abort(403, 'User {} does not have permission to access Project {}'.format(current_user, project))
-
-    return project
-
-
-def get_network_or_404(network_id):
-    """Gets a network or aborts 404 if it doesn't exist
-
-    :param int network_id: The identifier of the network
-    :rtype: Network
-    :raises: HTTPException
-    """
-    network = manager.session.query(Network).get(network_id)
-
-    if network is None:
-        abort(404, 'Network {} does not exist'.format(network_id))
-
-    return network
-
-
-def safe_get_network(network_id):
-    """Aborts if the current user is not the owner of the network
-
-    :param int network_id: The identifier of the network
-    :rtype: Network
-    :raises: HTTPException
-    """
-    network = get_network_or_404(network_id)
-
-    if network.report and network.report.public:
-        return network
-
-    # FIXME what about networks in a project?
-
-    if not current_user.owns_network(network):
-        abort(403, 'User {} does not have permission to access Network {}'.format(current_user, network))
-
-    return network
-
-
-def query_from_network(network, autocommit=True):
+@lru_cache(maxsize=256)
+def query_from_network_with_current_user(user, network, autocommit=True):
     """Makes a query from the given network
 
+    :param User user: The user making the query
     :param Network network: The network
     :param bool autocommit: Should the query be committed immediately
     :rtype: Query
     """
-    query = Query.from_network(network, user=current_user)
+    query = Query.from_network(network, user=user)
 
     if autocommit:
         manager.session.add(query)

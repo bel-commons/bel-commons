@@ -16,10 +16,11 @@ from flask_security import current_user, login_required, roles_required
 from sklearn.cluster import KMeans
 
 from pybel_tools.analysis.ucmpa import RESULT_LABELS
+from .content import safe_get_query
 from .forms import DifferentialGeneExpressionForm
 from .manager_utils import create_omic, next_or_jsonify, safe_get_experiment
 from .models import Experiment, Omic, Query
-from .utils import get_network_ids_with_permission_helper, manager, safe_get_query
+from .utils import get_network_ids_with_permission_helper, manager
 
 log = logging.getLogger(__name__)
 

@@ -326,7 +326,8 @@
             </div>
             <div class="panel-body">
                 <p>
-                    The node-based overlap between networks is calculated as the <a href="https://en.wikipedia.org/wiki/Overlap_coefficient">Szymkiewicz-Simpson coefficient</a>
+                    The node-based overlap between networks is calculated as the <a
+                        href="https://en.wikipedia.org/wiki/Overlap_coefficient">Szymkiewicz-Simpson coefficient</a>
                     of their respective nodes. Up to the top 10 are shown below.
                 </p>
             </div>
@@ -347,9 +348,11 @@
                             <td>
                                 {{ (100 * tanimoto)|round|int }}%
 
-                                <a href="{{ url_for('ui.view_network_comparison', network_1_id=network.id, network_2_id=other_network.id) }}">
-                                    <span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span>
-                                </a>
+                                {% if current_user.is_admin %}
+                                    <a href="{{ url_for('ui.view_network_comparison', network_1_id=network.id, network_2_id=other_network.id) }}">
+                                        <span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span>
+                                    </a>
+                                {% endif %}
                             </td>
                         </tr>
                     {% endif %}

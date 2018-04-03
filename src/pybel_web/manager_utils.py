@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 
+"""Utilities in this package should not depend on anything (especially proxies), and should instead take arguments
+corresponding to objects"""
+
 import itertools as itt
 import logging
 import time
@@ -338,14 +341,18 @@ def run_cmpa_helper(manager, experiment, use_tqdm=False):
     experiment.time = time.time() - t
 
 
-def get_experiment(manager, experiment_id):
-    """Gets an experiment
-
-    :param pybel.manager.Manager manager:
-    :param int experiment_id:
-    :rtype: Optional[Experiment]
+def user_has_rights_to_experiment(user, experiment):
     """
-    return manager.session.query(Experiment).get(experiment_id)
+
+    :param User user:
+    :param Experiment experiment:
+    :return:
+    """
+    return (
+            experiment.public or
+            user.is_admin or
+            user == experiment.user
+    )
 
 
 def safe_get_experiment(manager, experiment_id, user):
@@ -357,15 +364,12 @@ def safe_get_experiment(manager, experiment_id, user):
     :rtype: Experiment
     :raises: werkzeug.exceptions.HTTPException
     """
-    experiment = get_experiment(manager, experiment_id)
+    experiment = manager.session.query(Experiment).get(experiment_id)
 
     if experiment is None:
         abort(404, 'Experiment {} does not exist'.format(experiment_id))
 
-    if experiment.public:
-        return experiment
-
-    if not user.is_admin and (user != experiment.user):
+    if not user_has_rights_to_experiment(user, experiment):
         abort(403, 'You do not have rights to drop this experiment')
 
     return experiment
@@ -391,4 +395,93 @@ def next_or_jsonify(message, *args, status=200, category='message', **kwargs):
         status=status,
         message=message,
         **kwargs
+    )
+
+
+def iter_public_networks(manager):
+    """Lists the recent networks from :meth:`pybel.manager.Manager.list_recent_networks()` that have been made public
+
+    :param pybel.manager.Manager manager: A manager
+    :rtype: iter[Network]
+    """
+    return (
+        network
+        for network in manager.list_recent_networks()
+        if network.report and network.report.public
+    )
+
+
+def _iterate_networks_for_user(user, manager, user_datastore):
+    """
+    :param models.User user: A user
+    :param pybel.manager.Manager manager: A manager
+    :param flask_security.datastore.UserDatastore user_datastore: A user datastore
+    :rtype: iter[Network]
+    """
+    yield from iter_public_networks(manager)
+    yield from user.get_owned_networks()
+    yield from user.get_shared_networks()
+    yield from user.get_project_networks()
+
+    if user.is_scai:
+        role = user_datastore.find_or_create_role(name='scai')
+        for user in role.users:
+            yield from user.get_owned_networks()
+
+
+def networks_with_permission_iter_helper(user, manager, user_datastore):
+    """Gets an iterator over all the networks from all the sources
+
+    :param models.User user: A user
+    :param pybel.manager.Manager manager: A manager
+    :param flask_security.datastore.UserDatastore user_datastore: A user datastore
+    :rtype: iter[Network]
+    """
+    if not user.is_authenticated:
+        log.debug('getting only public networks for anonymous user')
+        yield from iter_public_networks(manager)
+
+    elif user.is_admin:
+        log.debug('getting all recent networks for admin')
+        yield from manager.list_recent_networks()
+
+    else:
+        log.debug('getting all networks for user [%s]', user)
+        yield from _iterate_networks_for_user(user, manager, user_datastore)
+
+
+def get_network_ids_with_permission_helper(user, manager, user_datastore):
+    """Gets the set of networks ids tagged as public or uploaded by the current user
+
+    :param User user: A user
+    :param pybel.manager.Manager manager: A manager
+    :param flask_security.datastore.UserDatastore user_datastore: A user datastore
+    :return: A list of all networks tagged as public or uploaded by the current user
+    :rtype: set[int]
+    """
+    networks = networks_with_permission_iter_helper(user, manager, user_datastore)
+    return {network.id for network in networks}
+
+
+def user_missing_query_rights_abstract(manager, user_datastore, user, query):
+    """Checks if the user does not have the rights to run the given query
+
+    :param pybel.manager.Manager manager: A manager
+    :param flask_security.datastore.UserDatastore user_datastore: A user datastore
+    :param models.User user: A user object
+    :param models.Query query: A query object
+    :rtype: bool
+    """
+    log.debug('checking if user [%s] has rights to query [id=%s]', user, query.id)
+
+    if user.is_admin:
+        log.debug('[%s] is admin and can access query [id=%d]', user, query.id)
+        return False  # admins are never missing the rights to a query
+
+    permissive_network_ids = get_network_ids_with_permission_helper(user=user, manager=manager,
+                                                                    user_datastore=user_datastore)
+
+    return any(
+        network.id not in permissive_network_ids
+        for network in query.assembly.networks
     )
