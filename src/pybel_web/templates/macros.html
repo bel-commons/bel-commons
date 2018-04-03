@@ -405,9 +405,11 @@
                             {{ network }}
                         </a>
                     </h4>
-                    <div class="list-group-item-text">
-                        {{ network.description }}
-                    </div>
+                    {% if network.description %}
+                        <div class="list-group-item-text">
+                            {{ network.description }}
+                        </div>
+                    {% endif %}
                 </div>
             {% endfor %}
         </div>
