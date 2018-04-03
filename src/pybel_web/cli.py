@@ -629,7 +629,7 @@ if omics_dir is not None or bms is not None:
         """Load examples"""
 
     if omics_dir:
-        @examples.command()
+        @examples.command(help='Load omics from {}'.format(omics_dir))
         @click.pass_obj
         def load_omics(manager):
             """Load omics"""
