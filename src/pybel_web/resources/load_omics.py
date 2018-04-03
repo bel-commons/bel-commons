@@ -9,7 +9,7 @@ import os
 
 from pybel.manager import Manager
 from pybel_web.manager_utils import create_omic
-from pybel_web.resources.constants import dir_path
+from pybel_web.resources.constants import OMICS_DATA_DIR
 
 log = logging.getLogger(__name__)
 
@@ -116,9 +116,9 @@ def main(connection=None):
     :type connection: Optional[str or pybel.manager.Manager]
     """
     directories = [
-        os.path.join(dir_path, 'GSE28146'),
-        os.path.join(dir_path, 'GSE1297'),
-        os.path.join(dir_path, 'GSE63063'),
+        os.path.join(OMICS_DATA_DIR, 'GSE28146'),
+        os.path.join(OMICS_DATA_DIR, 'GSE1297'),
+        os.path.join(OMICS_DATA_DIR, 'GSE63063'),
     ]
 
     for directory in directories:
