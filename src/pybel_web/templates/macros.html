@@ -213,6 +213,9 @@
 {% macro render_experiment_row(experiment, include_omic=True) -%}
     <tr>
         <td>
+            {% if not experiment.completed %}
+                <span class="glyphicon glyphicon-refresh" aria-hidden="true"></span>
+            {% endif %}
             {% if experiment.public %}
                 <span class="glyphicon glyphicon-globe" aria-hidden="true"></span>
             {% else %}
@@ -230,43 +233,40 @@
             <a href="{{ url_for('ui.view_query', query_id=experiment.query.id) }}">
                 {{ experiment.query.id }}
             </a>
-
-            <a class="btn btn-default btn-sm"
-               href="{{ url_for('ui.view_explorer_query', query_id=experiment.query.id) }}">
-                <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
-            </a>
         </td>
         {% if include_omic %}
-            <td>
-                <a href="{{ url_for('analysis.view_omic', omic_id=experiment.omic.id) }}">
-                    {{ experiment.omic.id }}
-                </a>
+            <td><a href="{{ url_for('analysis.view_omic', omic_id=experiment.omic.id) }}">
+                {{ experiment.omic.pretty_source_name }}
+            </a>
             </td>
-            <td>{{ experiment.omic.pretty_source_name }}</td>
             <td>{{ experiment.omic.description }}</td>
         {% endif %}
 
         <td>
             {% if experiment.completed %}
-                <span class="glyphicon glyphicon-ok-circle" aria-hidden="true"></span>
-            {% else %}
-                <span class="glyphicon glyphicon glyphicon-remove-circle" aria-hidden="true"></span>
-            {% endif %}
-        </td>
-        <td>
-            {% if experiment.completed %}
-                <a href="{{ url_for('analysis.view_experiment', experiment_id=experiment.id) }}"
-                   class="btn btn-default btn-sm">
-                    <span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span>
-                </a>
-            {% endif %}
-        </td>
-        <td>
-            {% if experiment.completed %}
-                <a class="btn btn-default btn-sm"
-                   href="{{ url_for('dbs.download_analysis', experiment_id=experiment.id) }}">
-                    <span class="glyphicon glyphicon-download" aria-hidden="true"></span>
-                </a>
+                <div class="dropdown">
+                    <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown"
+                            aria-haspopup="true"
+                            aria-expanded="true">
+                        Actions
+                        <span class="caret"></span>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <a href="{{ url_for('analysis.view_experiment', experiment_id=experiment.id) }}">
+                                <span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span> View Experiment
+                            </a>
+
+                            <a href="{{ url_for('ui.view_explorer_query', query_id=experiment.query.id) }}">
+                                <span class="glyphicon glyphicon-search" aria-hidden="true"></span> Explore Query
+                            </a>
+
+                            <a href="{{ url_for('dbs.download_analysis', experiment_id=experiment.id) }}">
+                                <span class="glyphicon glyphicon-download" aria-hidden="true"></span> Download Results
+                            </a>
+                        </li>
+                    </ul>
+                </div>
             {% endif %}
         </td>
     </tr>
@@ -277,16 +277,14 @@
         <thead>
         <tr>
             <th></th>
-            <th>Identifier</th>
+            <th></th>
             <th>Created</th>
             <th>N</th>
             <th>Query</th>
             {% if include_omic %}
-                <th>Omic</th>
                 <th>Omic Name</th>
                 <th>Omic Description</th>
             {% endif %}
-            <th>Complete</th>
             <th></th>
         </tr>
         </thead>
