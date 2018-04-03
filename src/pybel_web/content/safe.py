@@ -9,7 +9,7 @@ from flask_login import current_user
 from werkzeug.exceptions import abort
 
 from .get_or_404_with_proxy import get_network_or_404, get_project_or_404, get_query_or_404
-from ..manager_utils import get_network_ids_with_permission_helper, user_missing_query_rights_abstract
+from ..manager_utils import user_missing_query_rights_abstract
 from ..proxies import manager, user_datastore
 
 __all__ = [
@@ -41,6 +41,7 @@ def user_has_project_rights(user, project):
     :rtype: bool
     """
     return user.is_authenticated and (user.is_admin or project.has_user(current_user))
+
 
 def safe_get_network(network_id):
     """Aborts if the current user is not the owner of the network
@@ -92,8 +93,3 @@ def safe_get_query(query_id):
         abort(403, 'Insufficient rights to run query {}'.format(query_id))
 
     return query
-
-
-def safe_get_user_network_query(user, network_id):
-    network = safe_get_network(network_id)
-    query = query_from_network(network)
