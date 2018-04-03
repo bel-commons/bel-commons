@@ -372,7 +372,7 @@ def suggest_annotation():
     if not q:
         return jsonify([])
 
-    entries = manager.session.query(AnnotationEntry).filter(AnnotationEntry.name.contains(q))
+    entries = manager.session.query(AnnotationEntry).filter(AnnotationEntry.name_contains(q))
 
     return jsonify([
         {
@@ -434,7 +434,7 @@ def suggest_network():
 
     network_query = manager.session.query(Network)
 
-    network_query = network_query.filter(or_(Network.name.contains(q), Network.description.contains(q)))
+    network_query = network_query.filter(or_(Network.name_contains(q), Network.description_contains(q)))
 
     return jsonify([
         network.to_json(include_id=True)
@@ -1420,7 +1420,7 @@ def suggest_authors():
     if not q:
         return jsonify([])
 
-    authors = manager.session.query(Author).filter(Author.name.contains(q)).all()
+    authors = manager.session.query(Author).filter(Author.name_contains(q)).all()
 
     return jsonify([
         {
@@ -1954,7 +1954,7 @@ def get_node_suggestion():
     if not q:
         return jsonify([])
 
-    nodes = manager.session.query(Node).filter(Node.bel.contains(q)).order_by(func.length(Node.bel))
+    nodes = manager.session.query(Node).filter(Node.bel_contains(q)).order_by(func.length(Node.bel))
 
     return jsonify([
         {
@@ -2073,7 +2073,7 @@ def query_to_network(query_id):
     network_ids = rv['network_ids']
     rv['networks'] = [
         '{} v{}'.format(name, version)
-        for name, version in manager.session.query(Network.name, Network.version).filter(Network.id.in_(network_ids))
+        for name, version in manager.session.query(Network.name, Network.version).filter(Network.id_in(network_ids))
     ]
 
     return jsonify(rv)
@@ -2398,7 +2398,7 @@ def drop_user(user_id):
         required: true
         type: integer
     """
-    user = User.query.get(user_id)
+    user = manager.session.query(User).get(user_id)
 
     if user is None:
         abort(404)
