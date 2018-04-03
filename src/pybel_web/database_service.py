@@ -2185,7 +2185,7 @@ def get_query_from_isolated_node(query_id, node_hash):
     child_query.append_seeding_induction([node])
 
     child_query_model = parent_query.get_assembly_query()
-    child_query_model.set_pipeline(child_query)
+    child_query_model.set_seeding(child_query)
     child_query_model.set_pipeline(child_query)
 
     if current_user.is_authenticated:
