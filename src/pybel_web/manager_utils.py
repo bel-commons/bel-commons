@@ -275,10 +275,10 @@ def create_omic(data, gene_column, data_column, description, source_name, sep, p
     df = pd.read_csv(data, sep=sep)
 
     if gene_column not in df.columns:
-        abort(403, '{} not a column in document'.format(gene_column))
+        abort(500, 'The omic document does not have a column named: {}'.format(gene_column))
 
     if data_column not in df.columns:
-        abort(403, '{} not a column in document'.format(data_column))
+        abort(500, 'The omic document does not have a column named: {}'.format(data_column))
 
     result = Omic(
         description=description,
