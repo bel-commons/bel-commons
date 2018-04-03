@@ -530,9 +530,14 @@ def experiments():
 @click.pass_obj
 def ls(manager):
     """Lists experiments"""
-    click.echo('\t'.join(('id', 'type', 'description', 'completed')))
+    click.echo('\t'.join(('id', 'type', 'omics description', 'completed')))
     for experiment in manager.session.query(Experiment).order_by(Experiment.created.desc()).all():
-        click.echo('\t'.join(map(str, (experiment.id, experiment.type, experiment.description, experiment.completed))))
+        click.echo('\t'.join(map(str, (
+            experiment.id,
+            experiment.type,
+            experiment.omic.description,
+            experiment.completed
+        ))))
 
 
 @experiments.command()
