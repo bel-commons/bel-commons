@@ -26,23 +26,40 @@
                     {{ omic.description }}
                 </p>
 
-
-                <dl class="dl-horizontal">
-                    <dt>Identifier</dt>
-                    <dd>{{ omic.id }}</dd>
-                    <dt>Created</dt>
-                    <dd>{{ omic.created }}</dd>
-                    <dt>Description</dt>
-                    <dd></dd>
-                    <dt>Public</dt>
-                    <dd>
-                        {% if omic.public %}
-                            <span class="glyphicon glyphicon-ok-circle" aria-hidden="true"></span>
-                        {% else %}
-                            <span class="glyphicon glyphicon glyphicon-remove-circle" aria-hidden="true"></span>
-                        {% endif %}
-                    </dd>
-                </dl>
+                <div class="row">
+                    <div class="col-6-lg">
+                        <dl class="dl-horizontal">
+                            <dt>Identifier</dt>
+                            <dd>{{ omic.id }}</dd>
+                            <dt>Created</dt>
+                            <dd>{{ omic.created }}</dd>
+                            <dt>Public</dt>
+                            <dd>
+                                {% if omic.public %}
+                                    <span class="glyphicon glyphicon-ok-circle" aria-hidden="true"></span>
+                                {% else %}
+                                    <span class="glyphicon glyphicon glyphicon-remove-circle" aria-hidden="true"></span>
+                                {% endif %}
+                            </dd>
+                        </dl>
+                    </div>
+                    <div class="col-6-lg">
+                        <dl class="dl-horizontal">
+                            <dt>Count</dt>
+                            <dd>{{ count }}</dd>
+                            <dt>Mean</dt>
+                            <dd>{{ mean }}</dd>
+                            <dt>Standard Deviation</dt>
+                            <dd>{{ std }}</dd>
+                            <dt>Minimum</dt>
+                            <dd>{{ minimum }}</dd>
+                            <dt>Median</dt>
+                            <dd>{{ median }}</dd>
+                            <dt>Maximum</dt>
+                            <dd>{{ maximum }}</dd>
+                        </dl>
+                    </div>
+                </div>
             </div>
         </div>
 

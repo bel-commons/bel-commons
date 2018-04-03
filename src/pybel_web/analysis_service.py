@@ -38,7 +38,17 @@ def view_omics():
 def view_omic(omic_id):
     """Views an Omic model"""
     omic = manager.session.query(Omic).get(omic_id)
-    return render_template('omic.html', omic=omic, current_user=current_user)
+
+    data = omic.get_source_dict()
+    values = list(data.values())
+    count = len(values)
+    std = np.std(values)
+    mean = np.mean(values)
+    median = np.median(values)
+    mini = np.min(values)
+    maxi = np.max(values)
+    return render_template('omic.html', omic=omic, current_user=current_user, count=count, mean=mean, median=median,
+                           std=std, minimum=mini, maximum=maxi)
 
 
 @experiment_blueprint.route('/omics/drop')
