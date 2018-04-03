@@ -474,7 +474,7 @@ def user_missing_query_rights_abstract(manager, user_datastore, user, query):
     """
     log.debug('checking if user [%s] has rights to query [id=%s]', user, query.id)
 
-    if user.is_admin:
+    if user.is_authenticated and user.is_admin:
         log.debug('[%s] is admin and can access query [id=%d]', user, query.id)
         return False  # admins are never missing the rights to a query
 
