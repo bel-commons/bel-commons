@@ -213,15 +213,27 @@
 {% macro render_experiment_row(experiment, include_omic=True) -%}
     <tr>
         <td>
+            {% if experiment.public %}
+                <span class="glyphicon glyphicon-globe" aria-hidden="true"></span>
+            {% else %}
+                <span class="glyphicon glyphicon-piggy-bank" aria-hidden="true"></span>
+            {% endif %}
+        </td>
+        <td>
             <a href="{{ url_for('analysis.view_experiment', experiment_id=experiment.id) }}">
                 {{ experiment.id }}
             </a>
         </td>
-        <td>{{ experiment.created }}</td>
+        <td>{{ experiment.created.strftime('%Y-%m-%d') }}</td>
         <td>{{ experiment.permutations }}</td>
         <td>
             <a href="{{ url_for('ui.view_query', query_id=experiment.query.id) }}">
                 {{ experiment.query.id }}
+            </a>
+
+            <a class="btn btn-default btn-sm"
+               href="{{ url_for('ui.view_explorer_query', query_id=experiment.query.id) }}">
+                <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
             </a>
         </td>
         {% if include_omic %}
@@ -233,13 +245,7 @@
             <td>{{ experiment.omic.pretty_source_name }}</td>
             <td>{{ experiment.omic.description }}</td>
         {% endif %}
-        <td>
-            {% if experiment.public %}
-                <span class="glyphicon glyphicon-ok-circle" aria-hidden="true"></span>
-            {% else %}
-                <span class="glyphicon glyphicon glyphicon-remove-circle" aria-hidden="true"></span>
-            {% endif %}
-        </td>
+
         <td>
             {% if experiment.completed %}
                 <span class="glyphicon glyphicon-ok-circle" aria-hidden="true"></span>
@@ -249,20 +255,18 @@
         </td>
         <td>
             {% if experiment.completed %}
-                <div class="pull-right">
-                    <a href="{{ url_for('analysis.view_experiment', experiment_id=experiment.id) }}"
-                       class="btn btn-default btn-xs">
-                        <span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span>
-                    </a>
-                    <a class="btn btn-default btn-xs"
-                       href="{{ url_for('dbs.download_analysis', experiment_id=experiment.id) }}">
-                        <span class="glyphicon glyphicon-download" aria-hidden="true"></span>
-                    </a>
-                    <a class="btn btn-default btn-xs"
-                       href="{{ url_for('ui.view_explorer_query', query_id=experiment.query.id) }}">
-                        <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
-                    </a>
-                </div>
+                <a href="{{ url_for('analysis.view_experiment', experiment_id=experiment.id) }}"
+                   class="btn btn-default btn-sm">
+                    <span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span>
+                </a>
+            {% endif %}
+        </td>
+        <td>
+            {% if experiment.completed %}
+                <a class="btn btn-default btn-sm"
+                   href="{{ url_for('dbs.download_analysis', experiment_id=experiment.id) }}">
+                    <span class="glyphicon glyphicon-download" aria-hidden="true"></span>
+                </a>
             {% endif %}
         </td>
     </tr>
@@ -272,16 +276,16 @@
     <table class="table table-striped table-responsive">
         <thead>
         <tr>
+            <th></th>
             <th>Identifier</th>
             <th>Created</th>
-            <th>Permutations</th>
+            <th>N</th>
             <th>Query</th>
             {% if include_omic %}
                 <th>Omic</th>
                 <th>Omic Name</th>
                 <th>Omic Description</th>
             {% endif %}
-            <th>Public</th>
             <th>Complete</th>
             <th></th>
         </tr>
