@@ -708,6 +708,30 @@ class Query(Base):
     def __repr__(self):
         return '<Query id={}>'.format(self.id)
 
+    def get_assembly_query(self):
+        """Returns a new query, just with the same assembly as this one
+
+        :rtype: Query
+        """
+        return Query(
+            assembly=self.assembly,
+            parent=self
+        )
+
+    def set_seeding(self, query):
+        """Sets the seeding value from a PyBEL Tools query
+
+        :param pybel_tools.query.Query query:
+        """
+        self.seeding = query.seeding_to_jsons()
+
+    def set_pipeline(self, query):
+        """Sets the pipeline value from a PyBEL Tools query
+
+        :param pybel_tools.query.Query query:
+        """
+        self.pipeline = query.pipeline.to_jsons()
+
     def _get_query(self):
         """Converts this object to a :class:`pybel_tools.query.Query` object
 

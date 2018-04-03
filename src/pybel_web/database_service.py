@@ -441,6 +441,7 @@ def suggest_network():
         for network in network_query
     ])
 
+
 @api_blueprint.route('/api/network/<int:network_id>/namespaces')
 def namespaces_by_network(network_id):
     """Gets all of the namespaces in a network
@@ -2183,12 +2184,9 @@ def get_query_from_isolated_node(query_id, node_hash):
     ])
     child_query.append_seeding_induction([node])
 
-    child_query_model = models.Query(
-        assembly=parent_query.assembly,
-        seeding=child_query.seeding_to_jsons(),
-        pipeline_protocol=child_query.pipeline.to_jsons(),
-        parent_id=parent_query.id,
-    )
+    child_query_model = parent_query.get_assembly_query()
+    child_query_model.set_pipeline(child_query)
+    child_query_model.set_pipeline(child_query)
 
     if current_user.is_authenticated:
         child_query_model.user = current_user
