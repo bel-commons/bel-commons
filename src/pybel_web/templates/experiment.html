@@ -146,6 +146,8 @@
                     <dd>{{ experiment.type }}</dd>
                     <dt>Permutations</dt>
                     <dd>{{ experiment.permutations }}</dd>
+                </dl>
+                <dl class="dl-horizontal">
                     <dt>Omic Identifier</dt>
                     <dd>
                         <a href="{{ url_for('analysis.view_omic', omic_id=experiment.omic_id) }}">
@@ -156,6 +158,8 @@
                     <dd>{{ experiment.omic.source_name }}</dd>
                     <dt>Omic Description</dt>
                     <dd>{{ experiment.omic.description }}</dd>
+                </dl>
+                <dl class="dl-horizontal">
                     <dt>Query Identifier</dt>
                     <dd>{{ experiment.query.id }} (
                         <a href="{{ url_for('ui.view_query', query_id=experiment.query.id) }}">
