@@ -18,6 +18,7 @@ from pybel_tools.utils import enable_cool_mode
 from pybel_web.manager_utils import run_cmpa_helper
 from pybel_web.models import Experiment, Omic, Query
 from pybel_web.resources.constants import BMS_BASE
+from .constants import OMICS_DATA_DIR
 
 log = logging.getLogger(__name__)
 enable_cool_mode()
@@ -179,9 +180,9 @@ def main(connection=None, permutations=25):
     """
     network_directory = os.path.join(BMS_BASE, 'aetionomy', 'neurommsig')
 
-    gse1297_directory = os.path.join(dir_path, 'GSE1297')
-    gse28146_directory = os.path.join(dir_path, 'GSE28146')
-    gse63063_directory = os.path.join(dir_path, 'GSE63063')
+    gse1297_directory = os.path.join(OMICS_DATA_DIR, 'GSE1297')
+    gse28146_directory = os.path.join(OMICS_DATA_DIR, 'GSE28146')
+    gse63063_directory = os.path.join(OMICS_DATA_DIR, 'GSE63063')
 
     omics_directories = [
         gse1297_directory,
