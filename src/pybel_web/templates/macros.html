@@ -238,7 +238,7 @@
                 {{ experiment.id }}
             </a>
         </td>
-        <td>{{ experiment.created.strftime('%Y-%m-%d') }}</td>
+        <td>{{ experiment.created }}</td>
         <td>{{ experiment.permutations }}</td>
         <td>
             <a href="{{ url_for('ui.view_query', query_id=experiment.query.id) }}">
