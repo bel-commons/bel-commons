@@ -55,7 +55,7 @@ dumb_belief_stuff = {
     METADATA_LICENSES: {'Document license'}
 }
 
-pbw_sender = ("PyBEL Web", 'pybel@scai.fraunhofer.de')
+pbw_sender = ("BEL Commons", 'bel-commons@scai.fraunhofer.de')
 
 
 @celery.task(name='debug-task')
