@@ -22,6 +22,7 @@ from pybel_tools.mutation import (
     remove_pathologies,
 )
 from pybel_tools.pipeline import MissingPipelineFunctionError, Pipeline, no_arguments_map
+from pybel_tools.query import QueryMissingNetworksError
 from pybel_tools.summary import info_json
 from pybel_tools.utils import get_version as get_pybel_tools_version
 from . import models
@@ -443,7 +444,7 @@ def get_pipeline():
     try:
         q = pybel_tools.query.Query.from_json(d)
 
-    except pybel_tools.query.QueryMissingNetworksError as e:
+    except QueryMissingNetworksError as e:
         flask.flash('Error building query: {}'.format(e))
         return redirect(url_for('.view_query_builder'))
 
