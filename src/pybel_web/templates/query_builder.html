@@ -66,40 +66,10 @@
     <script type="text/javascript"
             src='https://cdnjs.cloudflare.com/ajax/libs/bootstrap-toggle/2.2.2/js/bootstrap-toggle.min.js'></script>
     <script type="text/javascript"
-            src="{{ url_for('static', filename='js/home_controller/query_builder_controller.js', version='20171013') }}">
+            src="{{ url_for('static', filename='js/controllers/query_builder_controller.js', version='20171013') }}">
     </script>
     <script type="text/javascript" src="https://cdn.datatables.net/v/bs/dt-1.10.16/datatables.min.js"></script>
 
-    <script>
-        $(document).ready(function () {
-                const dataTableConfig = {
-                    dom: "<'row'<'col-sm-1'><'col-sm-4'l><'col-sm-5'f>>" +
-                    "<'row'<'col-sm-12'tr>>" +
-                    "<'row'<'col-sm-1'><'col-sm-4'i><'col-sm-7'p>>"
-                };
-                var table = $("#network-table").DataTable(dataTableConfig);
-
-                // Clicks all buttons in all tables
-                $('#selectAll').click(function (e) {
-
-                    var boolean;
-                    if ($(this).prop('checked')) {
-                        boolean = true;
-                    }
-                    else {
-                        boolean = false;
-                    }
-
-                    // For each table add a hidden input to the form with the checked boxes
-                    $.each(table.$('input'), function (index, input) {
-                        input.checked = boolean;
-                    });
-                });
-            }
-        );
-
-
-    </script>
 {% endblock %}
 
 {% block content %}

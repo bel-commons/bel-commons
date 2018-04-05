@@ -8,17 +8,52 @@
  */
 
 
-// Controls that at least a network has been selected
-$('#query-form').on('submit', function (e) {
-    if ($("input[type=checkbox]:checked").length === 0) {
-        e.preventDefault();
-        alert('Please select at least one network in your query.');
-        return false;
-    }
-});
-
 
 $(document).ready(function () {
+
+    // Populates the Datatable
+    const dataTableConfig = {
+        dom: "<'row'<'col-sm-1'><'col-sm-4'l><'col-sm-5'f>>" +
+        "<'row'<'col-sm-12'tr>>" +
+        "<'row'<'col-sm-1'><'col-sm-4'i><'col-sm-7'p>>"
+    };
+    var table = $("#network-table").DataTable(dataTableConfig);
+
+    // Clicks all buttons in all tables
+    $('#selectAll').click(function (e) {
+
+        var boolean = $(this).prop('checked');
+
+        // For each table add a hidden input to the form with the checked boxes
+        $.each(table.$('input'), function (index, input) {
+            input.checked = boolean;
+        });
+    });
+
+    var form = $('#query-form');
+
+    // Controls that at least a network has been selected
+    form.on('submit', function (e) {
+        if ($("input[type=checkbox]:checked").length === 0) {
+            e.preventDefault();
+            alert('Please select at least one network in your query.');
+            return false;
+        }
+
+        table.rows().nodes().to$().find('input[type="checkbox"]').each(function (index, input) {
+
+            if (input.checked) {
+                $(form).append(
+                    $('<input>')
+                        .attr('type', 'hidden')
+                        .attr('name', input.name)
+                        .val(input.value)
+                );
+            }
+        });
+
+    });
+
 
     // Autocompletion for author seeding
     $("#author_selection").select2({
@@ -164,11 +199,6 @@ $(document).ready(function () {
                 }
             });
         }, minLength: 2
-    });
-
-    // Clicks all buttons in table
-    $('#selectAll').click(function (e) {
-        $("#network-table").find('td input:checkbox').prop('checked', this.checked);
     });
 
 });
