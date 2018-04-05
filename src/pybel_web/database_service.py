@@ -1201,7 +1201,9 @@ def get_query_summary(query_id):
         'query': query_id
     }
 
+    t = time.time()
     network = get_graph_from_request(query_id)
+    rv['time'] = time.time() - t
 
     if network is not None and network.node:
         rv['status'] = True
