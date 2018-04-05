@@ -66,7 +66,7 @@
     <script type="text/javascript"
             src='https://cdnjs.cloudflare.com/ajax/libs/bootstrap-toggle/2.2.2/js/bootstrap-toggle.min.js'></script>
     <script type="text/javascript"
-            src="{{ url_for('static', filename='js/home_controller/query_builder_controller.js', version='20171013') }}">
+            src="{{ url_for('static', filename='js/controllers/query_builder_controller.js', version='20171013') }}">
     </script>
     <script type="text/javascript" src="https://cdn.datatables.net/v/bs/dt-1.10.16/datatables.min.js"></script>
 
@@ -82,13 +82,7 @@
                 // Clicks all buttons in all tables
                 $('#selectAll').click(function (e) {
 
-                    var boolean;
-                    if ($(this).prop('checked')) {
-                        boolean = true;
-                    }
-                    else {
-                        boolean = false;
-                    }
+                    var boolean = $(this).prop('checked');
 
                     // For each table add a hidden input to the form with the checked boxes
                     $.each(table.$('input'), function (index, input) {
