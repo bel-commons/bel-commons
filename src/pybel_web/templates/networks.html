@@ -47,30 +47,16 @@
             var search = $(this).val().toLowerCase();
 
             $(".list-group-item").each(function () {
-
                 if (this.children[0].innerHTML.toLowerCase().indexOf(search) != -1) {
                     $(this).show();
                 }
-
                 else if (this.children[1].childNodes[1].innerHTML.toLowerCase().indexOf(search) != -1) {
                     $(this).show();
                 }
                 else {
                     $(this).hide();
                 }
-
             });
-            $(".list-group-item:visible").each(function (index) {
-                if (index == 0) {
-                    $(this).css("border-top-left-radius", "10px");
-                    $(this).css("border-top-right-radius", "10px");
-                }
-                if (index == $(".list-group-item:visible").length - 1) {
-                    $(this).css("border-bottom-left-radius", "10px");
-                    $(this).css("border-bottom-right-radius", "10px");
-                }
-            });
-
         });
 
     </script>
