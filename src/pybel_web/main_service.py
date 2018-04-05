@@ -33,8 +33,9 @@ from .external_managers import manager_dict
 from .manager_utils import next_or_jsonify
 from .models import Assembly, EdgeComment, EdgeVote, Experiment, Omic, Project, Query, Report, User
 from .utils import (
-    calculate_overlap_dict, get_graph_from_request, get_networks_with_permission, get_or_create_vote, manager,
-    query_form_to_dict, query_from_network_with_current_user, render_network_summary_safe, safe_get_node,
+    calculate_overlap_dict, get_graph_from_request, get_networks_with_permission, get_or_create_vote,
+    get_version as get_bel_commons_version, manager, query_form_to_dict, query_from_network_with_current_user,
+    render_network_summary_safe, safe_get_node,
 )
 
 log = logging.getLogger(__name__)
@@ -540,7 +541,7 @@ def view_about():
         ('Python Version', sys.version),
         ('PyBEL Version', get_pybel_version()),
         ('PyBEL Tools Version', get_pybel_tools_version()),
-        ('BEL Commons Version', VERSION),
+        ('BEL Commons Version', get_bel_commons_version()),
         ('Deployed', time_instantiated)
     ]
 

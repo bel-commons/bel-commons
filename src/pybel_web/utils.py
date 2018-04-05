@@ -17,7 +17,7 @@ from pybel.manager import Network
 from pybel.struct.summary import count_namespaces, get_annotation_values_by_annotation, get_pubmed_identifiers
 from pybel_tools.summary import count_variants, get_annotations
 from pybel_tools.utils import min_tanimoto_set_similarity, prepare_c3, prepare_c3_time_series
-from .constants import AND
+from .constants import AND, VERSION
 from .content import safe_get_query
 from .manager_utils import (
     get_network_ids_with_permission_helper, get_network_summary_dict, iter_public_networks,
@@ -575,7 +575,6 @@ def render_network_summary_safe(manager_, network_id, template):
     return render_network_summary(network_id, template=template)
 
 
-
 @lru_cache(maxsize=256)
 def query_from_network_with_current_user(user, network, autocommit=True):
     """Makes a query from the given network
@@ -623,3 +622,12 @@ def safe_get_node(manager_, node_hash):
                    'not been finalized, and is therefore not cached. {}'.format(node_hash))
 
     return node
+
+
+def get_version():
+    """Gets the current BEL Commons version
+
+    :return: The current BEL Commons version
+    :rtype: str
+    """
+    return VERSION
