@@ -21,7 +21,7 @@ from pybel_tools.mutation import (
     collapse_by_central_dogma_to_genes, remove_associations, remove_isolated_nodes,
     remove_pathologies,
 )
-from pybel_tools.pipeline import Pipeline, no_arguments_map
+from pybel_tools.pipeline import MissingPipelineFunctionError, Pipeline, no_arguments_map
 from pybel_tools.summary import info_json
 from pybel_tools.utils import get_version as get_pybel_tools_version
 from . import models
@@ -442,8 +442,12 @@ def get_pipeline():
 
     try:
         q = pybel_tools.query.Query.from_json(d)
-    except pybel_tools.query.QueryMissingNetworks:
-        abort(400, 'query JSON missing "network_ids" key')
+    except pybel_tools.query.QueryMissingNetworksError:
+        flask.flash('query JSON missing "network_ids" key')
+        return redirect(url_for('.view_query_builder'))
+    except MissingPipelineFunctionError:
+        flask.flash('query contains invalid pipline function')
+        return redirect(url_for('.view_query_builder'))
     else:
         query = models.Query.from_query(manager, q, current_user)
         manager.session.add(query)
