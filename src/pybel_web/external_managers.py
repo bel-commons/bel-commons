@@ -15,6 +15,7 @@ __all__ = [
     'go_manager',
     'entrez_manager',
     'interpro_manager',
+    'manager_dict',
 ]
 
 log = logging.getLogger(__name__)
