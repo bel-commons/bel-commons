@@ -439,13 +439,17 @@ def view_query_builder():
 def get_pipeline():
     """Executes a pipeline"""
     d = query_form_to_dict(request.form)
-    q = pybel_tools.query.Query.from_json(d)
-    query = models.Query.from_query(manager, q, current_user)
 
-    manager.session.add(query)
-    manager.session.commit()
+    try:
+        q = pybel_tools.query.Query.from_json(d)
+    except pybel_tools.query.QueryMissingNetworks:
+        abort(400, 'query JSON missing "network_ids" key')
+    else:
+        query = models.Query.from_query(manager, q, current_user)
+        manager.session.add(query)
+        manager.session.commit()
 
-    return redirect_to_view_explorer_query(query)
+        return redirect_to_view_explorer_query(query)
 
 
 @ui_blueprint.route('/namespace')
