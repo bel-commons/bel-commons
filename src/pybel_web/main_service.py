@@ -9,7 +9,7 @@ import time
 from collections import defaultdict
 
 import flask
-from flask import Blueprint, abort, current_app, flash, redirect, render_template, request, url_for
+from flask import Blueprint, Markup, abort, current_app, flash, redirect, render_template, request, url_for
 from flask_security import current_user, login_required, roles_required
 
 import pybel_tools.query
@@ -90,6 +90,10 @@ def home():
     number_evidences = manager.session.query(Evidence).count()
     number_votes = manager.session.query(EdgeVote).count()
     number_comments = manager.session.query(EdgeComment).count()
+
+    preprint_message = Markup("We're getting ready to publish this web application! Check our <a href=\"https://doi.org"
+                              "/10.1101/288274\">preprint</a> on <i>bioRxiv</i>.")
+    flash(preprint_message, category='warning')
 
     return render_template(
         'index.html',
