@@ -177,12 +177,12 @@
                             <div class="pull-right">
                                 {% if network.report %}
                                     <small class="text-muted">
-                                        {{ network.report.number_nodes }} node{% if network.report.number_nodes != 1 %}
-                                        s{% endif %} |
-                                        {{ network.report.number_edges }} edge{% if network.report.number_edges != 1 %}
-                                        s{% endif %} |
-                                        {{ network.report.number_citations }} citation
-                                        {% if network.report.number_citations != 1 %}s{% endif %} |
+                                        {{ network.report.number_nodes }}
+                                        node{% if network.report.number_nodes != 1 %}s{% endif %} |
+                                        {{ network.report.number_edges }}
+                                        edge{% if network.report.number_edges != 1 %}s{% endif %} |
+                                        {{ network.report.number_citations }}
+                                        citation{% if network.report.number_citations != 1 %}s{% endif %} |
 
                                         {% if network.report.public %}
                                             Public <span class="glyphicon glyphicon-globe" aria-hidden="true"></span>
