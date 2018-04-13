@@ -118,7 +118,7 @@ def serve_network(graph, serve_format=None):
 
     elif serve_format == 'graphml':
         bio = BytesIO()
-        to_graphml(graph, bio, keep_edge_data=False)
+        to_graphml(graph, bio)
         bio.seek(0)
         return send_file(
             bio,
