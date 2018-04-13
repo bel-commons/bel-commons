@@ -86,8 +86,8 @@ def to_json_custom(graph, _id='id', source='source', target='target'):
 def serve_network(graph, serve_format=None):
     """A helper function to serialize a graph and download as a file
 
-    :param Optional[pybel.BELGraph] graph: A BEL graph
-    :param str serve_format: The format to serve the network
+    :param pybel.BELGraph graph: A BEL graph
+    :param Optional[str] serve_format: The format to serve the network
     :rtype: flask.Response
     """
     if serve_format is None:
@@ -118,7 +118,7 @@ def serve_network(graph, serve_format=None):
 
     elif serve_format == 'graphml':
         bio = BytesIO()
-        to_graphml(graph, bio)
+        to_graphml(graph, bio, keep_edge_data=False)
         bio.seek(0)
         return send_file(
             bio,
