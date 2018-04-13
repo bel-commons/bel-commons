@@ -777,7 +777,7 @@ def export_network(network_id, serve_format):
               - csv
               - gsea
     """
-    network_ids = get_network_ids_with_permission_helper(current_user, manager)
+    network_ids = get_network_ids_with_permission_helper(current_user, manager, user_datastore)
 
     if network_id not in network_ids:
         abort(403, 'You do not have permission to download the selected network')
