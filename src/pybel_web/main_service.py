@@ -534,13 +534,19 @@ def view_annotation_entry(annotation_entry_id):
 
 @ui_blueprint.route('/imprint')
 def view_imprint():
-    """Renders the impressum"""
+    """Render the imprint."""
     return render_template('imprint.html')
+
+
+@ui_blueprint.route('/terms-and-conditions')
+def view_terms_and_conditions():
+    """Render the terms and conditions."""
+    return render_template('terms_and_conditions.html')
 
 
 @ui_blueprint.route('/about')
 def view_about():
-    """Sends the about page"""
+    """Send the about page."""
     metadata = [
         ('Python Version', sys.version),
         ('PyBEL Version', get_pybel_version()),

@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% import "bootstrap/wtf.html" as wtf %}
+{% import "bootstrap/fixes.html" as fixes %}
+{% import "bootstrap/utils.html" as util %}
+
+{% block title %}Terms &amp; Conditions{% endblock %}
+
+{% block content %}
+    <div class="container">
+        {{ util.flashed_messages(dismissible=True, container=False) }}
+
+        <div class="page-header">
+            <h1>Terms &amp; Conditions</h1>
+        </div>
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Fraunhofer SCAI Disclaimer</h3>
+            </div>
+            <div class="panel-body">
+                <p>
+                    BEL Commons is a purely academic attempt to build the first ever useful user interface for BEL.
+                    In the future, parts of this site will remain academic and become open source, while other
+                    parts will inspire the development of enterprise-grade software from our department.
+                </p>
+            </div>
+        </div>
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">IMI Disclaimer</h3>
+            </div>
+            <div class="panel-body">
+                <p>
+                    This site reflects the author's view and neither IMI nor the European Union, EFPIA, or any
+                    associated partners are responsible for any use that may be made of the information contained
+                    therein.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    {% include "footer.html" %}
+{% endblock %}
