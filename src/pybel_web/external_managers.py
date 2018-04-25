@@ -88,7 +88,7 @@ try:
 except ImportError:
     interpro_manager = None
 else:
-    log.info('Using Bio2BEL Interpro')
+    log.info('Using Bio2BEL InterPro')
     interpro_manager = bio2bel_interpro.Manager(connection=connection)
     interpro_manager.create_all()
 
@@ -117,7 +117,7 @@ except ImportError:
     hmdd_manager = None
 else:
     log.info('Using Bio2BEL HMDD')
-    hmdd_manager = bio2bel_hmdb.Manager(connection=connection)
+    hmdd_manager = bio2bel_hmdd.Manager(connection=connection)
     hmdd_manager.create_all()
 
 try:
@@ -125,9 +125,27 @@ try:
 except ImportError:
     mir2disease_manager = None
 else:
-    log.info('Using Bio2BEL mir2diseaes')
+    log.info('Using Bio2BEL mir2disease')
     mir2disease_manager = bio2bel_mir2disease.Manager(connection=connection)
     mir2disease_manager.create_all()
+
+try:
+    import bio2bel_drugbank
+except ImportError:
+    drugbank_manager = None
+else:
+    log.info('Using Bio2BEL DrugBank')
+    drugbank_manager = bio2bel_drugbank.Manager(connection=connection)
+    drugbank_manager.create_all()
+
+try:
+    import bio2bel_phosphosite
+except ImportError:
+    phosphosite_manager = None
+else:
+    log.info('Using Bio2BEL PhosphoSitePlus')
+    phosphosite_manager = bio2bel_phosphosite.Manager(connection=connection)
+    phosphosite_manager.create_all()
 
 manager_dict = {
     name: manager
