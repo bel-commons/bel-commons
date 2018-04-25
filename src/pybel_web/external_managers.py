@@ -147,6 +147,15 @@ else:
     phosphosite_manager = bio2bel_phosphosite.Manager(connection=connection)
     phosphosite_manager.create_all()
 
+try:
+    import bio2bel_sider
+except ImportError:
+    sider_manager = None
+else:
+    log.info('Using Bio2BEL SIDER')
+    sider_manager = bio2bel_sider.Manager(connection=connection)
+    sider_manager.create_all()
+
 manager_dict = {
     name: manager
     for name, manager in locals().items()
