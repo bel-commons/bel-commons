@@ -67,7 +67,7 @@
                         <ul>
                             <li>
                                 <a href="http://belief.scai.fraunhofer.de/BeliefDashboard/home/bel">Introduction
-                                to BEL</a>
+                                    to BEL</a>
                             </li>
                             <li>
                                 <a href="{{ url_for('ui.view_how_to_use') }}">How To Use BEL Commons</a>
@@ -205,29 +205,35 @@
                 <div class="panel-heading">
                     <h3 class="panel-title">Bio2BEL Managers</h3>
                 </div>
-                <div class="list-group">
-                    {% for name, m in managers.items()|sort %}
-                        <div class="list-group-item">
-                            <h4 class="list-group-item-heading">
-                                <a href="https://github.com/bio2bel/{{ name[:-8] }}">{{ name[:-8] }}</a>
-                                {% if current_user.is_admin %}
-                                    {{ m }}
-                                {% endif %}
-                            </h4>
-                            <div class="list-group-item-text">
+                <div class="panel-body">
+                    <div class="row">
+                        {% for name, m in managers.items()|sort %}
+                            <div class="col-sm-6 col-md-3">
+                                <h4>
+                                    <a href="https://github.com/bio2bel/{{ name[:-8] }}">{{ name[:-8] }}</a>
+                                    {% if current_user.is_admin %}
+                                        {{ m }}
+                                    {% endif %}
+                                </h4>
                                 {% if m.summarize %}
                                     <dl class="dl-horizontal">
                                         {% for k, v in m.summarize().items() %}
                                             <dt>{{ k }}</dt>
-                                            <dd>{{ v }}</dd>
+                                            <dd>
+                                                {% if v is mapping %}
+                                                    {{ v|length }}
+                                                {% else %}
+                                                    {{ v }}
+                                                {% endif %}
+                                            </dd>
                                         {% endfor %}
                                     </dl>
                                 {% else %}
                                     <p>Missing <i>summarize</i> function</p>
                                 {% endif %}
                             </div>
-                        </div>
-                    {% endfor %}
+                        {% endfor %}
+                    </div>
                 </div>
             </div>
         {% endif %}
