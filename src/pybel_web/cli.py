@@ -46,6 +46,7 @@ from .models import Assembly, Base, EdgeComment, EdgeVote, Experiment, Omic, Pro
 from .parser_endpoint import build_parser_service
 from .parser_service import parser_blueprint
 from .utils import iterate_user_strings
+from .views.reporting import reporting_blueprint
 
 log = logging.getLogger('pybel_web')
 
@@ -169,6 +170,7 @@ def run(host, port, default_config, debug, config, examples, with_gunicorn, work
     app.register_blueprint(experiment_blueprint)
     app.register_blueprint(belief_blueprint)
     app.register_blueprint(external_blueprint)
+    app.register_blueprint(reporting_blueprint)
 
     if app.config.get('BMS_BASE'):
         app.register_blueprint(bms_blueprint)

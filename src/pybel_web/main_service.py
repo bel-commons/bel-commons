@@ -779,14 +779,6 @@ def view_user(user_id):
     user = manager.session.query(User).get(user_id)
     return render_user(user)
 
-
-@ui_blueprint.route('/reporting', methods=['GET'])
-@roles_required('admin')
-def view_reports():
-    """Shows the uploading reporting"""
-    return render_template('reporting.html', reports=manager.session.query(Report).order_by(Report.created).all())
-
-
 @ui_blueprint.route('/overview')
 @roles_required('admin')
 def view_overview():
