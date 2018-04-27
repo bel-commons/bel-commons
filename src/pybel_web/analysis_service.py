@@ -20,7 +20,7 @@ from .content import safe_get_query
 from .forms import DifferentialGeneExpressionForm
 from .manager_utils import create_omic, next_or_jsonify, safe_get_experiment
 from .models import Experiment, Omic, Query
-from .utils import get_network_ids_with_permission_helper, manager
+from .utils import get_network_ids_with_permission_helper, manager, user_datastore
 
 log = logging.getLogger(__name__)
 
@@ -188,7 +188,8 @@ def view_network_uploader(network_id):
 
     :param int network_id: The identifier ot the network to query against
     """
-    if network_id not in get_network_ids_with_permission_helper(current_user, manager):
+    if network_id not in get_network_ids_with_permission_helper(user=current_user, manager=manager,
+                                                                user_datastore=user_datastore):
         abort(403, 'Insufficient rights for network {}'.format(network_id))
 
     query = Query.from_query_args(manager, [network_id], current_user)
