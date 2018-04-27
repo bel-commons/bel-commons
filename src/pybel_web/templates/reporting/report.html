@@ -6,6 +6,59 @@
 
 {% block title %}Reporting{% endblock %}
 
+{% block styles %}
+    {{ super() }}
+    <link href="{{ url_for('static', filename='css/c3.min.css') }}" rel="stylesheet" type="text/css"/>
+{% endblock %}
+
+{% block head %}
+    {{ super() }}
+
+    <script src="{{ url_for('static', filename='js/d3.3.5.17.min.js') }}" charset="utf-8"></script>
+    <script src="{{ url_for('static', filename='js/c3.min.js') }}"></script>
+    <script src="//code.jquery.com/jquery-1.12.4.js"></script>
+{% endblock %}
+
+{% block scripts %}
+    {{ super() }}
+    <script>
+        {% for name, data in charts.items() %}
+            {% if data %}
+                c3.generate({
+                    bindto: '#{{ name }}',
+                    data: {
+                        x: 'x',
+                        columns: {{ data|safe }}
+                    },
+                    axis: {
+                        x: {
+                            type: 'timeseries',
+                            tick: {
+                                format: '%m-%d'
+                            }
+                        }
+                    }
+                });
+            {% endif %}
+        {% endfor %}
+    </script>
+{% endblock %}
+
 {% block content %}
-    {{ date_report }}
+    <div class="container">
+        <div class="page-header">
+            <h1>Reporting</h1>
+        </div>
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Reporting</h3>
+            </div>
+            <div class="panel-body">
+                {% for name in charts %}
+                    <div id="{{ name }}"></div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
 {% endblock %}
