@@ -43,6 +43,12 @@ log = logging.getLogger(__name__)
 
 
 def get_top_hubs(graph, count=15):
+    """Gets the top hubs in the graph by BEL
+
+    :param pybel.BELGraph graph: A BEL graph
+    :param int count:
+    :rtype: dict[str,int]
+    """
     return {
         calculate_canonical_name(graph, node): v
         for node, v in Counter(graph.degree()).most_common(count)
@@ -50,6 +56,12 @@ def get_top_hubs(graph, count=15):
 
 
 def count_top_pathologies(graph, count=15):
+    """Gets the top highest relationship-having edges in the graph by BEL
+
+    :param pybel.BELGraph graph: A BEL graph
+    :param int count:
+    :rtype: dict[str,int]
+    """
     return {
         calculate_canonical_name(graph, node): v
         for node, v in count_pathologies(graph).most_common(count)
@@ -268,6 +280,7 @@ def create_omic(data, gene_column, data_column, description, source_name, sep, p
     :param str data_column:
     :param str description:
     :param str source_name:
+    :param str sep:
     :param bool public:
     :param Optional[User] user:
     :rtype: Omic
@@ -333,7 +346,8 @@ def run_cmpa_helper(manager, experiment, use_tqdm=False):
     log.info('executing query %s', experiment.query)
     graph = experiment.query.run(manager)
 
-    log.info('calculating scores for query [id=%d] with omic %s with %d permutations', experiment.query.id, experiment.omic,
+    log.info('calculating scores for query [id=%d] with omic %s with %d permutations', experiment.query.id,
+             experiment.omic,
              experiment.permutations)
     scores = calculate_scores(graph, data, experiment.permutations, use_tqdm=use_tqdm)
     experiment.dump_results(scores)
