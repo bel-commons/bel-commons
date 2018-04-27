@@ -178,14 +178,6 @@ def run(host, port, default_config, debug, config, examples, with_gunicorn, work
     if app.config.get('PYBEL_WEB_PARSER_API'):
         build_parser_service(app)
 
-    if 'BEL4IMOCEDE_DATA_PATH' in os.environ:
-        try:
-            from . import mozg_service
-        except RuntimeError:
-            log.exception('missing mozg service required data')
-        else:
-            app.register_blueprint(mozg_service.mozg_blueprint)
-
     log.info('Done building %s in %.2f seconds', app, time.time() - t)
 
     if with_gunicorn:
