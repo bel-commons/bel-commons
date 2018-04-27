@@ -647,19 +647,22 @@ if omics_dir is not None or bms is not None:
 
     if bms:
         @examples.command()
+        @click.option('--skip-cbn', is_flag=True)
         @click.pass_obj
-        def load_networks(manager):
+        def load_networks(manager, skip_cbn):
             """Load networks"""
             from .resources.load_networks import main
             set_debug(logging.INFO)
-            main(manager)
+            main(manager, skip_cbn=skip_cbn)
 
     if omics_dir and bms:
         @examples.command()
         @click.option('--reload-omics', is_flag=True, help='Reload')
-        @click.option('-p', '--permutations', type=int, help='Number of permutations to run. Defaults to 25.', default=25)
+        @click.option('-p', '--permutations', type=int, help='Number of permutations to run. Defaults to 25.',
+                      default=25)
+        @click.option('--skip-cbn', is_flag=True)
         @click.pass_obj
-        def load(manager, reload_omics, permutations):
+        def load(manager, reload_omics, permutations, skip_cbn):
             """Load omics, networks, and experiments"""
             from .resources.load_omics import main as load_omics_main
             from .resources.load_networks import main as load_networks_main
@@ -668,12 +671,13 @@ if omics_dir is not None or bms is not None:
             set_debug(logging.INFO)
 
             load_omics_main(manager, reload=reload_omics)
-            load_networks_main(manager)
+            load_networks_main(manager, skip_cbn=skip_cbn)
             load_experiments_main(manager, permutations=permutations)
 
 
         @examples.command()
-        @click.option('-p', '--permutations', type=int, help='Number of permutations to run. Defaults to 25.', default=25)
+        @click.option('-p', '--permutations', type=int, help='Number of permutations to run. Defaults to 25.',
+                      default=25)
         @click.pass_obj
         def load_experiments(manager, permutations):
             """Load experiments"""

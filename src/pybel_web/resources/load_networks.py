@@ -263,20 +263,22 @@ def upload_managers(connection=None):
         upload_with_manager(manager, connection=connection)
 
 
-def main(connection=None):
+def main(connection=None, skip_cbn=False):
     """Load BEL
 
     :param connection: database connection string to cache, pre-built :class:`Manager`, or None to use default cache
     :type connection: Optional[str or pybel.manager.Manager]
+    :param bool skip_cbn: Some of the CBN networks are difficult so this flag lets you skip them.
     """
     upload_neurommsig_graphs(connection=connection)
     upload_bel_directory(selventa_directory, connection=connection)
     upload_bel_directory(alzheimer_directory, connection=connection, blacklist=['alzheimers'])
     upload_bel_directory(parkinsons_directory, connection=connection, blacklist=['parkinsons'])
 
-    upload_jgf_directory(cbn_human, connection=connection)
-    upload_jgf_directory(cbn_mouse, connection=connection)
-    upload_jgf_directory(cbn_rat, connection=connection)
+    if not skip_cbn:
+        upload_jgf_directory(cbn_human, connection=connection)
+        upload_jgf_directory(cbn_mouse, connection=connection)
+        upload_jgf_directory(cbn_rat, connection=connection)
 
     upload_managers(connection=connection)
 
