@@ -4,7 +4,7 @@
 
 import datetime
 import logging
-from collections import Counter
+from collections import Counter, OrderedDict
 
 from flask import Blueprint, render_template, request
 from flask_security import roles_required
@@ -59,13 +59,13 @@ def view_report():
     vote_data = _get_vote_timeseries('Votes', interval)
     comment_data = _get_timeseries(EdgeComment, 'Comments', interval)
 
-    charts = {
-        'network-chart': network_data,
-        'query-chart': query_data,
-        'experiment-chart': experiment_data,
-        'vote-chart': vote_data,
-        'comment-chart': comment_data
-    }
+    charts = OrderedDict([
+        ('network-chart', network_data),
+        ('query-chart', query_data),
+        ('experiment-chart', experiment_data),
+        ('vote-chart', vote_data),
+        ('comment-chart', comment_data),
+    ])
 
     return render_template(
         'reporting/report.html',
