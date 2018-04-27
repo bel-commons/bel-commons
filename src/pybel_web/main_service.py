@@ -132,7 +132,7 @@ def view_networks():
     networks = get_networks_with_permission(manager)
 
     return render_template(
-        'networks.html',
+        'network/networks.html',
         networks=sorted(networks, key=lambda network: network.created, reverse=True),
         current_user=current_user,
         BMS_BASE=current_app.config.get('BMS_BASE'),
@@ -188,7 +188,7 @@ def view_nodes():
         nodes = nodes.offset(offset)
 
     return render_template(
-        'nodes.html',
+        'node/nodes.html',
         nodes=nodes,
         count=count,
         current_user=current_user,
@@ -209,7 +209,7 @@ def view_node(node_hash):
     node = safe_get_node(manager, node_hash)
 
     return render_template(
-        'node.html',
+        'node/node.html',
         node=node,
         current_user=current_user,
         hgnc_manager=hgnc_manager,
@@ -232,7 +232,7 @@ def view_evidences():
         evidences = evidences.offset(offset)
 
     return render_template(
-        'evidences.html',
+        'evidence/evidences.html',
         manager=manager,
         evidences=evidences.all(),
         count=manager.session.query(Evidence).count(),
@@ -245,7 +245,7 @@ def view_evidence(evidence_id):
     evidence = manager.session.query(Evidence).get(evidence_id)
     if evidence is None:
         abort(404)
-    return render_template('evidence.html', manager=manager, evidence=evidence)
+    return render_template('evidence/evidence.html', manager=manager, evidence=evidence)
 
 
 @ui_blueprint.route('/node/<source_hash>/edges/<target_hash>')
@@ -273,7 +273,7 @@ def view_relations(source_hash, target_hash):
         ev2cit[ev] = edge.evidence.citation.to_json()
 
     return render_template(
-        'evidence_list.html',
+        'evidence/evidence_list.html',
         data=data,
         ev2cit=ev2cit,
         source_bel=source.bel,
@@ -285,7 +285,7 @@ def view_relations(source_hash, target_hash):
 @roles_required('admin')
 def view_edges():
     """Renders a page viewing all edges"""
-    return render_template('edges.html', edges=manager.session.query(Edge).limit(15), current_user=current_user)
+    return render_template('edge/edges.html', edges=manager.session.query(Edge).limit(15), current_user=current_user)
 
 
 @ui_blueprint.route('/edge/<edge_hash>')
@@ -294,7 +294,7 @@ def view_edge(edge_hash):
 
     :param str edge_hash: The identifier of the edge to display
     """
-    return render_template('edge.html', edge=manager.get_edge_by_hash(edge_hash), current_user=current_user)
+    return render_template('edge/edge.html', edge=manager.get_edge_by_hash(edge_hash), current_user=current_user)
 
 
 @ui_blueprint.route('/edge/<edge_hash>/vote/<int:vote>')
@@ -314,7 +314,7 @@ def vote_edge(edge_hash, vote):
 def view_query(query_id):
     """Renders a single query page"""
     query = safe_get_query(query_id)
-    return render_template('query.html', query=query, manager=manager, current_user=current_user)
+    return render_template('query/query.html', query=query, manager=manager, current_user=current_user)
 
 
 @ui_blueprint.route('/query')
@@ -329,7 +329,7 @@ def view_queries():
     q = q.order_by(Query.created.desc())
 
     return render_template(
-        'queries.html',
+        'query/queries.html',
         queries=q.all(),
         manager=manager,
         current_user=current_user,
@@ -346,7 +346,7 @@ def view_citations():
     q = q.limit(limit)
 
     return render_template(
-        'citations.html',
+        'citation/citations.html',
         citations=q.all(),
         count=manager.session.query(Citation).count(),
         manager=manager,
@@ -358,7 +358,7 @@ def view_citations():
 def view_citation(citation_id):
     """View a citation"""
     citation = manager.session.query(Citation).get(citation_id)
-    return render_template('citation.html', citation=citation)
+    return render_template('citation/citation.html', citation=citation)
 
 
 @ui_blueprint.route('/citation/pubmed/<pmid>')
@@ -389,7 +389,7 @@ def view_explorer_query(query_id):
     :param int query_id: The identifier of the query
     """
     query = safe_get_query(query_id)
-    return render_template('explorer.html', query=query, explorer_toolbox=get_explorer_toolbox())
+    return render_template('network/explorer.html', query=query, explorer_toolbox=get_explorer_toolbox())
 
 
 @ui_blueprint.route('/node/<node_hash>/explore/')
@@ -434,7 +434,7 @@ def view_query_builder():
     networks = get_networks_with_permission(manager)
 
     return render_template(
-        'query_builder.html',
+        'query/query_builder.html',
         networks=networks,
         current_user=current_user,
         preselected=request.args.get('start', type=int)
@@ -469,7 +469,7 @@ def get_pipeline():
 def view_namespaces():
     """Displays a page listing the namespaces."""
     return render_template(
-        'namespaces.html',
+        'namespace/namespaces.html',
         namespaces=manager.session.query(Namespace).order_by(Namespace.keyword).all(),
         current_user=current_user,
     )
@@ -479,7 +479,7 @@ def view_namespaces():
 def view_annotations():
     """Displays a page listing the annotations."""
     return render_template(
-        'annotations.html',
+        'annotation/annotations.html',
         annotations=manager.session.query(Annotation).order_by(Annotation.keyword).all(),
         current_user=current_user,
     )
@@ -494,7 +494,7 @@ def view_annotation(annotation_id):
     annotation = manager.session.query(Annotation).get(annotation_id)
 
     return render_template(
-        'annotation.html',
+        'annotation/annotation.html',
         annotation=annotation,
     )
 
@@ -511,7 +511,7 @@ def view_annotation_entries():
     annotation_entry_count = manager.count_annotation_entries()
 
     return render_template(
-        'annotation_entries.html',
+        'annotation/annotation_entries.html',
         annotation_entries=annotation_entries,
         annotation_entry_count=annotation_entry_count,
     )
@@ -526,7 +526,7 @@ def view_annotation_entry(annotation_entry_id):
     annotation_entry = manager.session.query(AnnotationEntry).get(annotation_entry_id)
 
     return render_template(
-        'annotation_entry.html',
+        'annotation/annotation_entry.html',
         annotation_entry=annotation_entry,
         current_user=current_user,
     )
@@ -535,13 +535,13 @@ def view_annotation_entry(annotation_entry_id):
 @ui_blueprint.route('/imprint')
 def view_imprint():
     """Render the imprint."""
-    return render_template('imprint.html')
+    return render_template('meta/imprint.html')
 
 
 @ui_blueprint.route('/terms-and-conditions')
 def view_terms_and_conditions():
     """Render the terms and conditions."""
-    return render_template('terms_and_conditions.html')
+    return render_template('meta/terms_and_conditions.html')
 
 
 @ui_blueprint.route('/about')
@@ -555,7 +555,7 @@ def view_about():
         ('Deployed', time_instantiated)
     ]
 
-    return render_template('about.html', metadata=metadata, managers=manager_dict)
+    return render_template('meta/about.html', metadata=metadata, managers=manager_dict)
 
 
 @ui_blueprint.route('/dgx_tutorial')
@@ -570,7 +570,7 @@ def view_network(network_id):
 
     :param int network_id: The identifier of the network to summarize
     """
-    return render_network_summary_safe(manager, network_id, template='network.html')
+    return render_network_summary_safe(manager, network_id, template='network/network.html')
 
 
 @ui_blueprint.route('/network/<int:network_id>/compilation')
@@ -579,7 +579,7 @@ def view_summarize_compilation(network_id):
 
     :param int network_id: The identifier of the network to summarize
     """
-    return render_network_summary_safe(manager, network_id, template='summarize_compilation.html')
+    return render_network_summary_safe(manager, network_id, template='network/summarize_compilation.html')
 
 
 @ui_blueprint.route('/network/<int:network_id>/warnings')
@@ -588,7 +588,7 @@ def view_summarize_warnings(network_id):
 
     :param int network_id: The identifier of the network to summarize
     """
-    return render_network_summary_safe(manager, network_id, template='summarize_warnings.html')
+    return render_network_summary_safe(manager, network_id, template='network/summarize_warnings.html')
 
 
 @ui_blueprint.route('/network/<int:network_id>/biogrammar')
@@ -597,7 +597,7 @@ def view_summarize_biogrammar(network_id):
 
     :param int network_id: The identifier of the network to summarize
     """
-    return render_network_summary_safe(manager, network_id, template='summarize_biogrammar.html')
+    return render_network_summary_safe(manager, network_id, template='network/summarize_biogrammar.html')
 
 
 @ui_blueprint.route('/network/<int:network_id>/completeness')
@@ -611,7 +611,7 @@ def view_summarize_completeness(network_id):
 
     entries = summarize_competeness(graph)
 
-    return render_template('summarize_completeness.html', current_user=current_user, network=network, entries=entries)
+    return render_template('network/summarize_completeness.html', current_user=current_user, network=network, entries=entries)
 
 
 @ui_blueprint.route('/network/<int:network_id>/stratified/<annotation>')
@@ -639,7 +639,7 @@ def view_summarize_stratified(network_id, annotation):
         useful_summaries[name]['citation_overlap'] = summaries[name]['Citations'] / graph_summary['Citations']
 
     return render_template(
-        'summarize_stratified.html',
+        'network/summarize_stratified.html',
         network=network,
         annotation=annotation,
         full_summary=graph_summary,
@@ -651,7 +651,7 @@ def view_summarize_stratified(network_id, annotation):
 @ui_blueprint.route('/how_to_use')
 def view_how_to_use():
     """Shows How to use PyBEL-web"""
-    return render_template('how_to_use.html')
+    return render_template('meta/how_to_use.html')
 
 
 @ui_blueprint.route('/help/pipeline')
@@ -668,7 +668,7 @@ def view_pipeline_help():
         data.append((fname.replace('_', ' ').title(), f.__doc__.split('\n\n')[0]))
 
     return render_template(
-        'pipeline_help.html',
+        'query/pipeline_help.html',
         function_dict=data
     )
 
@@ -697,7 +697,7 @@ def view_network_comparison(network_1_id, network_2_id):
     )
 
     return render_template(
-        'network_comparison.html',
+        'network/network_comparison.html',
         networks=[network_1, network_2],
         data=data,
     )
@@ -721,7 +721,7 @@ def view_query_comparison(query_1_id, query_2_id):
     )
 
     return render_template(
-        'query_comparison.html',
+        'query/query_comparison.html',
         query_1_id=query_1_id,
         query_2_id=query_2_id,
         data=data,
@@ -754,12 +754,12 @@ def download_saved_file(fid):
 @roles_required('admin')
 def view_users():
     """Renders a list of users"""
-    return render_template('users.html', users=manager.session.query(User))
+    return render_template('user/users.html', users=manager.session.query(User))
 
 
 def render_user(user):
     pending_reports = user.pending_reports()
-    return render_template('user.html', user=user, pending_reports=pending_reports, manager=manager)
+    return render_template('user/user.html', user=user, pending_reports=pending_reports, manager=manager)
 
 
 @ui_blueprint.route('/user/current')
@@ -778,6 +778,7 @@ def view_user(user_id):
     """
     user = manager.session.query(User).get(user_id)
     return render_user(user)
+
 
 @ui_blueprint.route('/overview')
 @roles_required('admin')
@@ -808,7 +809,7 @@ def nuke():
 @roles_required('admin')
 def view_config():
     """Render the configuration"""
-    return render_template('deployment.html', config=current_app.config)
+    return render_template('meta/deployment.html', config=current_app.config)
 
 
 #######################################

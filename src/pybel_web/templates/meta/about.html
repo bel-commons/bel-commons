@@ -211,9 +211,6 @@
                             <div class="col-sm-6 col-md-3">
                                 <h4>
                                     <a href="https://github.com/bio2bel/{{ name[:-8] }}">{{ name[:-8] }}</a>
-                                    {% if current_user.is_admin %}
-                                        {{ m }}
-                                    {% endif %}
                                 </h4>
                                 {% if m.summarize %}
                                     <dl class="dl-horizontal">

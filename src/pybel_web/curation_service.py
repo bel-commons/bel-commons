@@ -80,7 +80,7 @@ def get_boilerplate():
     form = BoilerplateForm()
 
     if not form.validate_on_submit():
-        return render_template('boilerplate.html', form=form)
+        return render_template('curation/boilerplate.html', form=form)
 
     si = StringIO()
 
@@ -114,7 +114,7 @@ def merge_namespaces():
     form = MergeNamespaceForm()
 
     if not form.validate_on_submit():
-        return render_template('merge_namespaces.html', form=form)
+        return render_template('curation/merge_namespaces.html', form=form)
 
     log.warning(form.file)
 
@@ -186,7 +186,7 @@ def validate_resource():
             results[name] = response
 
     return render_template(
-        'ols_suggestion.html',
+        'curation/ols_suggestion.html',
         data=results,
         missing_suggestion=missing_suggestion,
         timer=round(time.time() - t),
@@ -198,4 +198,4 @@ def validate_resource():
 @roles_required('admin')
 def view_curation_interface():
     """View the curation interface prototype"""
-    return render_template('curate.html')
+    return render_template('curation/curate.html')

@@ -45,7 +45,7 @@
                 {% for node in nodes %}
                     <div class="list-group-item">
                         <h4 class="list-group-item-heading">
-                            {{ node.bel }}
+                            <a href="{{ url_for('ui.view_node', node_hash=node.sha512) }}">{{ node.bel }}</a>
 
                             <div class="pull-right">
                                 <small class="text-muted">

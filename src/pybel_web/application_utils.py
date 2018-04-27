@@ -227,14 +227,14 @@ class FlaskPyBEL(object):
                 ))
 
             return render_template(
-                '500.html',
+                'errors/500.html',
                 **kwargs
             )
 
         @self.app.errorhandler(403)
         def forbidden_error(error):
             """You must not cross this error"""
-            return render_template('403.html')
+            return render_template('errors/403.html')
 
     def _register_mutators(self):
         """Registers all the mutator functions with PyBEL tools decorators"""

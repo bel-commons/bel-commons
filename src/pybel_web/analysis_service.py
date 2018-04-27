@@ -31,7 +31,7 @@ experiment_blueprint = Blueprint('analysis', __name__, url_prefix='/experiment')
 def view_omics():
     """Views a list of all omics data sets"""
     query = manager.session.query(Omic).filter(Omic.public).order_by(Omic.created.desc())
-    return render_template('omics.html', omics=query.all(), current_user=current_user)
+    return render_template('omic/omics.html', omics=query.all(), current_user=current_user)
 
 
 @experiment_blueprint.route('/omic/<int:omic_id>')
@@ -47,7 +47,8 @@ def view_omic(omic_id):
     median = np.median(values)
     mini = np.min(values)
     maxi = np.max(values)
-    return render_template('omic.html', omic=omic, current_user=current_user, count=count, mean=mean, median=median,
+    return render_template('omic/omic.html', omic=omic, current_user=current_user, count=count, mean=mean,
+                           median=median,
                            std=std, minimum=mini, maximum=maxi)
 
 
@@ -74,7 +75,7 @@ def view_experiments(query_id=None, omic_id=None):
         experiment_query = experiment_query.filter(Experiment.omic_id == omic_id)
 
     return render_template(
-        'experiments.html',
+        'experiment/experiments.html',
         experiments=experiment_query.order_by(Experiment.created.desc()).all(),
         current_user=current_user
     )
@@ -100,7 +101,7 @@ def view_experiment(experiment_id):
     data = experiment.get_data_list()
 
     return render_template(
-        'experiment.html',
+        'experiment/experiment.html',
         experiment=experiment,
         columns=RESULT_LABELS,
         data=sorted(data, key=itemgetter(1)),
@@ -283,7 +284,7 @@ def download_experiment_comparison(experiment_ids):
 
 def render_experiment_comparison(experiment_ids, experiments):
     return render_template(
-        'experiments_compare.html',
+        'experiment/experiments_compare.html',
         experiment_ids=experiment_ids,
         experiments=experiments,
         normalize=request.args.get('normalize', type=int, default=0),
