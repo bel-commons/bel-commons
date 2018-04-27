@@ -240,7 +240,9 @@ def upload_with_manager(external_manager, connection=None):
         log.info('no %s', external_manager)
         return
 
-    manager = Manager.ensure(connection=connection)
+    if not external_manager.is_populated():
+        log.info('populating %s', external_manager)
+        external_manager.populate()
 
     try:
         graph = external_manager.to_bel()
@@ -250,6 +252,8 @@ def upload_with_manager(external_manager, connection=None):
     except Exception:
         log.exception('error with %s', external_manager)
         return
+
+    manager = Manager.ensure(connection=connection)
 
     insert_graph(manager, graph)
 
