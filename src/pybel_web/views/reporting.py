@@ -31,15 +31,17 @@ def _get_timeseries_from_models(models, y_axis_name, x_axis_name='x'):
     ]
 
 
-def _get_timeseries(model, interval, name):
+def _get_timeseries(model, name, interval=None):
     models = manager.session.query(model.created)
-    models = models.filter(model.created > interval)
+    if interval is not None:
+        models = models.filter(model.created > interval)
     return _get_timeseries_from_models(models, name)
 
 
-def _get_vote_timeseries(interval, name):
+def _get_vote_timeseries(name, interval=None):
     models = manager.session.query(EdgeVote.changed)
-    models = models.filter(EdgeVote.changed > interval)
+    if interval is not None:
+        models = models.filter(EdgeVote.changed > interval)
     return _get_timeseries_from_models(models, name)
 
 
@@ -47,14 +49,15 @@ def _get_vote_timeseries(interval, name):
 @roles_required('admin')
 def view_report():
     """This view gives an overview of the user actions in the last 7 days"""
-    days = request.args.get('days', default=7, type=int)
-    interval = datetime.datetime.now() - datetime.timedelta(days=days)
+    interval = request.args.get('days', type=int)
+    if interval is not None:
+        interval = datetime.datetime.now() - datetime.timedelta(days=interval)
 
-    network_data = _get_timeseries(Report, interval, 'Network Uploads')
-    query_data = _get_timeseries(Query, interval, 'Queries')
-    experiment_data = _get_timeseries(Experiment, interval, 'Experiments')
-    vote_data = _get_vote_timeseries(interval, 'Votes')
-    comment_data = _get_timeseries(EdgeComment, interval, 'Comments')
+    network_data = _get_timeseries(Report, 'Network Uploads', interval)
+    query_data = _get_timeseries(Query, 'Queries', interval)
+    experiment_data = _get_timeseries(Experiment, 'Experiments', interval)
+    vote_data = _get_vote_timeseries('Votes', interval)
+    comment_data = _get_timeseries(EdgeComment, 'Comments', interval)
 
     charts = {
         'network-chart': network_data,
