@@ -19,6 +19,7 @@ from pybel_web.external_services import external_blueprint
 from pybel_web.main_service import ui_blueprint
 from pybel_web.parser_endpoint import build_parser_service
 from pybel_web.parser_service import parser_blueprint
+from pybel_web.views.reporting import reporting_blueprint
 
 datefmt = '%H:%M:%S'
 fmt = "%(asctime)s - %(levelname)s - %(name)s - %(message)s"
@@ -43,6 +44,7 @@ app.register_blueprint(parser_blueprint)
 app.register_blueprint(api_blueprint)
 app.register_blueprint(experiment_blueprint)
 app.register_blueprint(external_blueprint)
+app.register_blueprint(reporting_blueprint)
 
 if app.config.get('BMS_BASE'):
     app.register_blueprint(bms_blueprint)
