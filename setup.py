@@ -49,6 +49,7 @@ INSTALL_REQUIRES = [
 ]
 EXTRAS_REQUIRE = {
     'bio2bel': [
+        'bio2bel>=0.0.9',
         'bio2bel_hgnc',
         'bio2bel_chebi',
         'bio2bel_mirtarbase',

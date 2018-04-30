@@ -23,6 +23,7 @@ gitpython
 wtforms
 sklearn
 numpy
+bio2bel>=0.0.9[bio2bel]
 bio2bel_hgnc[bio2bel]
 bio2bel_chebi[bio2bel]
 bio2bel_expasy[bio2bel]

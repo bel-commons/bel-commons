@@ -240,6 +240,12 @@ def upload_with_manager(external_manager, connection=None):
         log.info('no %s', external_manager)
         return
 
+    from bio2bel import AbstractManager
+
+    if not isinstance(external_manager, AbstractManager):
+        log.info('manager is not a Bio2BEL manager: %s', external_manager)
+        return
+
     if not external_manager.is_populated():
         log.info('populating %s', external_manager)
         external_manager.populate()
