@@ -64,19 +64,27 @@
                         {% if node.namespace_entry %}
                             <h4>Entity</h4>
                             <dl class="dl-horizontal">
-                                <dt>Name</dt>
-                                <dd>{{ node.namespace_entry.name }}</dd>
+                                {% if  node.namespace_entry.name %}
+                                    <dt>Name</dt>
+                                    <dd>{{ node.namespace_entry.name }}</dd>
+                                {% endif %}
+                                {% if  node.namespace_entry.identifier %}
+                                    <dt>Identifier</dt>
+                                    <dd>{{ node.namespace_entry.identifier }}</dd>
+                                {% endif %}
                                 <dt>Namespace</dt>
                                 <dd>{{ node.namespace_entry.namespace.keyword }}</dd>
                                 <dt>Namespace Version</dt>
                                 <dd>{{ node.namespace_entry.namespace.version }}</dd>
                                 {% if node.namespace_entry.namespace.url %}
-                                    <dt>Namespace URL</dt>
-                                    <dd>
-                                        <a href="{{ node.namespace_entry.namespace.url }}">
-                                            {{ node.namespace_entry.namespace.url }}
-                                        </a>
-                                    </dd>
+                                    {% if not node.namespace_entry.namespace.url.startswith('_') %}
+                                        <dt>Namespace URL</dt>
+                                        <dd>
+                                            <a href="{{ node.namespace_entry.namespace.url }}">
+                                                {{ node.namespace_entry.namespace.url }}
+                                            </a>
+                                        </dd>
+                                    {% endif %}
                                 {% else %}
                                     <dt>Pattern</dt>
                                     <dd>{{ node.namespace_entry.namespace.pattern }}</dd>
