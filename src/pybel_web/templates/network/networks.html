@@ -379,7 +379,6 @@
                                     </div>
                                 </li>
 
-
                                 {% if current_user.is_authenticated and ((network.report and network.report.user == current_user) or current_user.is_admin) %}
                                     <li>
                                         <div class="btn-group">
@@ -439,17 +438,17 @@
                                                         </li>
                                                     {% endif %}
                                                 {% endif %}
-
-                                                {% if (current_user.is_scai or current_user.is_admin) and not network.report %}
-                                                    <li role="separator" class="divider"></li>
-                                                    <li>
-                                                        <a href="{{ url_for('dbs.claim_network', network_id=network.id, next=url_for('ui.view_networks')) }}">
-                                                            Sudo Claim
-                                                        </a>
-                                                    </li>
-                                                {% endif %}
                                             </ul>
                                         </div>
+                                    </li>
+                                {% endif %}
+
+                                {% if current_user.is_authenticated and (current_user.is_scai or current_user.is_admin) and not network.report %}
+                                    <li>
+                                        <a href="{{ url_for('dbs.claim_network', network_id=network.id, next=url_for('ui.view_networks')) }}"
+                                           class="btn btn-warning">
+                                            Sudo Claim
+                                        </a>
                                     </li>
                                 {% endif %}
                             </ul>
