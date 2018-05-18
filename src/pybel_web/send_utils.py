@@ -4,13 +4,13 @@ import logging
 from io import BytesIO, StringIO
 
 from flask import Response, jsonify, send_file
+from pybel.constants import (
+    CAUSAL_DECREASE_RELATIONS, CAUSAL_INCREASE_RELATIONS, DECREASES, FUSION, HASH, INCREASES, MEMBERS, RELATION,
+    TWO_WAY_RELATIONS, VARIANTS,
+)
 
 from pybel import to_bel_lines, to_bytes, to_csv, to_cx, to_graphml, to_gsea, to_jgif, to_json, to_sif
 from pybel.canonicalize import node_to_bel
-from pybel.constants import (
-    CAUSAL_DECREASE_RELATIONS, CAUSAL_INCREASE_RELATIONS, DECREASES, HASH, INCREASES, RELATION,
-    TWO_WAY_RELATIONS,
-)
 from pybel.struct.summary import get_pubmed_identifiers
 from pybel.utils import hash_edge, hash_node
 from pybel_tools.mutation.metadata import serialize_authors
@@ -41,6 +41,8 @@ def to_json_custom(graph, _id='id', source='source', target='target'):
         nd = graph.node[node].copy()
         nd[_id] = hash_node(node)
         nd['bel'] = node_to_bel(nd)
+        if VARIANTS in nd or FUSION in nd or MEMBERS in nd:
+            nd['cname'] = nd['bel']
         result['nodes'].append(nd)
         mapping[node] = i
 
