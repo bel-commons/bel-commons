@@ -93,9 +93,9 @@
                     Controls
                 </button>
 
-                    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#export">
-                        Download
-                    </button>
+                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#export">
+                    Download
+                </button>
 
                 <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#paths">
                     Path Mining
@@ -199,7 +199,8 @@
                         <p class="text-center" style="margin-top: 10px;"><b> Modify Links Length</b></p>
                         <label for="link-slider"></label><input id="link-slider" style="width: 80%; margin-bottom: 10px; margin-top: 10px;
                          margin-left: 10%; margin-right: 10%;"
-                                                                class="text-center" type="range" min="0" max="1" step="any" value="0.7"/>
+                                                                class="text-center" type="range" min="0" max="1"
+                                                                step="any" value="0.7"/>
                         <button class='btn btn-primary not-rounded full-width' id='get-checked-edges'>Show
                             Selected Edges
                         </button>
@@ -649,21 +650,15 @@
                                 </div>
                             </div>
                         </div>
-
-                        <div class="form-group">
-                            <div class="col-sm-offset-2 col-sm-10">
-                                <input type="button" class="btn btn-primary" id="button-paths" value="Submit"
-                                       data-dismiss="modal"/>
-                                <input type="button" class="btn btn-primary pull-right" id="random-paths"
-                                       value="Show a Random Path" data-dismiss="modal"/>
-                            </div>
-                        </div>
-
                     </form>
                 </div><!-- /.Modal body -->
 
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    <input type="button" class="btn btn-default" id="random-paths"
+                           value="Show a Random Path" data-dismiss="modal"/>
+
+                    <input type="button" class="btn btn-primary pull-right" id="button-paths" value="Submit"
+                           data-dismiss="modal"/>
                 </div>
 
             </div><!-- /.Modal content -->
@@ -741,65 +736,71 @@
                         </tr>
 
                         {% if current_user.is_authenticated %}
-                        <tr>
-                            <td>Save as a BEL script</td>
-                            <td>
-                                <button type="button" id="bel-button" class="btn btn-default" aria-label="Left Align">
-                                    <img alt="BEL-logo" id="bel-logo"
-                                         src="{{ url_for('static', filename='img/bel300x.png') }}"></button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>Save as <a href="http://graphml.graphdrawing.org/">GraphML</a> for use in Cytoscape</td>
-                            <td>
-                                <button type="button" class="btn btn-default explorer-download" data-format="graphml">
-                                    <span class="glyphicon glyphicon-download" aria-hidden="true"></span>
-                                </button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>Save as CSV for import in Microsoft Excel</td>
-                            <td>
-                                <button type="button" class="btn btn-default explorer-download" data-format="csv">
-                                    <span class="glyphicon glyphicon-download" aria-hidden="true"></span>
-                                </button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>Save as SIF</td>
-                            <td>
-                                <button type="button" class="btn btn-default explorer-download" data-format="sif">
-                                    <span class="glyphicon glyphicon-download" aria-hidden="true"></span>
-                                </button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>Save as <a href="http://www.home.ndexbio.org/data-model/">CX</a> JSON for use with the
-                                <a href="http://ndexbio.org/">Network Data Exchange</a></td>
-                            <td>
-                                <button type="button" class="btn btn-default explorer-download" data-format="cx">
-                                    <span class="glyphicon glyphicon-download" aria-hidden="true"></span>
-                                </button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>Save as Node-Link JSON for custom visualization using <a href="https://d3js.org/">D3</a>
-                            </td>
-                            <td>
-                                <button type="button" class="btn btn-default explorer-download" data-format="json">
-                                    <span class="glyphicon glyphicon-download" aria-hidden="true"></span>
-                                </button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>Save as a Python <a href="https://docs.python.org/3/library/pickle.html">pickle</a> for
-                                programmatic use with <a href="https://github.com/pybel/pybel">PyBEL</a></td>
-                            <td>
-                                <button type="button" class="btn btn-default explorer-download" data-format="bytes">
-                                    <span class="glyphicon glyphicon-download" aria-hidden="true"></span>
-                                </button>
-                            </td>
-                        </tr>
+                            <tr>
+                                <td>Save as a BEL script</td>
+                                <td>
+                                    <button type="button" id="bel-button" class="btn btn-default"
+                                            aria-label="Left Align">
+                                        <img alt="BEL-logo" id="bel-logo"
+                                             src="{{ url_for('static', filename='img/bel300x.png') }}"></button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Save as <a href="http://graphml.graphdrawing.org/">GraphML</a> for use in Cytoscape
+                                </td>
+                                <td>
+                                    <button type="button" class="btn btn-default explorer-download"
+                                            data-format="graphml">
+                                        <span class="glyphicon glyphicon-download" aria-hidden="true"></span>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Save as CSV for import in Microsoft Excel</td>
+                                <td>
+                                    <button type="button" class="btn btn-default explorer-download" data-format="csv">
+                                        <span class="glyphicon glyphicon-download" aria-hidden="true"></span>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Save as SIF</td>
+                                <td>
+                                    <button type="button" class="btn btn-default explorer-download" data-format="sif">
+                                        <span class="glyphicon glyphicon-download" aria-hidden="true"></span>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Save as <a href="http://www.home.ndexbio.org/data-model/">CX</a> JSON for use with
+                                    the
+                                    <a href="http://ndexbio.org/">Network Data Exchange</a></td>
+                                <td>
+                                    <button type="button" class="btn btn-default explorer-download" data-format="cx">
+                                        <span class="glyphicon glyphicon-download" aria-hidden="true"></span>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Save as Node-Link JSON for custom visualization using <a
+                                        href="https://d3js.org/">D3</a>
+                                </td>
+                                <td>
+                                    <button type="button" class="btn btn-default explorer-download" data-format="json">
+                                        <span class="glyphicon glyphicon-download" aria-hidden="true"></span>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Save as a Python <a href="https://docs.python.org/3/library/pickle.html">pickle</a>
+                                    for
+                                    programmatic use with <a href="https://github.com/pybel/pybel">PyBEL</a></td>
+                                <td>
+                                    <button type="button" class="btn btn-default explorer-download" data-format="bytes">
+                                        <span class="glyphicon glyphicon-download" aria-hidden="true"></span>
+                                    </button>
+                                </td>
+                            </tr>
                         {% endif %}
 
                         <tr>
