@@ -34,7 +34,7 @@ from pybel_tools.utils import enable_cool_mode, get_version as pybel_tools_get_v
 from .analysis_service import experiment_blueprint
 from .application import create_application
 from .bms_service import bms_blueprint
-from .constants import CHARLIE_EMAIL
+from .constants import get_admin_email
 from .curation_service import curation_blueprint
 from .database_service import api_blueprint
 from .external_services import belief_blueprint, external_blueprint
@@ -108,11 +108,6 @@ def make_gunicorn_app(app, host, port, workers):
     })
 
 
-_config_map = {
-    'local': 'pybel_web.config.LocalConfig',
-    'test': 'pybel_web.config.TestConfig',
-    'prod': 'pybel_web.config.ProductionConfig'
-}
 
 _main_help = "BEL Commons Command Line Interface on {}\n with " \
              "PyBEL v{} and PyBEL Tools v{}".format(sys.executable,
@@ -129,14 +124,12 @@ def main():
 @main.command()
 @click.option('--host', default='0.0.0.0', help='Flask host. Defaults to 0.0.0.0')
 @click.option('--port', type=int, default=5000, help='Flask port. Defaults to 5000')
-@click.option('--default-config', type=click.Choice(['local', 'test', 'prod']),
-              help='Use different default config object')
 @click.option('-v', '--debug', count=True, help="Turn on debugging. More v's, more debugging")
 @click.option('--config', type=click.File('r'), help='Additional configuration in a JSON file')
 @click.option('-e', '--examples', is_flag=True, help='Ensure examples')
 @click.option('--with-gunicorn', is_flag=True)
 @click.option('-w', '--workers', type=int, default=number_of_workers(), help='Number of workers')
-def run(host, port, default_config, debug, config, examples, with_gunicorn, workers):
+def run(host, port, debug, config, examples, with_gunicorn, workers):
     """Run the web application"""
     set_debug_param(debug)
     if debug < 3:
@@ -156,7 +149,6 @@ def run(host, port, default_config, debug, config, examples, with_gunicorn, work
     config_dict = json.load(config) if config is not None else {}
 
     app = create_application(
-        config_location=_config_map.get(default_config),
         examples=examples,
         **config_dict
     )
@@ -277,23 +269,23 @@ def drop(manager, yes, user_dump):
 @manage.command()
 @click.pass_obj
 def sanitize_reports(manager):
-    """Add charlie as the owner of all non-reported graphs"""
+    """Add admin as the owner of all non-reported graphs"""
     ds = SQLAlchemyUserDatastore(manager, User, Role)
-    user_ = ds.find_user(email=CHARLIE_EMAIL)
-    click.echo('Adding {} as owner of unreported uploads'.format(user_))
+    u = ds.find_user(email=get_admin_email())
+    click.echo('Adding {} as owner of unreported uploads'.format(u))
 
-    for network_ in manager.session.query(Network):
-        if network_.report is not None:
+    for n in manager.session.query(Network):
+        if n.report is not None:
             continue
 
         report = Report(
-            network=network_,
-            user=user_
+            network=n,
+            user=u
         )
 
         manager.session.add(report)
 
-        click.echo('Sanitizing {}'.format(network_))
+        click.echo('Sanitizing {}'.format(n))
 
     manager.session.commit()
 
@@ -625,6 +617,7 @@ if omics_dir is not None or bms is not None:
     @manage.group()
     def examples():
         """Load examples"""
+
 
     if omics_dir:
         @examples.command(help='Load omics from {}'.format(omics_dir))

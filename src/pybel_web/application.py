@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 
-"""
-Resources:
+"""Builds a Flask extension for PyBEL.
+
+The following resources were really helpful in learning about this:
 
 1. https://citizen-stig.github.io/2016/02/17/using-celery-with-flask-factories.html
 2. https://github.com/citizen-stig/celery-with-flask-factories
@@ -61,7 +62,7 @@ class IntListConverter(ListConverter):
         return [int(entry) for entry in ListConverter.to_python(self, value)]
 
 
-def get_config_location(config_location=None):
+def get_config_object(config_location=None):
     """Get the application configuration
 
     :param Optional[str] config_location:
@@ -80,36 +81,46 @@ def get_config_location(config_location=None):
     return _default_config_location
 
 
-def create_application(config_location=None, examples=None, **kwargs):
+PYBEL_WEB_CONFIG_JSON = 'PYBEL_WEB_CONFIG_JSON'
+SWAGGER = 'SWAGGER'
+SQLALCHEMY_DATABASE_URI = 'SQLALCHEMY_DATABASE_URI'
+SQLALCHEMY_TRACK_MODIFICATIONS = 'SQLALCHEMY_TRACK_MODIFICATIONS'
+CELERY_BROKER_URL = 'CELERY_BROKER_URL'
+MAIL_DEFAULT_SENDER = 'MAIL_DEFAULT_SENDER'
+MAIL_SERVER = 'MAIL_SERVER'
+PYBEL_WEB_STARTUP_NOTIFY = 'PYBEL_WEB_STARTUP_NOTIFY'
+SERVER_NAME = 'SERVER_NAME'
+
+
+def create_application(config_object_name=None, examples=None, **kwargs):
     """Builds a Flask app
     
     1. Loads default config
     2. Updates with kwargs
     
-    :param bool get_mail: Activate the return have a tuple of (Flask, Mail)
-    :param str config_location: The path to the object that will get loaded for default configuration. Defaults to
-                                :data:`'pybel_web.config.Config'`
+    :param str config_object_name: The path to the object that will get loaded for default configuration. Defaults to
+     :data:`'pybel_web.config.Config'`
     :param Optional[bool] examples: Should examples be pre-loaded
     :param dict kwargs: keyword arguments to add to config
     :rtype: flask.Flask
     """
     app = Flask(__name__)
-    app.config.from_object(get_config_location(config_location))
+    app.config.from_object(get_config_object(config_object_name))
     app.config.update(pybel_config)
 
-    pbw_conf_json = os.environ.get('PYBEL_WEB_CONFIG_JSON')
-    if pbw_conf_json is not None:
-        if os.path.exists(pbw_conf_json):
-            log.info('importing config from %s', pbw_conf_json)
-            app.config.from_json(pbw_conf_json)
+    pbw_config_json = os.environ.get(PYBEL_WEB_CONFIG_JSON)
+    if pbw_config_json is not None:
+        if os.path.exists(pbw_config_json):
+            log.info('importing config from %s', pbw_config_json)
+            app.config.from_json(pbw_config_json)
         else:
-            log.warning('configuration from environment at %s does not exist', pbw_conf_json)
+            log.warning('configuration from environment at %s does not exist', pbw_config_json)
 
     app.config.update(kwargs)
-    app.config.setdefault('SWAGGER', SWAGGER_CONFIG)
+    app.config.setdefault(SWAGGER, SWAGGER_CONFIG)
     app.config.setdefault(PYBEL_CONNECTION, get_cache_connection())
-    app.config['SQLALCHEMY_DATABASE_URI'] = app.config[PYBEL_CONNECTION]
-    app.config.setdefault('SQLALCHEMY_TRACK_MODIFICATIONS', False)
+    app.config[SQLALCHEMY_DATABASE_URI] = app.config[PYBEL_CONNECTION]
+    app.config.setdefault(SQLALCHEMY_TRACK_MODIFICATIONS, False)
 
     log.info('database: %s', app.config.get(PYBEL_CONNECTION))
 
@@ -122,18 +133,20 @@ def create_application(config_location=None, examples=None, **kwargs):
     bootstrap.init_app(app)
     swagger.init_app(app)
 
-    celery_broker_url = app.config.get('CELERY_BROKER_URL')
+    celery_broker_url = app.config.get(CELERY_BROKER_URL)
     if celery_broker_url is not None:
         log.info('using celery broker: %s', celery_broker_url)
         create_celery(app)
 
-    app.config.setdefault('MAIL_DEFAULT_SENDER', ("PyBEL Web", 'pybel@scai.fraunhofer.de'))
-    mail_server = app.config.get('MAIL_SERVER')
+    app.config.setdefault(MAIL_DEFAULT_SENDER, ("BEL Commons", 'pybel@scai.fraunhofer.de'))
+    mail_server = app.config.get(MAIL_SERVER)
+    mail_default_sender = app.config.get(MAIL_DEFAULT_SENDER)
+
     if mail_server:
         log.info('using mail server: %s', mail_server)
         mail.init_app(app)
 
-        notify = app.config.get('PYBEL_WEB_STARTUP_NOTIFY')
+        notify = app.config.get(PYBEL_WEB_STARTUP_NOTIFY)
         if notify:
             log.info('sending startup notification to %s', notify)
             with app.app_context():
@@ -144,9 +157,9 @@ def create_application(config_location=None, examples=None, **kwargs):
                         socket.gethostname(),
                         getuser(),
                         time.asctime(),
-                        app.config.get('SERVER_NAME')
+                        app.config.get(SERVER_NAME)
                     ),
-                    sender=app.config['MAIL_DEFAULT_SENDER'],
+                    sender=mail_default_sender,
                     recipients=[notify]
                 )
             log.info('notified %s', notify)

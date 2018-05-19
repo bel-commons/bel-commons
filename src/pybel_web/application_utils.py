@@ -102,10 +102,10 @@ def build_network_ajax_manager(manager, user_datastore):
 
 
 def build_project_view(manager, user_datastore):
-    """
+    """Builds a Flask-Admin model view for a project
 
-    :param manager:
-    :param user_datastore:
+    :param pybel.manager.Manager manager: A PyBEL manager
+    :param flask_security.DataStore user_datastore: A Flask Security user datastore
     :rtype: type[ModelView]
     """
 
@@ -157,7 +157,6 @@ class FlaskPyBEL(object):
         :param Optional[flask.Flask] app: A Flask app
         :param Optional[pybel.manager.Manager] manager: A thing that has an engine and a session object
         :param bool examples: Should the example subgraphs be loaded on startup? Warning: takes a while. Defaults to
-
         """
         self.app = app
         self.manager = manager
@@ -381,7 +380,7 @@ class FlaskPyBEL(object):
         :rtype: FlaskPyBEL
         """
         if cls.APP_NAME not in app.extensions:
-            raise ValueError('FlaskPyBEL has not been instantiated')
+            raise ValueError('{} has not been instantiated'.format(cls.__name__))
 
         return app.extensions[cls.APP_NAME]
 

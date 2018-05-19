@@ -32,7 +32,7 @@ from pybel_tools.mutation import add_canonical_names, add_identifiers, infer_cen
 from pybel_tools.utils import enable_cool_mode
 from pybel_web.application import create_application
 from pybel_web.celery_utils import create_celery
-from pybel_web.constants import CHARLIE_EMAIL, DANIEL_EMAIL, integrity_message, merged_document_folder
+from pybel_web.constants import get_admin_email, integrity_message, merged_document_folder
 from pybel_web.manager_utils import fill_out_report, insert_graph, make_graph_summary, run_cmpa_helper
 from pybel_web.models import Experiment, Project, User
 from pybel_web.utils import get_network_summary_dict, safe_get_report
@@ -222,7 +222,7 @@ def upload_bel(connection, report_id, enrich_citations=False):
             with app.app_context():
                 app.extensions['mail'].send_message(
                     subject='Possible attempted Espionage',
-                    recipients=[CHARLIE_EMAIL, DANIEL_EMAIL],
+                    recipients=[get_admin_email()],
                     body='The following user ({} {}) may have attempted espionage of network: {}'.format(
                         report.user.id,
                         report.user.email,

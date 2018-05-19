@@ -41,15 +41,18 @@ def view_omic(omic_id):
 
     data = omic.get_source_dict()
     values = list(data.values())
-    count = len(values)
-    std = np.std(values)
-    mean = np.mean(values)
-    median = np.median(values)
-    mini = np.min(values)
-    maxi = np.max(values)
-    return render_template('omic/omic.html', omic=omic, current_user=current_user, count=count, mean=mean,
-                           median=median,
-                           std=std, minimum=mini, maximum=maxi)
+
+    return render_template(
+        'omic/omic.html',
+        omic=omic,
+        current_user=current_user,
+        count=len(values),
+        mean=np.mean(values),
+        median=np.median(values),
+        std=np.std(values),
+        minimum=np.min(values),
+        maximum=np.max(values)
+    )
 
 
 @experiment_blueprint.route('/omics/drop')

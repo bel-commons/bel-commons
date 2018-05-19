@@ -3,7 +3,6 @@
 import os
 
 import pybel_tools.constants
-from .constants import CHARLIE_EMAIL
 
 
 class Config:
@@ -35,37 +34,6 @@ class Config:
     #: A connection string for the PyBEL cache
     PYBEL_CONNECTION = None
 
-    #: Should the version of the networks be checked on reload? This is important for maintaining the right data format
-    PYBEL_DS_CHECK_VERSION = True
-
-
-class EmailConfig:
-    """This contains the email information for running on bart"""
-    MAIL_SERVER = 'localhost'
-    MAIL_PORT = 25
-    MAIL_USERNAME = 'pybel@scai.fraunhofer.de'
-    # Automatically sends mail from this account
-    MAIL_DEFAULT_SENDER = 'PyBEL Web <pybel@scai.fraunhofer.de>'
-
-
-class ProductionConfig(Config, EmailConfig):
-    """This configuration is for running in production on bart:5000"""
-    SERVER_NAME = 'pybel.scai.fraunhofer.de'
-
-    SECURITY_REGISTERABLE = True
-    SECURITY_CONFIRMABLE = True
-    SECURITY_SEND_REGISTER_EMAIL = True
-    SECURITY_RECOVERABLE = True
-
-    SECURITY_EMAIL_SENDER = 'PyBEL Web <pybel@scai.fraunhofer.de>"'
-
-    PYBEL_WEB_STARTUP_NOTIFY = CHARLIE_EMAIL
-    PYBEL_WEB_REPORT_RECIPIENT = CHARLIE_EMAIL
-
-
-class TestConfig(ProductionConfig):
-    """This configuration is for running in development on bart:5001"""
-
 
 class DockerConfig(Config):
     """Follows format from guide at
@@ -89,11 +57,6 @@ class DockerConfig(Config):
         database=DB_DATABASE,
         charset='utf8'
     )
-
-
-class LocalConfig(Config):
-    """Local configuration that doesn't use celery for asnyc stuff, and just does it synchronously"""
-    PYBEL_DS_PRELOAD = True
 
 
 class UnitTestConfig(Config):

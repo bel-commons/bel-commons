@@ -2,7 +2,7 @@
 
 import os
 
-from pybel.constants import PYBEL_DIR
+from pybel.constants import PYBEL_DIR, config
 from pybel_tools.pipeline import function_is_registered
 
 VERSION = '0.2.2-dev'
@@ -37,9 +37,23 @@ BLACK_LIST = {
     AND,
 }
 
-CHARLIE_EMAIL = 'charles.hoyt@scai.fraunhofer.de'
-DANIEL_EMAIL = 'daniel.domingo.fernandez@scai.fraunhofer.de'
-ALEX_EMAIL = 'aliaksandr.masny@scai.fraunhofer.de'
+PYBEL_ADMIN_EMAIL = 'PYBEL_WEB_ADMIN_EMAIL'
+PYBEL_ADMIN_PASSWORD = 'PYBEL_WEB_ADMIN_PASSWORD'
+
+
+def get_admin_email():
+    rv = config.get(PYBEL_ADMIN_EMAIL)
+    if rv is None:
+        raise RuntimeError('{} is not set'.format(PYBEL_ADMIN_EMAIL))
+    return rv
+
+
+def get_admin_password():
+    rv = config.get(PYBEL_ADMIN_PASSWORD)
+    if rv is None:
+        raise RuntimeError('{} is not set'.format(PYBEL_ADMIN_PASSWORD))
+    return rv
+
 
 SWAGGER_CONFIG = {
     'title': 'BEL Commons API',
