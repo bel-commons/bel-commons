@@ -33,7 +33,7 @@ from pybel_tools.utils import enable_cool_mode
 from pybel_web.application import create_application
 from pybel_web.celery_utils import create_celery
 from pybel_web.constants import CHARLIE_EMAIL, DANIEL_EMAIL, integrity_message, merged_document_folder
-from pybel_web.manager_utils import fill_out_report, make_graph_summary, run_cmpa_helper
+from pybel_web.manager_utils import fill_out_report, insert_graph, make_graph_summary, run_cmpa_helper
 from pybel_web.models import Experiment, Project, User
 from pybel_web.utils import get_network_summary_dict, safe_get_report
 
@@ -394,13 +394,16 @@ def run_cmpa(connection, experiment_id):
 
 
 @celery.task(name='upload-json')
-def upload_json(connection, payload):
+def upload_json(connection, username, payload):
     """Receives a JSON serialized BEL graph
 
     :param str connection: A connection to build the manager
+    :param str username: the email of the user to associate with the graph
     :param payload: JSON dictionary for :func:`pybel.from_json`
     """
     manager = Manager(connection=connection)
+
+    user = manager.session.query(User).filter(User.email == username).one()
 
     try:
         graph = from_json(payload)
@@ -408,10 +411,7 @@ def upload_json(connection, payload):
         return -1
 
     try:
-        manager.insert_graph(graph, store_parts=app.config.get("PYBEL_USE_EDGE_STORE", True))
-    except IntegrityError:
-        manager.session.rollback()
-        return -1
+        insert_graph(manager, graph, user)
     except Exception:
         celery_logger.exception('Upload error')
         manager.session.rollback()
