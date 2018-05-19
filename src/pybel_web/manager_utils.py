@@ -37,7 +37,7 @@ from pybel_tools.summary import (
     get_unused_list_annotation_values,
 )
 from .constants import LABEL
-from .models import Experiment, Omic, Report
+from .models import Experiment, Omic, Report, User
 
 log = logging.getLogger(__name__)
 
@@ -247,9 +247,11 @@ def insert_graph(manager, graph, user_id=1, public=False):
 
     :param pybel.manager.Manager manager: A PyBEL manager
     :param pybel.BELGraph graph: A BEL graph
-    :param int user_id: The identifier of the user to report. Defaults to 1.
+    :param user_id: The identifier of the user to report. Defaults to 1. Can also give user object.
+    :type user_id: int or User
     :param bool public: Should the network be public? Defaults to false
     :rtype: Network
+    :raises: TypeError
     """
     if manager.has_name_version(graph.name, graph.version):
         log.info('database already has %s', graph)
@@ -260,7 +262,12 @@ def insert_graph(manager, graph, user_id=1, public=False):
     report = Report(public=public)
 
     if user_id:
-        report.user_id = user_id
+        if isinstance(user_id, int):
+            report.user_id = user_id
+        elif isinstance(user_id, User):
+            report.user = user_id
+        else:
+            raise TypeError('invalid user: {} {}'.format(user_id.__class__, user_id))
 
     graph_summary = make_graph_summary(graph)
 
