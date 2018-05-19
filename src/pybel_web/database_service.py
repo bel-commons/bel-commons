@@ -1887,6 +1887,10 @@ def get_enriched_node_json(node):
 
             node_data['annotations']['GO'] = go_data
 
+    elif namespace in {'MESH', 'MESHC', 'MESHPP', 'MESHD'} and mesh_manager:
+        model = mesh_manager.get_term_by_name(name)
+        node_data['annotations']['MESH'] = {'missing': True} if model is None else model.to_json()
+
     elif namespace == 'RGD':
         pass
 

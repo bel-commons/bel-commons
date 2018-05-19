@@ -403,6 +403,22 @@
     </dl>
 {%- endmacro %}
 
+{% macro render_node_mesh_enrichment(mesh_manager, node) -%}
+    {% if node.namespace_entry.namespace.keyword in ['MESH', 'MESHPP', 'MESHD', 'MESHC'] %}
+        {% set term = mesh_manager.get_term_by_name(node.namespace_entry.name) %}
+    {% endif %}
+
+    <h4>MeSH</h4>
+    <dl class="dl-horizontal">
+        <dt>Descriptor</dt>
+        <dd>{{ term['descriptor_name'] }} ({{ term['descriptor_ui'] }})</dd>
+        <dt>Concept</dt>
+        <dd>{{ term['concept_name'] }} ({{ term['concept_ui'] }})</dd>
+        <dt>Term</dt>
+        <dd>{{ term['term_name'] }} ({{ term['term_ui'] }})</dd>
+    </dl>
+{%- endmacro %}
+
 {% macro render_networks_panel(networks) -%}
     <div class="panel panel-default">
         <div class="panel-heading">

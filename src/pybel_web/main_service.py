@@ -197,6 +197,7 @@ def view_nodes():
         go_manager=go_manager,
         entrez_manager=entrez_manager,
         interpro_manager=interpro_manager,
+        mesh_manager=mesh_manager,
     )
 
 
@@ -217,6 +218,7 @@ def view_node(node_hash):
         go_manager=go_manager,
         entrez_manager=entrez_manager,
         interpro_manager=interpro_manager,
+        mesh_manager=mesh_manager,
     )
 
 

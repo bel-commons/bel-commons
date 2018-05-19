@@ -99,6 +99,8 @@
                                 {{ pbw.render_node_chebi_enrichment(chebi_manager, node) }}
                             {% elif go_manager and node.namespace_entry.namespace.keyword in ['GO', 'GOBP', 'GOBPID'] %}
                                 {{ pbw.render_node_go_enrichment(go_manager, node) }}
+                            {% elif mesh_manager and node.namespace_entry.namespace.keyword in ['MESH', 'MESHPP', 'MESHD', 'MESHC'] %}
+                                {{ pbw.render_node_mesh_enrichment(mesh_manager, node) }}
                             {% endif %}
                         {% endif %}
                     </div>

@@ -148,6 +148,27 @@ function handleGoNodeInfo(nodeObject, data) {
     }
 }
 
+function handleMeshNodeInfo(nodeObject, data) {
+    if (data.descriptor_ui) {
+        nodeObject['MeSH Descriptor UI'] = data.descriptor_ui
+    }
+    if (data.descriptor_name) {
+        nodeObject['MeSH Descriptor Name'] = data.descriptor_name
+    }
+    if (data.concept_ui) {
+        nodeObject['MeSH Concept UI'] = data.concept_ui
+    }
+    if (data.concept_name) {
+        nodeObject['MeSH Concept Name'] = data.concept_name
+    }
+    if (data.term_ui) {
+        nodeObject['MeSH Term UI'] = data.term_ui
+    }
+    if (data.term_name) {
+        nodeObject['MeSH Term Name'] = data.term_name
+    }
+}
+
 function handleNodeResponseCommon(nodeObject, node) {
     if (node.identifier) {
         nodeObject["Identifier"] = node.identifier;
@@ -177,6 +198,9 @@ function handleNodeResponse(nodeObject, nodeResponse) {
         }
         if (nodeResponse.annotations.GO) {
             handleGoNodeInfo(nodeObject, nodeResponse.annotations.GO)
+        }
+        if (nodeResponse.annotations.MESH) {
+            handleMeshNodeInfo(nodeObject, nodeResponse.annotations.MESH)
         }
     }
 }
