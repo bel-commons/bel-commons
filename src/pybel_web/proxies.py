@@ -17,7 +17,7 @@ def get_manager_proxy():
 def get_userdatastore_proxy():
     """Gets a proxy for the user datastore from the current app
 
-    :rtype: flask_security.SQLAlchemyUserDataStore
+    :rtype: flask_security.DatabaseService
     """
     return LocalProxy(lambda: get_user_datastore(current_app))
 

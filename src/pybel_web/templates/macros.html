@@ -13,7 +13,7 @@
             {% set node_class_count =  node.out_edges.filter_by(relation='isA').count() %}
             {% set node_children_count =  node.in_edges.filter_by(relation='isA').count() %}
 
-            {% if node.type == 'Gene' and node_orthology_count%}
+            {% if node.type == 'Gene' and node_orthology_count %}
                 Orthologies: {{ node_orthology_count }} |
             {% endif %}
             {% if node_equivalence_count %}

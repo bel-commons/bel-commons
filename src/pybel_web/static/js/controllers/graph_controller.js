@@ -133,7 +133,6 @@ function handleExpasyNodeInfo(nodeObject, data) {
 }
 
 function handleGoNodeInfo(nodeObject, data) {
-    console.log(data);
     if (data.id) {
         nodeObject['GO Identifier'] = data.id
     }

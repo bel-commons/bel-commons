@@ -31,7 +31,7 @@ from .content import safe_get_network, safe_get_query
 from .external_managers import *
 from .external_managers import manager_dict
 from .manager_utils import next_or_jsonify
-from .models import Assembly, EdgeComment, EdgeVote, Experiment, Omic, Project, Query, Report, User
+from .models import Assembly, EdgeComment, EdgeVote, Experiment, Omic, Project, Query, User
 from .utils import (
     calculate_overlap_dict, get_graph_from_request, get_networks_with_permission, get_or_create_vote,
     get_version as get_bel_commons_version, manager, query_form_to_dict, query_from_network_with_current_user,
@@ -136,26 +136,6 @@ def view_networks():
         networks=sorted(networks, key=lambda network: network.created, reverse=True),
         current_user=current_user,
         BMS_BASE=current_app.config.get('BMS_BASE'),
-    )
-
-
-def _render_nodes(template, nodes, count=None):
-    """Renders a list of nodes
-
-    :param iter[Node] nodes:
-    :param Optional[int] count: The number of nodes displayed
-    :return: flask.Response
-    """
-    return render_template(
-        template,
-        nodes=nodes,
-        count=count,
-        current_user=current_user,
-        hgnc_manager=hgnc_manager,
-        chebi_manager=chebi_manager,
-        go_manager=go_manager,
-        entrez_manager=entrez_manager,
-        interpro_manager=interpro_manager,
     )
 
 
@@ -613,7 +593,8 @@ def view_summarize_completeness(network_id):
 
     entries = summarize_competeness(graph)
 
-    return render_template('network/summarize_completeness.html', current_user=current_user, network=network, entries=entries)
+    return render_template('network/summarize_completeness.html', current_user=current_user, network=network,
+                           entries=entries)
 
 
 @ui_blueprint.route('/network/<int:network_id>/stratified/<annotation>')

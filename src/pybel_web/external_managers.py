@@ -5,6 +5,7 @@
 import logging
 
 from pybel.constants import get_cache_connection
+
 from pybel_tools.pipeline import in_place_mutator
 
 __all__ = [
@@ -15,6 +16,7 @@ __all__ = [
     'go_manager',
     'entrez_manager',
     'interpro_manager',
+    'sider_manager',
     'mesh_manager',
     'manager_dict',
 ]
