@@ -14,8 +14,6 @@ problems--the code will get executed twice:
 Also see (1) from http://click.pocoo.org/5/setuptools/#setuptools-integration
 """
 
-from __future__ import print_function
-
 import datetime
 import json
 import logging
@@ -190,8 +188,9 @@ def run(host, port, default_config, debug, config, examples, with_gunicorn, work
 
 @main.command()
 @click.option('-c', '--concurrency', type=int, default=1)
+@click.option('-b', '--broker', default='amqp://guest:guest@localhost:5672//')
 @click.option('--debug', default='INFO', type=click.Choice(['INFO', 'DEBUG']))
-def worker(concurrency, debug):
+def worker(concurrency, broker, debug):
     """Run the celery worker"""
     from .celery_worker import celery
     from celery.bin import worker
@@ -199,7 +198,7 @@ def worker(concurrency, debug):
     pybel_worker = worker.worker(app=celery)
 
     pybel_worker.run(
-        broker='amqp://guest:guest@localhost:5672//',
+        broker=broker,
         loglevel=debug,
         traceback=True,
         concurrency=concurrency
