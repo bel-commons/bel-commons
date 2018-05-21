@@ -3,6 +3,7 @@
 """Utilities in this package should not depend on anything (especially proxies), and should instead take arguments
 corresponding to objects"""
 
+import datetime
 import itertools as itt
 import logging
 import time
@@ -242,13 +243,13 @@ def fill_out_report(network, report, graph_summary):
     report.completed = True
 
 
-def insert_graph(manager, graph, user_id=1, public=False):
+def insert_graph(manager, graph, user=1, public=False):
     """Insert a graph and also make a report
 
     :param pybel.manager.Manager manager: A PyBEL manager
     :param pybel.BELGraph graph: A BEL graph
-    :param user_id: The identifier of the user to report. Defaults to 1. Can also give user object.
-    :type user_id: int or User
+    :param user: The identifier of the user to report. Defaults to 1. Can also give user object.
+    :type user: int or User
     :param bool public: Should the network be public? Defaults to false
     :rtype: Network
     :raises: TypeError
@@ -261,13 +262,13 @@ def insert_graph(manager, graph, user_id=1, public=False):
 
     report = Report(public=public)
 
-    if user_id:
-        if isinstance(user_id, int):
-            report.user_id = user_id
-        elif isinstance(user_id, User):
-            report.user = user_id
+    if user:
+        if isinstance(user, int):
+            report.user_id = user
+        elif isinstance(user, User):
+            report.user = user
         else:
-            raise TypeError('invalid user: {} {}'.format(user_id.__class__, user_id))
+            raise TypeError('invalid user: {} {}'.format(user.__class__, user))
 
     graph_summary = make_graph_summary(graph)
 
@@ -476,7 +477,7 @@ def get_network_ids_with_permission_helper(user, manager, user_datastore):
 
     :param User user: A user
     :param pybel.manager.Manager manager: A manager
-    :param flask_security.datastore.UserDatastore user_datastore: A user datastore
+    :param flask_security.SQLAlchemyUserDatastore user_datastore: A Flask-Security user datastore
     :return: A list of all networks tagged as public or uploaded by the current user
     :rtype: set[int]
     """
@@ -488,7 +489,7 @@ def user_missing_query_rights_abstract(manager, user_datastore, user, query):
     """Checks if the user does not have the rights to run the given query
 
     :param pybel.manager.Manager manager: A manager
-    :param flask_security.datastore.UserDatastore user_datastore: A user datastore
+    :param flask_security.SQLAlchemyUserDatastore user_datastore: A Flask-Security user datastore
     :param models.User user: A user object
     :param models.Query query: A query object
     :rtype: bool
@@ -506,3 +507,35 @@ def user_missing_query_rights_abstract(manager, user_datastore, user, query):
         network.id not in permissive_network_ids
         for network in query.assembly.networks
     )
+
+
+def register_users_from_manifest(user_datastore, manifest):
+    """Register the users and roles in a manifest.
+
+    :param flask_security.SQLAlchemyUserDatastore user_datastore: A Flask-Security user datastore
+    :param dict manifest: A manifest dictionary, which contains two keys: ``roles`` and ``users``. The ``roles``
+     key corresponds to a list of dictionaries containing ``name`` and ``description`` entries. The ``users`` key
+     corresponds to a list of dictionaries containing ``email``, ``password``, and ``name`` entries
+     as well as a optional ``roles`` entry with a corresponding list relational to the names in the ``roles``
+     entry in the manifest.
+    """
+    for role in manifest['roles']:
+        user_datastore.find_or_create_role(**role)
+
+    for user_manifest in manifest['users']:
+        email = user_manifest['email']
+        user = user_datastore.find_user(email=email)
+        if user is None:
+            log.info('creating user: %s', email)
+            user = user_datastore.create_user(
+                confirmed_at=datetime.datetime.now(),
+                email=email,
+                password=user_manifest['password'],
+                name=user_manifest['name']
+            )
+
+        for role_name in user_manifest.get('roles', []):
+            if user_datastore.add_role_to_user(user, role_name):
+                log.info('registered %s as %s', user, role_name)
+
+    user_datastore.commit()

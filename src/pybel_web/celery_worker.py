@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
 
-"""
-Run the celery worker with:
+"""Runs the Celery worker for BEL Commons.
 
-:code:`python3 -m celery -A pybel_web.celery_worker.celery worker`
-
-While also laughing at how ridiculously redundant this nomenclature is.
+Use: :code:`python3 -m celery -A pybel_web.celery_worker.celery worker` while also laughing at how ridiculously
+redundant this nomenclature is.
 """
 
 import hashlib

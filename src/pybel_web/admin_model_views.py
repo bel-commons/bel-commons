@@ -1,10 +1,18 @@
 # -*- coding: utf-8 -*-
 
-"""This module contains model views for the Flask-admin interface"""
+"""This module contains model views for the Flask-admin interface."""
+
+from itertools import chain
 
 from flask import redirect, request
 from flask_admin.contrib.sqla import ModelView as ModelViewBase
+from flask_admin.contrib.sqla.ajax import QueryAjaxModelLoader
+from flask_admin.model.ajax import DEFAULT_PAGE_SIZE
 from flask_security import current_user, url_for_security
+from sqlalchemy import or_
+
+from pybel.manager.models import Network
+from .models import Project
 
 
 class ModelView(ModelViewBase):
@@ -75,3 +83,112 @@ class QueryView(ModelView):
     column_exclude_list = ['dump']
     column_default_sort = ('created', True)
     column_display_pk = True
+
+
+def iter_public_networks(manager):
+    """Lists the graphs that have been made public
+
+    :param pybel.manager.Manager manager:
+    :rtype: iter[Network]
+    """
+    return (
+        network
+        for network in manager.list_recent_networks()
+        if network.report and network.report.public
+    )
+
+
+def build_network_ajax_manager(manager, user_datastore):
+    """
+
+    :param pybel.manager.Manager manager: A PyBE manager
+    :param flask_security.SQLAlchemyUserDatastore user_datastore: A flask security user datastore manager
+    :rtype: QueryAjaxModelLoader
+    """
+
+    class NetworkAjaxModelLoader(QueryAjaxModelLoader):
+        """Custom Network AJAX loader for Flask Admin"""
+
+        def __init__(self):
+            super(NetworkAjaxModelLoader, self).__init__('networks', manager.session, Network,
+                                                         fields=[Network.name])
+
+        def get_list(self, term, offset=0, limit=DEFAULT_PAGE_SIZE):
+            """Overrides get_list to be lazy and tricky about only getting current user's networks"""
+            query = self.session.query(self.model)
+
+            filters = (field.ilike(u'%%%s%%' % term) for field in self._cached_fields)
+            query = query.filter(or_(*filters))
+
+            if not current_user.is_admin:
+                network_chain = chain(
+                    current_user.get_owned_networks(),
+                    current_user.get_shared_networks(),
+                    iter_public_networks(manager),
+                )
+
+                allowed_network_ids = {
+                    network.id
+                    for network in network_chain
+                }
+
+                if current_user.is_scai:
+                    scai_role = user_datastore.find_or_create_role(name='scai')
+
+                    for user in scai_role.users:
+                        for network in user.get_owned_networks():
+                            allowed_network_ids.add(network.id)
+
+                if not allowed_network_ids:  # If the current user doesn't have any networks, then return nothing
+                    return []
+
+                query = query.filter(Network.id.in_(allowed_network_ids))
+
+            return query.offset(offset).limit(limit).all()
+
+    return NetworkAjaxModelLoader()
+
+
+def build_project_view(manager, user_datastore):
+    """Builds a Flask-Admin model view for a project
+
+    :param pybel.manager.Manager manager: A PyBEL manager
+    :param flask_security.DataStore user_datastore: A Flask Security user datastore
+    :rtype: flask_admin.contrib.sqla.ModelView
+    """
+
+    class ProjectView(ModelViewBase):
+        """Special view to allow users of given projects to manage them"""
+
+        def is_accessible(self):
+            """Checks the current user is logged in"""
+            return current_user.is_authenticated
+
+        def inaccessible_callback(self, name, **kwargs):
+            """redirect to login page if user doesn't have access"""
+            return redirect(url_for_security('login', next=request.url))
+
+        def get_query(self):
+            """Only show projects that the user is part of"""
+            parent_query = super(ProjectView, self).get_query()
+
+            if current_user.is_admin:
+                return parent_query
+
+            current_projects = {
+                project.id
+                for project in current_user.projects
+            }
+
+            return parent_query.filter(Project.id.in_(current_projects))
+
+        def on_model_change(self, form, model, is_created):
+            """Hacky - automatically add user when they create a project"""
+            if current_user not in model.users:
+                model.users.append(current_user)
+
+        form_ajax_refs = {
+            'networks': build_network_ajax_manager(manager, user_datastore)
+        }
+
+    return ProjectView(Project, manager.session)

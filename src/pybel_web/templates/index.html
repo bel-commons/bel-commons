@@ -17,14 +17,6 @@
             });
         </script>
     {% endif %}
-    <script type="text/javascript">
-        var maxHeight = 0;
-        $(".panel-body").find(".row").find(".col-sm-6").find(".thumbnail").each(function (idx, item) {
-            var height = $(item).height();
-            maxHeight = maxHeight > height ? maxHeight : height;
-        });
-        $(".panel-body").find(".row").find(".col-sm-6").find(".thumbnail").height(maxHeight);
-    </script>
     <script>
         $(function () {
             $('[data-toggle="tooltip"]').tooltip()
@@ -82,6 +74,49 @@
             </div>
         {% endif %}
 
+        {% if current_user.is_admin %}
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <div class="btn-group">
+                        <a href="{{ url_for('ui.view_networks') }}" class="btn btn-default btn-sm">
+                            Network <span class="badge">{{ number_networks }}</span>
+                        </a>
+                        <a href="{{ url_for('ui.view_edges') }}" class="btn btn-default btn-sm">
+                            Edge <span class="badge">{{ number_edges }}</span>
+                        </a>
+                        <a href="{{ url_for('ui.view_nodes') }}" class="btn btn-default btn-sm">
+                            Node <span class="badge">{{ number_nodes }}</span>
+                        </a>
+                        <a href="{{ url_for('ui.view_citations') }}" class="btn btn-default btn-sm">
+                            Citation <span class="badge">{{ number_citations }}</span>
+                        </a>
+                        <a href="{{ url_for('ui.view_evidences') }}" class="btn btn-default btn-sm">
+                            Evidence <span class="badge">{{ number_evidences }}</span>
+                        </a>
+                        <a href="{{ url_for('ui.view_queries') }}" class="btn btn-default btn-sm" role="button">
+                            Query <span class="badge">{{ number_queries }}</span>
+                        </a>
+                        <a href="{{ url_for('analysis.view_omics') }}" class="btn btn-default btn-sm" role="button">
+                            Omic <span class="badge">{{ number_omics }}</span>
+                        </a>
+                        <a href="{{ url_for('analysis.view_experiments') }}" class="btn btn-default btn-sm"
+                           role="button">
+                            Experiment <span class="badge">{{ number_experiments }}</span>
+                        </a>
+                        <span class="btn btn-default btn-sm">
+                        Assembly <span class="badge">{{ number_assemblies }}</span>
+                    </span>
+                        <span class="btn btn-default btn-sm" role="button">
+                        Vote <span class="badge">{{ number_votes }}</span>
+                    </span>
+                        <span class="btn btn-default btn-sm" role="button">
+                        Comment <span class="badge">{{ number_comments }}</span>
+                    </span>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
         <div class="jumbotron">
             <h1>BEL Commons</h1>
             <p>
@@ -90,180 +125,108 @@
                 support <strong>elucidating</strong> disease-specific, mechanistic insight.
             </p>
 
-            {% if current_user.is_admin %}
-                <div>
-                    <a href="{{ url_for('ui.view_networks') }}" class="btn btn-warning">
-                        Networks <span class="badge">{{ number_networks }}</span>
-                    </a>
-                    <a href="{{ url_for('ui.view_edges') }}" class="btn btn-warning">
-                        Edges <span class="badge">{{ number_edges }}</span>
-                    </a>
-                    <a href="{{ url_for('ui.view_nodes') }}" class="btn btn-warning">
-                        Nodes <span class="badge">{{ number_nodes }}</span>
-                    </a>
-                    <a href="{{ url_for('ui.view_citations') }}"
-                       class="btn btn-warning" role="button">
-                        Citations <span class="badge">{{ number_citations }}</span>
-                    </a>
-                    <a href="{{ url_for('ui.view_evidences') }}"
-                       class="btn btn-warning" role="button">
-                        Evidences <span class="badge">{{ number_evidences }}</span>
-                    </a>
-                    <span class="btn btn-warning" role="button">
-                        Assemblies <span class="badge">{{ number_assemblies }}</span>
-                    </span>
-                    <a href="{{ url_for('ui.view_queries') }}"
-                       class="btn btn-warning" role="button">
-                        Queries <span class="badge">{{ number_queries }}</span>
-                    </a>
-                    <a href="{{ url_for('analysis.view_omics') }}"
-                       class="btn btn-warning" role="button">
-                        Omics <span class="badge">{{ number_omics }}</span>
-                    </a>
-                    <a href="{{ url_for('analysis.view_experiments') }}"
-                       class="btn btn-warning" role="button">
-                        Experiments <span class="badge">{{ number_experiments }}</span>
-                    </a>
-                    <span class="btn btn-warning" role="button">
-                        Votes <span class="badge">{{ number_votes }}</span>
-                    </span>
-                    <span class="btn btn-warning" role="button">
-                        Comments <span class="badge">{{ number_comments }}</span>
-                    </span>
-                </div>
-            {% else %}
-                <small>
-                    Disclaimer: this is a scientific prototype that has been developed in an academic
-                    capacity, and thus comes with no warranty or guarantee of maintenance, support, or back-up of data.
-                </small>
-            {% endif %}
+            <small>
+                Disclaimer: this is a scientific prototype that has been developed in an academic
+                capacity, and thus comes with no warranty or guarantee of maintenance, support, or back-up of data.
+            </small>
         </div>
 
         <div class="panel panel-default">
             <div class="panel-body">
                 <div class="row">
-                    <div class="col-sm-6 col-md-4">
-                        <div class="thumbnail home-link">
-                            <!--<img src="http://placehold.it/350x150" alt="...">-->
-                            <div class="caption">
-                                <h3>Upload</h3>
-                                <p>
-                                    Parse BEL script, validate its contents, perform automatic enrichment, and
-                                    generate a network summary.
-                                </p>
-                                <p>
-                                    <a href="{{ url_for('parser.view_parser') }}" class="btn btn-primary btn-block">
-                                        Upload BEL
-                                    </a>
-                                </p>
-                            </div>
-                        </div>
+                    <div class="col-lg-4 col-md-4 col-sm-4">
+                        <h3>Upload</h3>
+                        <p>
+                            Parse BEL script, validate its contents, perform automatic enrichment, and
+                            generate a network summary.
+                        </p>
+                        <p>
+                            <a href="{{ url_for('parser.view_parser') }}" class="btn btn-primary btn-block">
+                                Upload BEL
+                            </a>
+                        </p>
                     </div>
 
-                    <div class="col-sm-6 col-md-4">
-                        <div class="thumbnail">
-                            <!--<img src="http://placehold.it/350x150" alt="...">-->
-                            <div class="caption home-link">
-                                <h3>Catalog</h3>
-                                <p>
-                                    View summaries and statistics over curated networks and as a first step towards
-                                    exploration, visualization, and
-                                    <a href="{{ url_for('analysis.view_experiments') }}">analysis</a>.
-                                </p>
-                                <p>
-                                    <a href="{{ url_for('ui.view_networks') }}" class="btn btn-primary btn-block">
-                                        Network Catalog
-                                    </a>
-                                </p>
-                            </div>
-                        </div>
+                    <div class="col-lg-4 col-md-4 col-sm-4">
+                        <h3>Catalog</h3>
+                        <p>
+                            View summaries and statistics over curated networks and as a first step towards
+                            exploration, visualization, and <a href="{{ url_for('analysis.view_experiments') }}">analysis</a>.
+                        </p>
+                        <p>
+                            <a href="{{ url_for('ui.view_networks') }}" class="btn btn-primary btn-block">
+                                Network Catalog
+                            </a>
+                        </p>
                     </div>
 
-                    <div class="col-sm-6 col-md-4">
-                        <div class="thumbnail home-link">
-                            <!--<img src="http://placehold.it/350x150" alt="...">-->
-                            <div class="caption">
-                                <h3>Query</h3>
-                                <p>Build a network by investigating the knowledge related to interesting biological
-                                    entities, chemical matter, authors, or publications.</p>
-                                <a href="{{ url_for('ui.view_query_builder') }}"
-                                   class="btn btn-primary btn-block" role="button">Build Query</a>
-                            </div>
-                        </div>
+                    <div class="col-lg-4 col-md-4 col-sm-4">
+                        <h3>Query</h3>
+                        <p>
+                            Build a network by investigating the knowledge related to interesting biological
+                            entities, chemical matter, authors, or publications.
+                        </p>
+                        <p>
+                            <a href="{{ url_for('ui.view_query_builder') }}"
+                               class="btn btn-primary btn-block" role="button">Build Query</a>
+                        </p>
                     </div>
 
-                    <div class="col-sm-6 col-md-4">
-                        <div class="thumbnail home-link">
-                            <!--<img src="http://placehold.it/350x150" alt="...">-->
-                            <div class="caption">
-                                <h3>Curate</h3>
-                                <p>
-                                    Generate a template BEL script given a list of PubMed identifiers, merge
-                                    multiple BEL namespace files, or give feedback on overlapping definitions in a
-                                    given namespace.
-                                </p>
-                                <p>
-                                    <a href="{{ url_for('curation.get_boilerplate') }}" class="btn btn-primary"
-                                       role="button" data-toggle="tooltip" data-placement="top"
-                                       title="Generate a template BEL script given an optional list of PubMed identifiers or Entrez Gene identifiers">
-                                        Generate</a>
-                                    <a href="{{ url_for('curation.merge_namespaces') }}" class="btn btn-primary"
-                                       role="button" data-toggle="tooltip" data-placement="top"
-                                       title="Merge multiple BEL Namespace (BELNS) files">
-                                        Merge</a>
-                                    <a href="{{ url_for('curation.validate_resource') }}" class="btn btn-primary"
-                                       role="button" data-toggle="tooltip" data-placement="top"
-                                       title="Validate a manually curated BEL Namespace or Annotation with the EBI Ontology Lookup Service">
-                                        Validate</a>
+                    <div class="col-lg-4 col-md-4 col-sm-4">
+                        <h3>Curate</h3>
+                        <p>
+                            Tools for generating BEL script stubs, merging BEL namespace files, or curation feedback
+                            on BEL namespace files.
+                        </p>
+                        <div class="btn-group">
+                            <a href="{{ url_for('curation.get_boilerplate') }}" class="btn btn-primary"
+                               role="button" data-toggle="tooltip" data-placement="top"
+                               title="Generate a template BEL script given an optional list of PubMed identifiers or Entrez Gene identifiers">
+                                Generate</a>
+                            <a href="{{ url_for('curation.merge_namespaces') }}" class="btn btn-primary"
+                               role="button" data-toggle="tooltip" data-placement="top"
+                               title="Merge multiple BEL Namespace (BELNS) files">
+                                Merge</a>
+                            <a href="{{ url_for('curation.validate_resource') }}" class="btn btn-primary"
+                               role="button" data-toggle="tooltip" data-placement="top"
+                               title="Validate a manually curated BEL Namespace or Annotation with the EBI Ontology Lookup Service">
+                                Validate</a>
 
-                                    {% if current_user.is_admin %}
-                                        <a href="{{ url_for('curation.view_curation_interface') }}"
-                                           class="btn btn-warning">
-                                            Curate
-                                        </a>
-                                    {% endif %}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-sm-6 col-md-4">
-                        <div class="thumbnail home-link">
-                            <!--<img src="http://placehold.it/350x150" alt="...">-->
-                            <div class="caption">
-                                <h3>Terminologies</h3>
-                                <p>
-                                    View the ontologies and terminologies used in the knowledge base as namespaces and
-                                    annotations. Each contains provenance information including a uniform resource
-                                    locator and version number.
-
-                                </p>
-
-                                <a href="{{ url_for('ui.view_namespaces') }}" class="btn btn-primary">
-                                    Namespaces <span class="badge">{{ manager.count_namespaces() }}</span>
+                            {% if current_user.is_admin %}
+                                <a href="{{ url_for('curation.view_curation_interface') }}"
+                                   class="btn btn-warning">
+                                    Curate
                                 </a>
-
-                                <a href="{{ url_for('ui.view_annotations') }}" class="btn btn-primary">
-                                    Annotations <span class="badge">{{ manager.count_annotations() }}</span>
-                                </a>
-                            </div>
+                            {% endif %}
                         </div>
                     </div>
 
-                    <div class="col-sm-6 col-md-4">
-                        <div class="thumbnail home-link">
-                            <!--<img src="http://placehold.it/350x150" alt="...">-->
-                            <div class="caption">
-                                <h3>Future Work</h3>
-                                <p>PyBEL is in constant development. Join us on the <a
-                                        href="https://github.com/pybel/pybel">core</a>, <a
-                                        href="https://github.com/pybel/pybel-tools">analytical tools</a>, or <a
-                                        href="https://github.com/pybel/pybel-notebooks">notebooks</a> repositories for
-                                    upcoming code, protocols, and pipelines and additional entries in
-                                    <a href="https://github.com/bio2bel">Bio2BEL</a>.
-                                </p>
-                            </div>
+                    <div class="col-lg-4 col-md-4 col-sm-4">
+                        <h3>Terminologies</h3>
+                        <p>
+                            View the underlying namespaces and annotations along with their respective uniform resource
+                            locators and version numbers.
+                        </p>
+                        <div class="btn-group">
+                            <a href="{{ url_for('ui.view_namespaces') }}" class="btn btn-primary">
+                                Namespaces <span class="badge">{{ manager.count_namespaces() }}</span>
+                            </a>
+                            <a href="{{ url_for('ui.view_annotations') }}" class="btn btn-primary">
+                                Annotations <span class="badge">{{ manager.count_annotations() }}</span>
+                            </a>
                         </div>
+                    </div>
+
+                    <div class="col-lg-4 col-md-4 col-sm-4">
+                        <h3>Future Work</h3>
+                        <p>
+                            PyBEL is in constant development. Join us on the <a
+                                href="https://github.com/pybel/pybel">core</a>, <a
+                                href="https://github.com/pybel/pybel-tools">analytical tools</a>, or <a
+                                href="https://github.com/pybel/pybel-notebooks">notebooks</a> repositories for
+                            upcoming code, protocols, and pipelines and additional entries in
+                            <a href="https://github.com/bio2bel">Bio2BEL</a>.
+                        </p>
                     </div>
                 </div>
             </div>

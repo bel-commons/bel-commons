@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+"""Constants for BEL Commons."""
+
 import os
 
 from pybel.constants import PYBEL_DIR, config
@@ -7,9 +9,24 @@ from pybel_tools.pipeline import function_is_registered
 
 VERSION = '0.2.2-dev'
 
+# Configuration parameter names
+PYBEL_WEB_ADMIN_EMAIL = 'PYBEL_WEB_ADMIN_EMAIL'
+PYBEL_WEB_ADMIN_PASSWORD = 'PYBEL_WEB_ADMIN_PASSWORD'
+PYBEL_WEB_CONFIG_JSON = 'PYBEL_WEB_CONFIG_JSON'
 PYBEL_WEB_EXAMPLES = 'PYBEL_WEB_EXAMPLES'
+PYBEL_WEB_USER_MANIFEST = 'PYBEL_WEB_USER_MANIFEST'
+PYBEL_WEB_STARTUP_NOTIFY = 'PYBEL_WEB_STARTUP_NOTIFY'
+SENTRY_DSN = 'SENTRY_DSN'
+SWAGGER = 'SWAGGER'
+SQLALCHEMY_DATABASE_URI = 'SQLALCHEMY_DATABASE_URI'
+SQLALCHEMY_TRACK_MODIFICATIONS = 'SQLALCHEMY_TRACK_MODIFICATIONS'
+CELERY_BROKER_URL = 'CELERY_BROKER_URL'
+MAIL_DEFAULT_SENDER = 'MAIL_DEFAULT_SENDER'
+MAIL_SERVER = 'MAIL_SERVER'
+SERVER_NAME = 'SERVER_NAME'
 
-integrity_message = "A graph with the same name ({}) and version ({}) already exists. If there have been changes since the last version, try bumping the version number."
+integrity_message = "A graph with the same name ({}) and version ({}) already exists. If there have been changes " \
+                    "since the last version, try bumping the version number."
 
 #: Label for nodes' differential gene expression values
 LABEL = 'dgxa'
@@ -37,21 +54,18 @@ BLACK_LIST = {
     AND,
 }
 
-PYBEL_ADMIN_EMAIL = 'PYBEL_WEB_ADMIN_EMAIL'
-PYBEL_ADMIN_PASSWORD = 'PYBEL_WEB_ADMIN_PASSWORD'
-
 
 def get_admin_email():
-    rv = config.get(PYBEL_ADMIN_EMAIL)
+    rv = config.get(PYBEL_WEB_ADMIN_EMAIL)
     if rv is None:
-        raise RuntimeError('{} is not set'.format(PYBEL_ADMIN_EMAIL))
+        raise RuntimeError('{} is not set'.format(PYBEL_WEB_ADMIN_EMAIL))
     return rv
 
 
 def get_admin_password():
-    rv = config.get(PYBEL_ADMIN_PASSWORD)
+    rv = config.get(PYBEL_WEB_ADMIN_PASSWORD)
     if rv is None:
-        raise RuntimeError('{} is not set'.format(PYBEL_ADMIN_PASSWORD))
+        raise RuntimeError('{} is not set'.format(PYBEL_WEB_ADMIN_PASSWORD))
     return rv
 
 

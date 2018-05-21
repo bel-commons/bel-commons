@@ -78,4 +78,4 @@ def view_report():
 def view_networks():
     """Shows the uploading reporting"""
     return render_template('reporting/networks.html',
-                           reports=manager.session.query(Report).order_by(Report.created).all())
+                           reports=manager.session.query(Report).order_by(Report.created.desc()).all())

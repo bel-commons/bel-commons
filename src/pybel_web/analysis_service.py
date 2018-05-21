@@ -30,7 +30,13 @@ experiment_blueprint = Blueprint('analysis', __name__, url_prefix='/experiment')
 @experiment_blueprint.route('/omic/')
 def view_omics():
     """Views a list of all omics data sets"""
-    query = manager.session.query(Omic).filter(Omic.public).order_by(Omic.created.desc())
+    query = manager.session.query(Omic)
+
+    if not (current_user.is_authenticated and current_user.is_admin):
+        query = query.filter(Omic.public)
+
+    query = query.order_by(Omic.created.desc())
+
     return render_template('omic/omics.html', omics=query.all(), current_user=current_user)
 
 

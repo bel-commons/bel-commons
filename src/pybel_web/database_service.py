@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""This module runs the database-backed PyBEL API"""
+"""This module runs the database-backed PyBEL API."""
 
 import csv
 import logging
@@ -54,6 +54,7 @@ from .utils import (
 
 log = logging.getLogger(__name__)
 
+# TODO add url_prefix='/api'
 api_blueprint = Blueprint('dbs', __name__)
 
 

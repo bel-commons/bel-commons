@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""This module contains the user interface blueprint for the application"""
+"""This module contains the user interface blueprint for the application."""
 
 import datetime
 import logging
@@ -42,7 +42,8 @@ log = logging.getLogger(__name__)
 
 ui_blueprint = Blueprint('ui', __name__)
 time_instantiated = str(datetime.datetime.now())
-
+preprint_message = Markup("We're getting ready to publish this web application! Check our <a href=\"https://doi.org"
+                          "/10.1101/288274\">preprint</a> on <i>bioRxiv</i>.")
 extract_useful_subgraph = Pipeline.from_functions([
     remove_pathologies,
     remove_associations,
@@ -91,9 +92,8 @@ def home():
     number_votes = manager.session.query(EdgeVote).count()
     number_comments = manager.session.query(EdgeComment).count()
 
-    preprint_message = Markup("We're getting ready to publish this web application! Check our <a href=\"https://doi.org"
-                              "/10.1101/288274\">preprint</a> on <i>bioRxiv</i>.")
-    flash(preprint_message, category='warning')
+    if not current_user.is_admin:
+        flash(preprint_message, category='warning')
 
     return render_template(
         'index.html',

@@ -30,7 +30,11 @@ from pybel.constants import PYBEL_CONNECTION, config as pybel_config, get_cache_
 from pybel.manager import BaseManager, Manager
 from .application_utils import FlaskPyBEL
 from .celery_utils import create_celery
-from .constants import SWAGGER_CONFIG, VERSION
+from .constants import (
+    CELERY_BROKER_URL, MAIL_DEFAULT_SENDER, MAIL_SERVER, PYBEL_WEB_CONFIG_JSON,
+    PYBEL_WEB_STARTUP_NOTIFY, SERVER_NAME, SQLALCHEMY_DATABASE_URI, SQLALCHEMY_TRACK_MODIFICATIONS, SWAGGER,
+    SWAGGER_CONFIG, VERSION,
+)
 from .forms import ExtendedRegisterForm
 
 log = logging.getLogger(__name__)
@@ -81,15 +85,25 @@ def get_config_object(config_location=None):
     return _default_config_location
 
 
-PYBEL_WEB_CONFIG_JSON = 'PYBEL_WEB_CONFIG_JSON'
-SWAGGER = 'SWAGGER'
-SQLALCHEMY_DATABASE_URI = 'SQLALCHEMY_DATABASE_URI'
-SQLALCHEMY_TRACK_MODIFICATIONS = 'SQLALCHEMY_TRACK_MODIFICATIONS'
-CELERY_BROKER_URL = 'CELERY_BROKER_URL'
-MAIL_DEFAULT_SENDER = 'MAIL_DEFAULT_SENDER'
-MAIL_SERVER = 'MAIL_SERVER'
-PYBEL_WEB_STARTUP_NOTIFY = 'PYBEL_WEB_STARTUP_NOTIFY'
-SERVER_NAME = 'SERVER_NAME'
+def _send_startup_mail(app):
+    mail_default_sender = app.config.get(MAIL_DEFAULT_SENDER)
+    notify = app.config.get(PYBEL_WEB_STARTUP_NOTIFY)
+    if notify:
+        log.info('sending startup notification to %s', notify)
+        with app.app_context():
+            mail.send_message(
+                subject="BEL Commons Startup",
+                body="BEL Commons v{} was started on {} by {} at {}.\n\nDeployed to: {}".format(
+                    VERSION,
+                    socket.gethostname(),
+                    getuser(),
+                    time.asctime(),
+                    app.config.get(SERVER_NAME)
+                ),
+                sender=mail_default_sender,
+                recipients=[notify]
+            )
+        log.info('notified %s', notify)
 
 
 def create_application(config_object_name=None, examples=None, **kwargs):
@@ -139,30 +153,12 @@ def create_application(config_object_name=None, examples=None, **kwargs):
         create_celery(app)
 
     app.config.setdefault(MAIL_DEFAULT_SENDER, ("BEL Commons", 'pybel@scai.fraunhofer.de'))
-    mail_server = app.config.get(MAIL_SERVER)
-    mail_default_sender = app.config.get(MAIL_DEFAULT_SENDER)
 
-    if mail_server:
+    mail_server = app.config.get(MAIL_SERVER)
+    if mail_server is not None:
         log.info('using mail server: %s', mail_server)
         mail.init_app(app)
-
-        notify = app.config.get(PYBEL_WEB_STARTUP_NOTIFY)
-        if notify:
-            log.info('sending startup notification to %s', notify)
-            with app.app_context():
-                mail.send_message(
-                    subject="BEL Commons Startup",
-                    body="BEL Commons v{} was started on {} by {} at {}.\n\nDeployed to: {}".format(
-                        VERSION,
-                        socket.gethostname(),
-                        getuser(),
-                        time.asctime(),
-                        app.config.get(SERVER_NAME)
-                    ),
-                    sender=mail_default_sender,
-                    recipients=[notify]
-                )
-            log.info('notified %s', notify)
+        _send_startup_mail(app)
 
     class WebBaseManager(BaseManager):
         def __init__(self, *args, **kwargs):
