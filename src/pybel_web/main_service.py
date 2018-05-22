@@ -92,7 +92,7 @@ def home():
     number_votes = manager.session.query(EdgeVote).count()
     number_comments = manager.session.query(EdgeComment).count()
 
-    if not current_user.is_admin:
+    if not current_user.is_authenticated or not current_user.is_admin:
         flash(preprint_message, category='warning')
 
     return render_template(
