@@ -27,7 +27,7 @@ INSTALL_REQUIRES = [
     'pybel-tools>=0.5.1',
     'networkx==1.11',
     'requests',
-    'sqlalchemy==1.1.15',
+    'sqlalchemy',
     'flask==0.12.2',
     'flask-bootstrap',
     'flask-wtf',
