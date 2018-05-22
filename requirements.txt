@@ -2,7 +2,7 @@ networkx==1.11
 pybel>=0.11.1
 pybel-tools>=0.5.1
 ols_client>=0.0.8
-sqlalchemy==1.1.15
+sqlalchemy
 requests
 flask==0.12.2
 flask-bootstrap==3.3.7.1
@@ -23,11 +23,4 @@ gitpython
 wtforms
 sklearn
 numpy
-bio2bel>=0.0.9[bio2bel]
-bio2bel_hgnc[bio2bel]
-bio2bel_chebi[bio2bel]
-bio2bel_expasy[bio2bel]
-bio2bel_entrez[bio2bel]
-bio2bel_go[bio2bel]
-bio2bel_interpro[bio2bel]
-bio2bel_mirtarbase[bio2bel]
+bio2bel>=0.0.9

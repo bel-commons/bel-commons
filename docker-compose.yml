@@ -17,7 +17,8 @@ services:
       PYBEL_SECURITY_PASSWORD_SALT: ${PYBEL_SECURITY_PASSWORD_SALT}
       CELERY_BROKER_URL: amqp://queue
     restart: always
-    command: gunicorn -b 0.0.0.0:5000 pybel_web.run:app --log-level=INFO
+    #command: gunicorn -b 0.0.0.0:5000 pybel_web.run:app --log-level=INFO
+    command: pybel-web run
     # add more workers later -w ${PYBEL_GUNICORN_NUMBER_WORKERS}
     ports:
       - "5000:5000"

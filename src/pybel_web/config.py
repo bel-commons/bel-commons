@@ -15,7 +15,7 @@ class Config:
     in docker-compose or localhost if running locally.
     """
     #: The Flask app secret key. CHANGE THIS
-    SECRET_KEY = 'pybel_not_default_key1234567890"'
+    SECRET_KEY = os.environ.get('SECRET_KEY', 'pybel_not_default_key1234567890')
     DEBUG = False
     TESTING = False
 
