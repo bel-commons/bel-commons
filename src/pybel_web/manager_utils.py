@@ -433,11 +433,11 @@ def iter_public_networks(manager):
     )
 
 
-def _iterate_networks_for_user(user, manager, user_datastore):
+def _iterate_networks_for_user(user, manager, user_datastore=None):
     """
     :param models.User user: A user
     :param pybel.manager.Manager manager: A manager
-    :param flask_security.datastore.UserDatastore user_datastore: A user datastore
+    :param Optional[flask_security.datastore.UserDatastore user_datastore]: A user datastore
     :rtype: iter[Network]
     """
     yield from iter_public_networks(manager)
@@ -445,7 +445,7 @@ def _iterate_networks_for_user(user, manager, user_datastore):
     yield from user.get_shared_networks()
     yield from user.get_project_networks()
 
-    if user.is_scai:
+    if user_datastore is not None and user.is_scai:
         role = user_datastore.find_or_create_role(name='scai')
         for user in role.users:
             yield from user.get_owned_networks()
