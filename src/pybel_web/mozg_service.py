@@ -54,10 +54,10 @@ if not os.path.exists(anhedonia_graph_path):
     raise RuntimeError('Anhedonia graph missing from {}'.format(anhedonia_graph_path))
 anhedonia_graph = from_pickle(anhedonia_graph_path)
 
-alzheimer_graph_path = os.path.join(gpickle_dir, 'alzheimer.gpickle')
-if not os.path.exists(alzheimer_graph_path):
-    raise RuntimeError('Anhedonia graph missing from {}'.format(alzheimer_graph_path))
-alzheimer_graph = from_pickle(alzheimer_graph_path)
+# alzheimer_graph_path = os.path.join(gpickle_dir, 'alzheimer.gpickle')
+# if not os.path.exists(alzheimer_graph_path):
+#     raise RuntimeError('Anhedonia graph missing from {}'.format(alzheimer_graph_path))
+# alzheimer_graph = from_pickle(alzheimer_graph_path)
 
 # Registers this function so we can look it up later
 mutator(make_graph)
@@ -68,12 +68,12 @@ queries = {}
 
 projection_metadata = manager.insert_graph(projection_graph)
 anhedonia_metadata = manager.insert_graph(anhedonia_graph)
-alzheimer_metadata = manager.insert_graph(alzheimer_graph)
+# alzheimer_metadata = manager.insert_graph(alzheimer_graph)
 
 GRAPH_MAPPING = {
     'projections': projection_metadata.id,
     'anhedonia': anhedonia_metadata.id,
-    'alzheimer': alzheimer_metadata.id
+    # 'alzheimer': alzheimer_metadata.id
 }
 
 # Prepare pharmacomap data structure
@@ -102,7 +102,7 @@ def get_roi_set(pharmacomap_temporal_structure):
 def build_resulting_data_structure(pharmacomap_temporal_structure):
     """
 
-    :rtype: dct[dct[dct]]]
+    :rtype: dct[list[dct]]]
     """
     rv = {}
 
@@ -110,8 +110,10 @@ def build_resulting_data_structure(pharmacomap_temporal_structure):
     for roi in roi_set:
         for dct_name, dct in pharmacomap_temporal_structure.items():
             if not rv.get(roi):
-                rv[roi] = {}
-            rv[roi][dct_name] = dct.get(roi)
+                rv[roi] = []
+            roi_dct = dct.get(roi)
+            roi_dct['fileName'] = dct_name
+            rv[roi].append(roi_dct)
 
     return rv
 
@@ -120,7 +122,6 @@ pharmacomap_data_structure = build_resulting_data_structure(pharmacomap_temporal
 # Prepare a mapping dict
 mapping_dct_path = os.path.join(data_dir, 'mapping_npao_to_aba.csv')
 NPAO_ABA_MAPPING = get_npao_aba_mapping_dict(mapping_dct_path)
-
 
 def get_roi_data(roi):
     """
