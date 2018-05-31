@@ -98,11 +98,10 @@ def iter_public_networks(manager):
     )
 
 
-def build_network_ajax_manager(manager, user_datastore):
+def build_network_ajax_manager(manager):
     """
 
-    :param pybel.manager.Manager manager: A PyBE manager
-    :param flask_security.SQLAlchemyUserDatastore user_datastore: A flask security user datastore manager
+    :param pybel_web.manager.WebManager
     :rtype: QueryAjaxModelLoader
     """
 
@@ -133,7 +132,7 @@ def build_network_ajax_manager(manager, user_datastore):
                 }
 
                 if current_user.is_scai:
-                    scai_role = user_datastore.find_or_create_role(name='scai')
+                    scai_role = manager.user_datastore.find_or_create_role(name='scai')
 
                     for user in scai_role.users:
                         for network in user.get_owned_networks():
@@ -149,11 +148,10 @@ def build_network_ajax_manager(manager, user_datastore):
     return NetworkAjaxModelLoader()
 
 
-def build_project_view(manager, user_datastore):
+def build_project_view(manager):
     """Builds a Flask-Admin model view for a project
 
-    :param pybel.manager.Manager manager: A PyBEL manager
-    :param flask_security.DataStore user_datastore: A Flask Security user datastore
+    :param pybel_web.manager.WebManager manager: A PyBEL manager
     :rtype: flask_admin.contrib.sqla.ModelView
     """
 
@@ -188,7 +186,7 @@ def build_project_view(manager, user_datastore):
                 model.users.append(current_user)
 
         form_ajax_refs = {
-            'networks': build_network_ajax_manager(manager, user_datastore)
+            'networks': build_network_ajax_manager(manager)
         }
 
     return ProjectView(Project, manager.session)

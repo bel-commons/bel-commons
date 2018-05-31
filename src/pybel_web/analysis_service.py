@@ -2,7 +2,6 @@
 
 import json
 import logging
-import time
 from collections import defaultdict
 from io import StringIO
 from operator import itemgetter
@@ -11,6 +10,7 @@ import flask
 import numpy as np
 import pandas as pd
 import pandas.errors
+import time
 from flask import Blueprint, abort, current_app, make_response, redirect, render_template, request, url_for
 from flask_security import current_user, login_required, roles_required
 from sklearn.cluster import KMeans
@@ -18,9 +18,9 @@ from sklearn.cluster import KMeans
 from pybel_tools.analysis.ucmpa import RESULT_LABELS
 from .content import safe_get_query
 from .forms import DifferentialGeneExpressionForm
-from .manager_utils import create_omic, next_or_jsonify, safe_get_experiment
+from .manager_utils import create_omic, next_or_jsonify
 from .models import Experiment, Omic, Query
-from .utils import get_network_ids_with_permission_helper, manager, user_datastore
+from .utils import manager
 
 log = logging.getLogger(__name__)
 
@@ -198,8 +198,7 @@ def view_network_uploader(network_id):
 
     :param int network_id: The identifier ot the network to query against
     """
-    if network_id not in get_network_ids_with_permission_helper(user=current_user, manager=manager,
-                                                                user_datastore=user_datastore):
+    if network_id not in manager.get_network_ids_with_permission_helper(user=current_user):
         abort(403, 'Insufficient rights for network {}'.format(network_id))
 
     query = Query.from_query_args(manager, [network_id], current_user)
@@ -254,6 +253,39 @@ def get_dataframe_from_experiments(experiments, *, normalize=None, clusters=None
         df = df.sort_values('Group')
 
     return df
+
+
+def user_has_rights_to_experiment(user, experiment):
+    """
+
+    :param User user:
+    :param Experiment experiment:
+    :return:
+    """
+    return (
+            experiment.public or
+            user.is_admin or
+            user == experiment.user
+    )
+
+def safe_get_experiment(manager, experiment_id, user):
+    """Safely gets an experiment
+
+    :param pybel.manager.Manager manager:
+    :param int experiment_id:
+    :param User user:
+    :rtype: Experiment
+    :raises: werkzeug.exceptions.HTTPException
+    """
+    experiment = manager.session.query(Experiment).get(experiment_id)
+
+    if experiment is None:
+        abort(404, 'Experiment {} does not exist'.format(experiment_id))
+
+    if not user_has_rights_to_experiment(user, experiment):
+        abort(403, 'You do not have rights to drop this experiment')
+
+    return experiment
 
 
 def safe_get_experiments(experiment_ids):

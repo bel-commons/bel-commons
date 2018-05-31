@@ -9,8 +9,7 @@ from flask_login import current_user
 from werkzeug.exceptions import abort
 
 from .get_or_404_with_proxy import get_network_or_404, get_project_or_404, get_query_or_404
-from ..manager_utils import user_missing_query_rights_abstract
-from ..proxies import manager, user_datastore
+from ..proxies import manager
 
 __all__ = [
     'user_missing_query_rights',
@@ -30,7 +29,7 @@ def user_missing_query_rights(user, query):
     :param models.Query query: A query object
     :rtype: bool
     """
-    user_missing_query_rights_abstract(manager=manager, user_datastore=user_datastore, user=user, query=query)
+    return manager.user_missing_query_rights_abstract(user=user, query=query)
 
 
 def user_has_project_rights(user, project):

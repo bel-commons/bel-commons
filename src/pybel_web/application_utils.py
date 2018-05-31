@@ -1,13 +1,11 @@
 # -*- coding: utf-8 -*-
 
-import datetime
 import json
 import logging
 import os
 
 from flask import g, render_template
 from flask_admin import Admin
-from flask_security import SQLAlchemyUserDatastore
 from raven.contrib.flask import Sentry
 
 from pybel.constants import config
@@ -23,7 +21,6 @@ from .admin_model_views import (
     AnnotationView, CitationView, EdgeView, EvidenceView, ExperimentView, ModelView,
     NamespaceView, NetworkView, NodeView, QueryView, ReportView, UserView, build_project_view,
 )
-from .manager_utils import register_users_from_manifest
 from .constants import PYBEL_WEB_EXAMPLES, PYBEL_WEB_USER_MANIFEST, SENTRY_DSN
 from .manager_utils import insert_graph
 from .models import (
@@ -33,7 +30,6 @@ from .resources.users import default_users_path
 
 __all__ = [
     'FlaskPyBEL',
-    'get_user_datastore',
     'get_manager',
 ]
 
@@ -55,7 +51,6 @@ class FlaskPyBEL(object):
         """
         self.app = app
         self.manager = manager
-        self.user_datastore = None
 
         if app is not None and manager is not None:
             self.init_app(app, manager, examples=examples)
@@ -63,10 +58,17 @@ class FlaskPyBEL(object):
         self.sentry_dsn = None
         self.sentry = None
 
+    @property
+    def user_datastore(self):
+        """
+        :rtype: flask_security.SQLAlchemyUserDatastore
+        """
+        return self.manager.user_datastore
+
     def init_app(self, app, manager, examples=None, register_mutators=True, register_users=True, register_admin=True):
         """
         :param flask.Flask app: A Flask app
-        :param pybel.manager.Manager manager: A thing that has an engine and a session object
+        :param pybel_web.manager.WebManager manager: A thing that has an engine and a session object
         :param bool examples: Should the example subgraphs be loaded on startup? Warning: takes a while.
         """
         self.app = app
@@ -84,8 +86,6 @@ class FlaskPyBEL(object):
             Base.metadata.create_all()
         except Exception:
             log.exception('Failed to create all')
-
-        self.user_datastore = SQLAlchemyUserDatastore(self.manager, User, Role)
 
         self.app.extensions = getattr(app, 'extensions', {})
         self.app.extensions[self.APP_NAME] = self
@@ -192,11 +192,11 @@ class FlaskPyBEL(object):
         if os.path.exists(default_users_path):
             with open(default_users_path) as f:
                 default_users_manifest = json.load(f)
-            register_users_from_manifest(self.user_datastore, default_users_manifest)
+            self.manager.register_users_from_manifest(default_users_manifest)
 
         pybel_config_user_manifest = config.get(PYBEL_WEB_USER_MANIFEST)
         if pybel_config_user_manifest is not None:
-            register_users_from_manifest(self.user_datastore, pybel_config_user_manifest)
+            self.manager.register_users_from_manifest(pybel_config_user_manifest)
 
     def _build_admin_service(self):
         """Add a Flask-Admin database front-end.
@@ -257,19 +257,10 @@ class FlaskPyBEL(object):
         return app.extensions[cls.APP_NAME]
 
 
-def get_user_datastore(app):
-    """Gets the User Data Store from a Flask app
-
-    :param flask.Flask app: A Flask app
-    :rtype: flask_security.DatabaseService
-    """
-    return FlaskPyBEL.get_state(app).user_datastore
-
-
 def get_manager(app):
-    """Gets the cache manger from a Flask app
+    """Get the cache manger from a Flask app.
 
     :param flask.Flask app: A Flask app
-    :rtype: pybel.manager.Manager
+    :rtype: pybel_web.manager.WebManager
     """
     return FlaskPyBEL.get_state(app).manager

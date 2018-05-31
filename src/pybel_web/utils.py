@@ -3,11 +3,11 @@
 import base64
 import datetime
 import logging
-import time
 from collections import Counter, defaultdict
 from functools import lru_cache
 from io import BytesIO
 
+import time
 from flask import abort, render_template
 from flask_security import current_user
 from sqlalchemy import and_, func
@@ -19,12 +19,9 @@ from pybel_tools.summary import count_variants, get_annotations
 from pybel_tools.utils import min_tanimoto_set_similarity, prepare_c3, prepare_c3_time_series
 from .constants import AND, VERSION
 from .content import safe_get_query
-from .manager_utils import (
-    get_network_ids_with_permission_helper, get_network_summary_dict, iter_public_networks,
-    networks_with_permission_iter_helper,
-)
+from .manager_utils import get_network_summary_dict
 from .models import EdgeComment, EdgeVote, NetworkOverlap, Query, Report, User
-from .proxies import manager, user_datastore
+from .proxies import manager
 
 log = logging.getLogger(__name__)
 
@@ -40,7 +37,7 @@ def sanitize_list_of_str(l):
 
 def get_top_overlaps(network_id, number=10):
     overlap_counter = get_node_overlaps(network_id)
-    allowed_network_ids = get_network_ids_with_permission_helper(current_user, manager, user_datastore)
+    allowed_network_ids = manager.get_network_ids_with_permission_helper(current_user)
     overlaps = [
         (manager.get_network_by_id(network_id), v)
         for network_id, v in overlap_counter.most_common()
@@ -382,17 +379,17 @@ def unique_networks(networks):
 def get_networks_with_permission(manager_):
     """Gets all networks tagged as public or uploaded by the current user
 
-    :param DatabaseService manager_: The database service
+    :param pybel_web.manager.WebManager manager: A manager
     :return: A list of all networks tagged as public or uploaded by the current user
     :rtype: list[Network]
     """
     if not current_user.is_authenticated:
-        return list(iter_public_networks(manager_))
+        return list(manager_.iter_public_networks())
 
     if current_user.is_admin:
         return manager_.list_recent_networks()
 
-    return list(unique_networks(networks_with_permission_iter_helper(current_user, manager_, user_datastore)))
+    return list(unique_networks(manager_.networks_with_permission_iter_helper(current_user)))
 
 
 @lru_cache(maxsize=256)
@@ -569,7 +566,7 @@ def render_network_summary_safe(manager_, network_id, template):
     :param str template: The name of the template to render
     :rtype: flask.Response
     """
-    if network_id not in get_network_ids_with_permission_helper(current_user, manager_, user_datastore):
+    if network_id not in manager.get_network_ids_with_permission_helper(current_user):
         abort(403, 'Insufficient rights for network {}'.format(network_id))
 
     return render_network_summary(network_id, template=template)

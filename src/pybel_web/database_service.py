@@ -5,12 +5,12 @@
 import csv
 import logging
 import pickle
-import time
 from io import StringIO
 from operator import itemgetter
 
 import flask
 import networkx as nx
+import time
 from flask import Blueprint, abort, current_app, flash, jsonify, make_response, redirect, request
 from flask_security import current_user, login_required, roles_required
 from flask_security.utils import verify_password
@@ -47,9 +47,8 @@ from .manager_utils import fill_out_report, make_graph_summary, next_or_jsonify
 from .models import EdgeComment, Experiment, Project, Report, User
 from .send_utils import serve_network, to_json_custom
 from .utils import (
-    get_graph_from_request, get_network_ids_with_permission_helper, get_node_overlaps,
-    get_or_create_vote, get_query_ancestor_id, get_recent_reports, get_tree_from_query, help_get_edge_entry, manager,
-    user_datastore,
+    get_graph_from_request, get_node_overlaps, get_or_create_vote, get_query_ancestor_id, get_recent_reports,
+    get_tree_from_query, help_get_edge_entry, manager,
 )
 
 log = logging.getLogger(__name__)
@@ -66,7 +65,7 @@ def receive():
     if username is None or password is None:
         return jsonify(message='no login information provided')
 
-    user = user_datastore.find_user(email=username)
+    user = manager.user_datastore.find_user(email=username)
     if user is None:
         return jsonify(message='user does not exist')
 
@@ -77,7 +76,8 @@ def receive():
     # TODO assume https authentication and use this to assign user to receive network function
     payload = request.get_json()
 
-    task = current_app.celery.send_task('upload-json', args=[current_app.config['SQLALCHEMY_DATABASE_URI'], username, payload])
+    task = current_app.celery.send_task('upload-json',
+                                        args=[current_app.config['SQLALCHEMY_DATABASE_URI'], username, payload])
     return next_or_jsonify('Sent async receive task', task_id=task.id)
 
 
@@ -792,7 +792,7 @@ def export_network(network_id, serve_format):
               - csv
               - gsea
     """
-    network_ids = get_network_ids_with_permission_helper(current_user, manager, user_datastore)
+    network_ids = manager.get_network_ids_with_permission_helper(current_user)
 
     if network_id not in network_ids:
         abort(403, 'You do not have permission to download the selected network')
@@ -2345,8 +2345,8 @@ def add_user_role(user, role):
     tags:
         - user
     """
-    user_datastore.add_role_to_user(user, role)
-    user_datastore.commit()
+    manager.user_datastore.add_role_to_user(user, role)
+    manager.user_datastore.commit()
     return jsonify({'status': 200})
 
 
@@ -2359,8 +2359,8 @@ def drop_user_role(user, role):
     tags:
         - user
     """
-    user_datastore.remove_role_from_user(user, role)
-    user_datastore.commit()
+    manager.user_datastore.remove_role_from_user(user, role)
+    manager.user_datastore.commit()
     return jsonify({'status': 200})
 
 
@@ -2384,8 +2384,8 @@ def drop_user(user_id):
     if user is None:
         abort(404)
 
-    user_datastore.delete_user(user)
-    user_datastore.commit()
+    manager.user_datastore.delete_user(user)
+    manager.user_datastore.commit()
 
     return next_or_jsonify(
         'Dropped user: {}'.format(user),
