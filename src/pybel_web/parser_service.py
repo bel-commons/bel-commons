@@ -4,14 +4,14 @@ from __future__ import unicode_literals
 
 import hashlib
 import logging
-import time
 
+import time
 from flask import Blueprint, current_app, flash, redirect, render_template, url_for
 from flask_security import current_user, login_required, roles_required
 
 from .forms import ParserForm
 from .models import Report
-from .utils import manager
+from .proxies import manager
 
 log = logging.getLogger(__name__)
 

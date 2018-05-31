@@ -43,11 +43,24 @@ from .manager_utils import insert_graph
 from .models import Assembly, Base, EdgeComment, EdgeVote, Experiment, Omic, Project, Query, Report, Role, User
 from .parser_endpoint import build_parser_service
 from .parser_service import parser_blueprint
-from .utils import iterate_user_strings
 from .views.reporting import reporting_blueprint
 
 log = logging.getLogger('pybel_web')
 
+
+def _iterate_user_strings(manager_):
+    """Iterates over strings to print describing users
+
+    :param pybel.manager.Manager manager_:
+    :rtype: iter[str]
+    """
+    for user in manager_.session.query(User).all():
+        yield '{email}\t{password}\t{roles}\t{name}'.format(
+            email=user.email,
+            password=user.password,
+            roles=','.join(sorted(r.name for r in user.roles)),
+            name=(user.name if user.name else '')
+        )
 
 def set_debug(level):
     logging.basicConfig(level=level, format="%(asctime)s - %(levelname)s - %(name)s - %(message)s", datefmt='%H:%M:%S')
@@ -258,7 +271,7 @@ def drop(manager, yes, user_dump):
     """Drop the database"""
     if yes or click.confirm('Drop database at {}?'.format(manager.connection)):
         click.echo('Dumping users to {}'.format(user_dump))
-        for s in iterate_user_strings(manager):
+        for s in _iterate_user_strings(manager):
             click.echo(s, file=user_dump)
         click.echo('Done dumping users')
         click.echo('Dropping database')
@@ -334,7 +347,7 @@ def users():
 @click.pass_obj
 def ls(manager):
     """Lists all users"""
-    for s in iterate_user_strings(manager):
+    for s in _iterate_user_strings(manager):
         click.echo(s)
 
 

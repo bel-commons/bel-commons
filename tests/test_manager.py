@@ -7,7 +7,6 @@ from pybel.constants import INCREASES, PROTEIN
 from pybel.examples import sialic_acid_graph
 from pybel.manager.models import Edge, Node
 from pybel_web.models import Assembly, EdgeComment, EdgeVote, Query, User
-from pybel_web.utils import get_or_create_vote
 from tests.constants import TemporaryCacheClsMixin, TemporaryCacheInstanceMixin
 
 log = logging.getLogger(__name__)
@@ -19,11 +18,11 @@ class TestDrop(TemporaryCacheClsMixin):
         edges = list(network.edges.order_by(Edge.bel))
         edge = edges[0]
         user = User(email='test@example.com')
-        vote = get_or_create_vote(self.manager, edge, user, agreed=True)
+        vote = self.manager.get_or_create_vote(edge, user, agreed=True)
         self.assertIsNone(vote.changed)
         self.assertTrue(vote.agreed)
 
-        vote = get_or_create_vote(self.manager, edge, user, agreed=False)
+        vote = self.manager.get_or_create_vote(edge, user, agreed=False)
         self.assertIsNotNone(vote.changed)
         self.assertFalse(vote.agreed)
 

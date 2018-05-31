@@ -3,17 +3,17 @@
 import codecs
 import logging
 import re
-import time
 from io import StringIO
 
+import time
 from flask import Blueprint, make_response, render_template, request
 from flask_security import current_user, login_required, roles_required
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileAllowed, FileField
+from ols_client import OlsClient
 from wtforms import fields
 from wtforms.validators import DataRequired
 
-from ols_client import OlsClient
 from pybel.constants import NAMESPACE_DOMAIN_TYPES
 from pybel.resources.definitions import parse_bel_resource, write_namespace
 from pybel.utils import get_version as get_pybel_version
@@ -71,6 +71,9 @@ class ValidateResourceForm(FlaskForm):
         FileAllowed(['belns', 'belanno'], 'Only files with the *.belns or *.belanno extension are allowed')
     ])
     submit = fields.SubmitField('Validate')
+
+    def parse_bel_resource(self):
+        return parse_bel_resource(codecs.iterdecode(self.file.data.stream, 'utf-8'))
 
 
 @curation_blueprint.route('/bel/template', methods=['GET', 'POST'])
@@ -168,7 +171,7 @@ def validate_resource():
             ]
         )
 
-    resource = parse_bel_resource(codecs.iterdecode(form.file.data.stream, 'utf-8'))
+    resource = form.parse_bel_resource()
 
     ols = OlsClient()
 

@@ -10,19 +10,16 @@ import hashlib
 import json
 import logging
 import os
-import time
 
 import requests.exceptions
+import time
 from celery.utils.log import get_task_logger
 from flask import render_template
-from sqlalchemy import and_
 from sqlalchemy.exc import IntegrityError, OperationalError
 
 from pybel import from_cbn_jgif, from_json, to_bel_path, to_bytes, to_database
 from pybel.constants import METADATA_CONTACT, METADATA_DESCRIPTION, METADATA_LICENSES
-from pybel.manager import Manager
 from pybel.manager.citation_utils import enrich_pubmed_citations
-from pybel.manager.models import Network
 from pybel.parser.exc import InconsistentDefinitionError
 from pybel.resources.exc import ResourceError
 from pybel.struct import strip_annotations
@@ -31,9 +28,11 @@ from pybel_tools.utils import enable_cool_mode
 from pybel_web.application import create_application
 from pybel_web.celery_utils import create_celery
 from pybel_web.constants import get_admin_email, integrity_message, merged_document_folder
-from pybel_web.manager_utils import fill_out_report, insert_graph, make_graph_summary, run_cmpa_helper
-from pybel_web.models import Experiment, Project, User
-from pybel_web.utils import get_network_summary_dict, safe_get_report
+from pybel_web.manager import WebManager
+from pybel_web.manager_utils import (
+    fill_out_report, get_network_summary_dict, insert_graph, make_graph_summary, run_cmpa_helper,
+)
+from pybel_web.models import User
 
 celery_logger = get_task_logger(__name__)
 log = logging.getLogger(__name__)
@@ -71,10 +70,10 @@ def summarize_bel(connection, report_id):
     :param str connection: A connection to build the manager
     :param int report_id: A report to parse
     """
-    manager = Manager(connection=connection)
+    manager = WebManager.from_connection(connection)
 
     t = time.time()
-    report = safe_get_report(manager, report_id)
+    report = manager.get_report_by_id(report_id)
     source_name = report.source_name
 
     def make_mail(subject, body):
@@ -120,7 +119,7 @@ def summarize_bel(connection, report_id):
 
     time_difference = time.time() - t
 
-    send_summary_mail(graph, report, time_difference)
+    send_summary_mail(manager, graph, report, time_difference)
 
     report.time = time_difference
     report.completed = True
@@ -141,10 +140,10 @@ def upload_bel(connection, report_id, enrich_citations=False):
     :param str connection: The connection string
     :param int report_id: Report identifier
     """
-    manager = Manager(connection=connection)
+    manager = WebManager.from_connection(connection)
 
     t = time.time()
-    report = safe_get_report(manager, report_id)
+    report = manager.get_report_by_id(report_id)
 
     report_id = report.id
     source_name = report.source_name
@@ -207,8 +206,7 @@ def upload_bel(connection, report_id, enrich_citations=False):
 
     send_summary_mail(graph, report, time.time() - t)
 
-    network_filter = and_(Network.name == graph.name, Network.version == graph.version)
-    network = manager.session.query(Network).filter(network_filter).one_or_none()
+    network = manager.get_network_by_name_version(graph.name, graph.version)
 
     if network is not None:
         message = integrity_message.format(graph.name, graph.version)
@@ -311,12 +309,12 @@ def merge_project(connection, user_id, project_id):
     :param int user_id: The database identifier of the user
     :param int project_id: The database identifier of the project
     """
-    manager = Manager(connection=connection)
+    manager = WebManager.from_connection(connection)
 
     t = time.time()
 
-    user = manager.session.query(User).get(user_id)
-    project = manager.session.query(Project).get(project_id)
+    user = manager.get_user_by_id(user_id)
+    project = manager.get_project_by_id(project_id)
     graph = project.as_bel()
 
     graph.name = hashlib.sha1(to_bytes(graph)).hexdigest()
@@ -355,8 +353,8 @@ def run_cmpa(connection, experiment_id):
     :param str connection: A connection to build the manager
     :param int experiment_id:
     """
-    manager = Manager(connection=connection)
-    experiment = manager.session.query(Experiment).get(experiment_id)
+    manager = WebManager.from_connection(connection)
+    experiment = manager.get_experiment_by_id(experiment_id)
 
     query_id = experiment.query_id
     source_name = experiment.source_name
@@ -399,7 +397,7 @@ def upload_json(connection, username, payload):
     :param str username: the email of the user to associate with the graph
     :param payload: JSON dictionary for :func:`pybel.from_json`
     """
-    manager = Manager(connection=connection)
+    manager = WebManager.from_connection(connection)
 
     user = manager.session.query(User).filter(User.email == username).one()
 
@@ -425,7 +423,7 @@ def upload_cbn(connection, dir_path):
     :param str connection: A connection to build the manager
     :param str dir_path: Directory full of CBN JGIF files
     """
-    manager = Manager(connection=connection)
+    manager = WebManager.from_connection(connection)
 
     t = time.time()
 

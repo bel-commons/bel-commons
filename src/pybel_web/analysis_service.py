@@ -16,11 +16,10 @@ from flask_security import current_user, login_required, roles_required
 from sklearn.cluster import KMeans
 
 from pybel_tools.analysis.ucmpa import RESULT_LABELS
-from .content import safe_get_query
 from .forms import DifferentialGeneExpressionForm
 from .manager_utils import create_omic, next_or_jsonify
 from .models import Experiment, Omic, Query
-from .utils import manager
+from .proxies import manager
 
 log = logging.getLogger(__name__)
 
@@ -105,7 +104,7 @@ def view_experiment(experiment_id):
 
     :param int experiment_id: The identifier of the experiment whose results to view
     """
-    experiment = manager.safe_get_experiment(experiment_id, current_user)
+    experiment = manager.safe_get_experiment(user=current_user, experiment_id=experiment_id)
 
     data = experiment.get_data_list()
 
@@ -135,7 +134,7 @@ def view_query_uploader(query_id):
 
     :param int query_id: The identifier of the query to upload against
     """
-    query = safe_get_query(query_id)
+    query = manager.safe_get_query(user=current_user, query_id=query_id)
 
     form = DifferentialGeneExpressionForm()
 
@@ -278,7 +277,14 @@ def download_experiment_comparison(experiment_ids):
     return output
 
 
-def render_experiment_comparison(experiment_ids, experiments):
+def render_experiment_comparison(experiments):
+    """
+    :param list[pybel_web.models.Experiment] experiments:
+    :return:
+    """
+    experiments = list(experiments)
+    experiment_ids = [experiment.id for experiment in experiments]
+
     return render_template(
         'experiment/experiments_compare.html',
         experiment_ids=experiment_ids,
@@ -295,8 +301,8 @@ def view_experiment_comparison(experiment_ids):
 
     :param list[int] experiment_ids: The identifiers of experiments to compare
     """
-    experiments = manager.safe_get_experiments(experiment_ids, current_user)
-    return render_experiment_comparison(experiment_ids, experiments)
+    experiments = manager.safe_get_experiments(user=current_user, experiment_ids=experiment_ids)
+    return render_experiment_comparison(experiments)
 
 
 @experiment_blueprint.route('/comparison/query/<int:query_id>')
@@ -305,6 +311,5 @@ def view_query_experiment_comparison(query_id):
 
     :param int query_id: The query identifier whose related experiments to compare
     """
-    query = safe_get_query(query_id)
-    experiment_ids = [experiment.id for experiment in query.experiments]
-    return render_experiment_comparison(experiment_ids, query.experiments)
+    query = manager.safe_get_query(user=current_user, query_id=query_id)
+    return render_experiment_comparison(query.experiments)

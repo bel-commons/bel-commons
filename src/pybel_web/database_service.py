@@ -5,6 +5,7 @@
 import csv
 import logging
 import pickle
+from functools import lru_cache
 from io import StringIO
 from operator import itemgetter
 
@@ -37,16 +38,13 @@ from pybel_tools.summary import (
 )
 from . import models
 from .constants import *
-from .content import safe_get_network, safe_get_project, safe_get_query, user_missing_query_rights
 from .external_managers import *
 from .main_service import BLACK_LIST, PATHS_METHOD, UNDIRECTED
 from .manager_utils import fill_out_report, make_graph_summary, next_or_jsonify
 from .models import EdgeComment, Project, Report, User
+from .proxies import manager
 from .send_utils import serve_network, to_json_custom
-from .utils import (
-    get_graph_from_request, get_node_overlaps, get_or_create_vote, get_query_ancestor_id, get_recent_reports,
-    get_tree_from_query, help_get_edge_entry, manager,
-)
+from .utils import get_tree_annotations
 
 log = logging.getLogger(__name__)
 
@@ -578,7 +576,7 @@ def drop_network_helper(network_id):
     :type network_id: int
     :rtype: flask.Response
     """
-    network = safe_get_network(network_id)
+    network = manager.safe_get_network(user=current_user, network_id=network_id)
 
     log.info('dropping network %s', network_id)
 
@@ -899,9 +897,25 @@ def make_network_private(network_id):
 @api_blueprint.route('/api/query/<int:query_id>.json')
 def download_query_json(query_id):
     """Downloads the query"""
-    query = safe_get_query(query_id)
+    query = manager.safe_get_query(user=current_user, query_id=query_id)
     query_json = query.to_json()
     return jsonify(query_json)
+
+
+@lru_cache(maxsize=256)
+def get_tree_from_query(query_id):
+    """Gets the tree json for a given network
+
+    :param int query_id: The database query identifier
+    :rtype: Optional[dict]
+    :raises: werkzeug.exceptions.HTTPException
+    """
+    graph = manager.safe_get_graph_from_query_id(user=current_user, query_id=query_id)
+
+    if graph is None:
+        return
+
+    return get_tree_annotations(graph)
 
 
 @api_blueprint.route('/api/query/<int:query_id>/tree/')
@@ -953,7 +967,7 @@ def check_query_rights(query_id):
     return jsonify({
         'status': 200,
         'query_id': query_id,
-        'allowed': (not user_missing_query_rights(current_user, query))
+        'allowed': (not manager.user_missing_query_rights(current_user, query))
     })
 
 
@@ -988,7 +1002,7 @@ def download_network(query_id, serve_format):
               - csv
               - gsea
     """
-    graph = get_graph_from_request(query_id)
+    graph = manager.safe_get_graph_from_query_id(user=current_user, query_id=query_id)
     return serve_network(graph, serve_format=serve_format)
 
 
@@ -1006,7 +1020,7 @@ def get_network(query_id):
         required: true
         type: integer
     """
-    graph = get_graph_from_request(query_id)
+    graph = manager.safe_get_graph_from_query_id(user=current_user, query_id=query_id)
     payload = to_json_custom(graph)
     return jsonify(payload)
 
@@ -1066,7 +1080,7 @@ def get_paths(query_id, source_id, target_id):
         raise IndexError('target is missing from cache: %s', target_id)
     target = target.to_tuple()
 
-    network = get_graph_from_request(query_id)
+    network = manager.safe_get_graph_from_query_id(user=current_user, query_id=query_id)
     method = request.args.get(PATHS_METHOD)
     undirected = UNDIRECTED in request.args
     remove_pathologies = PATHOLOGY_FILTER in request.args
@@ -1128,7 +1142,7 @@ def get_random_paths(query_id):
         required: true
         type: integer
     """
-    graph = get_graph_from_request(query_id)
+    graph = manager.safe_get_graph_from_query_id(user=current_user, query_id=query_id)
 
     path = get_random_path(graph)
 
@@ -1158,7 +1172,7 @@ def get_nodes_by_betweenness_centrality(query_id, node_number):
         required: true
         type: integer
     """
-    graph = get_graph_from_request(query_id)
+    graph = manager.safe_get_graph_from_query_id(user=current_user, query_id=query_id)
 
     if node_number > graph.number_of_nodes():
         node_number = graph.number_of_nodes()
@@ -1185,7 +1199,7 @@ def get_all_pmids(query_id):
         required: true
         type: integer
     """
-    graph = get_graph_from_request(query_id)
+    graph = manager.safe_get_graph_from_query_id(user=current_user, query_id=query_id)
     return jsonify(sorted(get_pubmed_identifiers(graph)))
 
 
@@ -1208,7 +1222,7 @@ def get_query_summary(query_id):
     }
 
     t = time.time()
-    network = get_graph_from_request(query_id)
+    network = manager.safe_get_graph_from_query_id(user=current_user, query_id=query_id)
     rv['time'] = time.time() - t
 
     if network is not None and network.node:
@@ -1365,7 +1379,7 @@ def get_all_authors(query_id):
         required: true
         type: integer
     """
-    graph = get_graph_from_request(query_id)
+    graph = manager.safe_get_graph_from_query_id(user=current_user, query_id=query_id)
     return jsonify(sorted(get_authors(graph)))
 
 
@@ -1435,7 +1449,7 @@ def get_edges():
         bq = bq.offset(offset)
 
     return jsonify([
-        help_get_edge_entry(manager, edge)
+        manager.help_get_edge_entry(edge, current_user)
         for edge in bq.all()
     ])
 
@@ -1584,7 +1598,7 @@ def get_edge_by_hash(edge_hash):
         type: string
     """
     edge = manager.get_edge_by_hash_or_404(edge_hash)
-    return jsonify(help_get_edge_entry(manager, edge))
+    return jsonify(manager.help_get_edge_entry(edge, current_user))
 
 
 @api_blueprint.route('/api/edge/hash_starts/<edge_hash>')
@@ -1626,7 +1640,7 @@ def store_up_vote(edge_hash):
         type: string
     """
     edge = manager.get_edge_by_hash_or_404(edge_hash)
-    vote = get_or_create_vote(manager, edge, current_user, True)
+    vote = manager.get_or_create_vote(edge, current_user, agreed=True)
     return jsonify(vote.to_json())
 
 
@@ -1646,7 +1660,7 @@ def store_down_vote(edge_hash):
         type: string
     """
     edge = manager.get_edge_by_hash_or_404(edge_hash)
-    vote = get_or_create_vote(manager, edge, current_user, False)
+    vote = manager.get_or_create_vote(edge, current_user, agreed=False)
     return jsonify(vote.to_json())
 
 
@@ -2045,7 +2059,7 @@ def query_to_network(query_id):
         required: true
         type: integer
     """
-    query = safe_get_query(query_id)
+    query = manager.safe_get_query(user=current_user, query_id=query_id)
 
     rv = query.to_json(include_id=True)
 
@@ -2075,7 +2089,7 @@ def get_query_parent(query_id):
         required: true
         type: integer
     """
-    query = safe_get_query(query_id)
+    query = manager.safe_get_query(user=current_user, query_id=query_id)
 
     if not query.parent:
         return jsonify({
@@ -2103,9 +2117,9 @@ def get_query_oldest_ancestry(query_id):
         required: true
         type: integer
     """
-    query = safe_get_query(query_id)
+    query = manager.safe_get_query(user=current_user, query_id=query_id)
 
-    ancestor_id = get_query_ancestor_id(query.id)
+    ancestor_id = manager.get_query_ancestor_id(query.id)
 
     return jsonify({
         'id': ancestor_id,
@@ -2120,7 +2134,7 @@ def add_pipeline_entry(query_id, name, *args, **kwargs):
     :param str name: The name of the function to append
     :rtype: flask.Response
     """
-    query = safe_get_query(query_id)
+    query = manager.safe_get_query(user=current_user, query_id=query_id)
 
     if not function_is_registered(name):
         abort(403, 'Invalid function name')
@@ -2158,7 +2172,7 @@ def get_query_from_isolated_node(query_id, node_hash):
         required: true
         type: string
     """
-    parent_query = safe_get_query(query_id)
+    parent_query = manager.safe_get_query(user=current_user, query_id=query_id)
     node = manager.get_node_tuple_by_hash(node_hash)
 
     child_query = Query(network_ids=[
@@ -2420,7 +2434,7 @@ def get_analysis(query_id, experiment_id):
         required: true
         type: integer
     """
-    graph = get_graph_from_request(query_id)
+    graph = manager.safe_get_graph_from_query_id(user=current_user, query_id=query_id)
     experiment = manager.get_experiment_or_404(experiment_id)
 
     data = pickle.loads(experiment.result)
@@ -2456,7 +2470,7 @@ def get_analysis_median(query_id, experiment_id):
         required: true
         type: integer
     """
-    graph = get_graph_from_request(query_id)
+    graph = manager.safe_get_graph_from_query_id(user=current_user, query_id=query_id)
     experiment = manager.get_experiment_or_404(experiment_id)
 
     data = pickle.loads(experiment.result)
@@ -2570,8 +2584,8 @@ def grant_network_to_project(network_id, project_id):
         type: integer
         format: int32
     """
-    network = safe_get_network(network_id)
-    project = safe_get_project(project_id)
+    network = manager.safe_get_network(user=current_user, network_id=network_id)
+    project = manager.safe_get_project(user=current_user, project_id=project_id)
     project.networks.append(network)
 
     manager.session.commit()
@@ -2607,9 +2621,8 @@ def grant_network_to_user(network_id, user_id):
         type: integer
         format: int32
     """
-    network = safe_get_network(network_id)
-
-    user = manager.session.query(User).get(user_id)
+    network = manager.safe_get_network(user=current_user, network_id=network_id)
+    user = manager.get_user_by_id(user_id)
     user.networks.append(network)
 
     manager.session.commit()
@@ -2623,7 +2636,7 @@ def safe_get_graph(network_id):
     :type network_id: int
     :rtype: pybel.BELGraph
     """
-    network = safe_get_network(network_id)
+    network = manager.safe_get_network(user=current_user, network_id=network_id)
     return network.as_bel()
 
 
@@ -2658,8 +2671,7 @@ def get_project_metadata(project_id):
         type: integer
         format: int32
     """
-    project = safe_get_project(project_id)
-
+    project = manager.safe_get_project(user=current_user, project_id=project_id)
     return jsonify(**project.to_json())
 
 
@@ -2681,7 +2693,7 @@ def drop_project_by_id(project_id):
         type: integer
         format: int32
     """
-    project = safe_get_project(project_id)
+    project = manager.safe_get_project(user=current_user, project_id=project_id)
 
     # FIXME cascade on project/users
 
@@ -2709,7 +2721,7 @@ def summarize_project(project_id):
         type: integer
         format: int32
     """
-    project = safe_get_project(project_id)
+    project = manager.safe_get_project(user=current_user, project_id=project_id)
 
     si = StringIO()
     cw = csv.writer(si)
@@ -2768,7 +2780,7 @@ def export_project_network(project_id, serve_format):
               - csv
               - gsea
     """
-    project = safe_get_project(project_id)
+    project = manager.safe_get_project(user=current_user, project_id=project_id)
 
     networks = [network.as_bel() for network in project.networks]
 
@@ -2801,7 +2813,7 @@ def get_blacklist():
 @api_blueprint.route('/api/text/report')
 def get_recent_report():
     """Gets the recent reports"""
-    lines = get_recent_reports(manager)
+    lines = manager.get_recent_reports()
     output = make_response('\n'.join(lines))
     output.headers["Content-type"] = "text/plain"
     return output
@@ -2817,7 +2829,7 @@ def list_all_network_overview():
     for source_network in manager.list_networks():
         source_network_id = source_network.id
         source_bel_graph = manager.get_graph_by_id(source_network_id)
-        overlap = get_node_overlaps(source_network_id)
+        overlap = manager.get_node_overlaps(source_network_id)
 
         node_elements.append({
             'data': {

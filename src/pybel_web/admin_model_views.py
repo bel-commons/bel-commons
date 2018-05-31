@@ -85,23 +85,10 @@ class QueryView(ModelView):
     column_display_pk = True
 
 
-def iter_public_networks(manager):
-    """Lists the graphs that have been made public
-
-    :param pybel.manager.Manager manager:
-    :rtype: iter[Network]
-    """
-    return (
-        network
-        for network in manager.list_recent_networks()
-        if network.report and network.report.public
-    )
-
-
 def build_network_ajax_manager(manager):
     """
 
-    :param pybel_web.manager.WebManager
+    :param pybel_web.manager.WebManager manager:
     :rtype: QueryAjaxModelLoader
     """
 
@@ -123,7 +110,7 @@ def build_network_ajax_manager(manager):
                 network_chain = chain(
                     current_user.get_owned_networks(),
                     current_user.get_shared_networks(),
-                    iter_public_networks(manager),
+                    manager.iter_public_networks()
                 )
 
                 allowed_network_ids = {
