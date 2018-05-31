@@ -169,7 +169,7 @@ class FlaskPyBEL(object):
 
         @in_place_mutator
         def delete_node_by_id(graph, node_hash):
-            """Removes a node by identifier
+            """Remove a node by identifier.
 
             :param pybel.BELGraph graph: A BEL graph
             :param str node_hash: A node hash
@@ -179,7 +179,7 @@ class FlaskPyBEL(object):
 
         @in_place_mutator
         def propagate_node_by_hash(graph, node_hash):
-            """Infers relationships from a node
+            """Infer relationships from a node.
 
             :param pybel.BELGraph graph: A BEL graph
             :param str node_hash: A node hash
@@ -188,7 +188,7 @@ class FlaskPyBEL(object):
             infer_child_relations(graph, node)
 
     def _register_users(self):
-        """Adds the default users to the user datastore."""
+        """Add the default users to the user datastore."""
         if os.path.exists(default_users_path):
             with open(default_users_path) as f:
                 default_users_manifest = json.load(f)
@@ -199,7 +199,7 @@ class FlaskPyBEL(object):
             register_users_from_manifest(self.user_datastore, pybel_config_user_manifest)
 
     def _build_admin_service(self):
-        """Adds Flask-Admin database front-end
+        """Add a Flask-Admin database front-end.
 
         :rtype: flask_admin.Admin
         """
@@ -230,7 +230,7 @@ class FlaskPyBEL(object):
         return admin
 
     def _ensure_graphs(self):
-        """Adds example BEL graphs that should always be present"""
+        """Add  example BEL graphs that should always be present."""
         for graph in (sialic_acid_graph, egf_graph, statin_graph, homology_graph):
             if not self.manager.has_name_version(graph.name, graph.version):
                 add_canonical_names(graph)
