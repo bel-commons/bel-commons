@@ -183,7 +183,7 @@ def download_undefined_namespace(network_id, namespace):
         required: true
         type: string
     """
-    graph = safe_get_graph(network_id)
+    graph = manager.safe_get_graph(user=current_user, network_id=network_id)
     names = get_undefined_namespace_names(graph, namespace)  # TODO put into report data
     return _build_namespace_helper(graph, namespace, names)
 
@@ -208,14 +208,14 @@ def download_missing_namespace(network_id, namespace):
         required: true
         type: string
     """
-    graph = safe_get_graph(network_id)
+    graph = manager.safe_get_graph(user=current_user, network_id=network_id)
     names = get_incorrect_names_by_namespace(graph, namespace)  # TODO put into report data
     return _build_namespace_helper(graph, namespace, names)
 
 
 @api_blueprint.route('/api/network/<int:network_id>/builder/namespace/naked')
 def download_naked_names(network_id):
-    """Outputs a namespace built from the naked names in the given namespace
+    """Output a namespace built from the naked names in the given namespace.
 
     ---
     tags:
@@ -227,13 +227,13 @@ def download_naked_names(network_id):
         required: true
         type: integer
     """
-    graph = safe_get_graph(network_id)
+    graph = manager.safe_get_graph(user=current_user, network_id=network_id)
     names = get_naked_names(graph)  # TODO put into report data
     return _build_namespace_helper(graph, 'NAKED', names)
 
 
 def _build_annotation_helper(graph, annotation, values):
-    """Builds an annoation document helper
+    """Build an annotation document helper.
 
     :param pybel.BELGraph graph:
     :param str annotation:
@@ -277,7 +277,7 @@ def download_list_annotation(network_id, annotation):
         required: true
         type: string
     """
-    graph = safe_get_graph(network_id)
+    graph = manager.safe_get_graph(user=current_user, network_id=network_id)
 
     if annotation not in graph.annotation_list:
         abort(400, 'Graph does not contain this list annotation')
@@ -576,7 +576,7 @@ def drop_network_helper(network_id):
     :type network_id: int
     :rtype: flask.Response
     """
-    network = manager.safe_get_network(user=current_user, network_id=network_id)
+    network = manager.strict_get_network(user=current_user, network_id=network_id)
 
     log.info('dropping network %s', network_id)
 
@@ -781,13 +781,7 @@ def export_network(network_id, serve_format):
               - csv
               - gsea
     """
-    network_ids = manager.get_network_ids_with_permission_helper(current_user)
-
-    if network_id not in network_ids:
-        abort(403, 'You do not have permission to download the selected network')
-
-    graph = manager.get_graph_by_id(network_id)
-
+    graph = manager.safe_get_graph(user=current_user, network_id=network_id)
     return serve_network(graph, serve_format)
 
 
@@ -2584,7 +2578,7 @@ def grant_network_to_project(network_id, project_id):
         type: integer
         format: int32
     """
-    network = manager.safe_get_network(user=current_user, network_id=network_id)
+    network = manager.strict_get_network(user=current_user, network_id=network_id)
     project = manager.safe_get_project(user=current_user, project_id=project_id)
     project.networks.append(network)
 
@@ -2621,7 +2615,7 @@ def grant_network_to_user(network_id, user_id):
         type: integer
         format: int32
     """
-    network = manager.safe_get_network(user=current_user, network_id=network_id)
+    network = manager.strict_get_network(user=current_user, network_id=network_id)
     user = manager.get_user_by_id(user_id)
     user.networks.append(network)
 
@@ -2629,15 +2623,6 @@ def grant_network_to_user(network_id, user_id):
 
     return next_or_jsonify('Added rights for {} to {}'.format(network, user))
 
-
-def safe_get_graph(network_id):
-    """Gets the network as a BEL graph or aborts if the user is not the owner
-
-    :type network_id: int
-    :rtype: pybel.BELGraph
-    """
-    network = manager.safe_get_network(user=current_user, network_id=network_id)
-    return network.as_bel()
 
 
 @api_blueprint.route('/api/project')

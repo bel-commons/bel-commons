@@ -863,7 +863,7 @@ class Query(Base):
 
     @staticmethod
     def from_query(manager, query, user=None):
-        """Builds a orm query from a pybel-tools query
+        """Build an ORM query from a PyBEL-Tools query.
 
         :param pybel.manager.Manager manager: A database manager
         :param pybel_tools.query.Query query: A query
@@ -878,7 +878,7 @@ class Query(Base):
 
     @staticmethod
     def from_query_args(manager, network_ids, user=None, seed_list=None, pipeline=None):
-        """Builds a orm query from the arguments for a pybel-tools query
+        """Build an ORM model from the arguments for a PyBEL-Tools query.
 
         :param pybel.manager.Manager manager:
         :param list[int] network_ids: A list of network identifiers
@@ -891,7 +891,7 @@ class Query(Base):
         return Query.from_query(manager, q, user=user)
 
     def build_appended(self, name, *args, **kwargs):
-        """Builds a new query with the given function appended to the current query's pipeline
+        """Build a new query with the given function appended to the current query's pipeline.
 
         :param str name: Append function name
         :param args: Append function positional arguments
@@ -909,7 +909,7 @@ class Query(Base):
         )
 
     def add_seed_neighbors(self, nodes):
-        """Adds a seed by neighbors. Returns a new query
+        """Add a seed by neighbors and return a new query.
 
         :param list[pybel.manager.models.Node] nodes: A list of nodes
         :rtype: Query
@@ -926,7 +926,8 @@ class Query(Base):
 
 
 class EdgeVote(Base):
-    """Describes the vote on an edge"""
+    """Describes the vote on an edge."""
+
     __tablename__ = VOTE_TABLE_NAME
 
     id = Column(Integer, primary_key=True)
@@ -946,7 +947,7 @@ class EdgeVote(Base):
     )
 
     def to_json(self):
-        """Converts this vote to JSON
+        """Convert this vote to JSON.
 
         :rtype: dict
         """
@@ -967,7 +968,8 @@ Index('edgeUserIndex', EdgeVote.edge_id, EdgeVote.user_id)
 
 
 class EdgeComment(Base):
-    """Describes the comments on an edge"""
+    """Describes the comments on an edge."""
+
     __tablename__ = COMMENT_TABLE_NAME
 
     id = Column(Integer, primary_key=True)
@@ -1001,7 +1003,8 @@ class EdgeComment(Base):
 
 
 class NetworkOverlap(Base):
-    """Describes the network overlap based on nodes"""
+    """Describes the network overlap based on nodes."""
+
     __tablename__ = OVERLAP_TABLE_NAME
 
     left_id = Column(Integer, ForeignKey('{}.id'.format(NETWORK_TABLE_NAME)), primary_key=True)

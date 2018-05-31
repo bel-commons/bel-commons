@@ -598,7 +598,7 @@ def view_summarize_completeness(network_id):
 
 @ui_blueprint.route('/network/<int:network_id>/stratified/<annotation>')
 def view_summarize_stratified(network_id, annotation):
-    """Show stratified summary of graph's subgraphs by annotation"""
+    """Show stratified summary of graph's subgraphs by annotation."""
     network = manager.safe_get_network(user=current_user, network_id=network_id)
     graph = network.as_bel()
     graphs = get_subgraphs_by_annotation(graph, annotation)

@@ -193,14 +193,12 @@ def view_query_uploader(query_id):
 @experiment_blueprint.route('/from_network/<int:network_id>/upload/', methods=('GET', 'POST'))
 @login_required
 def view_network_uploader(network_id):
-    """Views the results of analysis on a given graph
+    """View the uploader for a network.
 
     :param int network_id: The identifier ot the network to query against
     """
-    if network_id not in manager.get_network_ids_with_permission_helper(user=current_user):
-        abort(403, 'Insufficient rights for network {}'.format(network_id))
-
-    query = Query.from_query_args(manager, [network_id], current_user)
+    network = manager.safe_get_network(user=current_user, network_id=network_id)
+    query = Query.from_network(network=network, user=current_user)
     manager.session.add(query)
     manager.session.commit()
 

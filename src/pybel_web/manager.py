@@ -290,8 +290,10 @@ class WebManager(_Manager):
         :raises: werkzeug.exceptions.HTTPException
         """
         citation = self.get_citation_by_pmid(pubmed_identifier=pubmed_identifier)
+
         if citation is None:
             abort(404)
+
         return citation
 
     def get_author_by_name_or_404(self, name):
@@ -316,8 +318,10 @@ class WebManager(_Manager):
         :raises: werkzeug.exceptions.HTTPException
         """
         evidence = self.session.query(Evidence).get(evidence_id)
+
         if evidence is None:
             abort(404)
+
         return evidence
 
     def get_network_or_404(self, network_id):
@@ -409,7 +413,42 @@ class WebManager(_Manager):
         self.session.commit()
 
     def safe_get_network(self, user, network_id):
-        """Abort if the current user is not the owner of the network.
+        """Get a network and abort if the user does not have permissions to view.
+
+        :param User user:
+        :param int network_id: The identifier of the network
+        :rtype: Network
+        :raises: werkzeug.exceptions.HTTPException
+        """
+        network = self.get_network_or_404(network_id)
+
+        if user.is_admin:
+            return network
+
+        if network.report and network.report.public:
+            return network
+
+        if network.id in self.get_network_ids_with_permission_helper(user):
+            return network
+
+        abort(403)
+
+    def safe_get_graph(self, user, network_id):
+        """Get the network as a BEL graph or aborts if the user does not have permission to view.
+
+        :param User user:
+        :type network_id: int
+        :rtype: pybel.BELGraph
+        """
+        network = self.safe_get_network(user=user, network_id=network_id)
+
+        if network is None:
+            return
+
+        return network.as_bel()
+
+    def strict_get_network(self, user, network_id):
+        """Get a network and abort if the user does not have super rights.
 
         :param User user:
         :param int network_id: The identifier of the network
@@ -421,12 +460,10 @@ class WebManager(_Manager):
         if network.report and network.report.public:
             return network
 
-        # FIXME what about networks in a project?
+        if user.owns_network(network):
+            return network
 
-        if not user.owns_network(network):
-            abort(403, 'User {} does not have permission to access Network {}'.format(user, network))
-
-        return network
+        abort(403, 'User {} does not have permission to access Network {}'.format(user, network))
 
     def safe_get_project(self, user, project_id):
         """Get a project by identifier, aborts 404 if doesn't exist and aborts 403 if current user does not have rights.
@@ -446,7 +483,6 @@ class WebManager(_Manager):
     def get_networks_with_permission(self, user):
         """Gets all networks tagged as public or uploaded by the current user
 
-        :param pybel_web.manager.WebManager manager: A manager
         :return: A list of all networks tagged as public or uploaded by the current user
         :rtype: list[Network]
         """
@@ -643,11 +679,7 @@ class WebManager(_Manager):
         :param str template: The name of the template to render
         :rtype: flask.Response
         """
-        if network_id not in self.get_network_ids_with_permission_helper(user):
-            abort(403, 'Insufficient rights for network {}'.format(network_id))
-
-        network = self.get_network_by_id(network_id)
-
+        network = self.safe_get_network(user=user, network_id=network_id)
         return self.safe_render_network_summary(user=user, network=network, template=template)
 
     def get_recent_reports(self, weeks=2):
