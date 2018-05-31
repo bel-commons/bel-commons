@@ -11,26 +11,22 @@ from raven.contrib.flask import Sentry
 from pybel.constants import config
 from pybel.examples import *
 from pybel.manager.models import (
-    Annotation, AnnotationEntry, Author, Citation, Edge, Evidence, Namespace,
-    NamespaceEntry, Network, Node,
+    Annotation, AnnotationEntry, Author, Citation, Edge, Evidence, Namespace, NamespaceEntry, Network, Node,
 )
 from pybel.struct.mutation import infer_child_relations
 from pybel_tools.mutation import add_canonical_names, expand_node_neighborhood, expand_nodes_neighborhoods
 from pybel_tools.pipeline import in_place_mutator, uni_in_place_mutator
 from .admin_model_views import (
-    AnnotationView, CitationView, EdgeView, EvidenceView, ExperimentView, ModelView,
-    NamespaceView, NetworkView, NodeView, QueryView, ReportView, UserView, build_project_view,
+    AnnotationView, CitationView, EdgeView, EvidenceView, ExperimentView, ModelView, NamespaceView, NetworkView,
+    NodeView, QueryView, ReportView, UserView, build_project_view,
 )
 from .constants import PYBEL_WEB_EXAMPLES, PYBEL_WEB_USER_MANIFEST, SENTRY_DSN
 from .manager_utils import insert_graph
-from .models import (
-    Assembly, Base, EdgeComment, EdgeVote, Experiment, NetworkOverlap, Query, Report, Role, User,
-)
+from .models import Assembly, Base, EdgeComment, EdgeVote, Experiment, NetworkOverlap, Query, Report, Role, User
 from .resources.users import default_users_path
 
 __all__ = [
     'FlaskPyBEL',
-    'get_manager',
 ]
 
 log = logging.getLogger(__name__)
@@ -65,6 +61,14 @@ class FlaskPyBEL(object):
         """
         return self.manager.user_datastore
 
+    @property
+    def session(self):
+        return self.manager.session
+
+    @property
+    def engine(self):
+        return self.manager.engine
+
     def init_app(self, app, manager, examples=None, register_mutators=True, register_users=True, register_admin=True):
         """
         :param flask.Flask app: A Flask app
@@ -79,8 +83,8 @@ class FlaskPyBEL(object):
             log.info('initiating Sentry: %s', self.sentry_dsn)
             self.sentry = Sentry(app, dsn=self.sentry_dsn)
 
-        Base.metadata.bind = self.manager.engine
-        Base.query = self.manager.session.query_property()
+        Base.metadata.bind = self.engine
+        Base.query = self.session.query_property()
 
         try:
             Base.metadata.create_all()
@@ -204,28 +208,27 @@ class FlaskPyBEL(object):
         :rtype: flask_admin.Admin
         """
         admin = Admin(self.app, template_mode='bootstrap3')
-        manager = self.manager
 
-        admin.add_view(UserView(User, manager.session))
-        admin.add_view(ModelView(Role, manager.session))
-        admin.add_view(NamespaceView(Namespace, manager.session))
-        admin.add_view(ModelView(NamespaceEntry, manager.session))
-        admin.add_view(AnnotationView(Annotation, manager.session))
-        admin.add_view(ModelView(AnnotationEntry, manager.session))
-        admin.add_view(NetworkView(Network, manager.session))
-        admin.add_view(NodeView(Node, manager.session))
-        admin.add_view(EdgeView(Edge, manager.session))
-        admin.add_view(CitationView(Citation, manager.session))
-        admin.add_view(EvidenceView(Evidence, manager.session))
-        admin.add_view(ModelView(Author, manager.session))
-        admin.add_view(ReportView(Report, manager.session))
-        admin.add_view(ExperimentView(Experiment, manager.session))
-        admin.add_view(QueryView(Query, manager.session))
-        admin.add_view(ModelView(Assembly, manager.session))
-        admin.add_view(ModelView(EdgeVote, manager.session))
-        admin.add_view(ModelView(EdgeComment, manager.session))
-        admin.add_view(ModelView(NetworkOverlap, manager.session))
-        admin.add_view(build_project_view(self.manager, self.user_datastore))
+        admin.add_view(UserView(User, self.session))
+        admin.add_view(ModelView(Role, self.session))
+        admin.add_view(NamespaceView(Namespace, self.session))
+        admin.add_view(ModelView(NamespaceEntry, self.session))
+        admin.add_view(AnnotationView(Annotation, self.session))
+        admin.add_view(ModelView(AnnotationEntry, self.session))
+        admin.add_view(NetworkView(Network, self.session))
+        admin.add_view(NodeView(Node, self.session))
+        admin.add_view(EdgeView(Edge, self.session))
+        admin.add_view(CitationView(Citation, self.session))
+        admin.add_view(EvidenceView(Evidence, self.session))
+        admin.add_view(ModelView(Author, self.session))
+        admin.add_view(ReportView(Report, self.session))
+        admin.add_view(ExperimentView(Experiment, self.session))
+        admin.add_view(QueryView(Query, self.session))
+        admin.add_view(ModelView(Assembly, self.session))
+        admin.add_view(ModelView(EdgeVote, self.session))
+        admin.add_view(ModelView(EdgeComment, self.session))
+        admin.add_view(ModelView(NetworkOverlap, self.session))
+        admin.add_view(build_project_view(self.manager))
 
         return admin
 
@@ -255,12 +258,3 @@ class FlaskPyBEL(object):
             raise ValueError('{} has not been instantiated'.format(cls.__name__))
 
         return app.extensions[cls.APP_NAME]
-
-
-def get_manager(app):
-    """Get the cache manger from a Flask app.
-
-    :param flask.Flask app: A Flask app
-    :rtype: pybel_web.manager.WebManager
-    """
-    return FlaskPyBEL.get_state(app).manager

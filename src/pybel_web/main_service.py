@@ -5,10 +5,10 @@
 import datetime
 import logging
 import sys
-import time
 from collections import defaultdict
 
 import flask
+import time
 from flask import Blueprint, Markup, abort, current_app, flash, redirect, render_template, request, url_for
 from flask_security import current_user, login_required, roles_required
 
@@ -18,8 +18,7 @@ from pybel.utils import get_version as get_pybel_version
 from pybel_tools.biogrammar.double_edges import summarize_competeness
 from pybel_tools.grouping import get_subgraphs_by_annotation
 from pybel_tools.mutation import (
-    collapse_by_central_dogma_to_genes, remove_associations, remove_isolated_nodes,
-    remove_pathologies,
+    collapse_by_central_dogma_to_genes, remove_associations, remove_isolated_nodes, remove_pathologies,
 )
 from pybel_tools.pipeline import MissingPipelineFunctionError, Pipeline, no_arguments_map
 from pybel_tools.query import QueryMissingNetworksError
@@ -31,12 +30,13 @@ from .content import safe_get_network, safe_get_query
 from .external_managers import *
 from .external_managers import manager_dict
 from .manager_utils import next_or_jsonify
-from .models import Assembly, EdgeComment, EdgeVote, Experiment, Omic, Project, Query, User
+from .models import Assembly, EdgeComment, EdgeVote, Experiment, Omic, Query, User
 from .utils import (
     calculate_overlap_dict, get_graph_from_request, get_networks_with_permission, get_or_create_vote,
     get_version as get_bel_commons_version, manager, query_form_to_dict, query_from_network_with_current_user,
     render_network_summary_safe, safe_get_node,
 )
+from operator import itemgetter
 
 log = logging.getLogger(__name__)
 
@@ -52,7 +52,7 @@ extract_useful_subgraph = Pipeline.from_functions([
 ])
 
 
-def format_big_number(n):
+def _format_big_number(n):
     if n > 1000000:
         return '{}M'.format(int(round(n / 1000000)))
     elif n > 1000:
@@ -80,35 +80,43 @@ def home():
     4. Network/Edge/NanoPub Store Navigator
     5. Query Builder
     """
-    number_networks = manager.count_networks()
-    number_edges = manager.count_edges()
-    number_nodes = manager.count_nodes()
-    number_assemblies = manager.session.query(Assembly).count()
-    number_queries = manager.session.query(Query).count()
-    number_omics = manager.session.query(Omic).count()
-    number_experiments = manager.session.query(Experiment).count()
-    number_citations = manager.session.query(Citation).count()
-    number_evidences = manager.session.query(Evidence).count()
-    number_votes = manager.session.query(EdgeVote).count()
-    number_comments = manager.session.query(EdgeComment).count()
 
     if not current_user.is_authenticated or not current_user.is_admin:
         flash(preprint_message, category='warning')
 
+    hist = None
+    if current_user.is_admin:
+        number_networks = manager.count_networks()
+        number_edges = manager.count_edges()
+        number_nodes = manager.count_nodes()
+        number_assemblies = manager.session.query(Assembly).count()
+        number_queries = manager.session.query(Query).count()
+        number_omics = manager.session.query(Omic).count()
+        number_experiments = manager.session.query(Experiment).count()
+        number_citations = manager.session.query(Citation).count()
+        number_evidences = manager.session.query(Evidence).count()
+        number_votes = manager.session.query(EdgeVote).count()
+        number_comments = manager.session.query(EdgeComment).count()
+
+        hist = [
+            ('Network', number_networks, url_for('.view_networks')),
+            ('Edge', number_edges, url_for('.view_edges')),
+            ('Node', number_nodes, url_for('.view_nodes')),
+            ('Query', number_queries, url_for('.view_queries')),
+            ('Omic', number_omics, url_for('analysis.view_omics')),
+            ('Experiment', number_experiments, url_for('analysis.view_experiments')),
+            ('Citation', number_citations, url_for('.view_citations')),
+            ('Evidence', number_evidences, url_for('.view_evidences')),
+            ('Assembly', number_assemblies, None),
+            ('Vote', number_votes, None),
+            ('Comment', number_comments, None),
+        ]
+        hist = sorted(hist, key=itemgetter(1), reverse=True)
+
     return render_template(
         'index.html',
         current_user=current_user,
-        number_networks=format_big_number(number_networks),
-        number_edges=format_big_number(number_edges),
-        number_nodes=format_big_number(number_nodes),
-        number_assemblies=format_big_number(number_assemblies),
-        number_queries=format_big_number(number_queries),
-        number_omics=number_omics,
-        number_experiments=number_experiments,
-        number_citations=format_big_number(number_citations),
-        number_evidences=format_big_number(number_evidences),
-        number_votes=format_big_number(number_votes),
-        number_comments=format_big_number(number_comments),
+        database_histogram=hist,
         manager=manager,
     )
 
@@ -399,9 +407,9 @@ def view_explore_project(project_id):
 
     :param int project_id: The identifier of the project to explore
     """
-    project = manager.session.query(Project).get(project_id)
+    project = manager.get_project_by_id(project_id)
 
-    query = Query.from_networks(project.networks, user=current_user)
+    query = Query.from_project(project, user=current_user)
     query.assembly.name = '{} query of {}'.format(time.asctime(), project.name)
 
     manager.session.add(query)
@@ -759,7 +767,7 @@ def view_user(user_id):
 
     :param int user_id: The identifier of the user to summarize
     """
-    user = manager.session.query(User).get(user_id)
+    user = manager.get_user_by_id(user_id)
     return render_user(user)
 
 

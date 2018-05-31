@@ -20,7 +20,7 @@ import pybel
 from pybel.constants import NAME, NAMESPACE, NAMESPACE_DOMAIN_OTHER
 from pybel.manager.citation_utils import enrich_citation_model, get_pubmed_citation_response
 from pybel.manager.models import (
-    Annotation, AnnotationEntry, Author, Citation, Edge, Evidence, Namespace, Network, Node, network_edge,
+    Annotation, AnnotationEntry, Author, Citation, Edge, Namespace, Network, Node, network_edge,
 )
 from pybel.resources.definitions import write_annotation, write_namespace
 from pybel.struct import union
@@ -37,14 +37,11 @@ from pybel_tools.summary import (
 )
 from . import models
 from .constants import *
-from .content import (
-    get_edge_by_hash_or_404, get_network_or_404, get_node_by_hash_or_404, get_query_or_404,
-    safe_get_network, safe_get_project, safe_get_query, user_missing_query_rights,
-)
+from .content import safe_get_network, safe_get_project, safe_get_query, user_missing_query_rights
 from .external_managers import *
 from .main_service import BLACK_LIST, PATHS_METHOD, UNDIRECTED
 from .manager_utils import fill_out_report, make_graph_summary, next_or_jsonify
-from .models import EdgeComment, Experiment, Project, Report, User
+from .models import EdgeComment, Project, Report, User
 from .send_utils import serve_network, to_json_custom
 from .utils import (
     get_graph_from_request, get_node_overlaps, get_or_create_vote, get_query_ancestor_id, get_recent_reports,
@@ -114,10 +111,7 @@ def drop_namespace_by_id(namespace_id):
         required: true
         type: integer
     """
-    namespace = manager.session.query(Namespace).get(namespace_id)
-
-    if namespace is None:
-        abort(404)
+    namespace = manager.get_namespace_by_id_or_404(namespace_id)
 
     log.info('dropping namespace %s', namespace_id)
 
@@ -332,10 +326,7 @@ def drop_annotation_by_id(annotation_id):
         required: true
         type: integer
     """
-    annotation = manager.session.query(Annotation).get(annotation_id)
-
-    if annotation is None:
-        abort(404)
+    annotation = manager.get_annotation_or_404(annotation_id)
 
     manager.session.delete(annotation)
     manager.session.commit()
@@ -414,7 +405,7 @@ def get_network_metadata(network_id):
       200:
         description: The metadata describing the network
     """
-    network = get_network_or_404(network_id)
+    network = manager.get_network_or_404(network_id)
 
     return jsonify(**network.to_json(include_id=True))
 
@@ -708,7 +699,7 @@ def claim_network(network_id):
         required: true
         type: integer
     """
-    network = get_network_or_404(network_id)
+    network = manager.get_network_or_404(network_id)
 
     t = time.time()
 
@@ -847,10 +838,10 @@ def update_network_status(network_id, public):
     :param int network_id: 
     :param bool public:
     """
-    network = get_network_or_404(network_id)
+    network = manager.get_network_or_404(network_id)
 
     if network.report is None:
-        abort(400)
+        abort(400, 'Network does not have an associated report.')
 
     if not current_user.is_admin or current_user.id != network.report.user_id:
         abort(403, 'You do not have permission to modify that network')
@@ -957,7 +948,7 @@ def check_query_rights(query_id):
         required: true
         type: integer
     """
-    query = get_query_or_404(query_id)
+    query = manager.get_query_or_404(query_id)
 
     return jsonify({
         'status': 200,
@@ -1233,7 +1224,6 @@ def get_query_summary(query_id):
 # CITATIONS
 ####################################
 
-
 @api_blueprint.route('/api/citation')
 def list_citations():
     """Gets all citations
@@ -1250,19 +1240,26 @@ def list_citations():
 
 @api_blueprint.route('/api/citation/<int:citation_id>')
 def get_citation_by_id(citation_id):
-    citation = manager.session.query(Citation).get(citation_id)
-    if citation is None:
-        abort(404)
+    """Get a citation by its identifier.
+
+    ---
+    tags:
+        - citation
+    parameters:
+      - name: citation_id
+        in: path
+        description: The citation's database identifier
+        required: true
+        type: integer
+    """
+    citation = manager.get_citation_by_id_or_404(citation_id)
     return jsonify(citation.to_json(include_id=True))
 
 
 @api_blueprint.route('/api/citation/pubmed/<pubmed_identifier>/enrich')
 def enrich_citation_by_id(pubmed_identifier):
     """Enrich a citation in the database"""
-    citation = manager.get_citation_by_pmid(pubmed_identifier=pubmed_identifier)
-
-    if citation is None:
-        abort(404)
+    citation = manager.get_citation_by_pmid_or_404(pubmed_identifier)
 
     if citation.name and citation.title:
         return jsonify({
@@ -1293,7 +1290,7 @@ def enrich_citation_by_id(pubmed_identifier):
 
 @api_blueprint.route('/api/author/<name>/citations')
 def list_citations_by_author(name):
-    """Gets all citations from the given author
+    """Get all citations from the given author.
 
     ---
     tags:
@@ -1305,10 +1302,7 @@ def list_citations_by_author(name):
         required: true
         type: string
     """
-    author = manager.get_author_by_name(name)
-
-    if author is None:
-        return abort(404)
+    author = manager.get_author_by_name_or_404(name)
 
     return jsonify([
         citation.to_json(include_id=True)
@@ -1318,7 +1312,7 @@ def list_citations_by_author(name):
 
 @api_blueprint.route('/api/citation/pubmed/suggestion/')
 def get_pubmed_suggestion():
-    """Return list of PubMed identifiers matching the integer keyword
+    """Return list of PubMed identifiers matching the integer keyword.
 
     ---
     tags:
@@ -1349,9 +1343,7 @@ def get_pubmed_suggestion():
 @api_blueprint.route('/api/evidence/<int:evidence_id>')
 def get_evidence_by_id(evidence_id):
     """Gets an evidence by its identifier as JSON"""
-    evidence = manager.session.query(Evidence).get(evidence_id)
-    if evidence is None:
-        abort(404)
+    evidence = manager.get_evidence_by_id_or_404(evidence_id)
     return jsonify(evidence.to_json(include_id=True))
 
 
@@ -1361,7 +1353,7 @@ def get_evidence_by_id(evidence_id):
 
 @api_blueprint.route('/api/query/<int:query_id>/authors')
 def get_all_authors(query_id):
-    """Gets a list of all authors in the graph produced by the given URL parameters
+    """Get a list of all authors in the graph produced by the given URL parameters.
 
     ---
     tags:
@@ -1379,7 +1371,7 @@ def get_all_authors(query_id):
 
 @api_blueprint.route('/api/author/suggestion/')
 def suggest_authors():
-    """Return list of authors matching the author keyword
+    """Return list of authors matching the author keyword.
 
     ---
     tags:
@@ -1414,7 +1406,7 @@ def suggest_authors():
 @api_blueprint.route('/api/edge')
 @roles_required('admin')
 def get_edges():
-    """Gets all edges
+    """Get all edges.
 
     ---
     tags:
@@ -1451,7 +1443,7 @@ def get_edges():
 @api_blueprint.route('/api/edge/drop')
 @roles_required('admin')
 def drop_edges():
-    """Drops all edges
+    """Drop all edges.
 
     ---
     tags:
@@ -1591,7 +1583,7 @@ def get_edge_by_hash(edge_hash):
         required: true
         type: string
     """
-    edge = get_edge_by_hash_or_404(edge_hash)
+    edge = manager.get_edge_by_hash_or_404(edge_hash)
     return jsonify(help_get_edge_entry(manager, edge))
 
 
@@ -1633,7 +1625,7 @@ def store_up_vote(edge_hash):
         required: true
         type: string
     """
-    edge = get_edge_by_hash_or_404(edge_hash)
+    edge = manager.get_edge_by_hash_or_404(edge_hash)
     vote = get_or_create_vote(manager, edge, current_user, True)
     return jsonify(vote.to_json())
 
@@ -1653,7 +1645,7 @@ def store_down_vote(edge_hash):
         required: true
         type: string
     """
-    edge = get_edge_by_hash_or_404(edge_hash)
+    edge = manager.get_edge_by_hash_or_404(edge_hash)
     vote = get_or_create_vote(manager, edge, current_user, False)
     return jsonify(vote.to_json())
 
@@ -1673,7 +1665,7 @@ def store_comment(edge_hash):
         required: true
         type: string
     """
-    edge = get_edge_by_hash_or_404(edge_hash)
+    edge = manager.get_edge_by_hash_or_404(edge_hash)
 
     comment = request.args.get('comment')
 
@@ -1697,6 +1689,11 @@ def store_comment(edge_hash):
 ####################################
 
 def jsonify_nodes(nodes):
+    """Convert a list of nodes to json.
+
+    :param list[Node] nodes:
+    :return: A jsonified response to send
+    """
     return jsonify([
         node.to_json(include_id=True)
         for node in nodes
@@ -1768,16 +1765,15 @@ def get_node_by_hash(node_hash):
         required: true
         type: string
     """
-    node = get_node_by_hash_or_404(node_hash)
-
+    node = manager.get_node_by_hash_or_404(node_hash)
     rv = get_enriched_node_json(node)
-
     return jsonify(rv)
 
 
 @api_blueprint.route('/api/node/<node_hash>/drop')
+@roles_required('admin')
 def drop_node(node_hash):
-    """Drops a node
+    """Drop a node.
 
     :param node_hash: A PyBEL node hash
 
@@ -1791,7 +1787,7 @@ def drop_node(node_hash):
         required: true
         type: string
     """
-    node = get_node_by_hash_or_404(node_hash)
+    node = manager.get_node_by_hash_or_404(node_hash)
     manager.session.delete(node)
     manager.session.commit()
     return next_or_jsonify('Dropped node: {}'.format(node.bel))
@@ -1969,7 +1965,9 @@ def get_pipeline_function_names():
 @api_blueprint.route('/api/query/<int:query_id>/drop')
 @login_required
 def drop_query_by_id(query_id):
-    """Drops a query
+    """Drop a query.
+
+    User must own the query to drop it.
 
     ---
     tags:
@@ -1981,7 +1979,10 @@ def drop_query_by_id(query_id):
         required: true
         type: integer
     """
-    query = safe_get_query(query_id)
+    query = manager.get_query_or_404(query_id)
+
+    if not current_user.is_admin or query.user != current_user:
+        abort(403)
 
     manager.session.delete(query)
     manager.session.commit()
@@ -1992,7 +1993,9 @@ def drop_query_by_id(query_id):
 @api_blueprint.route('/api/query/drop')
 @roles_required('admin')
 def drop_queries():
-    """Drops all queries
+    """Drop all queries.
+
+    User must be admin to drop all queries.
 
     ---
     tags:
@@ -2007,7 +2010,7 @@ def drop_queries():
 @api_blueprint.route('/api/user/<int:user_id>/drop-queries/')
 @login_required
 def drop_user_queries(user_id):
-    """Drops all queries associated with the user
+    """Drop all queries associated with the user.
 
     ---
     tags:
@@ -2021,10 +2024,9 @@ def drop_user_queries(user_id):
         type: integer
     """
     if not (current_user.is_admin or user_id == current_user.id):
-        abort(403, 'Unauthorized user')
+        abort(403)
 
-    manager.session.query(models.Query).filter(models.Query.user_id == user_id).delete()
-    manager.session.commit()
+    manager.drop_queries_by_user_id(user_id)
 
     return next_or_jsonify('Dropped all queries associated with {}'.format(current_user))
 
@@ -2353,7 +2355,7 @@ def add_user_role(user, role):
 @api_blueprint.route('/api/user/<user>/remove_role/<role>')
 @roles_required('admin')
 def drop_user_role(user, role):
-    """Removes a role from a user
+    """Remove a role from a user.
 
     ---
     tags:
@@ -2367,7 +2369,7 @@ def drop_user_role(user, role):
 @api_blueprint.route('/api/user/<int:user_id>/drop')
 @roles_required('admin')
 def drop_user(user_id):
-    """Drops a user
+    """Drop a user.
 
     ---
     tags:
@@ -2379,10 +2381,7 @@ def drop_user(user_id):
         required: true
         type: integer
     """
-    user = manager.session.query(User).get(user_id)
-
-    if user is None:
-        abort(404)
+    user = manager.get_user_or_404(user_id)
 
     manager.user_datastore.delete_user(user)
     manager.user_datastore.commit()
@@ -2399,14 +2398,6 @@ def drop_user(user_id):
 ####################################
 # Analysis
 ####################################
-
-def get_experiment_or_404(experiment_id):
-    experiment = manager.session.query(Experiment).get(experiment_id)
-
-    if experiment is None:
-        abort(404, 'Experiment {} does not exist'.format(experiment_id))
-
-    return experiment
 
 
 @api_blueprint.route('/api/query/<int:query_id>/analysis/<int:experiment_id>/')
@@ -2430,7 +2421,7 @@ def get_analysis(query_id, experiment_id):
         type: integer
     """
     graph = get_graph_from_request(query_id)
-    experiment = get_experiment_or_404(experiment_id)
+    experiment = manager.get_experiment_or_404(experiment_id)
 
     data = pickle.loads(experiment.result)
     results = [
@@ -2466,7 +2457,7 @@ def get_analysis_median(query_id, experiment_id):
         type: integer
     """
     graph = get_graph_from_request(query_id)
-    experiment = get_experiment_or_404(experiment_id)
+    experiment = manager.get_experiment_or_404(experiment_id)
 
     data = pickle.loads(experiment.result)
     # position 3 is the 'median' score
@@ -2495,9 +2486,9 @@ def drop_experiment_by_id(experiment_id):
         type: integer
         format: int32
     """
-    experiment = get_experiment_or_404(experiment_id)
+    experiment = manager.get_experiment_or_404(experiment_id)
 
-    if not current_user.is_admin and (current_user != experiment.user):
+    if not current_user.has_experiment_rights(experiment):
         abort(403)
 
     manager.session.delete(experiment)
@@ -2531,9 +2522,9 @@ def download_analysis(experiment_id):
       200:
         description: A CSV document with the results in it
     """
-    experiment = get_experiment_or_404(experiment_id)
+    experiment = manager.get_experiment_or_404(experiment_id)
 
-    if not current_user.is_admin and (current_user != experiment.user):
+    if not current_user.has_experiment_rights(experiment):
         abort(403)
 
     si = StringIO()

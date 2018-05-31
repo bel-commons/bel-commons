@@ -43,7 +43,7 @@ def view_omics():
 @experiment_blueprint.route('/omic/<int:omic_id>')
 def view_omic(omic_id):
     """Views an Omic model"""
-    omic = manager.session.query(Omic).get(omic_id)
+    omic = manager.get_omic_by_id(omic_id)
 
     data = omic.get_source_dict()
     values = list(data.values())
@@ -105,7 +105,7 @@ def view_experiment(experiment_id):
 
     :param int experiment_id: The identifier of the experiment whose results to view
     """
-    experiment = safe_get_experiment(manager, experiment_id, current_user)
+    experiment = manager.safe_get_experiment(experiment_id, current_user)
 
     data = experiment.get_data_list()
 
@@ -255,51 +255,6 @@ def get_dataframe_from_experiments(experiments, *, normalize=None, clusters=None
     return df
 
 
-def user_has_rights_to_experiment(user, experiment):
-    """
-
-    :param User user:
-    :param Experiment experiment:
-    :return:
-    """
-    return (
-            experiment.public or
-            user.is_admin or
-            user == experiment.user
-    )
-
-def safe_get_experiment(manager, experiment_id, user):
-    """Safely gets an experiment
-
-    :param pybel.manager.Manager manager:
-    :param int experiment_id:
-    :param User user:
-    :rtype: Experiment
-    :raises: werkzeug.exceptions.HTTPException
-    """
-    experiment = manager.session.query(Experiment).get(experiment_id)
-
-    if experiment is None:
-        abort(404, 'Experiment {} does not exist'.format(experiment_id))
-
-    if not user_has_rights_to_experiment(user, experiment):
-        abort(403, 'You do not have rights to drop this experiment')
-
-    return experiment
-
-
-def safe_get_experiments(experiment_ids):
-    """Safely gets a list of experiments
-
-    :param list[int] experiment_ids:
-    :rtype: list[Experiment]
-    """
-    return [
-        safe_get_experiment(manager, experiment_id, current_user)
-        for experiment_id in experiment_ids
-    ]
-
-
 @experiment_blueprint.route('/comparison/<list:experiment_ids>.tsv')
 def download_experiment_comparison(experiment_ids):
     """Different data analyses on same query
@@ -313,7 +268,7 @@ def download_experiment_comparison(experiment_ids):
     normalize = request.args.get('normalize', type=int, default=0)
     seed = request.args.get('seed', type=int)
 
-    experiments = safe_get_experiments(experiment_ids)
+    experiments = manager.safe_get_experiments(experiment_ids, current_user)
     df = get_dataframe_from_experiments(experiments, normalize=normalize, clusters=clusters, seed=seed)
 
     si = StringIO()
@@ -340,7 +295,7 @@ def view_experiment_comparison(experiment_ids):
 
     :param list[int] experiment_ids: The identifiers of experiments to compare
     """
-    experiments = safe_get_experiments(experiment_ids)
+    experiments = manager.safe_get_experiments(experiment_ids, current_user)
     return render_experiment_comparison(experiment_ids, experiments)
 
 

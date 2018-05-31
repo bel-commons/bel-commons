@@ -78,40 +78,17 @@
             <div class="panel panel-default">
                 <div class="panel-body">
                     <div class="btn-group">
-                        <a href="{{ url_for('ui.view_networks') }}" class="btn btn-default btn-sm">
-                            Network <span class="badge">{{ number_networks }}</span>
-                        </a>
-                        <a href="{{ url_for('ui.view_edges') }}" class="btn btn-default btn-sm">
-                            Edge <span class="badge">{{ number_edges }}</span>
-                        </a>
-                        <a href="{{ url_for('ui.view_nodes') }}" class="btn btn-default btn-sm">
-                            Node <span class="badge">{{ number_nodes }}</span>
-                        </a>
-                        <a href="{{ url_for('ui.view_citations') }}" class="btn btn-default btn-sm">
-                            Citation <span class="badge">{{ number_citations }}</span>
-                        </a>
-                        <a href="{{ url_for('ui.view_evidences') }}" class="btn btn-default btn-sm">
-                            Evidence <span class="badge">{{ number_evidences }}</span>
-                        </a>
-                        <a href="{{ url_for('ui.view_queries') }}" class="btn btn-default btn-sm" role="button">
-                            Query <span class="badge">{{ number_queries }}</span>
-                        </a>
-                        <a href="{{ url_for('analysis.view_omics') }}" class="btn btn-default btn-sm" role="button">
-                            Omic <span class="badge">{{ number_omics }}</span>
-                        </a>
-                        <a href="{{ url_for('analysis.view_experiments') }}" class="btn btn-default btn-sm"
-                           role="button">
-                            Experiment <span class="badge">{{ number_experiments }}</span>
-                        </a>
-                        <span class="btn btn-default btn-sm">
-                        Assembly <span class="badge">{{ number_assemblies }}</span>
-                    </span>
-                        <span class="btn btn-default btn-sm" role="button">
-                        Vote <span class="badge">{{ number_votes }}</span>
-                    </span>
-                        <span class="btn btn-default btn-sm" role="button">
-                        Comment <span class="badge">{{ number_comments }}</span>
-                    </span>
+                        {% for histogram_name, histogram_count, histogram_url in database_histogram %}
+                            {% if histogram_url is not none %}
+                                <a href="{{ histogram_url }}" class="btn btn-default btn-sm">
+                                    {{ histogram_name }} <span class="badge">{{ histogram_count }}</span>
+                                </a>
+                            {% else %}
+                                <span class="btn btn-default btn-sm">
+                                {{ histogram_name }} <span class="badge">{{ histogram_count }}</span>
+                                </span>
+                            {% endif %}
+                        {% endfor %}
                     </div>
                 </div>
             </div>
