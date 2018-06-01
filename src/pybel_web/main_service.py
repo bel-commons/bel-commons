@@ -5,10 +5,11 @@
 import datetime
 import logging
 import sys
-import time
 from collections import defaultdict
+from operator import itemgetter
 
 import flask
+import time
 from flask import Blueprint, Markup, abort, current_app, flash, redirect, render_template, request, url_for
 from flask_security import current_user, login_required, roles_required
 
@@ -18,8 +19,7 @@ from pybel.utils import get_version as get_pybel_version
 from pybel_tools.biogrammar.double_edges import summarize_competeness
 from pybel_tools.grouping import get_subgraphs_by_annotation
 from pybel_tools.mutation import (
-    collapse_by_central_dogma_to_genes, remove_associations, remove_isolated_nodes,
-    remove_pathologies,
+    collapse_by_central_dogma_to_genes, remove_associations, remove_isolated_nodes, remove_pathologies,
 )
 from pybel_tools.pipeline import MissingPipelineFunctionError, Pipeline, no_arguments_map
 from pybel_tools.query import QueryMissingNetworksError
@@ -27,15 +27,13 @@ from pybel_tools.summary import info_json
 from pybel_tools.utils import get_version as get_pybel_tools_version
 from . import models
 from .constants import *
-from .content import safe_get_network, safe_get_query
 from .external_managers import *
 from .external_managers import manager_dict
 from .manager_utils import next_or_jsonify
-from .models import Assembly, EdgeComment, EdgeVote, Experiment, Omic, Project, Query, User
+from .models import Assembly, EdgeComment, EdgeVote, Experiment, Omic, Query, User
+from .proxies import manager
 from .utils import (
-    calculate_overlap_dict, get_graph_from_request, get_networks_with_permission, get_or_create_vote,
-    get_version as get_bel_commons_version, manager, query_form_to_dict, query_from_network_with_current_user,
-    render_network_summary_safe, safe_get_node,
+    calculate_overlap_dict, get_version as get_bel_commons_version,
 )
 
 log = logging.getLogger(__name__)
@@ -52,7 +50,7 @@ extract_useful_subgraph = Pipeline.from_functions([
 ])
 
 
-def format_big_number(n):
+def _format_big_number(n):
     if n > 1000000:
         return '{}M'.format(int(round(n / 1000000)))
     elif n > 1000:
@@ -70,9 +68,11 @@ def redirect_to_view_explorer_query(query):
     return redirect(url_for('ui.view_explorer_query', query_id=query.id))
 
 
-@ui_blueprint.route('/', methods=['GET', 'POST'])
+@ui_blueprint.route('/')
 def home():
-    """The home page has links to the main components of the application:
+    """Return the home page.
+
+    The home page has links to the main components of the application:
 
     1. BEL Parser
     2. Curation Tools
@@ -80,40 +80,36 @@ def home():
     4. Network/Edge/NanoPub Store Navigator
     5. Query Builder
     """
-    number_networks = manager.count_networks()
-    number_edges = manager.count_edges()
-    number_nodes = manager.count_nodes()
-    number_assemblies = manager.session.query(Assembly).count()
-    number_queries = manager.session.query(Query).count()
-    number_omics = manager.session.query(Omic).count()
-    number_experiments = manager.session.query(Experiment).count()
-    number_citations = manager.session.query(Citation).count()
-    number_evidences = manager.session.query(Evidence).count()
-    number_votes = manager.session.query(EdgeVote).count()
-    number_comments = manager.session.query(EdgeComment).count()
 
     if not current_user.is_authenticated or not current_user.is_admin:
         flash(preprint_message, category='warning')
 
+    hist = None
+    if current_user.is_authenticated and current_user.is_admin:
+        hist = [
+            ('Network', manager.count_networks(), url_for('.view_networks')),
+            ('Edge', manager.count_edges(), url_for('.view_edges')),
+            ('Node', manager.count_nodes(), url_for('.view_nodes')),
+            ('Query', manager.session.query(Query).count(), url_for('.view_queries')),
+            ('Omic', manager.session.query(Omic).count(), url_for('analysis.view_omics')),
+            ('Experiment', manager.session.query(Experiment).count(), url_for('analysis.view_experiments')),
+            ('Citation', manager.session.query(Citation).count(), url_for('.view_citations')),
+            ('Evidence', manager.session.query(Evidence).count(), url_for('.view_evidences')),
+            ('Assembly', manager.session.query(Assembly).count(), None),
+            ('Vote', manager.session.query(EdgeVote).count(), None),
+            ('Comment', manager.session.query(EdgeComment).count(), None),
+        ]
+        hist = sorted(hist, key=itemgetter(1), reverse=True)
+
     return render_template(
         'index.html',
         current_user=current_user,
-        number_networks=format_big_number(number_networks),
-        number_edges=format_big_number(number_edges),
-        number_nodes=format_big_number(number_nodes),
-        number_assemblies=format_big_number(number_assemblies),
-        number_queries=format_big_number(number_queries),
-        number_omics=number_omics,
-        number_experiments=number_experiments,
-        number_citations=format_big_number(number_citations),
-        number_evidences=format_big_number(number_evidences),
-        number_votes=format_big_number(number_votes),
-        number_comments=format_big_number(number_comments),
+        database_histogram=hist,
         manager=manager,
     )
 
 
-@ui_blueprint.route('/network', methods=['GET', 'POST'])
+@ui_blueprint.route('/network')
 def view_networks():
     """The networks page has two components: a search box, and a list of networks. Each network is shown by name,
     with the version number and the first author. Each has several actions:
@@ -129,7 +125,7 @@ def view_networks():
        - Drop
        - Make public/private
     """
-    networks = get_networks_with_permission(manager)
+    networks = manager.get_networks_with_permission(current_user)
 
     return render_template(
         'network/networks.html',
@@ -187,7 +183,7 @@ def view_node(node_hash):
 
     :param str node_hash: The node's hash
     """
-    node = safe_get_node(manager, node_hash)
+    node = manager.get_node_by_hash_or_404(node_hash)
 
     return render_template(
         'node/node.html',
@@ -237,8 +233,8 @@ def view_relations(source_hash, target_hash):
     :param str source_hash: The source node's hash
     :param str target_hash: The target node's hash
     """
-    source = safe_get_node(manager, source_hash)
-    target = safe_get_node(manager, target_hash)
+    source = manager.get_node_by_hash_or_404(source_hash)
+    target = manager.get_node_by_hash_or_404(target_hash)
 
     edges = list(manager.query_edges(source=source, target=target))
 
@@ -282,20 +278,20 @@ def view_edge(edge_hash):
 @ui_blueprint.route('/edge/<edge_hash>/vote/<int:vote>')
 @login_required
 def vote_edge(edge_hash, vote):
-    """Renders a page viewing a single edges
+    """Render a page viewing a single edges.
 
     :param str edge_hash: The identifier of the edge to display
     :param int vote:
     """
     edge = manager.get_edge_by_hash(edge_hash)
-    get_or_create_vote(manager, edge, current_user, agreed=(vote != 0))
+    manager.get_or_create_vote(edge, current_user, agreed=(vote != 0))
     return redirect(url_for('.view_edge', edge_hash=edge_hash))
 
 
 @ui_blueprint.route('/query/<int:query_id>')
 def view_query(query_id):
     """Renders a single query page"""
-    query = safe_get_query(query_id)
+    query = manager.safe_get_query(user=current_user, query_id=query_id)
     return render_template('query/query.html', query=query, manager=manager, current_user=current_user)
 
 
@@ -359,8 +355,8 @@ def view_explore_network(network_id):
 
     :param int network_id: The identifier of the network to explore
     """
-    network = safe_get_network(network_id)
-    query = query_from_network_with_current_user(current_user, network)
+    network = manager.safe_get_network(user=current_user, network_id=network_id)
+    query = manager.query_from_network_with_current_user(user=current_user, network=network)
     return redirect_to_view_explorer_query(query)
 
 
@@ -370,7 +366,7 @@ def view_explorer_query(query_id):
 
     :param int query_id: The identifier of the query
     """
-    query = safe_get_query(query_id)
+    query = manager.safe_get_query(user=current_user, query_id=query_id)
     return render_template('network/explorer.html', query=query, explorer_toolbox=get_explorer_toolbox())
 
 
@@ -380,7 +376,7 @@ def view_explorer_node(node_hash):
 
     :param str node_hash: The hash of the node
     """
-    node = safe_get_node(manager, node_hash)
+    node = manager.get_node_by_hash_or_404(node_hash)
 
     query_original = Query.from_networks(networks=node.networks, user=current_user)
     manager.session.flush()
@@ -399,9 +395,9 @@ def view_explore_project(project_id):
 
     :param int project_id: The identifier of the project to explore
     """
-    project = manager.session.query(Project).get(project_id)
+    project = manager.get_project_by_id(project_id)
 
-    query = Query.from_networks(project.networks, user=current_user)
+    query = Query.from_project(project, user=current_user)
     query.assembly.name = '{} query of {}'.format(time.asctime(), project.name)
 
     manager.session.add(query)
@@ -413,7 +409,7 @@ def view_explore_project(project_id):
 @ui_blueprint.route('/query/build', methods=['GET', 'POST'])
 def view_query_builder():
     """Renders the query builder page"""
-    networks = get_networks_with_permission(manager)
+    networks = manager.get_networks_with_permission(current_user)
 
     return render_template(
         'query/query_builder.html',
@@ -426,7 +422,7 @@ def view_query_builder():
 @ui_blueprint.route('/query/compile', methods=['POST'])
 def get_pipeline():
     """Executes a pipeline"""
-    d = query_form_to_dict(request.form)
+    d = manager.query_form_to_dict(request.form)
 
     try:
         q = pybel_tools.query.Query.from_json(d)
@@ -552,7 +548,7 @@ def view_network(network_id):
 
     :param int network_id: The identifier of the network to summarize
     """
-    return render_network_summary_safe(manager, network_id, template='network/network.html')
+    return manager.render_network_summary_safe(network_id, user=current_user, template='network/network.html')
 
 
 @ui_blueprint.route('/network/<int:network_id>/compilation')
@@ -561,7 +557,8 @@ def view_summarize_compilation(network_id):
 
     :param int network_id: The identifier of the network to summarize
     """
-    return render_network_summary_safe(manager, network_id, template='network/summarize_compilation.html')
+    return manager.render_network_summary_safe(network_id, user=current_user,
+                                               template='network/summarize_compilation.html')
 
 
 @ui_blueprint.route('/network/<int:network_id>/warnings')
@@ -570,7 +567,8 @@ def view_summarize_warnings(network_id):
 
     :param int network_id: The identifier of the network to summarize
     """
-    return render_network_summary_safe(manager, network_id, template='network/summarize_warnings.html')
+    return manager.render_network_summary_safe(network_id, user=current_user,
+                                               template='network/summarize_warnings.html')
 
 
 @ui_blueprint.route('/network/<int:network_id>/biogrammar')
@@ -579,7 +577,8 @@ def view_summarize_biogrammar(network_id):
 
     :param int network_id: The identifier of the network to summarize
     """
-    return render_network_summary_safe(manager, network_id, template='network/summarize_biogrammar.html')
+    return manager.render_network_summary_safe(network_id, user=current_user,
+                                               template='network/summarize_biogrammar.html')
 
 
 @ui_blueprint.route('/network/<int:network_id>/completeness')
@@ -599,8 +598,8 @@ def view_summarize_completeness(network_id):
 
 @ui_blueprint.route('/network/<int:network_id>/stratified/<annotation>')
 def view_summarize_stratified(network_id, annotation):
-    """Show stratified summary of graph's subgraphs by annotation"""
-    network = safe_get_network(network_id)
+    """Show stratified summary of graph's subgraphs by annotation."""
+    network = manager.safe_get_network(user=current_user, network_id=network_id)
     graph = network.as_bel()
     graphs = get_subgraphs_by_annotation(graph, annotation)
 
@@ -669,8 +668,8 @@ def view_network_comparison(network_1_id, network_2_id):
     :param int network_1_id: Identifier for the first network
     :param int network_2_id: Identifier for the second network
     """
-    network_1 = safe_get_network(network_1_id)
-    network_2 = safe_get_network(network_2_id)
+    network_1 = manager.safe_get_network(user=current_user, network_id=network_1_id)
+    network_2 = manager.safe_get_network(user=current_user, network_id=network_2_id)
 
     data = calculate_overlap_dict(
         g1=network_1.as_bel(),
@@ -693,8 +692,8 @@ def view_query_comparison(query_1_id, query_2_id):
     :param int query_1_id: The identifier of the first query
     :param int query_2_id: The identifier of the second query
     """
-    query_1_result = get_graph_from_request(query_1_id)
-    query_2_result = get_graph_from_request(query_2_id)
+    query_1_result = manager.safe_get_graph_from_query_id(user=current_user, query_id=query_1_id)
+    query_2_result = manager.safe_get_graph_from_query_id(user=current_user, query_id=query_2_id)
 
     data = calculate_overlap_dict(
         g1=query_1_result,
@@ -759,7 +758,7 @@ def view_user(user_id):
 
     :param int user_id: The identifier of the user to summarize
     """
-    user = manager.session.query(User).get(user_id)
+    user = manager.get_user_by_id(user_id)
     return render_user(user)
 
 

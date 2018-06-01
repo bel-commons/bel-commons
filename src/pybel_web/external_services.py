@@ -11,8 +11,8 @@ from pybel import from_url
 from pybel.struct import union
 from pybel_tools.selection import get_subgraph_by_annotations
 from pybel_tools.summary import get_annotation_values
+from .proxies import manager
 from .send_utils import serve_network
-from .utils import manager
 
 log = logging.getLogger(__name__)
 

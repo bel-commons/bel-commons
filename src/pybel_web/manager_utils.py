@@ -3,14 +3,13 @@
 """Utilities in this package should not depend on anything (especially proxies), and should instead take arguments
 corresponding to objects"""
 
-import datetime
 import itertools as itt
 import logging
-import time
 from collections import Counter
 
 import networkx as nx
 import pandas as pd
+import time
 from flask import abort, flash, jsonify, redirect, request
 
 import pybel
@@ -38,7 +37,7 @@ from pybel_tools.summary import (
     get_unused_list_annotation_values,
 )
 from .constants import LABEL
-from .models import Experiment, Omic, Report, User
+from .models import Omic, Report, User
 
 log = logging.getLogger(__name__)
 
@@ -355,46 +354,10 @@ def run_cmpa_helper(manager, experiment, use_tqdm=False):
     graph = experiment.query.run(manager)
 
     log.info('calculating scores for query [id=%d] with omic %s with %d permutations', experiment.query.id,
-             experiment.omic,
-             experiment.permutations)
+             experiment.omic, experiment.permutations)
     scores = calculate_scores(graph, data, experiment.permutations, use_tqdm=use_tqdm)
     experiment.dump_results(scores)
-
     experiment.time = time.time() - t
-
-
-def user_has_rights_to_experiment(user, experiment):
-    """
-
-    :param User user:
-    :param Experiment experiment:
-    :return:
-    """
-    return (
-            experiment.public or
-            user.is_admin or
-            user == experiment.user
-    )
-
-
-def safe_get_experiment(manager, experiment_id, user):
-    """Safely gets an experiment
-
-    :param pybel.manager.Manager manager:
-    :param int experiment_id:
-    :param User user:
-    :rtype: Experiment
-    :raises: werkzeug.exceptions.HTTPException
-    """
-    experiment = manager.session.query(Experiment).get(experiment_id)
-
-    if experiment is None:
-        abort(404, 'Experiment {} does not exist'.format(experiment_id))
-
-    if not user_has_rights_to_experiment(user, experiment):
-        abort(403, 'You do not have rights to drop this experiment')
-
-    return experiment
 
 
 def next_or_jsonify(message, *args, status=200, category='message', **kwargs):
@@ -418,124 +381,3 @@ def next_or_jsonify(message, *args, status=200, category='message', **kwargs):
         message=message,
         **kwargs
     )
-
-
-def iter_public_networks(manager):
-    """Lists the recent networks from :meth:`pybel.manager.Manager.list_recent_networks()` that have been made public
-
-    :param pybel.manager.Manager manager: A manager
-    :rtype: iter[Network]
-    """
-    return (
-        network
-        for network in manager.list_recent_networks()
-        if network.report and network.report.public
-    )
-
-
-def _iterate_networks_for_user(user, manager, user_datastore=None):
-    """
-    :param models.User user: A user
-    :param pybel.manager.Manager manager: A manager
-    :param Optional[flask_security.datastore.UserDatastore user_datastore]: A user datastore
-    :rtype: iter[Network]
-    """
-    yield from iter_public_networks(manager)
-    yield from user.get_owned_networks()
-    yield from user.get_shared_networks()
-    yield from user.get_project_networks()
-
-    if user_datastore is not None and user.is_scai:
-        role = user_datastore.find_or_create_role(name='scai')
-        for user in role.users:
-            yield from user.get_owned_networks()
-
-
-def networks_with_permission_iter_helper(user, manager, user_datastore):
-    """Gets an iterator over all the networks from all the sources
-
-    :param models.User user: A user
-    :param pybel.manager.Manager manager: A manager
-    :param flask_security.datastore.UserDatastore user_datastore: A user datastore
-    :rtype: iter[Network]
-    """
-    if not user.is_authenticated:
-        log.debug('getting only public networks for anonymous user')
-        yield from iter_public_networks(manager)
-
-    elif user.is_admin:
-        log.debug('getting all recent networks for admin')
-        yield from manager.list_recent_networks()
-
-    else:
-        log.debug('getting all networks for user [%s]', user)
-        yield from _iterate_networks_for_user(user, manager, user_datastore)
-
-
-def get_network_ids_with_permission_helper(user, manager, user_datastore):
-    """Gets the set of networks ids tagged as public or uploaded by the current user
-
-    :param User user: A user
-    :param pybel.manager.Manager manager: A manager
-    :param flask_security.SQLAlchemyUserDatastore user_datastore: A Flask-Security user datastore
-    :return: A list of all networks tagged as public or uploaded by the current user
-    :rtype: set[int]
-    """
-    networks = networks_with_permission_iter_helper(user, manager, user_datastore)
-    return {network.id for network in networks}
-
-
-def user_missing_query_rights_abstract(manager, user_datastore, user, query):
-    """Checks if the user does not have the rights to run the given query
-
-    :param pybel.manager.Manager manager: A manager
-    :param flask_security.SQLAlchemyUserDatastore user_datastore: A Flask-Security user datastore
-    :param models.User user: A user object
-    :param models.Query query: A query object
-    :rtype: bool
-    """
-    log.debug('checking if user [%s] has rights to query [id=%s]', user, query.id)
-
-    if user.is_authenticated and user.is_admin:
-        log.debug('[%s] is admin and can access query [id=%d]', user, query.id)
-        return False  # admins are never missing the rights to a query
-
-    permissive_network_ids = get_network_ids_with_permission_helper(user=user, manager=manager,
-                                                                    user_datastore=user_datastore)
-
-    return any(
-        network.id not in permissive_network_ids
-        for network in query.assembly.networks
-    )
-
-
-def register_users_from_manifest(user_datastore, manifest):
-    """Register the users and roles in a manifest.
-
-    :param flask_security.SQLAlchemyUserDatastore user_datastore: A Flask-Security user datastore
-    :param dict manifest: A manifest dictionary, which contains two keys: ``roles`` and ``users``. The ``roles``
-     key corresponds to a list of dictionaries containing ``name`` and ``description`` entries. The ``users`` key
-     corresponds to a list of dictionaries containing ``email``, ``password``, and ``name`` entries
-     as well as a optional ``roles`` entry with a corresponding list relational to the names in the ``roles``
-     entry in the manifest.
-    """
-    for role in manifest['roles']:
-        user_datastore.find_or_create_role(**role)
-
-    for user_manifest in manifest['users']:
-        email = user_manifest['email']
-        user = user_datastore.find_user(email=email)
-        if user is None:
-            log.info('creating user: %s', email)
-            user = user_datastore.create_user(
-                confirmed_at=datetime.datetime.now(),
-                email=email,
-                password=user_manifest['password'],
-                name=user_manifest['name']
-            )
-
-        for role_name in user_manifest.get('roles', []):
-            if user_datastore.add_role_to_user(user, role_name):
-                log.info('registered %s as %s', user, role_name)
-
-    user_datastore.commit()

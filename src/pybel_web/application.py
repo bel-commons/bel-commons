@@ -13,9 +13,9 @@ The following resources were really helpful in learning about this:
 import logging
 import os
 import socket
-import time
 from getpass import getuser
 
+import time
 from flasgger import Swagger
 from flask import (
     Flask,
@@ -27,7 +27,6 @@ from flask_sqlalchemy import SQLAlchemy
 from werkzeug.routing import BaseConverter
 
 from pybel.constants import PYBEL_CONNECTION, config as pybel_config, get_cache_connection
-from pybel.manager import BaseManager, Manager
 from .application_utils import FlaskPyBEL
 from .celery_utils import create_celery
 from .constants import (
@@ -36,6 +35,7 @@ from .constants import (
     SWAGGER_CONFIG, VERSION,
 )
 from .forms import ExtendedRegisterForm
+from .manager import WebManager
 
 log = logging.getLogger(__name__)
 
@@ -107,7 +107,7 @@ def _send_startup_mail(app):
 
 
 def create_application(config_object_name=None, examples=None, **kwargs):
-    """Builds a Flask app
+    """Build a Flask app.
     
     1. Loads default config
     2. Updates with kwargs
@@ -143,7 +143,6 @@ def create_application(config_object_name=None, examples=None, **kwargs):
     app.url_map.converters['list'] = ListConverter
 
     # Initialize extensions
-    db = SQLAlchemy(app=app)
     bootstrap.init_app(app)
     swagger.init_app(app)
 
@@ -160,17 +159,12 @@ def create_application(config_object_name=None, examples=None, **kwargs):
         mail.init_app(app)
         _send_startup_mail(app)
 
-    class WebBaseManager(BaseManager):
-        def __init__(self, *args, **kwargs):
-            self.session = db.session
-            self.engine = db.engine
-
-    class WebManager(Manager, WebBaseManager):
-        """Killin it with the MRO"""
-
-    manager = WebManager()
-
+    # Build a manager directly from the engine/session interface
+    # TODO consider making PyBELFlask a subclass of SQLAlchemy?
+    db = SQLAlchemy(app=app)
+    manager = WebManager(engine=db.engine, session=db.session)
     pbx.init_app(app, manager, examples=examples)
+
     security.init_app(app, pbx.user_datastore, register_form=ExtendedRegisterForm)
 
     return app

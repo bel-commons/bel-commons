@@ -202,6 +202,7 @@ class Experiment(Base):
         """
         return self.omic.pretty_source_name
 
+
 class Report(Base):
     """Stores information about compilation and uploading events"""
     __tablename__ = REPORT_TABLE_NAME
@@ -547,6 +548,26 @@ class User(Base, UserMixin):
         """
         return self.votes.filter(EdgeVote.edge == edge).one_or_none()
 
+    def has_project_rights(self, project):
+        """Returns if the given user has rights to the given project
+
+        :type project: Project
+        :rtype: bool
+        """
+        return self.is_authenticated and (self.is_admin or project.has_user(self))
+
+    def has_experiment_rights(self, experiment):
+        """Check if the user has rights to this experiment.
+
+        :param Experiment experiment:
+        :rtype: bool
+        """
+        return (
+                experiment.public or
+                self.is_admin or
+                self == experiment.user
+        )
+
     def __str__(self):
         return self.email
 
@@ -572,12 +593,12 @@ class User(Base, UserMixin):
         return result
 
     def owns_network(self, network):
-        """Returns if this user owns this network
+        """Check if the user uploaded the network.
 
         :type network: Network
         :rtype: bool
         """
-        return self.is_admin or (self.is_authenticated and network.report and self == network.report.user)
+        return self.is_authenticated and (self.is_admin or (network.report and self == network.report.user))
 
 
 assembly_network = Table(
@@ -634,21 +655,6 @@ class Assembly(Base):
         :rtype: Assembly
         """
         return Assembly.from_networks(networks=[network], user=user)
-
-    @staticmethod
-    def from_query(manager, query, user=None):
-        """Builds an assembly from a query
-
-        :param manager: A PyBEL cache manager
-        :param pybel_tools.query.Query query: A query object
-        :param Optional[User] user: The user who created this assembly
-        :rtype: Assembly
-        """
-        networks = [
-            manager.session.query(Network).get(network_id)
-            for network_id in query.network_ids
-        ]
-        return Assembly.from_networks(networks, user=user)
 
     def to_json(self):
         """
@@ -836,6 +842,16 @@ class Query(Base):
         return query
 
     @staticmethod
+    def from_project(project, user=None):
+        """Build a query from a project.
+
+        :param Project project:
+        :param Optional[User] user: The user who owns this query
+        :rtype: Query
+        """
+        return Query.from_networks(project.networks, user=user)
+
+    @staticmethod
     def from_network(network, user=None):
         """Builds a query from a network
 
@@ -847,24 +863,22 @@ class Query(Base):
 
     @staticmethod
     def from_query(manager, query, user=None):
-        """Builds a orm query from a pybel-tools query
+        """Build an ORM query from a PyBEL-Tools query.
 
         :param pybel.manager.Manager manager: A database manager
         :param pybel_tools.query.Query query: A query
         :param Optional[User] user: A user
         :rtype: Query
         """
-        assembly = Assembly.from_query(manager, query, user=user)
-
-        result = Query.from_assembly(assembly, user=user)
+        networks = manager.get_networks_by_ids(query.network_ids)
+        result = Query.from_networks(networks, user=user)
         result.seeding = query.seeding_to_jsons()
         result.pipeline = query.pipeline.to_jsons()
-
         return result
 
     @staticmethod
     def from_query_args(manager, network_ids, user=None, seed_list=None, pipeline=None):
-        """Builds a orm query from the arguments for a pybel-tools query
+        """Build an ORM model from the arguments for a PyBEL-Tools query.
 
         :param pybel.manager.Manager manager:
         :param list[int] network_ids: A list of network identifiers
@@ -877,7 +891,7 @@ class Query(Base):
         return Query.from_query(manager, q, user=user)
 
     def build_appended(self, name, *args, **kwargs):
-        """Builds a new query with the given function appended to the current query's pipeline
+        """Build a new query with the given function appended to the current query's pipeline.
 
         :param str name: Append function name
         :param args: Append function positional arguments
@@ -895,7 +909,7 @@ class Query(Base):
         )
 
     def add_seed_neighbors(self, nodes):
-        """Adds a seed by neighbors. Returns a new query
+        """Add a seed by neighbors and return a new query.
 
         :param list[pybel.manager.models.Node] nodes: A list of nodes
         :rtype: Query
@@ -912,7 +926,8 @@ class Query(Base):
 
 
 class EdgeVote(Base):
-    """Describes the vote on an edge"""
+    """Describes the vote on an edge."""
+
     __tablename__ = VOTE_TABLE_NAME
 
     id = Column(Integer, primary_key=True)
@@ -932,7 +947,7 @@ class EdgeVote(Base):
     )
 
     def to_json(self):
-        """Converts this vote to JSON
+        """Convert this vote to JSON.
 
         :rtype: dict
         """
@@ -953,7 +968,8 @@ Index('edgeUserIndex', EdgeVote.edge_id, EdgeVote.user_id)
 
 
 class EdgeComment(Base):
-    """Describes the comments on an edge"""
+    """Describes the comments on an edge."""
+
     __tablename__ = COMMENT_TABLE_NAME
 
     id = Column(Integer, primary_key=True)
@@ -987,7 +1003,8 @@ class EdgeComment(Base):
 
 
 class NetworkOverlap(Base):
-    """Describes the network overlap based on nodes"""
+    """Describes the network overlap based on nodes."""
+
     __tablename__ = OVERLAP_TABLE_NAME
 
     left_id = Column(Integer, ForeignKey('{}.id'.format(NETWORK_TABLE_NAME)), primary_key=True)

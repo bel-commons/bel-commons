@@ -1,26 +1,26 @@
 # -*- coding: utf-8 -*-
 
+"""Local proxies for PyBEL Web."""
+
 from flask import current_app
 from werkzeug.local import LocalProxy
 
-from .application_utils import get_manager, get_user_datastore
+from .application_utils import FlaskPyBEL
+
+__all__ = [
+    'manager',
+]
 
 
 def get_manager_proxy():
-    """Gets a proxy for the manager in the current app
+    """Get a proxy for the manager in the current app.
 
-    :rtype: pybel.manager.Manager
+    Why make this its own function? It tricks type assertion tools into knowing that the LocalProxy object represents
+    a WebManager.
+
+    :rtype: pybel_web.manager.WebManager
     """
-    return LocalProxy(lambda: get_manager(current_app))
-
-
-def get_userdatastore_proxy():
-    """Gets a proxy for the user datastore from the current app
-
-    :rtype: flask_security.DatabaseService
-    """
-    return LocalProxy(lambda: get_user_datastore(current_app))
+    return LocalProxy(lambda: FlaskPyBEL.get_state(current_app).manager)
 
 
 manager = get_manager_proxy()
-user_datastore = get_userdatastore_proxy()

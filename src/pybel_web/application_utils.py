@@ -1,40 +1,32 @@
 # -*- coding: utf-8 -*-
 
-import datetime
 import json
 import logging
 import os
 
 from flask import g, render_template
 from flask_admin import Admin
-from flask_security import SQLAlchemyUserDatastore
 from raven.contrib.flask import Sentry
 
 from pybel.constants import config
 from pybel.examples import *
 from pybel.manager.models import (
-    Annotation, AnnotationEntry, Author, Citation, Edge, Evidence, Namespace,
-    NamespaceEntry, Network, Node,
+    Annotation, AnnotationEntry, Author, Citation, Edge, Evidence, Namespace, NamespaceEntry, Network, Node,
 )
 from pybel.struct.mutation import infer_child_relations
 from pybel_tools.mutation import add_canonical_names, expand_node_neighborhood, expand_nodes_neighborhoods
 from pybel_tools.pipeline import in_place_mutator, uni_in_place_mutator
 from .admin_model_views import (
-    AnnotationView, CitationView, EdgeView, EvidenceView, ExperimentView, ModelView,
-    NamespaceView, NetworkView, NodeView, QueryView, ReportView, UserView, build_project_view,
+    AnnotationView, CitationView, EdgeView, EvidenceView, ExperimentView, ModelView, NamespaceView, NetworkView,
+    NodeView, QueryView, ReportView, UserView, build_project_view,
 )
-from .manager_utils import register_users_from_manifest
 from .constants import PYBEL_WEB_EXAMPLES, PYBEL_WEB_USER_MANIFEST, SENTRY_DSN
 from .manager_utils import insert_graph
-from .models import (
-    Assembly, Base, EdgeComment, EdgeVote, Experiment, NetworkOverlap, Query, Report, Role, User,
-)
+from .models import Assembly, Base, EdgeComment, EdgeVote, Experiment, NetworkOverlap, Query, Report, Role, User
 from .resources.users import default_users_path
 
 __all__ = [
     'FlaskPyBEL',
-    'get_user_datastore',
-    'get_manager',
 ]
 
 log = logging.getLogger(__name__)
@@ -55,7 +47,6 @@ class FlaskPyBEL(object):
         """
         self.app = app
         self.manager = manager
-        self.user_datastore = None
 
         if app is not None and manager is not None:
             self.init_app(app, manager, examples=examples)
@@ -63,10 +54,25 @@ class FlaskPyBEL(object):
         self.sentry_dsn = None
         self.sentry = None
 
+    @property
+    def user_datastore(self):
+        """
+        :rtype: flask_security.SQLAlchemyUserDatastore
+        """
+        return self.manager.user_datastore
+
+    @property
+    def session(self):
+        return self.manager.session
+
+    @property
+    def engine(self):
+        return self.manager.engine
+
     def init_app(self, app, manager, examples=None, register_mutators=True, register_users=True, register_admin=True):
         """
         :param flask.Flask app: A Flask app
-        :param pybel.manager.Manager manager: A thing that has an engine and a session object
+        :param pybel_web.manager.WebManager manager: A thing that has an engine and a session object
         :param bool examples: Should the example subgraphs be loaded on startup? Warning: takes a while.
         """
         self.app = app
@@ -77,15 +83,13 @@ class FlaskPyBEL(object):
             log.info('initiating Sentry: %s', self.sentry_dsn)
             self.sentry = Sentry(app, dsn=self.sentry_dsn)
 
-        Base.metadata.bind = self.manager.engine
-        Base.query = self.manager.session.query_property()
+        Base.metadata.bind = self.engine
+        Base.query = self.session.query_property()
 
         try:
             Base.metadata.create_all()
         except Exception:
             log.exception('Failed to create all')
-
-        self.user_datastore = SQLAlchemyUserDatastore(self.manager, User, Role)
 
         self.app.extensions = getattr(app, 'extensions', {})
         self.app.extensions[self.APP_NAME] = self
@@ -169,7 +173,7 @@ class FlaskPyBEL(object):
 
         @in_place_mutator
         def delete_node_by_id(graph, node_hash):
-            """Removes a node by identifier
+            """Remove a node by identifier.
 
             :param pybel.BELGraph graph: A BEL graph
             :param str node_hash: A node hash
@@ -179,7 +183,7 @@ class FlaskPyBEL(object):
 
         @in_place_mutator
         def propagate_node_by_hash(graph, node_hash):
-            """Infers relationships from a node
+            """Infer relationships from a node.
 
             :param pybel.BELGraph graph: A BEL graph
             :param str node_hash: A node hash
@@ -188,49 +192,48 @@ class FlaskPyBEL(object):
             infer_child_relations(graph, node)
 
     def _register_users(self):
-        """Adds the default users to the user datastore."""
+        """Add the default users to the user datastore."""
         if os.path.exists(default_users_path):
             with open(default_users_path) as f:
                 default_users_manifest = json.load(f)
-            register_users_from_manifest(self.user_datastore, default_users_manifest)
+            self.manager.register_users_from_manifest(default_users_manifest)
 
         pybel_config_user_manifest = config.get(PYBEL_WEB_USER_MANIFEST)
         if pybel_config_user_manifest is not None:
-            register_users_from_manifest(self.user_datastore, pybel_config_user_manifest)
+            self.manager.register_users_from_manifest(pybel_config_user_manifest)
 
     def _build_admin_service(self):
-        """Adds Flask-Admin database front-end
+        """Add a Flask-Admin database front-end.
 
         :rtype: flask_admin.Admin
         """
         admin = Admin(self.app, template_mode='bootstrap3')
-        manager = self.manager
 
-        admin.add_view(UserView(User, manager.session))
-        admin.add_view(ModelView(Role, manager.session))
-        admin.add_view(NamespaceView(Namespace, manager.session))
-        admin.add_view(ModelView(NamespaceEntry, manager.session))
-        admin.add_view(AnnotationView(Annotation, manager.session))
-        admin.add_view(ModelView(AnnotationEntry, manager.session))
-        admin.add_view(NetworkView(Network, manager.session))
-        admin.add_view(NodeView(Node, manager.session))
-        admin.add_view(EdgeView(Edge, manager.session))
-        admin.add_view(CitationView(Citation, manager.session))
-        admin.add_view(EvidenceView(Evidence, manager.session))
-        admin.add_view(ModelView(Author, manager.session))
-        admin.add_view(ReportView(Report, manager.session))
-        admin.add_view(ExperimentView(Experiment, manager.session))
-        admin.add_view(QueryView(Query, manager.session))
-        admin.add_view(ModelView(Assembly, manager.session))
-        admin.add_view(ModelView(EdgeVote, manager.session))
-        admin.add_view(ModelView(EdgeComment, manager.session))
-        admin.add_view(ModelView(NetworkOverlap, manager.session))
-        admin.add_view(build_project_view(self.manager, self.user_datastore))
+        admin.add_view(UserView(User, self.session))
+        admin.add_view(ModelView(Role, self.session))
+        admin.add_view(NamespaceView(Namespace, self.session))
+        admin.add_view(ModelView(NamespaceEntry, self.session))
+        admin.add_view(AnnotationView(Annotation, self.session))
+        admin.add_view(ModelView(AnnotationEntry, self.session))
+        admin.add_view(NetworkView(Network, self.session))
+        admin.add_view(NodeView(Node, self.session))
+        admin.add_view(EdgeView(Edge, self.session))
+        admin.add_view(CitationView(Citation, self.session))
+        admin.add_view(EvidenceView(Evidence, self.session))
+        admin.add_view(ModelView(Author, self.session))
+        admin.add_view(ReportView(Report, self.session))
+        admin.add_view(ExperimentView(Experiment, self.session))
+        admin.add_view(QueryView(Query, self.session))
+        admin.add_view(ModelView(Assembly, self.session))
+        admin.add_view(ModelView(EdgeVote, self.session))
+        admin.add_view(ModelView(EdgeComment, self.session))
+        admin.add_view(ModelView(NetworkOverlap, self.session))
+        admin.add_view(build_project_view(self.manager))
 
         return admin
 
     def _ensure_graphs(self):
-        """Adds example BEL graphs that should always be present"""
+        """Add  example BEL graphs that should always be present."""
         for graph in (sialic_acid_graph, egf_graph, statin_graph, homology_graph):
             if not self.manager.has_name_version(graph.name, graph.version):
                 add_canonical_names(graph)
@@ -255,21 +258,3 @@ class FlaskPyBEL(object):
             raise ValueError('{} has not been instantiated'.format(cls.__name__))
 
         return app.extensions[cls.APP_NAME]
-
-
-def get_user_datastore(app):
-    """Gets the User Data Store from a Flask app
-
-    :param flask.Flask app: A Flask app
-    :rtype: flask_security.DatabaseService
-    """
-    return FlaskPyBEL.get_state(app).user_datastore
-
-
-def get_manager(app):
-    """Gets the cache manger from a Flask app
-
-    :param flask.Flask app: A Flask app
-    :rtype: pybel.manager.Manager
-    """
-    return FlaskPyBEL.get_state(app).manager

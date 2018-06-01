@@ -2,7 +2,6 @@
 
 import json
 import logging
-import time
 from collections import defaultdict
 from io import StringIO
 from operator import itemgetter
@@ -11,16 +10,16 @@ import flask
 import numpy as np
 import pandas as pd
 import pandas.errors
+import time
 from flask import Blueprint, abort, current_app, make_response, redirect, render_template, request, url_for
 from flask_security import current_user, login_required, roles_required
 from sklearn.cluster import KMeans
 
 from pybel_tools.analysis.ucmpa import RESULT_LABELS
-from .content import safe_get_query
 from .forms import DifferentialGeneExpressionForm
-from .manager_utils import create_omic, next_or_jsonify, safe_get_experiment
+from .manager_utils import create_omic, next_or_jsonify
 from .models import Experiment, Omic, Query
-from .utils import get_network_ids_with_permission_helper, manager, user_datastore
+from .proxies import manager
 
 log = logging.getLogger(__name__)
 
@@ -43,7 +42,7 @@ def view_omics():
 @experiment_blueprint.route('/omic/<int:omic_id>')
 def view_omic(omic_id):
     """Views an Omic model"""
-    omic = manager.session.query(Omic).get(omic_id)
+    omic = manager.get_omic_by_id(omic_id)
 
     data = omic.get_source_dict()
     values = list(data.values())
@@ -105,7 +104,7 @@ def view_experiment(experiment_id):
 
     :param int experiment_id: The identifier of the experiment whose results to view
     """
-    experiment = safe_get_experiment(manager, experiment_id, current_user)
+    experiment = manager.safe_get_experiment(user=current_user, experiment_id=experiment_id)
 
     data = experiment.get_data_list()
 
@@ -135,7 +134,7 @@ def view_query_uploader(query_id):
 
     :param int query_id: The identifier of the query to upload against
     """
-    query = safe_get_query(query_id)
+    query = manager.safe_get_query(user=current_user, query_id=query_id)
 
     form = DifferentialGeneExpressionForm()
 
@@ -194,15 +193,12 @@ def view_query_uploader(query_id):
 @experiment_blueprint.route('/from_network/<int:network_id>/upload/', methods=('GET', 'POST'))
 @login_required
 def view_network_uploader(network_id):
-    """Views the results of analysis on a given graph
+    """View the uploader for a network.
 
     :param int network_id: The identifier ot the network to query against
     """
-    if network_id not in get_network_ids_with_permission_helper(user=current_user, manager=manager,
-                                                                user_datastore=user_datastore):
-        abort(403, 'Insufficient rights for network {}'.format(network_id))
-
-    query = Query.from_query_args(manager, [network_id], current_user)
+    network = manager.safe_get_network(user=current_user, network_id=network_id)
+    query = Query.from_network(network=network, user=current_user)
     manager.session.add(query)
     manager.session.commit()
 
@@ -256,18 +252,6 @@ def get_dataframe_from_experiments(experiments, *, normalize=None, clusters=None
     return df
 
 
-def safe_get_experiments(experiment_ids):
-    """Safely gets a list of experiments
-
-    :param list[int] experiment_ids:
-    :rtype: list[Experiment]
-    """
-    return [
-        safe_get_experiment(manager, experiment_id, current_user)
-        for experiment_id in experiment_ids
-    ]
-
-
 @experiment_blueprint.route('/comparison/<list:experiment_ids>.tsv')
 def download_experiment_comparison(experiment_ids):
     """Different data analyses on same query
@@ -281,7 +265,7 @@ def download_experiment_comparison(experiment_ids):
     normalize = request.args.get('normalize', type=int, default=0)
     seed = request.args.get('seed', type=int)
 
-    experiments = safe_get_experiments(experiment_ids)
+    experiments = manager.safe_get_experiments(experiment_ids, current_user)
     df = get_dataframe_from_experiments(experiments, normalize=normalize, clusters=clusters, seed=seed)
 
     si = StringIO()
@@ -291,7 +275,14 @@ def download_experiment_comparison(experiment_ids):
     return output
 
 
-def render_experiment_comparison(experiment_ids, experiments):
+def render_experiment_comparison(experiments):
+    """
+    :param list[pybel_web.models.Experiment] experiments:
+    :return:
+    """
+    experiments = list(experiments)
+    experiment_ids = [experiment.id for experiment in experiments]
+
     return render_template(
         'experiment/experiments_compare.html',
         experiment_ids=experiment_ids,
@@ -308,8 +299,8 @@ def view_experiment_comparison(experiment_ids):
 
     :param list[int] experiment_ids: The identifiers of experiments to compare
     """
-    experiments = safe_get_experiments(experiment_ids)
-    return render_experiment_comparison(experiment_ids, experiments)
+    experiments = manager.safe_get_experiments(user=current_user, experiment_ids=experiment_ids)
+    return render_experiment_comparison(experiments)
 
 
 @experiment_blueprint.route('/comparison/query/<int:query_id>')
@@ -318,6 +309,5 @@ def view_query_experiment_comparison(query_id):
 
     :param int query_id: The query identifier whose related experiments to compare
     """
-    query = safe_get_query(query_id)
-    experiment_ids = [experiment.id for experiment in query.experiments]
-    return render_experiment_comparison(experiment_ids, query.experiments)
+    query = manager.safe_get_query(user=current_user, query_id=query_id)
+    return render_experiment_comparison(query.experiments)

@@ -12,13 +12,14 @@ import networkx as nx
 import time
 from flask import Blueprint, abort, current_app, flash, jsonify, make_response, redirect, request
 from flask_security import current_user, login_required, roles_required
+from functools import lru_cache
 from sqlalchemy import func, or_
 
 import pybel
 from pybel.constants import NAME, NAMESPACE, NAMESPACE_DOMAIN_OTHER
 from pybel.manager.citation_utils import enrich_citation_model, get_pubmed_citation_response
 from pybel.manager.models import (
-    Annotation, AnnotationEntry, Author, Citation, Edge, Evidence, Namespace, Network, Node, network_edge,
+    Annotation, AnnotationEntry, Author, Citation, Edge, Namespace, Network, Node, network_edge,
 )
 from pybel.resources.definitions import write_annotation, write_namespace
 from pybel.struct import union
@@ -35,20 +36,13 @@ from pybel_tools.summary import (
 )
 from . import models
 from .constants import *
-from .content import (
-    get_edge_by_hash_or_404, get_network_or_404, get_node_by_hash_or_404, get_query_or_404,
-    safe_get_network, safe_get_project, safe_get_query, user_missing_query_rights,
-)
 from .external_managers import *
 from .main_service import BLACK_LIST, PATHS_METHOD, UNDIRECTED
 from .manager_utils import fill_out_report, make_graph_summary, next_or_jsonify
-from .models import EdgeComment, Experiment, Project, Report, User
+from .models import EdgeComment, Project, Report, User
+from .proxies import manager
 from .send_utils import serve_network, to_json_custom
-from .utils import (
-    get_graph_from_request, get_network_ids_with_permission_helper, get_node_overlaps,
-    get_or_create_vote, get_query_ancestor_id, get_recent_reports, get_tree_from_query, help_get_edge_entry, manager,
-    user_datastore,
-)
+from .utils import get_tree_annotations
 
 log = logging.getLogger(__name__)
 
@@ -89,10 +83,7 @@ def drop_namespace_by_id(namespace_id):
         required: true
         type: integer
     """
-    namespace = manager.session.query(Namespace).get(namespace_id)
-
-    if namespace is None:
-        abort(404)
+    namespace = manager.get_namespace_by_id_or_404(namespace_id)
 
     log.info('dropping namespace %s', namespace_id)
 
@@ -166,7 +157,7 @@ def download_undefined_namespace(network_id, namespace):
         required: true
         type: string
     """
-    graph = safe_get_graph(network_id)
+    graph = manager.safe_get_graph(user=current_user, network_id=network_id)
     names = get_undefined_namespace_names(graph, namespace)  # TODO put into report data
     return _build_namespace_helper(graph, namespace, names)
 
@@ -191,14 +182,14 @@ def download_missing_namespace(network_id, namespace):
         required: true
         type: string
     """
-    graph = safe_get_graph(network_id)
+    graph = manager.safe_get_graph(user=current_user, network_id=network_id)
     names = get_incorrect_names_by_namespace(graph, namespace)  # TODO put into report data
     return _build_namespace_helper(graph, namespace, names)
 
 
 @api_blueprint.route('/api/network/<int:network_id>/builder/namespace/naked')
 def download_naked_names(network_id):
-    """Outputs a namespace built from the naked names in the given namespace
+    """Output a namespace built from the naked names in the given namespace.
 
     ---
     tags:
@@ -210,13 +201,13 @@ def download_naked_names(network_id):
         required: true
         type: integer
     """
-    graph = safe_get_graph(network_id)
+    graph = manager.safe_get_graph(user=current_user, network_id=network_id)
     names = get_naked_names(graph)  # TODO put into report data
     return _build_namespace_helper(graph, 'NAKED', names)
 
 
 def _build_annotation_helper(graph, annotation, values):
-    """Builds an annoation document helper
+    """Build an annotation document helper.
 
     :param pybel.BELGraph graph:
     :param str annotation:
@@ -260,7 +251,7 @@ def download_list_annotation(network_id, annotation):
         required: true
         type: string
     """
-    graph = safe_get_graph(network_id)
+    graph = manager.safe_get_graph(user=current_user, network_id=network_id)
 
     if annotation not in graph.annotation_list:
         abort(400, 'Graph does not contain this list annotation')
@@ -307,10 +298,7 @@ def drop_annotation_by_id(annotation_id):
         required: true
         type: integer
     """
-    annotation = manager.session.query(Annotation).get(annotation_id)
-
-    if annotation is None:
-        abort(404)
+    annotation = manager.get_annotation_or_404(annotation_id)
 
     manager.session.delete(annotation)
     manager.session.commit()
@@ -389,7 +377,7 @@ def get_network_metadata(network_id):
       200:
         description: The metadata describing the network
     """
-    network = get_network_or_404(network_id)
+    network = manager.get_network_or_404(network_id)
 
     return jsonify(**network.to_json(include_id=True))
 
@@ -562,7 +550,7 @@ def drop_network_helper(network_id):
     :type network_id: int
     :rtype: flask.Response
     """
-    network = safe_get_network(network_id)
+    network = manager.strict_get_network(user=current_user, network_id=network_id)
 
     log.info('dropping network %s', network_id)
 
@@ -683,7 +671,7 @@ def claim_network(network_id):
         required: true
         type: integer
     """
-    network = get_network_or_404(network_id)
+    network = manager.get_network_or_404(network_id)
 
     t = time.time()
 
@@ -767,13 +755,7 @@ def export_network(network_id, serve_format):
               - csv
               - gsea
     """
-    network_ids = get_network_ids_with_permission_helper(current_user, manager, user_datastore)
-
-    if network_id not in network_ids:
-        abort(403, 'You do not have permission to download the selected network')
-
-    graph = manager.get_graph_by_id(network_id)
-
+    graph = manager.safe_get_graph(user=current_user, network_id=network_id)
     return serve_network(graph, serve_format)
 
 
@@ -822,10 +804,10 @@ def update_network_status(network_id, public):
     :param int network_id: 
     :param bool public:
     """
-    network = get_network_or_404(network_id)
+    network = manager.get_network_or_404(network_id)
 
     if network.report is None:
-        abort(400)
+        abort(400, 'Network does not have an associated report.')
 
     if not current_user.is_admin or current_user.id != network.report.user_id:
         abort(403, 'You do not have permission to modify that network')
@@ -883,9 +865,25 @@ def make_network_private(network_id):
 @api_blueprint.route('/api/query/<int:query_id>.json')
 def download_query_json(query_id):
     """Downloads the query"""
-    query = safe_get_query(query_id)
+    query = manager.safe_get_query(user=current_user, query_id=query_id)
     query_json = query.to_json()
     return jsonify(query_json)
+
+
+@lru_cache(maxsize=256)
+def get_tree_from_query(query_id):
+    """Gets the tree json for a given network
+
+    :param int query_id: The database query identifier
+    :rtype: Optional[dict]
+    :raises: werkzeug.exceptions.HTTPException
+    """
+    graph = manager.safe_get_graph_from_query_id(user=current_user, query_id=query_id)
+
+    if graph is None:
+        return
+
+    return get_tree_annotations(graph)
 
 
 @api_blueprint.route('/api/query/<int:query_id>/tree/')
@@ -932,12 +930,12 @@ def check_query_rights(query_id):
         required: true
         type: integer
     """
-    query = get_query_or_404(query_id)
+    query = manager.get_query_or_404(query_id)
 
     return jsonify({
         'status': 200,
         'query_id': query_id,
-        'allowed': (not user_missing_query_rights(current_user, query))
+        'allowed': (not manager.user_missing_query_rights(current_user, query))
     })
 
 
@@ -972,7 +970,7 @@ def download_network(query_id, serve_format):
               - csv
               - gsea
     """
-    graph = get_graph_from_request(query_id)
+    graph = manager.safe_get_graph_from_query_id(user=current_user, query_id=query_id)
     return serve_network(graph, serve_format=serve_format)
 
 
@@ -990,7 +988,7 @@ def get_network(query_id):
         required: true
         type: integer
     """
-    graph = get_graph_from_request(query_id)
+    graph = manager.safe_get_graph_from_query_id(user=current_user, query_id=query_id)
     payload = to_json_custom(graph)
     return jsonify(payload)
 
@@ -1050,7 +1048,7 @@ def get_paths(query_id, source_id, target_id):
         raise IndexError('target is missing from cache: %s', target_id)
     target = target.to_tuple()
 
-    network = get_graph_from_request(query_id)
+    network = manager.safe_get_graph_from_query_id(user=current_user, query_id=query_id)
     method = request.args.get(PATHS_METHOD)
     undirected = UNDIRECTED in request.args
     remove_pathologies = PATHOLOGY_FILTER in request.args
@@ -1112,7 +1110,7 @@ def get_random_paths(query_id):
         required: true
         type: integer
     """
-    graph = get_graph_from_request(query_id)
+    graph = manager.safe_get_graph_from_query_id(user=current_user, query_id=query_id)
 
     path = get_random_path(graph)
 
@@ -1142,7 +1140,7 @@ def get_nodes_by_betweenness_centrality(query_id, node_number):
         required: true
         type: integer
     """
-    graph = get_graph_from_request(query_id)
+    graph = manager.safe_get_graph_from_query_id(user=current_user, query_id=query_id)
 
     if node_number > graph.number_of_nodes():
         node_number = graph.number_of_nodes()
@@ -1169,7 +1167,7 @@ def get_all_pmids(query_id):
         required: true
         type: integer
     """
-    graph = get_graph_from_request(query_id)
+    graph = manager.safe_get_graph_from_query_id(user=current_user, query_id=query_id)
     return jsonify(sorted(get_pubmed_identifiers(graph)))
 
 
@@ -1192,7 +1190,7 @@ def get_query_summary(query_id):
     }
 
     t = time.time()
-    network = get_graph_from_request(query_id)
+    network = manager.safe_get_graph_from_query_id(user=current_user, query_id=query_id)
     rv['time'] = time.time() - t
 
     if network is not None and network.node:
@@ -1207,7 +1205,6 @@ def get_query_summary(query_id):
 ####################################
 # CITATIONS
 ####################################
-
 
 @api_blueprint.route('/api/citation')
 def list_citations():
@@ -1225,19 +1222,26 @@ def list_citations():
 
 @api_blueprint.route('/api/citation/<int:citation_id>')
 def get_citation_by_id(citation_id):
-    citation = manager.session.query(Citation).get(citation_id)
-    if citation is None:
-        abort(404)
+    """Get a citation by its identifier.
+
+    ---
+    tags:
+        - citation
+    parameters:
+      - name: citation_id
+        in: path
+        description: The citation's database identifier
+        required: true
+        type: integer
+    """
+    citation = manager.get_citation_by_id_or_404(citation_id)
     return jsonify(citation.to_json(include_id=True))
 
 
 @api_blueprint.route('/api/citation/pubmed/<pubmed_identifier>/enrich')
 def enrich_citation_by_id(pubmed_identifier):
     """Enrich a citation in the database"""
-    citation = manager.get_citation_by_pmid(pubmed_identifier=pubmed_identifier)
-
-    if citation is None:
-        abort(404)
+    citation = manager.get_citation_by_pmid_or_404(pubmed_identifier)
 
     if citation.name and citation.title:
         return jsonify({
@@ -1268,7 +1272,7 @@ def enrich_citation_by_id(pubmed_identifier):
 
 @api_blueprint.route('/api/author/<name>/citations')
 def list_citations_by_author(name):
-    """Gets all citations from the given author
+    """Get all citations from the given author.
 
     ---
     tags:
@@ -1280,10 +1284,7 @@ def list_citations_by_author(name):
         required: true
         type: string
     """
-    author = manager.get_author_by_name(name)
-
-    if author is None:
-        return abort(404)
+    author = manager.get_author_by_name_or_404(name)
 
     return jsonify([
         citation.to_json(include_id=True)
@@ -1293,7 +1294,7 @@ def list_citations_by_author(name):
 
 @api_blueprint.route('/api/citation/pubmed/suggestion/')
 def get_pubmed_suggestion():
-    """Return list of PubMed identifiers matching the integer keyword
+    """Return list of PubMed identifiers matching the integer keyword.
 
     ---
     tags:
@@ -1324,9 +1325,7 @@ def get_pubmed_suggestion():
 @api_blueprint.route('/api/evidence/<int:evidence_id>')
 def get_evidence_by_id(evidence_id):
     """Gets an evidence by its identifier as JSON"""
-    evidence = manager.session.query(Evidence).get(evidence_id)
-    if evidence is None:
-        abort(404)
+    evidence = manager.get_evidence_by_id_or_404(evidence_id)
     return jsonify(evidence.to_json(include_id=True))
 
 
@@ -1336,7 +1335,7 @@ def get_evidence_by_id(evidence_id):
 
 @api_blueprint.route('/api/query/<int:query_id>/authors')
 def get_all_authors(query_id):
-    """Gets a list of all authors in the graph produced by the given URL parameters
+    """Get a list of all authors in the graph produced by the given URL parameters.
 
     ---
     tags:
@@ -1348,13 +1347,13 @@ def get_all_authors(query_id):
         required: true
         type: integer
     """
-    graph = get_graph_from_request(query_id)
+    graph = manager.safe_get_graph_from_query_id(user=current_user, query_id=query_id)
     return jsonify(sorted(get_authors(graph)))
 
 
 @api_blueprint.route('/api/author/suggestion/')
 def suggest_authors():
-    """Return list of authors matching the author keyword
+    """Return list of authors matching the author keyword.
 
     ---
     tags:
@@ -1389,7 +1388,7 @@ def suggest_authors():
 @api_blueprint.route('/api/edge')
 @roles_required('admin')
 def get_edges():
-    """Gets all edges
+    """Get all edges.
 
     ---
     tags:
@@ -1418,7 +1417,7 @@ def get_edges():
         bq = bq.offset(offset)
 
     return jsonify([
-        help_get_edge_entry(manager, edge)
+        manager.help_get_edge_entry(edge, current_user)
         for edge in bq.all()
     ])
 
@@ -1426,7 +1425,7 @@ def get_edges():
 @api_blueprint.route('/api/edge/drop')
 @roles_required('admin')
 def drop_edges():
-    """Drops all edges
+    """Drop all edges.
 
     ---
     tags:
@@ -1566,8 +1565,8 @@ def get_edge_by_hash(edge_hash):
         required: true
         type: string
     """
-    edge = get_edge_by_hash_or_404(edge_hash)
-    return jsonify(help_get_edge_entry(manager, edge))
+    edge = manager.get_edge_by_hash_or_404(edge_hash)
+    return jsonify(manager.help_get_edge_entry(edge, current_user))
 
 
 @api_blueprint.route('/api/edge/hash_starts/<edge_hash>')
@@ -1608,8 +1607,8 @@ def store_up_vote(edge_hash):
         required: true
         type: string
     """
-    edge = get_edge_by_hash_or_404(edge_hash)
-    vote = get_or_create_vote(manager, edge, current_user, True)
+    edge = manager.get_edge_by_hash_or_404(edge_hash)
+    vote = manager.get_or_create_vote(edge, current_user, agreed=True)
     return jsonify(vote.to_json())
 
 
@@ -1628,8 +1627,8 @@ def store_down_vote(edge_hash):
         required: true
         type: string
     """
-    edge = get_edge_by_hash_or_404(edge_hash)
-    vote = get_or_create_vote(manager, edge, current_user, False)
+    edge = manager.get_edge_by_hash_or_404(edge_hash)
+    vote = manager.get_or_create_vote(edge, current_user, agreed=False)
     return jsonify(vote.to_json())
 
 
@@ -1648,7 +1647,7 @@ def store_comment(edge_hash):
         required: true
         type: string
     """
-    edge = get_edge_by_hash_or_404(edge_hash)
+    edge = manager.get_edge_by_hash_or_404(edge_hash)
 
     comment = request.args.get('comment')
 
@@ -1672,6 +1671,11 @@ def store_comment(edge_hash):
 ####################################
 
 def jsonify_nodes(nodes):
+    """Convert a list of nodes to json.
+
+    :param list[Node] nodes:
+    :return: A jsonified response to send
+    """
     return jsonify([
         node.to_json(include_id=True)
         for node in nodes
@@ -1743,16 +1747,15 @@ def get_node_by_hash(node_hash):
         required: true
         type: string
     """
-    node = get_node_by_hash_or_404(node_hash)
-
+    node = manager.get_node_by_hash_or_404(node_hash)
     rv = get_enriched_node_json(node)
-
     return jsonify(rv)
 
 
 @api_blueprint.route('/api/node/<node_hash>/drop')
+@roles_required('admin')
 def drop_node(node_hash):
-    """Drops a node
+    """Drop a node.
 
     :param node_hash: A PyBEL node hash
 
@@ -1766,7 +1769,7 @@ def drop_node(node_hash):
         required: true
         type: string
     """
-    node = get_node_by_hash_or_404(node_hash)
+    node = manager.get_node_by_hash_or_404(node_hash)
     manager.session.delete(node)
     manager.session.commit()
     return next_or_jsonify('Dropped node: {}'.format(node.bel))
@@ -1944,7 +1947,9 @@ def get_pipeline_function_names():
 @api_blueprint.route('/api/query/<int:query_id>/drop')
 @login_required
 def drop_query_by_id(query_id):
-    """Drops a query
+    """Drop a query.
+
+    User must own the query to drop it.
 
     ---
     tags:
@@ -1956,7 +1961,10 @@ def drop_query_by_id(query_id):
         required: true
         type: integer
     """
-    query = safe_get_query(query_id)
+    query = manager.get_query_or_404(query_id)
+
+    if not current_user.is_admin or query.user != current_user:
+        abort(403)
 
     manager.session.delete(query)
     manager.session.commit()
@@ -1967,7 +1975,9 @@ def drop_query_by_id(query_id):
 @api_blueprint.route('/api/query/drop')
 @roles_required('admin')
 def drop_queries():
-    """Drops all queries
+    """Drop all queries.
+
+    User must be admin to drop all queries.
 
     ---
     tags:
@@ -1982,7 +1992,7 @@ def drop_queries():
 @api_blueprint.route('/api/user/<int:user_id>/drop-queries/')
 @login_required
 def drop_user_queries(user_id):
-    """Drops all queries associated with the user
+    """Drop all queries associated with the user.
 
     ---
     tags:
@@ -1996,10 +2006,9 @@ def drop_user_queries(user_id):
         type: integer
     """
     if not (current_user.is_admin or user_id == current_user.id):
-        abort(403, 'Unauthorized user')
+        abort(403)
 
-    manager.session.query(models.Query).filter(models.Query.user_id == user_id).delete()
-    manager.session.commit()
+    manager.drop_queries_by_user_id(user_id)
 
     return next_or_jsonify('Dropped all queries associated with {}'.format(current_user))
 
@@ -2018,7 +2027,7 @@ def query_to_network(query_id):
         required: true
         type: integer
     """
-    query = safe_get_query(query_id)
+    query = manager.safe_get_query(user=current_user, query_id=query_id)
 
     rv = query.to_json(include_id=True)
 
@@ -2048,7 +2057,7 @@ def get_query_parent(query_id):
         required: true
         type: integer
     """
-    query = safe_get_query(query_id)
+    query = manager.safe_get_query(user=current_user, query_id=query_id)
 
     if not query.parent:
         return jsonify({
@@ -2076,9 +2085,9 @@ def get_query_oldest_ancestry(query_id):
         required: true
         type: integer
     """
-    query = safe_get_query(query_id)
+    query = manager.safe_get_query(user=current_user, query_id=query_id)
 
-    ancestor_id = get_query_ancestor_id(query.id)
+    ancestor_id = manager.get_query_ancestor_id(query.id)
 
     return jsonify({
         'id': ancestor_id,
@@ -2093,7 +2102,7 @@ def add_pipeline_entry(query_id, name, *args, **kwargs):
     :param str name: The name of the function to append
     :rtype: flask.Response
     """
-    query = safe_get_query(query_id)
+    query = manager.safe_get_query(user=current_user, query_id=query_id)
 
     if not function_is_registered(name):
         abort(403, 'Invalid function name')
@@ -2131,7 +2140,7 @@ def get_query_from_isolated_node(query_id, node_hash):
         required: true
         type: string
     """
-    parent_query = safe_get_query(query_id)
+    parent_query = manager.safe_get_query(user=current_user, query_id=query_id)
     node = manager.get_node_tuple_by_hash(node_hash)
 
     child_query = Query(network_ids=[
@@ -2320,29 +2329,29 @@ def add_user_role(user, role):
     tags:
         - user
     """
-    user_datastore.add_role_to_user(user, role)
-    user_datastore.commit()
+    manager.user_datastore.add_role_to_user(user, role)
+    manager.user_datastore.commit()
     return jsonify({'status': 200})
 
 
 @api_blueprint.route('/api/user/<user>/remove_role/<role>')
 @roles_required('admin')
 def drop_user_role(user, role):
-    """Removes a role from a user
+    """Remove a role from a user.
 
     ---
     tags:
         - user
     """
-    user_datastore.remove_role_from_user(user, role)
-    user_datastore.commit()
+    manager.user_datastore.remove_role_from_user(user, role)
+    manager.user_datastore.commit()
     return jsonify({'status': 200})
 
 
 @api_blueprint.route('/api/user/<int:user_id>/drop')
 @roles_required('admin')
 def drop_user(user_id):
-    """Drops a user
+    """Drop a user.
 
     ---
     tags:
@@ -2354,13 +2363,10 @@ def drop_user(user_id):
         required: true
         type: integer
     """
-    user = manager.session.query(User).get(user_id)
+    user = manager.get_user_or_404(user_id)
 
-    if user is None:
-        abort(404)
-
-    user_datastore.delete_user(user)
-    user_datastore.commit()
+    manager.user_datastore.delete_user(user)
+    manager.user_datastore.commit()
 
     return next_or_jsonify(
         'Dropped user: {}'.format(user),
@@ -2374,14 +2380,6 @@ def drop_user(user_id):
 ####################################
 # Analysis
 ####################################
-
-def get_experiment_or_404(experiment_id):
-    experiment = manager.session.query(Experiment).get(experiment_id)
-
-    if experiment is None:
-        abort(404, 'Experiment {} does not exist'.format(experiment_id))
-
-    return experiment
 
 
 @api_blueprint.route('/api/query/<int:query_id>/analysis/<int:experiment_id>/')
@@ -2404,8 +2402,8 @@ def get_analysis(query_id, experiment_id):
         required: true
         type: integer
     """
-    graph = get_graph_from_request(query_id)
-    experiment = get_experiment_or_404(experiment_id)
+    graph = manager.safe_get_graph_from_query_id(user=current_user, query_id=query_id)
+    experiment = manager.get_experiment_or_404(experiment_id)
 
     data = pickle.loads(experiment.result)
     results = [
@@ -2440,8 +2438,8 @@ def get_analysis_median(query_id, experiment_id):
         required: true
         type: integer
     """
-    graph = get_graph_from_request(query_id)
-    experiment = get_experiment_or_404(experiment_id)
+    graph = manager.safe_get_graph_from_query_id(user=current_user, query_id=query_id)
+    experiment = manager.get_experiment_or_404(experiment_id)
 
     data = pickle.loads(experiment.result)
     # position 3 is the 'median' score
@@ -2470,9 +2468,9 @@ def drop_experiment_by_id(experiment_id):
         type: integer
         format: int32
     """
-    experiment = get_experiment_or_404(experiment_id)
+    experiment = manager.get_experiment_or_404(experiment_id)
 
-    if not current_user.is_admin and (current_user != experiment.user):
+    if not current_user.has_experiment_rights(experiment):
         abort(403)
 
     manager.session.delete(experiment)
@@ -2506,9 +2504,9 @@ def download_analysis(experiment_id):
       200:
         description: A CSV document with the results in it
     """
-    experiment = get_experiment_or_404(experiment_id)
+    experiment = manager.get_experiment_or_404(experiment_id)
 
-    if not current_user.is_admin and (current_user != experiment.user):
+    if not current_user.has_experiment_rights(experiment):
         abort(403)
 
     si = StringIO()
@@ -2554,8 +2552,8 @@ def grant_network_to_project(network_id, project_id):
         type: integer
         format: int32
     """
-    network = safe_get_network(network_id)
-    project = safe_get_project(project_id)
+    network = manager.strict_get_network(user=current_user, network_id=network_id)
+    project = manager.safe_get_project(user=current_user, project_id=project_id)
     project.networks.append(network)
 
     manager.session.commit()
@@ -2591,24 +2589,13 @@ def grant_network_to_user(network_id, user_id):
         type: integer
         format: int32
     """
-    network = safe_get_network(network_id)
-
-    user = manager.session.query(User).get(user_id)
+    network = manager.strict_get_network(user=current_user, network_id=network_id)
+    user = manager.get_user_by_id(user_id)
     user.networks.append(network)
 
     manager.session.commit()
 
     return next_or_jsonify('Added rights for {} to {}'.format(network, user))
-
-
-def safe_get_graph(network_id):
-    """Gets the network as a BEL graph or aborts if the user is not the owner
-
-    :type network_id: int
-    :rtype: pybel.BELGraph
-    """
-    network = safe_get_network(network_id)
-    return network.as_bel()
 
 
 @api_blueprint.route('/api/project')
@@ -2642,8 +2629,7 @@ def get_project_metadata(project_id):
         type: integer
         format: int32
     """
-    project = safe_get_project(project_id)
-
+    project = manager.safe_get_project(user=current_user, project_id=project_id)
     return jsonify(**project.to_json())
 
 
@@ -2665,7 +2651,7 @@ def drop_project_by_id(project_id):
         type: integer
         format: int32
     """
-    project = safe_get_project(project_id)
+    project = manager.safe_get_project(user=current_user, project_id=project_id)
 
     # FIXME cascade on project/users
 
@@ -2693,7 +2679,7 @@ def summarize_project(project_id):
         type: integer
         format: int32
     """
-    project = safe_get_project(project_id)
+    project = manager.safe_get_project(user=current_user, project_id=project_id)
 
     si = StringIO()
     cw = csv.writer(si)
@@ -2752,7 +2738,7 @@ def export_project_network(project_id, serve_format):
               - csv
               - gsea
     """
-    project = safe_get_project(project_id)
+    project = manager.safe_get_project(user=current_user, project_id=project_id)
 
     networks = [network.as_bel() for network in project.networks]
 
@@ -2785,7 +2771,7 @@ def get_blacklist():
 @api_blueprint.route('/api/text/report')
 def get_recent_report():
     """Gets the recent reports"""
-    lines = get_recent_reports(manager)
+    lines = manager.get_recent_reports()
     output = make_response('\n'.join(lines))
     output.headers["Content-type"] = "text/plain"
     return output
@@ -2801,7 +2787,7 @@ def list_all_network_overview():
     for source_network in manager.list_networks():
         source_network_id = source_network.id
         source_bel_graph = manager.get_graph_by_id(source_network_id)
-        overlap = get_node_overlaps(source_network_id)
+        overlap = manager.get_node_overlaps(source_network_id)
 
         node_elements.append({
             'data': {

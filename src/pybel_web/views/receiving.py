@@ -7,7 +7,7 @@ from flask_security.utils import verify_password
 
 from ..manager_utils import next_or_jsonify
 from ..models import User
-from ..proxies import manager, user_datastore
+from ..proxies import manager
 
 __all__ = [
     'receiving_blueprint',
@@ -25,7 +25,7 @@ def _get_user():
     if username is None or password is None:
         return jsonify(success=False, code=1, message='no login information provided')
 
-    user = user_datastore.find_user(email=username)
+    user = manager.user_datastore.find_user(email=username)
     if user is None:
         return jsonify(success=False, code=2, message='user does not exist')
 
