@@ -14,15 +14,15 @@ problems--the code will get executed twice:
 Also see (1) from http://click.pocoo.org/5/setuptools/#setuptools-integration
 """
 
-import datetime
 import json
 import logging
 import multiprocessing
 import os
 import sys
-import time
 
 import click
+import datetime
+import time
 from flask_security import SQLAlchemyUserDatastore
 
 import pybel
@@ -44,7 +44,7 @@ from .models import Assembly, Base, EdgeComment, EdgeVote, Experiment, Omic, Pro
 from .parser_endpoint import build_parser_service
 from .parser_service import parser_blueprint
 from .utils import iterate_user_strings
-from .views.reporting import reporting_blueprint
+from .views import receiving_blueprint, reporting_blueprint
 
 log = logging.getLogger('pybel_web')
 
@@ -108,7 +108,6 @@ def make_gunicorn_app(app, host, port, workers):
     })
 
 
-
 _main_help = "BEL Commons Command Line Interface on {}\n with " \
              "PyBEL v{} and PyBEL Tools v{}".format(sys.executable,
                                                     pybel_version(),
@@ -161,6 +160,7 @@ def run(host, port, debug, config, examples, with_gunicorn, workers):
     app.register_blueprint(belief_blueprint)
     app.register_blueprint(external_blueprint)
     app.register_blueprint(reporting_blueprint)
+    app.register_blueprint(receiving_blueprint)
 
     if app.config.get('BMS_BASE'):
         app.register_blueprint(bms_blueprint)

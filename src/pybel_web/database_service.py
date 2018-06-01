@@ -5,15 +5,13 @@
 import csv
 import logging
 import pickle
-import time
 from io import StringIO
 from operator import itemgetter
 
-import flask
 import networkx as nx
+import time
 from flask import Blueprint, abort, current_app, flash, jsonify, make_response, redirect, request
 from flask_security import current_user, login_required, roles_required
-from flask_security.utils import verify_password
 from sqlalchemy import func, or_
 
 import pybel
@@ -56,29 +54,6 @@ log = logging.getLogger(__name__)
 
 # TODO add url_prefix='/api'
 api_blueprint = Blueprint('dbs', __name__)
-
-
-@api_blueprint.route('/api/receive', methods=['POST'])
-def receive():
-    """Receive a JSON serialized BEL graph"""
-    username = request.authorization.get('username')
-    password = request.authorization.get('password')
-    if username is None or password is None:
-        return jsonify(message='no login information provided')
-
-    user = user_datastore.find_user(email=username)
-    if user is None:
-        return jsonify(message='user does not exist')
-
-    verified = verify_password(password, user.password)
-    if not verified:
-        return jsonify(message='bad password')
-
-    # TODO assume https authentication and use this to assign user to receive network function
-    payload = request.get_json()
-
-    task = current_app.celery.send_task('upload-json', args=[current_app.config['SQLALCHEMY_DATABASE_URI'], username, payload])
-    return next_or_jsonify('Sent async receive task', task_id=task.id)
 
 
 ####################################

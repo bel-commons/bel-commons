@@ -392,28 +392,29 @@ def run_cmpa(connection, experiment_id):
 
 
 @celery.task(name='upload-json')
-def upload_json(connection, username, payload):
+def upload_json(connection, user_id, payload):
     """Receives a JSON serialized BEL graph
 
     :param str connection: A connection to build the manager
-    :param str username: the email of the user to associate with the graph
+    :param int user_id: the ID of the user to associate with the graph
     :param payload: JSON dictionary for :func:`pybel.from_json`
     """
     manager = Manager(connection=connection)
 
-    user = manager.session.query(User).filter(User.email == username).one()
+    user = manager.session.query(User).get(user_id)
 
     try:
         graph = from_json(payload)
     except Exception:
+        celery_logger.exception('unable to parse JSON')
         return -1
 
     try:
         insert_graph(manager, graph, user)
     except Exception:
-        celery_logger.exception('Upload error')
+        celery_logger.exception('unable to insert graph')
         manager.session.rollback()
-        return -1
+        return -2
 
     return 0
 

@@ -12,6 +12,10 @@ from flask_security import roles_required
 from ..models import EdgeComment, EdgeVote, Experiment, Query, Report
 from ..proxies import manager
 
+__all__ = [
+    'reporting_blueprint',
+]
+
 log = logging.getLogger(__name__)
 
 reporting_blueprint = Blueprint('reporting', __name__, url_prefix='/reporting')
