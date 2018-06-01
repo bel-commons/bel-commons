@@ -579,7 +579,7 @@ class WebManager(_Manager):
         nodes = set(node.id for node in network.nodes)
 
         rv = Counter({
-            ol.right.id: ol.overlap
+            ol.right_id: ol.overlap
             for ol in network.overlaps
         })
 
