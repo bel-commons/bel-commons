@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+
+{% import "bootstrap/wtf.html" as wtf %}
+{% import "bootstrap/fixes.html" as fixes %}
+{% import "bootstrap/utils.html" as util %}
+
+{% block title %}Parser/Validator Help{% endblock %}
+
+{% block content %}
+    <div class="container">
+
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Definition Errors</h3>
+            </div>
+            <table class="table table-responsive">
+                <thead>
+                <tr>
+                    <th>Error</th>
+                    <th>Description</th>
+                    <th>Example</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td>
+                        <a href="http://pybel.readthedocs.io/en/latest/logging.html#pybel.parser.exc.InconsistentDefinitionError">
+                            Redefined Namespace
+                        </a>
+                    </td>
+                    <td>
+                        Raised when two namespaces have the same keyword.
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <a href="http://pybel.readthedocs.io/en/latest/logging.html#pybel.parser.exc.InconsistentDefinitionError">
+                            Redefined Annotation
+                        </a>
+                    </td>
+                    <td>
+                        Raised when two annotations have the same keyword.
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Syntax Errors</h3>
+            </div>
+            <table class="table table-responsive">
+                <thead>
+                <tr>
+                    <th>Error</th>
+                    <th>Description</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td>Naked Name Warning</td>
+                    <td>Raised when a namespace:name argument is used without a namespace. For example,
+                        <code>a("Amyloid beta")</code> should be qualified with the namespace <code>CHEBI</code> as
+                        <code>a(CHEBI:"Amyloid beta")</code>.
+                    </td>
+                </tr>
+                <tr>
+                    <td>Undefined Namespace Warning</td>
+                    <td>Raised when a namespace:name argument uses a namespace that was not defined.</td>
+                </tr>
+
+                <tr>
+                    <td>Undefined Namespace Warning</td>
+                    <td>Raised when a namespace:name argument uses a namespace that was not defined.</td>
+                </tr>
+
+                <tr>
+                    <td>Missing Namespace Regex Warning</td>
+                    <td>
+                        Raised when a namespace is defined by a regular expression, and a namespace:name argument
+                        does not match.
+                    </td>
+                </tr>
+
+
+                </tbody>
+            </table>
+        </div>
+
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Parser and Validator Errors</h3>
+            </div>
+            <table class="table table-responsive">
+                <thead>
+                <tr>
+                    <th>Error</th>
+                    <th>Description</th>
+                    <th>Example</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td>.png</td>
+                    <td>PNG</td>
+                    <td>Portable Network Graphics</td>
+                    <td>For use in Powerpoint presentations</td>
+                </tr>
+
+                <tr>
+                    <td>.bel</td>
+                    <td>BEL</td>
+                    <td>Biological Expression Language script</td>
+                    <td>For exchange to other BEL-aware software. Outputs upgraded/canonicalized BEL 2.0 Script.</td>
+                </tr>
+                <tr>
+                    <td>.graphml</td>
+                    <td>GraphML</td>
+                    <td><a href="http://graphml.graphdrawing.org/">GraphML</a></td>
+                    <td>For <a href="http://www.cytoscape.org/">Cytoscape</a></td>
+                </tr>
+                <tr>
+                    <td>.csv</td>
+                    <td>CSV</td>
+                    <td>Comma Separated Values</td>
+                    <td>For use in Microsoft Excel, Cytoscape, or other explorers that accept simple formats</td>
+                </tr>
+                <tr>
+                    <td>.sif</td>
+                    <td>SIF</td>
+                    <td>Simple Interaction Format</td>
+                    <td>For use in Microsoft Excel, Cytoscape, or other explorers that accept simple formats</td>
+                </tr>
+                <tr>
+                    <td>.cx</td>
+                    <td>CX JSON</td>
+                    <td><a href="http://www.home.ndexbio.org/data-model/">Cytoscape CyberInfrastructure Exchange</a>
+                    </td>
+                    <td>
+                        For upload and sharing with the <a href="http://ndexbio.org/">Network Data Exchange (NDEx)</a>
+                    </td>
+                </tr>
+                <tr>
+                    <td>.json</td>
+                    <td>Node-Link JSON</td>
+                    <td>Node-Link JSON</td>
+                    <td>For custom visualization using <a href="https://d3js.org/">D3.js</a></td>
+                </tr>
+                <tr>
+                    <td>.gpickle</td>
+                    <td>Pickle</td>
+                    <td><a href="https://docs.python.org/3/library/pickle.html">Python Pickle</a></td>
+                    <td>For programmatic use with <a href="https://github.com/pybel/pybel">PyBEL</a></td>
+                </tr>
+
+                <tr>
+                    <td>.grp</td>
+                    <td>GRP</td>
+                    <td><a
+                            href="https://software.broadinstitute.org/cancer/software/gsea/wiki/index.php/Data_formats#GRP:_Gene_set_file_format_.28.2A.grp.29">Gene
+                        Set File Format</a></td>
+                    <td>For use in the Broad Institute <a href="http://software.broadinstitute.org/gsea/index.jsp">Gene
+                        Set Enrichment Analysis (GSEA)</a> software
+                    </td>
+                </tr>
+                <tr>
+                    <td>.txt</td>
+                    <td>Citation</td>
+                    <td>Citation List</td>
+                    <td>Exports list of PubMed identifiers in a text file</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}
+

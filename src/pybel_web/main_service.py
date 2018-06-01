@@ -2,12 +2,12 @@
 
 """This module contains the user interface blueprint for the application."""
 
-import datetime
 import logging
 import sys
 from collections import defaultdict
 from operator import itemgetter
 
+import datetime
 import flask
 import time
 from flask import Blueprint, Markup, abort, current_app, flash, redirect, render_template, request, url_for
@@ -632,13 +632,13 @@ def view_summarize_stratified(network_id, annotation):
 
 @ui_blueprint.route('/how_to_use')
 def view_how_to_use():
-    """Shows How to use PyBEL-web"""
+    """Show How to use PyBEL-web."""
     return render_template('meta/how_to_use.html')
 
 
 @ui_blueprint.route('/help/pipeline')
 def view_pipeline_help():
-    """View the help info for the functions"""
+    """View the help info for the functions."""
 
     data = []
     for fname, f in no_arguments_map.items():
@@ -657,8 +657,14 @@ def view_pipeline_help():
 
 @ui_blueprint.route('/help/download')
 def view_download_help():
-    """View the help info for the functions"""
+    """View the help info for the functions."""
     return render_template('help_download_format.html')
+
+
+@ui_blueprint.route('/help/parser-errors')
+def view_parser_error_help():
+    """View the help info for the parser and validator."""
+    return render_template('help_parsing_errors.html')
 
 
 @ui_blueprint.route('/network/<int:network_1_id>/compare/<int:network_2_id>')

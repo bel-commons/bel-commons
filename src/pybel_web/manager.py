@@ -2,15 +2,15 @@
 
 """Extensions to the PyBEL manager to support PyBEL-Web."""
 
-import datetime
 import logging
 from collections import Counter, defaultdict
-from functools import lru_cache
 
+import datetime
 import networkx
 import time
 from flask import abort, render_template
 from flask_security import SQLAlchemyUserDatastore
+from functools import lru_cache
 from sqlalchemy import and_, func
 
 from pybel.manager import Network
@@ -412,6 +412,14 @@ class WebManager(_Manager):
         self.session.query(Query).filter(Query.user_id == user_id).delete()
         self.session.commit()
 
+    def _network_has_permission(self, user, network_id):
+        """
+        :param User user:
+        :param int network_id:
+        :rtype: bool
+        """
+        return network_id in self.get_network_ids_with_permission_helper(user)
+
     def safe_get_network(self, user, network_id):
         """Get a network and abort if the user does not have permissions to view.
 
@@ -428,7 +436,7 @@ class WebManager(_Manager):
         if network.report and network.report.public:
             return network
 
-        if network.id in self.get_network_ids_with_permission_helper(user):
+        if self._network_has_permission(user=user, network_id=network.id):
             return network
 
         abort(403)

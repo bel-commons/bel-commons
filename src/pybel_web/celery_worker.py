@@ -398,8 +398,7 @@ def upload_json(connection, user_id, payload):
     :param payload: JSON dictionary for :func:`pybel.from_json`
     """
     manager = WebManager.from_connection(connection)
-
-    user = manager.session.query(User).get(user_id)
+    user = manager.get_user_by_id(user_id)
 
     try:
         graph = from_json(payload)

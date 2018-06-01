@@ -37,8 +37,8 @@ def _get_user():
 
 
 @receiving_blueprint.route('/', methods=['POST'])
-def receive():
-    """Receive a JSON serialized BEL graph"""
+def upload():
+    """Receive a JSON serialized BEL graph."""
     user = _get_user()
     if not isinstance(user, User):
         return user
@@ -50,12 +50,8 @@ def receive():
     return next_or_jsonify('Sent async receive task', task_id=task.id)
 
 
-def _user_has_rights(user, network):
-    pass
-
-
 @receiving_blueprint.route('/get_latest_network_version', methods=['POST'])
-def get_latest_network_version(name):
+def get_latest_network_version():
     """Get a network by name.
 
     ---
@@ -81,9 +77,7 @@ def get_latest_network_version(name):
     if network is None:
         return jsonify(success=False, code=5, message='network does not exist')
 
-    # check if user has rights to this network first
-
-    if not _user_has_rights(user, network):
+    if not manager._network_has_permission(user=user, network_id=network.id):
         return jsonify(success=False, code=6, message='user does not have rights to network')
 
     return jsonify(success=True, code=0, network=network.to_json())
