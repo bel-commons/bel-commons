@@ -586,7 +586,7 @@ class WebManager(_Manager):
         uncached_networks = list(
             other_network
             for other_network in self.list_recent_networks()
-            if other_network.id != network and other_network.id not in rv
+            if other_network.id != network.id and other_network.id not in rv
         )
 
         if uncached_networks:
