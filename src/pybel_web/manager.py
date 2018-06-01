@@ -590,7 +590,7 @@ class WebManager(_Manager):
         )
 
         if uncached_networks:
-            log.debug('caching overlaps for network [id=%d]', network)
+            log.debug('caching overlaps for network [id=%s]', network)
 
             for other_network in uncached_networks:
                 other_network_nodes = set(node.id for node in other_network.nodes)
