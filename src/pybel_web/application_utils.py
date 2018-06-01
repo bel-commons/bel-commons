@@ -1,87 +1,73 @@
 # -*- coding: utf-8 -*-
 
+"""An extension to Flask-SQLAlchemy."""
+
 import json
 import logging
 import os
 
 from flask import g, render_template
 from flask_admin import Admin
+from flask_sqlalchemy import SQLAlchemy, get_state
 from raven.contrib.flask import Sentry
 
-from pybel.constants import config
 from pybel.examples import *
 from pybel.manager.models import (
     Annotation, AnnotationEntry, Author, Citation, Edge, Evidence, Namespace, NamespaceEntry, Network, Node,
 )
 from pybel.struct.mutation import infer_child_relations
 from pybel_tools.mutation import add_canonical_names, expand_node_neighborhood, expand_nodes_neighborhoods
-from pybel_tools.pipeline import in_place_mutator, uni_in_place_mutator
+from pybel_tools.pipeline import (
+    in_place_mutator as in_place_transformation,
+    uni_in_place_mutator as uni_in_place_transformation,
+)
 from .admin_model_views import (
     AnnotationView, CitationView, EdgeView, EvidenceView, ExperimentView, ModelView, NamespaceView, NetworkView,
     NodeView, QueryView, ReportView, UserView, build_project_view,
 )
-from .constants import PYBEL_WEB_EXAMPLES, PYBEL_WEB_USER_MANIFEST, SENTRY_DSN
+from .constants import (
+    PYBEL_WEB_REGISTER_ADMIN, PYBEL_WEB_REGISTER_EXAMPLES, PYBEL_WEB_REGISTER_TRANSFORMATIONS,
+    PYBEL_WEB_REGISTER_USERS, PYBEL_WEB_USER_MANIFEST, SENTRY_DSN,
+)
+from .manager import WebManager
 from .manager_utils import insert_graph
 from .models import Assembly, Base, EdgeComment, EdgeVote, Experiment, NetworkOverlap, Query, Report, Role, User
 from .resources.users import default_users_path
 
 __all__ = [
-    'FlaskPyBEL',
+    'PyBELSQLAlchemy',
 ]
 
 log = logging.getLogger(__name__)
 logging.getLogger('urllib3.connectionpool').setLevel(logging.WARNING)
 
 
-class FlaskPyBEL(object):
-    """Encapsulates the data needed for the application"""
+class PyBELSQLAlchemy(SQLAlchemy):
+    """An extension of Flask-SQLAlchemy to support the PyBEL Web manager."""
 
-    #: The name in which this app is stored in the Flask.extensions dictionary
-    APP_NAME = 'pbw'
+    #: :type: pybel_web.manager.WebManager
+    manager = None
 
-    def __init__(self, app=None, manager=None, examples=None):
-        """
-        :param Optional[flask.Flask] app: A Flask app
-        :param Optional[pybel.manager.Manager] manager: A thing that has an engine and a session object
-        :param bool examples: Should the example subgraphs be loaded on startup? Warning: takes a while. Defaults to
-        """
-        self.app = app
-        self.manager = manager
+    #: :type: Optional[raven.contrib.flask.Sentry]
+    sentry = None
 
-        if app is not None and manager is not None:
-            self.init_app(app, manager, examples=examples)
-
-        self.sentry_dsn = None
-        self.sentry = None
-
-    @property
-    def user_datastore(self):
-        """
-        :rtype: flask_security.SQLAlchemyUserDatastore
-        """
-        return self.manager.user_datastore
-
-    @property
-    def session(self):
-        return self.manager.session
-
-    @property
-    def engine(self):
-        return self.manager.engine
-
-    def init_app(self, app, manager, examples=None, register_mutators=True, register_users=True, register_admin=True):
+    def init_app(self, app):
         """
         :param flask.Flask app: A Flask app
-        :param pybel_web.manager.WebManager manager: A thing that has an engine and a session object
-        :param bool examples: Should the example subgraphs be loaded on startup? Warning: takes a while.
         """
-        self.app = app
-        self.manager = manager
+        super().init_app(app)
 
-        self.sentry_dsn = app.config.get(SENTRY_DSN)
-        if self.sentry_dsn:
-            log.info('initiating Sentry: %s', self.sentry_dsn)
-            self.sentry = Sentry(app, dsn=self.sentry_dsn)
+        self.manager = WebManager(engine=self.engine, session=self.session)
+
+        self.app.config.setdefault(PYBEL_WEB_REGISTER_TRANSFORMATIONS, True)
+        self.app.config.setdefault(PYBEL_WEB_REGISTER_USERS, True)
+        self.app.config.setdefault(PYBEL_WEB_REGISTER_ADMIN, True)
+        self.app.config.setdefault(PYBEL_WEB_REGISTER_EXAMPLES, False)
+
+        sentry_dsn = self.app.config.get(SENTRY_DSN)
+        if sentry_dsn is not None:
+            log.info('initiating Sentry: %s', sentry_dsn)
+            self.sentry = Sentry(self.app, dsn=sentry_dsn)
 
         Base.metadata.bind = self.engine
         Base.query = self.session.query_property()
@@ -91,20 +77,22 @@ class FlaskPyBEL(object):
         except Exception:
             log.exception('Failed to create all')
 
-        self.app.extensions = getattr(app, 'extensions', {})
-        self.app.extensions[self.APP_NAME] = self
-
         self._register_error_handlers()
-
-        if register_mutators:
-            self._register_mutators()
-        if register_users:
+        if app.config[PYBEL_WEB_REGISTER_TRANSFORMATIONS]:
+            self._register_transformations()
+        if app.config[PYBEL_WEB_REGISTER_USERS]:
             self._register_users()
-        if register_admin:
-            self._build_admin_service()
+        if app.config[PYBEL_WEB_REGISTER_ADMIN]:
+            self._register_admin_service()
+        if app.config[PYBEL_WEB_REGISTER_EXAMPLES]:
+            self._register_examples()
 
-        if examples or app.config.get(PYBEL_WEB_EXAMPLES, False):
-            self._ensure_graphs()
+    @property
+    def user_datastore(self):
+        """
+        :rtype: flask_security.SQLAlchemyUserDatastore
+        """
+        return self.manager.user_datastore
 
     def _register_error_handlers(self):
         """Register the 500 and 403 error handlers."""
@@ -117,7 +105,7 @@ class FlaskPyBEL(object):
             """
             kwargs = {}
 
-            if self.sentry_dsn:
+            if self.app.config.get(SENTRY_DSN):
                 kwargs.update(dict(
                     event_id=g.sentry_event_id,
                     public_dsn=self.sentry.client.get_public_dsn('https')
@@ -133,12 +121,12 @@ class FlaskPyBEL(object):
             """You must not cross this error"""
             return render_template('errors/403.html')
 
-    def _register_mutators(self):
-        """Register all the mutator functions with PyBEL tools decorators"""
+    def _register_transformations(self):
+        """Register all the transformation functions with PyBEL tools decorators."""
 
-        @uni_in_place_mutator
+        @uni_in_place_transformation
         def expand_nodes_neighborhoods_by_ids(universe, graph, node_hashes):
-            """Expands around the neighborhoods of a list of nodes by identifier
+            """Expand around the neighborhoods of a list of nodes by identifier.
 
             :param pybel.BELGraph universe: A BEL graph
             :param pybel.BELGraph graph: A BEL graph
@@ -150,9 +138,9 @@ class FlaskPyBEL(object):
             ]
             return expand_nodes_neighborhoods(universe, graph, nodes)
 
-        @uni_in_place_mutator
+        @uni_in_place_transformation
         def expand_node_neighborhood_by_id(universe, graph, node_hash):
-            """Expands around the neighborhoods of a node by identifier
+            """Expand around the neighborhoods of a node by identifier.
 
             :param pybel.BELGraph universe: A BEL graph
             :param pybel.BELGraph graph: A BEL graph
@@ -161,17 +149,20 @@ class FlaskPyBEL(object):
             node = self.manager.get_node_tuple_by_hash(node_hash)
             return expand_node_neighborhood(universe, graph, node)
 
-        @in_place_mutator
+        @in_place_transformation
         def delete_nodes_by_ids(graph, node_hashes):
-            """Removes a list of nodes by identifier
+            """Remove a list of nodes by identifier.
 
             :param pybel.BELGraph graph: A BEL graph
             :param list[str] node_hashes: A list of node hashes
             """
-            nodes = self.manager.get_node_tuples_by_hashes(node_hashes)
+            nodes = [
+                self.manager.get_node_tuple_by_hash(node_hash)
+                for node_hash in node_hashes
+            ]
             graph.remove_nodes_from(nodes)
 
-        @in_place_mutator
+        @in_place_transformation
         def delete_node_by_id(graph, node_hash):
             """Remove a node by identifier.
 
@@ -181,7 +172,7 @@ class FlaskPyBEL(object):
             node = self.manager.get_node_tuple_by_hash(node_hash)
             graph.remove_node(node)
 
-        @in_place_mutator
+        @in_place_transformation
         def propagate_node_by_hash(graph, node_hash):
             """Infer relationships from a node.
 
@@ -198,11 +189,11 @@ class FlaskPyBEL(object):
                 default_users_manifest = json.load(f)
             self.manager.register_users_from_manifest(default_users_manifest)
 
-        pybel_config_user_manifest = config.get(PYBEL_WEB_USER_MANIFEST)
+        pybel_config_user_manifest = self.app.config.get(PYBEL_WEB_USER_MANIFEST)
         if pybel_config_user_manifest is not None:
             self.manager.register_users_from_manifest(pybel_config_user_manifest)
 
-    def _build_admin_service(self):
+    def _register_admin_service(self):
         """Add a Flask-Admin database front-end.
 
         :rtype: flask_admin.Admin
@@ -232,8 +223,8 @@ class FlaskPyBEL(object):
 
         return admin
 
-    def _ensure_graphs(self):
-        """Add  example BEL graphs that should always be present."""
+    def _register_examples(self):
+        """Add example BEL graphs that should always be present."""
         for graph in (sialic_acid_graph, egf_graph, statin_graph, homology_graph):
             if not self.manager.has_name_version(graph.name, graph.version):
                 add_canonical_names(graph)
@@ -249,12 +240,9 @@ class FlaskPyBEL(object):
                 insert_graph(self.manager, graph, user=test_user, public=False)
 
     @classmethod
-    def get_state(cls, app):
+    def get_manager(cls, app):
         """
         :param flask.Flask app: A Flask app
-        :rtype: FlaskPyBEL
+        :rtype: pybel_web.manager.WebManager
         """
-        if cls.APP_NAME not in app.extensions:
-            raise ValueError('{} has not been instantiated'.format(cls.__name__))
-
-        return app.extensions[cls.APP_NAME]
+        return get_state(app).db.manager

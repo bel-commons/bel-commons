@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""
-Module that contains the command line app
+"""Module that contains the command line app.
 
 Why does this file exist, and why not put this in __main__?
 You might be tempted to import things from __main__ later, but that will cause
@@ -14,6 +13,7 @@ problems--the code will get executed twice:
 Also see (1) from http://click.pocoo.org/5/setuptools/#setuptools-integration
 """
 
+import datetime
 import json
 import logging
 import multiprocessing
@@ -21,7 +21,6 @@ import os
 import sys
 
 import click
-import datetime
 import time
 from flask_security import SQLAlchemyUserDatastore
 
@@ -34,7 +33,7 @@ from pybel_tools.utils import enable_cool_mode, get_version as pybel_tools_get_v
 from .analysis_service import experiment_blueprint
 from .application import create_application
 from .bms_service import bms_blueprint
-from .constants import get_admin_email
+from .constants import PYBEL_WEB_REGISTER_EXAMPLES, get_admin_email
 from .curation_service import curation_blueprint
 from .database_service import api_blueprint
 from .external_services import belief_blueprint, external_blueprint
@@ -159,12 +158,10 @@ def run(host, port, debug, config, examples, with_gunicorn, workers):
 
     t = time.time()
 
-    config_dict = json.load(config) if config is not None else {}
+    config = json.load(config) if config is not None else {}
+    config.setdefault(PYBEL_WEB_REGISTER_EXAMPLES, examples)
 
-    app = create_application(
-        examples=examples,
-        **config_dict
-    )
+    app = create_application(**config)
 
     app.register_blueprint(ui_blueprint)
     app.register_blueprint(curation_blueprint)

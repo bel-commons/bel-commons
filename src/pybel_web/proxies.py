@@ -5,7 +5,7 @@
 from flask import current_app
 from werkzeug.local import LocalProxy
 
-from .application_utils import FlaskPyBEL
+from .application_utils import PyBELSQLAlchemy
 
 __all__ = [
     'manager',
@@ -20,7 +20,7 @@ def get_manager_proxy():
 
     :rtype: pybel_web.manager.WebManager
     """
-    return LocalProxy(lambda: FlaskPyBEL.get_state(current_app).manager)
+    return LocalProxy(lambda: PyBELSQLAlchemy.get_manager(current_app))
 
 
 manager = get_manager_proxy()

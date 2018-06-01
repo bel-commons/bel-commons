@@ -23,11 +23,10 @@ from flask import (
 from flask_bootstrap import Bootstrap, WebCDN
 from flask_mail import Mail
 from flask_security import Security
-from flask_sqlalchemy import SQLAlchemy
 from werkzeug.routing import BaseConverter
 
 from pybel.constants import PYBEL_CONNECTION, config as pybel_config, get_cache_connection
-from .application_utils import FlaskPyBEL
+from .application_utils import PyBELSQLAlchemy
 from .celery_utils import create_celery
 from .constants import (
     CELERY_BROKER_URL, MAIL_DEFAULT_SENDER, MAIL_SERVER, PYBEL_WEB_CONFIG_JSON,
@@ -35,14 +34,12 @@ from .constants import (
     SWAGGER_CONFIG, VERSION,
 )
 from .forms import ExtendedRegisterForm
-from .manager import WebManager
 
 log = logging.getLogger(__name__)
 
 _default_config_location = 'pybel_web.config.Config'
 
 bootstrap = Bootstrap()
-pbx = FlaskPyBEL()
 mail = Mail()
 security = Security()
 swagger = Swagger()
@@ -159,12 +156,7 @@ def create_application(config_object_name=None, examples=None, **kwargs):
         mail.init_app(app)
         _send_startup_mail(app)
 
-    # Build a manager directly from the engine/session interface
-    # TODO consider making PyBELFlask a subclass of SQLAlchemy?
-    db = SQLAlchemy(app=app)
-    manager = WebManager(engine=db.engine, session=db.session)
-    pbx.init_app(app, manager, examples=examples)
-
-    security.init_app(app, pbx.user_datastore, register_form=ExtendedRegisterForm)
+    pbdb = PyBELSQLAlchemy(app)
+    security.init_app(app, pbdb.user_datastore, register_form=ExtendedRegisterForm)
 
     return app
