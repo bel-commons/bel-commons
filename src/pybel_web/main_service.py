@@ -32,9 +32,7 @@ from .external_managers import manager_dict
 from .manager_utils import next_or_jsonify
 from .models import Assembly, EdgeComment, EdgeVote, Experiment, Omic, Query, User
 from .proxies import manager
-from .utils import (
-    calculate_overlap_dict, get_version as get_bel_commons_version,
-)
+from .utils import calculate_overlap_info, get_version as get_bel_commons_version
 
 log = logging.getLogger(__name__)
 
@@ -669,45 +667,32 @@ def view_parser_error_help():
 
 @ui_blueprint.route('/network/<int:network_1_id>/compare/<int:network_2_id>')
 def view_network_comparison(network_1_id, network_2_id):
-    """View the comparison between two networks
+    """View the comparison between two networks.
 
     :param int network_1_id: Identifier for the first network
     :param int network_2_id: Identifier for the second network
     """
     network_1 = manager.safe_get_network(user=current_user, network_id=network_1_id)
     network_2 = manager.safe_get_network(user=current_user, network_id=network_2_id)
-
-    data = calculate_overlap_dict(
-        g1=network_1.as_bel(),
-        g1_label=str(network_1),
-        g2=network_2.as_bel(),
-        g2_label=str(network_2),
-    )
-
+    data = calculate_overlap_info(network_1.as_bel(), network_2.as_bel())
     return render_template(
         'network/network_comparison.html',
-        networks=[network_1, network_2],
+        network_1=network_1,
+        network_2=network_2,
         data=data,
     )
 
 
 @ui_blueprint.route('/query/<int:query_1_id>/compare/<int:query_2_id>')
 def view_query_comparison(query_1_id, query_2_id):
-    """View the comparison between the result of two queries
+    """View the comparison between the result of two queries.
 
     :param int query_1_id: The identifier of the first query
     :param int query_2_id: The identifier of the second query
     """
-    query_1_result = manager.safe_get_graph_from_query_id(user=current_user, query_id=query_1_id)
-    query_2_result = manager.safe_get_graph_from_query_id(user=current_user, query_id=query_2_id)
-
-    data = calculate_overlap_dict(
-        g1=query_1_result,
-        g1_label='Query {}'.format(query_1_id),
-        g2=query_2_result,
-        g2_label='Query {}'.format(query_2_id),
-    )
-
+    g1 = manager.safe_get_graph_from_query_id(user=current_user, query_id=query_1_id)
+    g2 = manager.safe_get_graph_from_query_id(user=current_user, query_id=query_2_id)
+    data = calculate_overlap_info(g1, g2)
     return render_template(
         'query/query_comparison.html',
         query_1_id=query_1_id,

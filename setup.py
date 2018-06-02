@@ -41,8 +41,6 @@ INSTALL_REQUIRES = [
     'pandas',
     'celery',
     'raven',
-    'matplotlib_venn',
-    'matplotlib',
     'gitpython',
     'scikit-learn',
     'numpy',

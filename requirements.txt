@@ -17,8 +17,6 @@ click
 pandas
 celery
 raven
-matplotlib_venn
-matplotlib
 gitpython
 wtforms
 scikit-learn
