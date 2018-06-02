@@ -108,9 +108,9 @@ def build_network_ajax_manager(manager):
 
             if not current_user.is_admin:
                 network_chain = chain(
-                    current_user.get_owned_networks(),
-                    current_user.get_shared_networks(),
-                    manager.iter_public_networks()
+                    current_user.iter_owned_networks(),
+                    current_user.iter_shared_networks(),
+                    manager.iter_recent_public_networks()
                 )
 
                 allowed_network_ids = {
@@ -122,7 +122,7 @@ def build_network_ajax_manager(manager):
                     scai_role = manager.user_datastore.find_or_create_role(name='scai')
 
                     for user in scai_role.users:
-                        for network in user.get_owned_networks():
+                        for network in user.iter_owned_networks():
                             allowed_network_ids.add(network.id)
 
                 if not allowed_network_ids:  # If the current user doesn't have any networks, then return nothing

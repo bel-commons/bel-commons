@@ -930,12 +930,12 @@ def check_query_rights(query_id):
         required: true
         type: integer
     """
-    query = manager.get_query_or_404(query_id)
+    query = manager._safe_get_query_helper(current_user, query_id)
 
     return jsonify({
         'status': 200,
         'query_id': query_id,
-        'allowed': (not manager.user_missing_query_rights(current_user, query))
+        'allowed': query is not None
     })
 
 

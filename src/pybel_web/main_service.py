@@ -348,8 +348,7 @@ def view_explore_network(network_id):
 
     :param int network_id: The identifier of the network to explore
     """
-    network = manager.safe_get_network(user=current_user, network_id=network_id)
-    query = manager.query_from_network_with_current_user(user=current_user, network=network)
+    query = manager.query_from_network_with_current_user(user=current_user, network_id=network_id)
     return redirect_to_view_explorer_query(query)
 
 

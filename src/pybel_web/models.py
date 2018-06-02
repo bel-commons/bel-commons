@@ -11,6 +11,7 @@ from sqlalchemy import (
     Boolean, Column, DateTime, Float, ForeignKey, Index, Integer, LargeBinary, String, Table, Text,
     UniqueConstraint,
 )
+import itertools as itt
 from sqlalchemy.orm import backref, relationship
 
 import pybel_tools.query
@@ -492,8 +493,8 @@ class User(Base, UserMixin):
         """Is this user cut out for the truth?"""
         return self.is_admin or self.has_role('beta')
 
-    def get_owned_networks(self):
-        """Gets all networks this user owns
+    def iter_owned_networks(self):
+        """Get all networks this user owns.
 
         :rtype: iter[Network]
         """
@@ -503,14 +504,14 @@ class User(Base, UserMixin):
             if report.network
         )
 
-    def get_shared_networks(self):
+    def iter_shared_networks(self):
         """Gets all networks shared with this user
 
         :rtype: iter[Network]
         """
         return self.networks
 
-    def get_project_networks(self):
+    def iter_project_networks(self):
         """Gets all networks for which projects have granted this user access
 
         :rtype: iter[Network]
@@ -519,6 +520,17 @@ class User(Base, UserMixin):
             network
             for project in self.projects
             for network in project.networks
+        )
+
+    def iter_available_networks(self):
+        """Iterate over all owned, shared, and project networks.
+
+        :rtype: iter[Network]
+        """
+        return itt.chain(
+            self.iter_owned_networks(),
+            self.iter_shared_networks(),
+            self.iter_project_networks(),
         )
 
     def get_sorted_queries(self):
@@ -567,6 +579,12 @@ class User(Base, UserMixin):
                 self == experiment.user
         )
 
+    def __hash__(self):
+        return hash(self.email)
+
+    def __eq__(self, other):
+        return self.email == other.email
+
     def __str__(self):
         return self.email
 
@@ -597,7 +615,7 @@ class User(Base, UserMixin):
         :type network: Network
         :rtype: bool
         """
-        return self.is_authenticated and (self.is_admin or (network.report and self == network.report.user))
+        return network.report and network.report.user == self
 
 
 assembly_network = Table(
@@ -657,7 +675,6 @@ class Assembly(Base):
 
     def to_json(self):
         """
-
         :rtype: dict
         """
         result = {

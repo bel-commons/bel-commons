@@ -2,15 +2,16 @@
 
 """Extensions to the PyBEL manager to support PyBEL-Web."""
 
-import logging
-from collections import Counter, defaultdict
-
 import datetime
+import itertools as itt
+import logging
+from collections import defaultdict
+from functools import lru_cache
+
 import networkx
 import time
 from flask import abort, render_template
 from flask_security import SQLAlchemyUserDatastore
-from functools import lru_cache
 from sqlalchemy import and_, func
 
 from pybel.manager import Network
@@ -82,7 +83,7 @@ class WebManager(_Manager):
 
         self.user_datastore = SQLAlchemyUserDatastore(self, User, Role)
 
-    def iter_public_networks(self):
+    def iter_recent_public_networks(self):
         """List the recent networks from that have been made public.
 
         Wraps :meth:`pybel.manager.Manager.list_recent_networks()` and checks their associated reports.
@@ -100,17 +101,16 @@ class WebManager(_Manager):
         :param models.User user: A user
         :rtype: iter[Network]
         """
-        yield from self.iter_public_networks
-        yield from user.get_owned_networks()
-        yield from user.get_shared_networks()
-        yield from user.get_project_networks()
+        yield from self.iter_recent_public_networks()
+        yield from user.iter_available_networks()
 
+        # TODO reinvestigate how "organizations" are handled
         if user.is_scai:
             role = self.user_datastore.find_or_create_role(name='scai')
             for user in role.users:
-                yield from user.get_owned_networks()
+                yield from user.iter_owned_networks()
 
-    def networks_with_permission_iter_helper(self, user):
+    def iter_networks_with_permission(self, user):
         """Gets an iterator over all the networks from all the sources
 
         :param models.User user: A user
@@ -118,7 +118,7 @@ class WebManager(_Manager):
         """
         if not user.is_authenticated:
             log.debug('getting only public networks for anonymous user')
-            yield from self.iter_public_networks()
+            yield from self.iter_recent_public_networks()
 
         elif user.is_admin:
             log.debug('getting all recent networks for admin')
@@ -128,36 +128,15 @@ class WebManager(_Manager):
             log.debug('getting all networks for user [%s]', self)
             yield from self._iterate_networks_for_user(user)
 
-    def get_network_ids_with_permission_helper(self, user):
+    def get_network_ids_with_permission(self, user):
         """Gets the set of networks ids tagged as public or uploaded by the user
 
         :param User user: A user
         :return: A list of all networks tagged as public or uploaded by the user
         :rtype: set[int]
         """
-        networks = self.networks_with_permission_iter_helper(user)
+        networks = self.iter_networks_with_permission(user)
         return {network.id for network in networks}
-
-    @lru_cache(maxsize=256)
-    def user_missing_query_rights(self, user, query):
-        """Checks if the user does not have the rights to run the given query
-
-        :param models.User user: A user object
-        :param models.Query query: A query object
-        :rtype: bool
-        """
-        log.debug('checking if user [%s] has rights to query [id=%s]', user, query.id)
-
-        if user.is_authenticated and user.is_admin:
-            log.debug('[%s] is admin and can access query [id=%d]', user, query.id)
-            return False  # admins are never missing the rights to a query
-
-        permissive_network_ids = self.get_network_ids_with_permission_helper(user=user)
-
-        return any(
-            network.id not in permissive_network_ids
-            for network in query.assembly.networks
-        )
 
     def register_users_from_manifest(self, manifest):
         """Register the users and roles in a manifest.
@@ -206,6 +185,9 @@ class WebManager(_Manager):
 
     def get_report_by_id(self, report_id):
         return self.session.query(Report).get(report_id)
+
+    def count_reports(self):
+        return self.session.query(Report).count()
 
     def get_experiment_or_404(self, experiment_id):
         experiment = self.get_experiment_by_id(experiment_id)
@@ -418,7 +400,7 @@ class WebManager(_Manager):
         :param int network_id:
         :rtype: bool
         """
-        return network_id in self.get_network_ids_with_permission_helper(user)
+        return network_id in self.get_network_ids_with_permission(user)
 
     def safe_get_network(self, user, network_id):
         """Get a network and abort if the user does not have permissions to view.
@@ -465,13 +447,10 @@ class WebManager(_Manager):
         """
         network = self.get_network_or_404(network_id)
 
-        if network.report and network.report.public:
+        if user.is_authenticated and (user.is_admin or user.owns_network(network)):
             return network
 
-        if user.owns_network(network):
-            return network
-
-        abort(403, 'User {} does not have permission to access Network {}'.format(user, network))
+        abort(403, 'User {} does not have super user rights to network {}'.format(user, network))
 
     def safe_get_project(self, user, project_id):
         """Get a project by identifier, aborts 404 if doesn't exist and aborts 403 if current user does not have rights.
@@ -495,12 +474,12 @@ class WebManager(_Manager):
         :rtype: list[Network]
         """
         if not user.is_authenticated:
-            return list(self.iter_public_networks())
+            return list(self.iter_recent_public_networks())
 
         if user.is_admin:
             return self.list_recent_networks()
 
-        return list(unique_networks(self.networks_with_permission_iter_helper(user)))
+        return list(unique_networks(self.iter_networks_with_permission(user)))
 
     def get_edge_vote_by_user(self, edge, user):
         """Look up a vote by the edge and user.
@@ -747,14 +726,15 @@ class WebManager(_Manager):
         return self.get_query_ancestor_id(query.parent_id)
 
     @lru_cache(maxsize=256)
-    def query_from_network_with_current_user(self, user, network, autocommit=True):
+    def query_from_network_with_current_user(self, user, network_id, autocommit=True):
         """Makes a query from the given network
 
         :param User user: The user making the query
-        :param Network network: The network
+        :param int network_id: The network's database identifier
         :param bool autocommit: Should the query be committed immediately
         :rtype: Query
         """
+        network = self.safe_get_network(user=user, network_id=network_id)
         query = Query.from_network(network, user=user)
 
         if autocommit:
@@ -827,20 +807,41 @@ class WebManager(_Manager):
 
         return query_dict
 
+    def _safe_get_query_helper(self, user, query_id):
+        """Checks if the user has the rights to run the given query
+
+        :param models.User user: A user object
+        :param models.Query query: A query object
+        :rtype: Optional[Query]
+        """
+        query = self.get_query_or_404(query_id)
+
+        log.debug('checking if user [%s] has rights to query [id=%s]', user, query_id)
+
+        if user.is_authenticated and user.is_admin:
+            log.debug('[%s] is admin and can access query [id=%d]', user, query_id)
+            return query  # admins are never missing the rights to a query
+
+        permissive_network_ids = self.get_network_ids_with_permission(user=user)
+
+        if not any(network.id not in permissive_network_ids for network in query.assembly.networks):
+            return query
+
     def safe_get_query(self, user, query_id):
         """Get a query by its database identifier.
 
-        Raises an HTTPException with 404 if the query does not exist or raises an HTTPException with 403 if the user does
-        not have the appropriate permissions for all networks in the query's assembly.
+        - Raises an HTTPException with 404 if the query does not exist.
+        - Raises an HTTPException with 403 if the user does not have the appropriate permissions for all networks in
+          the query's assembly.
 
         :param User user:
         :param int query_id: The database identifier for a query
         :rtype: Query
         :raises: werkzeug.exceptions.HTTPException
         """
-        query = self.get_query_or_404(query_id)
+        query = self._safe_get_query_helper(user, query_id)
 
-        if self.user_missing_query_rights(user, query):
+        if query is None:
             abort(403, 'Insufficient rights to run query {}'.format(query_id))
 
         return query
@@ -855,13 +856,17 @@ class WebManager(_Manager):
         :raises: werkzeug.exceptions.HTTPException
         """
         log.debug('getting query [id=%d] from database', query_id)
+        t = time.time()
         query = self.safe_get_query(user=user, query_id=query_id)
+        log.debug('got query [id=%d] in %.2f seconds', query_id, time.time() - t)
 
         log.debug('running query [id=%d]', query_id)
+        t = time.time()
         try:
             result = query.run(self)
+            log.debug('ran query [id=%d] in %.2f seconds', query_id, time.time() - t)
         except networkx.exception.NetworkXError as e:
-            log.warning('query failed: %s', query)
+            log.warning('query [id=%d] failed after %.2f seconds', query_id, time.time() - t)
             raise e
 
         return result
