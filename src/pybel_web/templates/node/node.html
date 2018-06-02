@@ -5,7 +5,13 @@
 {% import "bootstrap/utils.html" as util %}
 {% import "macros.html" as pbw %}
 
-{% block title %}Node Catalog{% endblock %}
+{% block title %}
+    {% if node.namespace_entry.name %}
+        {{ node.namespace_entry.name }}
+    {% else %}
+        {{ node.bel }}
+    {% endif %}
+{% endblock %}
 
 {% block content %}
     <div class="container">
