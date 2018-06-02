@@ -444,19 +444,19 @@ def upload_cbn(connection, dir_path):
     return 0
 
 
-def send_summary_mail(graph, report, t):
-    """Sends a mail with a summary
+def send_summary_mail(graph, report, time_difference):
+    """Send a mail with a summary.
 
     :param pybel.BELGraph graph:
     :param Report report:
-    :param float t:
+    :param float time_difference: The time difference to log
     """
     with app.app_context():
         html = render_template(
             'email_report.html',
             graph=graph,
             report=report,
-            time=t,
+            time=time_difference,
             **get_network_summary_dict(graph)
         )
 
@@ -464,7 +464,7 @@ def send_summary_mail(graph, report, t):
             mail.send_message(
                 subject='Parsing Report for {}'.format(graph),
                 recipients=[report.user.email],
-                body='Below is the parsing report for {}, completed in {:.2f} seconds.'.format(graph, t),
+                body='Below is the parsing report for {}, completed in {:.2f} seconds.'.format(graph, time_difference),
                 html=html,
                 sender=pbw_sender,
             )
