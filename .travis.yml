@@ -1,41 +1,37 @@
 sudo: false
 cache: pip
-
 services:
   - mysql
-
 language: python
-
 python:
-    - 3.6
-
+  - 3.6
 env:
-  global:
-    - PYBEL_TEST_CONNECTOR=pymysql
-    - PYBEL_TEST_CONNECTION=mysql+pymysql://travis@localhost/test?charset=utf8
-  matrix:
-    - TOXENV=py
-    - TOXENV=docs
-    - TOXENV=manifest
-    - TOXENV=rst-lint
+  - PYBEL_TEST_CONNECTOR=pymysql
+    PYBEL_TEST_CONNECTION=mysql+pymysql://travis@localhost/test?charset=utf8
+matrix:
+  include:
+    - env: TOXENV=py
+    - env: TOXENV=docs
+    - env: TOXENV=manifest
+    - env: TOXENV=rst-lint
+    - env: TOXENV=flake8
+    - env: TOXENV=doc8
+    - env: TOXENV=pylint
+  allow_failures:
+    - env: TOXENV=flake8
+    - env: TOXENV=doc8
+    - env: TOXENV=pylint
 
 before_script:
   - mysql -e 'CREATE DATABASE test CHARACTER SET utf8 COLLATE utf8_general_ci;'
   - mysql -e "GRANT ALL PRIVILEGES ON test.* to 'travis'@'%' WITH GRANT OPTION;"
-
-before_install:
-    - pip install --upgrade pip
-    - pip install codecov
-
 install:
-    - pip install tox
-
+  - pip install --upgrade pip
+  - pip install codecov coverage tox
 script:
-    - tox
-
+  - tox
 after_success:
-    - tox -e coverage-report
-    - codecov
-
+  - tox -e coverage-report
+  - codecov
 notifications:
   slack: pybel:n2KbWKBum3musnBg3L76gGwq

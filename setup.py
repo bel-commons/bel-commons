@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+"""Setup for PyBEL Web."""
+
 import codecs
 import os
 import re
