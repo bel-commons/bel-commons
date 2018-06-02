@@ -21,6 +21,6 @@ matplotlib_venn
 matplotlib
 gitpython
 wtforms
-sklearn
+scikit-learn
 numpy
 bio2bel>=0.0.12

@@ -44,7 +44,7 @@ INSTALL_REQUIRES = [
     'matplotlib_venn',
     'matplotlib',
     'gitpython',
-    'sklearn',
+    'scikit-learn',
     'numpy',
 ]
 EXTRAS_REQUIRE = {
