@@ -9,13 +9,13 @@ import logging
 
 from pybel_web.analysis_service import experiment_blueprint
 from pybel_web.application import create_application
-from pybel_web.curation_service import curation_blueprint
+from pybel_web.constants import PYBEL_WEB_USE_PARSER_API
 from pybel_web.database_service import api_blueprint
-from pybel_web.external_services import external_blueprint
 from pybel_web.main_service import ui_blueprint
-from pybel_web.parser_endpoint import build_parser_service
-from pybel_web.parser_service import parser_blueprint
-from pybel_web.views import receiving_blueprint, reporting_blueprint
+from pybel_web.views import (
+    build_parser_service, curation_blueprint, receiving_blueprint, reporting_blueprint,
+    uploading_blueprint,
+)
 
 datefmt = '%H:%M:%S'
 fmt = "%(asctime)s - %(levelname)s - %(name)s - %(message)s"
@@ -36,15 +36,16 @@ app = create_application()
 
 app.register_blueprint(ui_blueprint)
 app.register_blueprint(curation_blueprint)
-app.register_blueprint(parser_blueprint)
+
 app.register_blueprint(api_blueprint)
-app.register_blueprint(experiment_blueprint)
-app.register_blueprint(external_blueprint)
 app.register_blueprint(reporting_blueprint)
+
+# These blueprints rely on celery
+app.register_blueprint(experiment_blueprint)
+app.register_blueprint(uploading_blueprint)
 app.register_blueprint(receiving_blueprint)
 
-
-if app.config.get('PYBEL_WEB_PARSER_API'):
+if app.config.get(PYBEL_WEB_USE_PARSER_API):
     build_parser_service(app)
 
 pbw_log.info('done creating app')

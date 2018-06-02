@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import unicode_literals
 
 import hashlib
 import logging
@@ -9,29 +8,29 @@ import time
 from flask import Blueprint, current_app, flash, redirect, render_template, url_for
 from flask_security import current_user, login_required, roles_required
 
-from .forms import ParserForm
-from .models import Report
-from .proxies import manager
+from ..forms import ParserForm
+from ..models import Report
+from ..proxies import manager
 
 log = logging.getLogger(__name__)
 
-parser_blueprint = Blueprint('parser', __name__)
+uploading_blueprint = Blueprint('parser', __name__)
 
 
-@parser_blueprint.route('/run-debug-celery', methods=['GET', 'POST'])
+@uploading_blueprint.route('/run-debug-celery')
 @roles_required('admin')
 def run_debug():
-    """Runs the debug task"""
+    """Run the debug task."""
     task = current_app.celery.send_task('debug-task')
     log.info('Parse task from %s', task.id)
-    flash('Queued parsing task{}.'.format(task.id))
-    return redirect(url_for('ui.home'))
+    flash('Queued Celery debug task: {}.'.format(task.id))
+    return redirect(url_for('.view_parser'))
 
 
-@parser_blueprint.route('/upload', methods=['GET', 'POST'])
+@uploading_blueprint.route('/upload', methods=['GET', 'POST'])
 @login_required
 def view_parser():
-    """Renders the form for asynchronous parsing"""
+    """Render the form for asynchronous parsing."""
     form = ParserForm(
         public=(not current_user.is_scai),
     )

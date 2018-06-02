@@ -32,16 +32,15 @@ from pybel.utils import get_version as pybel_version
 from pybel_tools.utils import enable_cool_mode, get_version as pybel_tools_get_version
 from .analysis_service import experiment_blueprint
 from .application import create_application
-from .constants import PYBEL_WEB_REGISTER_EXAMPLES, get_admin_email
-from .curation_service import curation_blueprint
+from .constants import PYBEL_WEB_REGISTER_EXAMPLES, PYBEL_WEB_USE_PARSER_API, get_admin_email
 from .database_service import api_blueprint
-from .external_services import belief_blueprint, external_blueprint
 from .main_service import ui_blueprint
 from .manager_utils import insert_graph
 from .models import Assembly, Base, EdgeComment, EdgeVote, Experiment, Omic, Project, Query, Report, Role, User
-from .parser_endpoint import build_parser_service
-from .parser_service import parser_blueprint
-from .views import receiving_blueprint, reporting_blueprint
+from .views import (
+    build_parser_service, curation_blueprint, receiving_blueprint, reporting_blueprint,
+    uploading_blueprint,
+)
 
 log = logging.getLogger('pybel_web')
 
@@ -164,15 +163,13 @@ def run(host, port, debug, config, examples, with_gunicorn, workers):
 
     app.register_blueprint(ui_blueprint)
     app.register_blueprint(curation_blueprint)
-    app.register_blueprint(parser_blueprint)
+    app.register_blueprint(uploading_blueprint)
     app.register_blueprint(api_blueprint)
     app.register_blueprint(experiment_blueprint)
-    app.register_blueprint(belief_blueprint)
-    app.register_blueprint(external_blueprint)
     app.register_blueprint(reporting_blueprint)
     app.register_blueprint(receiving_blueprint)
 
-    if app.config.get('PYBEL_WEB_PARSER_API'):
+    if app.config.get(PYBEL_WEB_USE_PARSER_API):
         build_parser_service(app)
 
     log.info('Done building %s in %.2f seconds', app, time.time() - t)
@@ -180,7 +177,6 @@ def run(host, port, debug, config, examples, with_gunicorn, workers):
     if with_gunicorn:
         gunicorn_app = make_gunicorn_app(app, host, port, workers)
         gunicorn_app.run()
-
     else:
         app.run(host=host, port=port)
 

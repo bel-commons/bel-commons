@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""This module contains integrations developed for external services"""
+"""This module contains integrations developed for external services."""
 
 import logging
 
@@ -11,8 +11,8 @@ from pybel import from_url
 from pybel.struct import union
 from pybel_tools.selection import get_subgraph_by_annotations
 from pybel_tools.summary import get_annotation_values
-from .proxies import manager
-from .send_utils import serve_network
+from pybel_web.proxies import manager
+from pybel_web.send_utils import serve_network
 
 log = logging.getLogger(__name__)
 

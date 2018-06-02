@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
 
 import logging
-import time
 from getpass import getuser
 
 import flask
+import time
 from flask import jsonify, request
 
 from pybel import BELGraph
 from pybel.parser import BelParser
-from .send_utils import serve_network
+from ..send_utils import serve_network
 
 __all__ = [
     'build_parser_service',
@@ -24,7 +24,7 @@ METADATA_USER = 'user'
 
 
 def build_parser_service(app, conversion_function=None):
-    """Builds parser app for sending and receiving BEL statements
+    """Add the parser app for sending and receiving BEL statements
     
     :param flask.Flask app: A Flask app
     :param conversion_function: An optional function to convert the output of the parser before serializing to JSON
