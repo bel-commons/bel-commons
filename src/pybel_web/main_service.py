@@ -2,12 +2,13 @@
 
 """This module contains the user interface blueprint for the application."""
 
+import datetime
 import logging
+import os
 import sys
 from collections import defaultdict
 from operator import itemgetter
 
-import datetime
 import flask
 import time
 from flask import Blueprint, Markup, abort, current_app, flash, redirect, render_template, request, url_for
@@ -26,17 +27,21 @@ from pybel_tools.query import QueryMissingNetworksError
 from pybel_tools.summary import info_json
 from pybel_tools.utils import get_version as get_pybel_tools_version
 from . import models
-from .constants import *
-from .external_managers import *
+from .constants import get_explorer_toolbox, merged_document_folder
 from .external_managers import manager_dict
 from .manager_utils import next_or_jsonify
 from .models import Assembly, EdgeComment, EdgeVote, Experiment, Omic, Query, User
 from .proxies import manager
 from .utils import calculate_overlap_info, get_version as get_bel_commons_version
 
+__all__ = [
+    'ui_blueprint',
+]
+
 log = logging.getLogger(__name__)
 
 ui_blueprint = Blueprint('ui', __name__)
+
 time_instantiated = str(datetime.datetime.now())
 preprint_message = Markup("We're getting ready to publish this web application! Check our <a href=\"https://doi.org"
                           "/10.1101/288274\">preprint</a> on <i>bioRxiv</i>.")
@@ -166,12 +171,7 @@ def view_nodes():
         nodes=nodes,
         count=count,
         current_user=current_user,
-        hgnc_manager=hgnc_manager,
-        chebi_manager=chebi_manager,
-        go_manager=go_manager,
-        entrez_manager=entrez_manager,
-        interpro_manager=interpro_manager,
-        mesh_manager=mesh_manager,
+        **manager_dict,
     )
 
 
@@ -187,12 +187,7 @@ def view_node(node_hash):
         'node/node.html',
         node=node,
         current_user=current_user,
-        hgnc_manager=hgnc_manager,
-        chebi_manager=chebi_manager,
-        go_manager=go_manager,
-        entrez_manager=entrez_manager,
-        interpro_manager=interpro_manager,
-        mesh_manager=mesh_manager,
+        **manager_dict,
     )
 
 
