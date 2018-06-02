@@ -471,7 +471,9 @@ def send_summary_mail(graph, report, t):
         else:
             path = os.path.join(os.path.expanduser('~'), 'Downloads', 'report_{}.html'.format(report.id))
 
-            with open(path, 'w') as file:
-                print(html, file=file)
-
-            celery_logger.info('HTML printed to file at: %s', path)
+            try:
+                with open(path, 'w') as file:
+                    print(html, file=file)
+                celery_logger.info('HTML printed to file at: %s', path)
+            except FileNotFoundError:
+                celery_logger.info('no file printed.')
