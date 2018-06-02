@@ -1,23 +1,130 @@
 # -*- coding: utf-8 -*-
 
+"""Tests for the manager."""
+
 import logging
 from uuid import uuid4
 
-from pybel.constants import INCREASES, PROTEIN
-from pybel.examples import sialic_acid_graph
-from pybel.manager.models import Edge, Node
-from pybel_web.models import Assembly, EdgeComment, EdgeVote, Query, User
-from tests.constants import TemporaryCacheClsMixin, TemporaryCacheInstanceMixin
+import time
 
+from pybel.constants import INCREASES, PROTEIN
+from pybel.manager.models import Edge, Network, Node
+from pybel_web.models import Assembly, EdgeComment, EdgeVote, Query, Report, User
+from tests.cases import TemporaryCacheMethodMixin
+from werkzeug.exceptions import HTTPException
 log = logging.getLogger(__name__)
 
 
-class TestDrop(TemporaryCacheClsMixin):
-    def test_drop_votes(self):  # TODO use mocks?
-        network = self.manager.insert_graph(sialic_acid_graph)
-        edges = list(network.edges.order_by(Edge.bel))
-        edge = edges[0]
+def n():
+    return str(uuid4())[:8]
+
+
+def make_network(name):
+    return Network(name=(str(name) or n()), version=n())
+
+
+def upgrade_network(network):
+    return Network(name=network.name, version=n())
+
+
+def make_report(network):
+    return Report(network=network)
+
+
+def make_node():
+    u = n()
+    return Node(type=PROTEIN, bel='p(HGNC:{})'.format(u))
+
+
+def make_edge(n1=None, n2=None):
+    if n1 is None:
+        n1 = make_node()
+    if n2 is None:
+        n2 = make_node()
+    return Edge(source=n1, target=n2, relation=INCREASES, bel='{} increases {}'.format(n1.bel, n2.bel))
+
+
+class MockAdminUser(User):
+
+    @property
+    def is_authenticated(self):
+        return False
+
+    @property
+    def is_admin(self):
+        return True
+
+
+class TestManager(TemporaryCacheMethodMixin):
+    """Test the PyBEL Web WebManager class."""
+
+    def test_manager_iter_recent_public_networks(self):
+        """Test iteration of the latest public networks"""
+        n1, n2, n3, n4 = networks = [make_network('Network {}'.format(i)) for i in range(1, 5)]
+
+        self.add_all(networks)
+
+        # skip making a report for the last one
+        r1, r2, r3 = reports = [make_report(network) for network in (n1, n2, n2)]
+        r1.public = True
+        r2.public = True
+        r3.public = False
+
+        self.add_all_and_commit(reports)
+
+        self.assertEqual(4, self.manager.count_networks())
+        self.assertEqual(3, self.manager.count_reports())
+
+        public_networks = list(self.manager.iter_recent_public_networks())
+        self.assertIn(n1, public_networks)
+        self.assertIn(n2, public_networks)
+        self.assertEqual(2, len(public_networks))
+
+        time.sleep(1)
+
+        # add some updates
+
+        n1v2 = upgrade_network(n1)
+        r1v2 = make_report(n1v2)
+        self.add_all_and_commit([n1v2, r1v2])
+
+        self.assertEqual(5, self.manager.count_networks())
+        self.assertEqual(4, self.manager.count_reports())
+
+        public_networks = list(self.manager.iter_recent_public_networks())
+        self.assertNotIn(n1, public_networks)
+        self.assertIn(n1v2, public_networks)
+        self.assertIn(n2, public_networks)
+        self.assertEqual(2, len(public_networks))
+
+    def test_user_iter_owned_networks(self):
+        """Test getting networks owned by a given user."""
+
+    def test_user_iter_shared_networks(self):
+        """Test getting networks shared with a given user."""
+
+    def test_user_iter_project_networks(self):
+        """Test getting networks accessible to a given user through a project."""
+
+    def test_safe_get_network(self):
+        u = User()
+        self.add_all_and_commit([u])
+
+        with self.assertRaises(HTTPException):
+            self.manager.safe_get_network(user=u, network_id=0)
+
+        # TODO test conditions for admin, for report, and for actual permission
+
+        network_id = 1
+        x = self.manager.strict_get_network(user=u, network_id=network_id)
+
+
+    def test_drop_votes(self):
+        edge = make_edge()
         user = User(email='test@example.com')
+        self.manager.add_all([edge, user])
+        self.manager.commit()
+
         vote = self.manager.get_or_create_vote(edge, user, agreed=True)
         self.assertIsNone(vote.changed)
         self.assertTrue(vote.agreed)
@@ -26,8 +133,6 @@ class TestDrop(TemporaryCacheClsMixin):
         self.assertIsNotNone(vote.changed)
         self.assertFalse(vote.agreed)
 
-
-class TestDropInstance(TemporaryCacheInstanceMixin):
     def test_drop_edge_cascade_to_vote(self):
         n1 = Node(type=PROTEIN, bel='p(HGNC:A)')
         n2 = Node(type=PROTEIN, bel='p(HGNC:B)')

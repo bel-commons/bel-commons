@@ -10,19 +10,16 @@ Reference for testing Flask
 import datetime
 import json
 import logging
-import os
-import tempfile
 import unittest
 
+from bio2bel.testing import TemporaryConnectionMethodMixin
 from flask import url_for
 from flask_security import current_user
 
 from pybel.constants import PYBEL_CONNECTION
-from pybel_web.application import FlaskPyBEL, create_application
-from pybel_web.curation_service import curation_blueprint
+from pybel_web.application import PyBELSQLAlchemy, create_application
 from pybel_web.database_service import api_blueprint
 from pybel_web.main_service import ui_blueprint
-from pybel_web.parser_service import parser_blueprint
 
 log = logging.getLogger(__name__)
 log.setLevel(10)
@@ -38,13 +35,14 @@ def has_no_empty_params(rule):
     return len(defaults) >= len(arguments)
 
 
-class WebTest(unittest.TestCase):
+class WebTest(TemporaryConnectionMethodMixin):
     def setUp(self):
-        self.db_fd, self.db_file = tempfile.mkstemp()
+        """Build a connection, a Flask app, and a Flask app testing client."""
+        super().setUp()
 
         config = {
             'SECRET_KEY': TEST_SECRET_KEY,
-            PYBEL_CONNECTION: 'sqlite:///' + self.db_file,
+            PYBEL_CONNECTION: self.connection,
             'SECURITY_REGISTERABLE': True,
             'SECURITY_CONFIRMABLE': False,
             'SECURITY_SEND_REGISTER_EMAIL': False,
@@ -61,40 +59,40 @@ class WebTest(unittest.TestCase):
             CELERY_CACHE_BACKEND='memory',
             CELERY_EAGER_PROPAGATES_EXCEPTIONS=True,
             WTF_CSRF_ENABLED=False,
+            LOGIN_DISABLED=False,
+            SERVER_NAME='localhost',
         ))
 
-        self.app_instance = create_application(**config)
+        self.app = create_application(**config)
 
-        self.app_instance.config.update({
-            'LOGIN_DISABLED': False,
-            'SERVER_NAME': 'localhost'
+        self.app.register_blueprint(ui_blueprint)
+        self.app.register_blueprint(api_blueprint)
 
-        })
-
-        self.app_instance.register_blueprint(ui_blueprint)
-        self.app_instance.register_blueprint(api_blueprint)
-        self.app_instance.register_blueprint(parser_blueprint)
-        self.app_instance.register_blueprint(curation_blueprint)
-
-        self.pybel = FlaskPyBEL.get_state(self.app_instance)
-
-        self.manager = self.pybel.manager
-
-        self.pybel.user_datastore.create_user(
+        self.user_datastore.create_user(
             email=TEST_USER_EMAIL,
             password=TEST_USER_PASSWORD,
             confirmed_at=datetime.datetime.now(),
         )
-        self.pybel.user_datastore.commit()
+        self.user_datastore.commit()
 
-        self.app = self.app_instance.test_client()
+        self.client = self.app.test_client()
 
-        with self.app_instance.app_context():
+        with self.app.app_context():
             self.manager.create_all()
 
-    def tearDown(self):
-        os.close(self.db_fd)
-        os.unlink(self.db_file)
+    @property
+    def manager(self):
+        """
+        :rtype: pybel_web.manager.WebManager
+        """
+        return PyBELSQLAlchemy.get_manager(self.app)
+
+    @property
+    def user_datastore(self):
+        """
+        :rtype: flask_security.SQLAlchemyUserDatastore
+        """
+        return self.manager.user_datastore
 
     def login(self, email, password):
         """Logs a user in to the test application
@@ -102,8 +100,8 @@ class WebTest(unittest.TestCase):
         :type email: str
         :type password: str
         """
-        with self.app_instance.app_context():
-            return self.app.post(
+        with self.app.app_context():
+            return self.client.post(
                 '/login',
                 data=dict(
                     email=email,
@@ -114,8 +112,8 @@ class WebTest(unittest.TestCase):
 
     def logout(self):
         """Logs a user out of the test application"""
-        with self.app_instance.app_context():
-            return self.app.get(
+        with self.app.app_context():
+            return self.client.get(
                 '/logout',
                 follow_redirects=True
             )
@@ -123,7 +121,7 @@ class WebTest(unittest.TestCase):
     @unittest.skip
     def test_login(self):
         """Test a user can be properly logged in then back out"""
-        with self.app_instance.app_context():
+        with self.app.app_context():
             self.assertFalse(current_user.authenticated)
 
             self.login(TEST_USER_EMAIL, TEST_USER_PASSWORD)
@@ -137,8 +135,8 @@ class WebTest(unittest.TestCase):
     def test_ui_pages(self):
         """This test should visit each UI page and minimally, not error"""
 
-        with self.app_instance.app_context():
-            for rule in self.app_instance.url_map.iter_rules():
+        with self.app.app_context():
+            for rule in self.app.url_map.iter_rules():
                 # Filter out rules we can't navigate to in a browser
                 # and rules that require parameters
                 if "GET" in rule.methods and has_no_empty_params(rule):
@@ -150,13 +148,13 @@ class WebTest(unittest.TestCase):
 
                     url = url_for(rule.endpoint, **(rule.defaults or {}))
 
-                    response = self.app.get(url, follow_redirects=True)
+                    response = self.client.get(url, follow_redirects=True)
 
                     self.assertEqual(200, response.status_code)
 
     def test_api_count_users(self):
-        with self.app_instance.app_context():
-            response = self.app.get('/api/user/count')
+        with self.app.app_context():
+            response = self.client.get('/api/user/count')
             r = json.loads(response.data)
             self.assertIn('count', r)
             self.assertEqual(5, r['count'])
@@ -172,7 +170,7 @@ class WebTest(unittest.TestCase):
         }
 
         self.login(TEST_USER_EMAIL, TEST_USER_PASSWORD)
-        response = self.app.post(
+        response = self.client.post(
             '/api/pipeline/query',
             data=pipeline_query,
         )
@@ -202,7 +200,7 @@ class WebTest(unittest.TestCase):
         }
 
         self.login(TEST_USER_EMAIL, TEST_USER_PASSWORD)
-        response = self.app.post(
+        response = self.client.post(
             '/api/pipeline/query',
             data=pipeline_query,
         )
