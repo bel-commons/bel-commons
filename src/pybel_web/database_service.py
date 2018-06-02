@@ -5,6 +5,7 @@
 import csv
 import logging
 import pickle
+from functools import lru_cache
 from io import StringIO
 from operator import itemgetter
 
@@ -12,7 +13,6 @@ import networkx as nx
 import time
 from flask import Blueprint, abort, current_app, flash, jsonify, make_response, redirect, request
 from flask_security import current_user, login_required, roles_required
-from functools import lru_cache
 from sqlalchemy import func, or_
 
 import pybel
@@ -29,15 +29,15 @@ from pybel_tools import pipeline
 from pybel_tools.analysis.ucmpa import RESULT_LABELS
 from pybel_tools.filters.node_filters import exclude_pathology_filter
 from pybel_tools.mutation import add_canonical_names
+from pybel_tools.pipeline import function_is_registered
 from pybel_tools.query import Query
 from pybel_tools.selection import get_random_path, get_subgraph_by_annotations, get_subgraph_by_node_filter
 from pybel_tools.summary import (
     get_authors, get_incorrect_names_by_namespace, get_naked_names, get_undefined_namespace_names, info_json, info_list,
 )
 from . import models
-from .constants import *
+from .constants import AND, BLACK_LIST, PATHOLOGY_FILTER, PATHS_METHOD, RANDOM_PATH, UNDIRECTED
 from .external_managers import *
-from .main_service import BLACK_LIST, PATHS_METHOD, UNDIRECTED
 from .manager_utils import fill_out_report, make_graph_summary, next_or_jsonify
 from .models import EdgeComment, Project, Report, User
 from .proxies import manager
