@@ -29,7 +29,7 @@ from pybel.constants import PYBEL_CONNECTION, config as pybel_config, get_cache_
 from .application_utils import PyBELSQLAlchemy
 from .celery_utils import create_celery
 from .constants import (
-    CELERY_BROKER_URL, MAIL_DEFAULT_SENDER, MAIL_SERVER, PYBEL_WEB_CONFIG_JSON,
+    CELERY_BROKER_URL, MAIL_DEFAULT_SENDER, MAIL_SERVER, PYBEL_WEB_CONFIG_JSON, PYBEL_WEB_CONFIG_OBJECT,
     PYBEL_WEB_STARTUP_NOTIFY, SERVER_NAME, SQLALCHEMY_DATABASE_URI, SQLALCHEMY_TRACK_MODIFICATIONS, SWAGGER,
     SWAGGER_CONFIG, VERSION,
 )
@@ -63,25 +63,6 @@ class IntListConverter(ListConverter):
         return [int(entry) for entry in ListConverter.to_python(self, value)]
 
 
-def get_config_object(config_location=None):
-    """Get the application configuration
-
-    :param Optional[str] config_location:
-    :rtype: str
-    """
-    if config_location is not None:
-        log.info('using configuration from user supplied argument: %s', config_location)
-        return config_location
-
-    pbw_conf_obj = os.environ.get('PYBEL_WEB_CONFIG_OBJECT')
-    if pbw_conf_obj is not None:
-        log.info('using configuration from environment: %s', pbw_conf_obj)
-        return pbw_conf_obj
-
-    log.info('using configuration from default %s', _default_config_location)
-    return _default_config_location
-
-
 def _send_startup_mail(app):
     mail_default_sender = app.config.get(MAIL_DEFAULT_SENDER)
     notify = app.config.get(PYBEL_WEB_STARTUP_NOTIFY)
@@ -103,33 +84,42 @@ def _send_startup_mail(app):
         log.info('notified %s', notify)
 
 
-def create_application(config_object_name=None, examples=None, **kwargs):
+def create_application(**kwargs):
     """Build a Flask app.
     
     1. Loads default config
     2. Updates with kwargs
     
-    :param str config_object_name: The path to the object that will get loaded for default configuration. Defaults to
-     :data:`'pybel_web.config.Config'`
-    :param Optional[bool] examples: Should examples be pre-loaded
     :param dict kwargs: keyword arguments to add to config
     :rtype: flask.Flask
     """
     app = Flask(__name__)
-    app.config.from_object(get_config_object(config_object_name))
+
+    # Load default config from object
+    config_object_name = os.environ.get(PYBEL_WEB_CONFIG_OBJECT)
+    if config_object_name is not None:
+        app.config.from_object(config_object_name)
+    else:
+        app.config.from_object(_default_config_location)
+
+    # Load config from PyBEL
     app.config.update(pybel_config)
+    app.config[PYBEL_CONNECTION] = get_cache_connection()  # in case config is set funny
 
-    pbw_config_json = os.environ.get(PYBEL_WEB_CONFIG_JSON)
-    if pbw_config_json is not None:
-        if os.path.exists(pbw_config_json):
-            log.info('importing config from %s', pbw_config_json)
-            app.config.from_json(pbw_config_json)
+    # Load config from JSON
+    config_json_path = os.environ.get(PYBEL_WEB_CONFIG_JSON)
+    if config_json_path is not None:
+        if os.path.exists(config_json_path):
+            log.info('importing config from %s', config_json_path)
+            app.config.from_json(config_json_path)
         else:
-            log.warning('configuration from environment at %s does not exist', pbw_config_json)
+            log.warning('configuration from environment at %s does not exist', config_json_path)
 
+    # Load config from function's kwargs
     app.config.update(kwargs)
+
+    # Set defaults
     app.config.setdefault(SWAGGER, SWAGGER_CONFIG)
-    app.config.setdefault(PYBEL_CONNECTION, get_cache_connection())
     app.config[SQLALCHEMY_DATABASE_URI] = app.config[PYBEL_CONNECTION]
     app.config.setdefault(SQLALCHEMY_TRACK_MODIFICATIONS, False)
 

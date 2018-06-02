@@ -8,17 +8,13 @@ services:
     volumes:
      - .:/app
     environment:
-      PYBEL_WEB_CONFIG_OBJECT: "pybel_web.config.DockerConfig"
-      PYBEL_DATABASE_USER: root
-      PYBEL_DATABASE_PASSWORD: root
-      PYBEL_DATABASE_HOST: mysql
-      PYBEL_DATABASE_DATABASE: pybel
-      SECRET_KEY: ${SECRET_KEY}
-      PYBEL_SECURITY_PASSWORD_SALT: ${PYBEL_SECURITY_PASSWORD_SALT}
+      PYBEL_CONNECTION: mysql+mysqldb://root:root@mysql/pybel?charset=utf8
       CELERY_BROKER_URL: amqp://queue
+      SECRET_KEY: ${SECRET_KEY}
+      SECURITY_PASSWORD_SALT: ${SECURITY_PASSWORD_SALT}
     restart: always
+    command: pybel-web run -vv
     #command: gunicorn -b 0.0.0.0:5000 pybel_web.run:app --log-level=INFO
-    command: pybel-web run
     # add more workers later -w ${PYBEL_GUNICORN_NUMBER_WORKERS}
     ports:
       - "5000:5000"
@@ -32,14 +28,10 @@ services:
     volumes:
      - .:/app
     environment:
-      PYBEL_WEB_CONFIG_OBJECT: "pybel_web.config.DockerConfig"
-      PYBEL_DATABASE_USER: root
-      PYBEL_DATABASE_PASSWORD: root
-      PYBEL_DATABASE_HOST: mysql
-      PYBEL_DATABASE_DATABASE: pybel
-      SECRET_KEY: ${SECRET_KEY}
-      PYBEL_SECURITY_PASSWORD_SALT: ${PYBEL_SECURITY_PASSWORD_SALT}}
+      PYBEL_CONNECTION: mysql+mysqldb://root:root@mysql/pybel?charset=utf8
       CELERY_BROKER_URL: amqp://queue
+      SECRET_KEY: ${SECRET_KEY}
+      SECURITY_PASSWORD_SALT: ${SECURITY_PASSWORD_SALT}
     restart: always
     command: celery worker -A pybel_web.celery_worker.celery -l INFO
     depends_on:
