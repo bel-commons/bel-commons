@@ -419,7 +419,7 @@ def view_query_builder():
 
 @ui_blueprint.route('/query/compile', methods=['POST'])
 def get_pipeline():
-    """Executes a pipeline"""
+    """Execute a pipeline."""
     d = manager.query_form_to_dict(request.form)
 
     try:
@@ -703,7 +703,7 @@ def view_query_comparison(query_1_id, query_2_id):
 
 @ui_blueprint.route('/download/bel/<fid>')
 def download_saved_file(fid):
-    """Downloads a BEL file
+    """Download a BEL file.
 
     :param str fid: The file's identifier
     """
@@ -726,26 +726,27 @@ def download_saved_file(fid):
 @ui_blueprint.route('/user')
 @roles_required('admin')
 def view_users():
-    """Renders a list of users"""
+    """Render a list of users."""
     return render_template('user/users.html', users=manager.session.query(User))
 
 
 def render_user(user):
     pending_reports = user.pending_reports()
     return render_template('user/user.html', user=user, pending_reports=pending_reports, manager=manager)
+    """Render a user and their pending reports."""
 
 
 @ui_blueprint.route('/user/current')
 @login_required
 def view_current_user_activity():
-    """Returns the current user's history."""
+    """Return the current user's history."""
     return render_user(current_user)
 
 
 @ui_blueprint.route('/user/<int:user_id>')
 @roles_required('admin')
 def view_user(user_id):
-    """Returns the given user's history
+    """Return the given user's history.
 
     :param int user_id: The identifier of the user to summarize
     """
@@ -756,14 +757,14 @@ def view_user(user_id):
 @ui_blueprint.route('/overview')
 @roles_required('admin')
 def view_overview():
-    """Views the overview"""
+    """View the overview."""
     return render_template('overview.html')
 
 
 @ui_blueprint.route('/admin/rollback')
 @roles_required('admin')
 def rollback():
-    """Rolls back the transaction for when something bad happens"""
+    """Roll back the transaction for when something bad happens."""
     manager.session.rollback()
     return next_or_jsonify('rolled back')
 
@@ -771,7 +772,7 @@ def rollback():
 @ui_blueprint.route('/admin/nuke/')
 @roles_required('admin')
 def nuke():
-    """Destroys the database and recreates it"""
+    """Destroy the database and recreates it."""
     log.info('nuking database')
     manager.drop_all(checkfirst=True)
     log.info('   the dust settles')
