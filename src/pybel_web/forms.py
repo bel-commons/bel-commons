@@ -1,27 +1,18 @@
 # -*- coding: utf-8 -*-
 
-"""A collection of WTForms used through the app"""
+"""Forms encoded in WTForms for PyBEL Web."""
 
 from flask_security import RegisterForm
 from flask_security.forms import get_form_field_label
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileAllowed, FileField
 from wtforms.fields import BooleanField, HiddenField, IntegerField, RadioField, StringField, SubmitField
-from wtforms.validators import DataRequired, URL
+from wtforms.validators import DataRequired
 
 from pybel_tools.selection.induce_subgraph import (
     SEED_TYPE_DOUBLE_NEIGHBORS, SEED_TYPE_DOWNSTREAM, SEED_TYPE_INDUCTION,
     SEED_TYPE_NEIGHBORS, SEED_TYPE_PATHS, SEED_TYPE_UPSTREAM,
 )
-
-
-class ParseUrlForm(FlaskForm):
-    """Builds an upload form with wtf-forms"""
-    url = StringField('A BEL Document URL', validators=[
-        DataRequired(message="You must provide a URL"),
-        URL(message='Must be a valid URL')
-    ])
-    submit = SubmitField('Upload')
 
 
 class SeedSubgraphForm(FlaskForm):
