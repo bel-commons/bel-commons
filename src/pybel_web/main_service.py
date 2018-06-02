@@ -726,9 +726,8 @@ def view_users():
 
 
 def render_user(user):
-    pending_reports = user.pending_reports()
-    return render_template('user/user.html', user=user, pending_reports=pending_reports, manager=manager)
     """Render a user and their pending reports."""
+    return render_template('user/user.html', user=user, pending_reports=user.pending_reports(), manager=manager)
 
 
 @ui_blueprint.route('/user/current')
