@@ -2816,20 +2816,3 @@ def list_all_network_overview():
             })
 
     return jsonify(node_elements + edge_elements)
-
-
-@api_blueprint.route('/api/network/overview')
-@roles_required('admin')
-def universe_summary():
-    """Renders the graph summary page"""
-
-    chart_data = {
-        'networks': manager.count_networks(),
-        'nodes': manager.count_nodes(),
-        'edges': manager.count_edges(),
-        'namespaces': manager.count_namespaces(),
-        'annotations': manager.count_annotations(),
-        # TODO count variants, transformations, modifications, degradation, etc
-    }
-
-    return jsonify(**chart_data)
