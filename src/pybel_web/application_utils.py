@@ -239,8 +239,8 @@ class PyBELSQLAlchemy(SQLAlchemy):
                 log.info('uploading internal example graph: %s', graph)
                 insert_graph(self.manager, graph, user=test_user, public=False)
 
-    @classmethod
-    def get_manager(cls, app):
+    @staticmethod
+    def get_manager(app):
         """
         :param flask.Flask app: A Flask app
         :rtype: pybel_web.manager.WebManager
