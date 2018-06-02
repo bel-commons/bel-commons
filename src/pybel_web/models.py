@@ -15,8 +15,7 @@ from sqlalchemy.orm import backref, relationship
 
 import pybel_tools.query
 from pybel import from_lines
-from pybel.manager import Base
-from pybel.manager.models import EDGE_TABLE_NAME, LONGBLOB, NETWORK_TABLE_NAME, Network
+from pybel.manager.models import Base, EDGE_TABLE_NAME, Edge, LONGBLOB, NETWORK_TABLE_NAME, Network
 from pybel.struct import union
 from pybel.utils import list2tuple
 from pybel_tools.query import SEED_DATA, SEED_METHOD
@@ -244,7 +243,7 @@ class Report(Base):
         nullable=True,
         doc='The network that was uploaded'
     )
-    network = relationship('Network', backref=backref('report', uselist=False))
+    network = relationship(Network, backref=backref('report', uselist=False))
 
     def get_lines(self):
         """Decodes the lines stored in this
@@ -471,8 +470,8 @@ class User(Base, UserMixin):
     active = Column(Boolean)
     confirmed_at = Column(DateTime)
 
-    roles = relationship('Role', secondary=roles_users, backref=backref('users', lazy='dynamic'))
-    networks = relationship('Network', secondary=users_networks, backref=backref('users', lazy='dynamic'))
+    roles = relationship(Role, secondary=roles_users, backref=backref('users', lazy='dynamic'))
+    networks = relationship(Network, secondary=users_networks, backref=backref('users', lazy='dynamic'))
 
     @property
     def is_admin(self):
@@ -621,7 +620,7 @@ class Assembly(Base):
 
     created = Column(DateTime, default=datetime.datetime.utcnow, doc='The date and time of upload')
 
-    networks = relationship('Network', secondary=assembly_network, backref=backref('assemblies', lazy='dynamic'))
+    networks = relationship(Network, secondary=assembly_network, backref=backref('assemblies', lazy='dynamic'))
 
     def as_bel(self):
         """Returns a merged instance of all of the contained networks
@@ -698,11 +697,11 @@ class Query(Base):
                                                                 'appropriate rights to all networks in assembly')
 
     user_id = Column(Integer, ForeignKey('{}.id'.format(USER_TABLE_NAME)), doc='The user who created the query')
-    user = relationship('User', backref=backref('queries', lazy='dynamic'))
+    user = relationship(User, backref=backref('queries', lazy='dynamic'))
 
     assembly_id = Column(Integer, ForeignKey('{}.id'.format(ASSEMBLY_TABLE_NAME)),
                          doc='The network assembly used in this query')
-    assembly = relationship('Assembly')
+    assembly = relationship(Assembly, backref=backref('queries'))
 
     seeding = Column(Text, doc="The stringified JSON of the list representation of the seeding")
     pipeline = Column(Text, doc="Protocol list")
@@ -933,11 +932,11 @@ class EdgeVote(Base):
     id = Column(Integer, primary_key=True)
 
     edge_id = Column(Integer, ForeignKey('{}.id'.format(EDGE_TABLE_NAME)), nullable=False)
-    edge = relationship('Edge', backref=backref('votes', lazy='dynamic', cascade="all, delete-orphan"))
+    edge = relationship(Edge, backref=backref('votes', lazy='dynamic', cascade="all, delete-orphan"))
 
     user_id = Column(Integer, ForeignKey('{}.id'.format(USER_TABLE_NAME)), nullable=False,
                      doc='The user who made this vote')
-    user = relationship('User', backref=backref('votes', lazy='dynamic'))
+    user = relationship(User, backref=backref('votes', lazy='dynamic'))
 
     agreed = Column(Boolean, nullable=True)
     changed = Column(DateTime, default=datetime.datetime.utcnow)
@@ -975,11 +974,11 @@ class EdgeComment(Base):
     id = Column(Integer, primary_key=True)
 
     edge_id = Column(Integer, ForeignKey('{}.id'.format(EDGE_TABLE_NAME)))
-    edge = relationship('Edge', backref=backref('comments', lazy='dynamic', cascade="all, delete-orphan"))
+    edge = relationship(Edge, backref=backref('comments', lazy='dynamic', cascade="all, delete-orphan"))
 
     user_id = Column(Integer, ForeignKey('{}.id'.format(USER_TABLE_NAME)), nullable=False,
                      doc='The user who made this comment')
-    user = relationship('User', backref=backref('comments', lazy='dynamic'))
+    user = relationship(User, backref=backref('comments', lazy='dynamic'))
 
     comment = Column(Text, nullable=False)
     created = Column(DateTime, default=datetime.datetime.utcnow)
