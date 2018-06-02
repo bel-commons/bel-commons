@@ -2780,38 +2780,38 @@ def get_recent_report():
 @api_blueprint.route('/api/network/overlap')
 @roles_required('admin')
 def list_all_network_overview():
-    """Returns a meta-network describing the overlaps of all networks"""
+    """Return a meta-network describing the overlaps of all networks."""
     node_elements = []
     edge_elements = []
 
+    cutoff = request.args.get('cutoff', type=int, default=25)
+
     for source_network in manager.list_networks():
-        source_network_id = source_network.id
-        source_bel_graph = manager.get_graph_by_id(source_network_id)
-        overlap = manager.get_node_overlaps(source_network_id)
+        overlap = manager.get_node_overlaps(source_network)
 
         node_elements.append({
             'data': {
-                'id': source_network_id,
+                'id': source_network.id,
                 'name': source_network.name,
-                'size': source_bel_graph.number_of_nodes()
+                'size': source_network.report.number_nodes
             }
         })
 
-        for target_network_id, weight in overlap.items():
-            weight = int(100 * weight)
+        for target_network_id, (target_network, overlap) in overlap.items():
+            overlap = int(100 * overlap)
 
-            if weight < 25:
+            if overlap < cutoff:
                 continue  # don't have a complete graph
 
-            if source_network_id < target_network_id:
+            if source_network.id <= target_network_id:
                 continue  # no duplicates
 
             edge_elements.append({
                 'data': {
                     'id': 'edge{}'.format(len(edge_elements)),
-                    'source': source_network_id,
+                    'source': source_network.id,
                     'target': target_network_id,
-                    'weight': weight
+                    'weight': overlap
                 }
             })
 

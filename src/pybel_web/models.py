@@ -1016,3 +1016,17 @@ class NetworkOverlap(Base):
                          backref=backref('incoming_overlaps', lazy='dynamic', cascade="all, delete-orphan"))
 
     overlap = Column(Float, nullable=False, doc='The node overlap between the two networks')
+
+    @staticmethod
+    def build(left, right, overlap):
+        """Build an overlap and ensure the order is correct.
+
+        :param Network left:
+        :param Network right:
+        :param float overlap:
+        :return: NetworkOverlap
+        """
+        if left.id < right.id:
+            left, right = right, left
+
+        return NetworkOverlap(left=left, right=right, overlap=overlap)

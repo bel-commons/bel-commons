@@ -571,17 +571,26 @@ class WebManager(_Manager):
         """Calculate overlaps to all other networks in the database.
 
         :param Network network:
-        :return: A dictionary from {int network_id: float similarity} for this network to all other networks
-        :rtype: collections.Counter[int,float]
+        :return: A dictionary from {int network_id: (network, float similarity)} for this network to all other networks
+        :rtype: dict[int,tuple[Network,float]]
         """
         t = time.time()
 
         nodes = set(node.id for node in network.nodes)
 
-        rv = Counter({
-            ol.right_id: ol.overlap
+        incoming_overlaps = (
+            (ol.left_id, ol.left, ol.overlap)
+            for ol in network.incoming_overlaps
+        )
+        outgoing_overlaps = (
+            (ol.right_id, ol.right, ol.overlap)
             for ol in network.overlaps
-        })
+        )
+
+        rv = {
+            other_network_id: (other_network, overlap)
+            for other_network_id, other_network, overlap in itt.chain(incoming_overlaps, outgoing_overlaps)
+        }
 
         uncached_networks = list(
             other_network
@@ -594,12 +603,9 @@ class WebManager(_Manager):
 
             for other_network in uncached_networks:
                 other_network_nodes = set(node.id for node in other_network.nodes)
-
                 overlap = min_tanimoto_set_similarity(nodes, other_network_nodes)
-
-                rv[other_network.id] = overlap
-
-                no = NetworkOverlap(left=network, right=other_network, overlap=overlap)
+                rv[other_network.id] = other_network, overlap
+                no = NetworkOverlap.build(left=network, right=other_network, overlap=overlap)
                 self.session.add(no)
 
             self.session.commit()
@@ -617,10 +623,11 @@ class WebManager(_Manager):
         :return:
         """
         overlap_counter = self.get_node_overlaps(network)
-        allowed_network_ids = self.get_network_ids_with_permission_helper(user)
+        allowed_network_ids = self.get_network_ids_with_permission(user)
+
         overlaps = [
-            (self.get_network_by_id(network_id), v)
-            for network_id, v in overlap_counter.most_common()
+            (network, v)
+            for network_id, (network, v) in sorted(overlap_counter.items(), key=lambda t: t[1][1], reverse=True)
             if network_id in allowed_network_ids and v > 0.0
         ]
         return overlaps[:number]
