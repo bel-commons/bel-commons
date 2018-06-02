@@ -275,9 +275,9 @@ function displayEdgeInfo(edge) {
     var edgeObject = {};
 
     edgeObject["Links"] = '<ul class="list-inline">';
-    edgeObject["Links"] += '<li><a target="_blank" href="/node/' + edge.source.id + '"><code>' + getCanonicalName(edge.source) + '</code> <span class="glyphicon glyphicon-new-window"></span></a></li>';
-    edgeObject["Links"] += '<li><a target="_blank" href="/node/' + edge.target.id + '"><code>' + getCanonicalName(edge.target) + '</code> <span class="glyphicon glyphicon-new-window"></span></a></li>';
-    edgeObject["Links"] += '<li><a target="_blank" href="/node/' + edge.source.id + '/edges/' + edge.target.id + '">All Evidences <span class="glyphicon glyphicon-new-window"></span></a></li>';
+    edgeObject["Links"] += '<li><a target="_blank" class="btn btn-default" href="/node/' + edge.source.id + '"><code>' + getCanonicalName(edge.source) + '</code> <span class="glyphicon glyphicon-new-window"></span></a></li>';
+    edgeObject["Links"] += '<li><a target="_blank" class="btn btn-default" href="/node/' + edge.target.id + '"><code>' + getCanonicalName(edge.target) + '</code> <span class="glyphicon glyphicon-new-window"></span></a></li>';
+    edgeObject["Links"] += '<li><a target="_blank" class="btn btn-default" href="/node/' + edge.source.id + '/edges/' + edge.target.id + '">All Evidences <span class="glyphicon glyphicon-new-window"></span></a></li>';
     edgeObject["Links"] += '</ul>';
 
     if (edge.contexts) {
@@ -318,7 +318,7 @@ function displayEdgeInfo(edge) {
                 }
 
                 if (window.allow_voting === true) {
-                    edgeObject[sk] += '<dt>Links</dt><dd><a target="_blank" href="/api/edge/' + context.id + '">' + 'More Information</a> ';
+                    edgeObject[sk] += '<dt>Links</dt><dd><a target="_blank" href="/edge/' + context.id + '">' + 'More Information</a> ';
                     edgeObject[sk] += 'or <a href="#" data-toggle="modal" data-target="#edge-feedback" data-edge="' +
                         context.id + '">Give Feedback</a>';
                     edgeObject[sk] += '</dd>';
@@ -336,8 +336,10 @@ function displayEdgeInfo(edge) {
     }
 
     var row = 0;
-    $.each(edgeObject, function (key, value) {
-        insertRow(dynamicTable, row, key, value);
+    $.each(edgeObject, function (sk, column1) {
+        var row = dynamicTable.insertRow(row);
+        var cell1 = row.insertCell(0);
+        cell1.innerHTML = column1;
         row++
     });
 }
