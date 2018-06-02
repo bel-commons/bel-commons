@@ -617,36 +617,47 @@ def summarize(manager):
     click.echo('Experiments: {}'.format(manager.session.query(Experiment).count()))
 
 
-omics_dir = os.environ.get('BEL_COMMONS_EXAMPLES_OMICS_DATA_DIR')
-bms = os.environ.get('BMS_BASE')
+_default_bms_dir = os.path.join(os.path.expanduser('~'), 'dev', 'bms')
+_default_omics_dir = os.path.join(os.path.expanduser('~'), 'dev', 'bel-commons-manuscript', 'data')
 
-if omics_dir is not None or bms is not None:
+omics_dir = (
+    _default_omics_dir
+    if os.path.exists(_default_omics_dir)
+    else os.environ.get('BEL_COMMONS_EXAMPLES_OMICS_DATA_DIR')
+)
+bms_dir = (
+    _default_bms_dir
+    if os.path.exists(_default_bms_dir)
+    else os.environ.get('BMS_BASE')
+)
+
+if omics_dir is not None or bms_dir is not None:
     @manage.group()
     def examples():
         """Load examples"""
 
 
-    if omics_dir:
+    if omics_dir is not None:
         @examples.command(help='Load omics from {}'.format(omics_dir))
         @click.option('-r', '--reload', is_flag=True, help='Reload')
         @click.pass_obj
         def load_omics(manager, reload):
-            """Load omics"""
+            """Load omics."""
             from .resources.load_omics import main
             set_debug(logging.INFO)
             main(manager, reload=reload)
 
-    if bms:
+    if bms_dir is not None:
         @examples.command()
         @click.option('--skip-cbn', is_flag=True)
         @click.pass_obj
         def load_networks(manager, skip_cbn):
-            """Load networks"""
+            """Load networks."""
             from .resources.load_networks import main
             set_debug(logging.INFO)
             main(manager, skip_cbn=skip_cbn)
 
-    if omics_dir and bms:
+    if omics_dir is not None and bms_dir is not None:
         @examples.command()
         @click.option('--reload-omics', is_flag=True, help='Reload')
         @click.option('-p', '--permutations', type=int, help='Number of permutations to run. Defaults to 25.',
@@ -654,7 +665,7 @@ if omics_dir is not None or bms is not None:
         @click.option('--skip-cbn', is_flag=True)
         @click.pass_obj
         def load(manager, reload_omics, permutations, skip_cbn):
-            """Load omics, networks, and experiments"""
+            """Load omics, networks, and experiments."""
             from .resources.load_omics import main as load_omics_main
             from .resources.load_networks import main as load_networks_main
             from .resources.load_experiments import main as load_experiments_main
@@ -671,7 +682,7 @@ if omics_dir is not None or bms is not None:
                       default=25)
         @click.pass_obj
         def load_experiments(manager, permutations):
-            """Load experiments"""
+            """Load experiments."""
             from .resources.load_experiments import main
             set_debug(logging.INFO)
             main(manager, permutations=permutations)
