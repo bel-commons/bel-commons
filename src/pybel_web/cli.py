@@ -32,7 +32,6 @@ from pybel.utils import get_version as pybel_version
 from pybel_tools.utils import enable_cool_mode, get_version as pybel_tools_get_version
 from .analysis_service import experiment_blueprint
 from .application import create_application
-from .bms_service import bms_blueprint
 from .constants import PYBEL_WEB_REGISTER_EXAMPLES, get_admin_email
 from .curation_service import curation_blueprint
 from .database_service import api_blueprint
@@ -172,9 +171,6 @@ def run(host, port, debug, config, examples, with_gunicorn, workers):
     app.register_blueprint(external_blueprint)
     app.register_blueprint(reporting_blueprint)
     app.register_blueprint(receiving_blueprint)
-
-    if app.config.get('BMS_BASE'):
-        app.register_blueprint(bms_blueprint)
 
     if app.config.get('PYBEL_WEB_PARSER_API'):
         build_parser_service(app)

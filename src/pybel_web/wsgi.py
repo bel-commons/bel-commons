@@ -9,7 +9,6 @@ import logging
 
 from pybel_web.analysis_service import experiment_blueprint
 from pybel_web.application import create_application
-from pybel_web.bms_service import bms_blueprint
 from pybel_web.curation_service import curation_blueprint
 from pybel_web.database_service import api_blueprint
 from pybel_web.external_services import external_blueprint
@@ -44,8 +43,6 @@ app.register_blueprint(external_blueprint)
 app.register_blueprint(reporting_blueprint)
 app.register_blueprint(receiving_blueprint)
 
-if app.config.get('BMS_BASE'):
-    app.register_blueprint(bms_blueprint)
 
 if app.config.get('PYBEL_WEB_PARSER_API'):
     build_parser_service(app)

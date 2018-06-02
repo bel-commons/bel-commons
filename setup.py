@@ -41,7 +41,6 @@ INSTALL_REQUIRES = [
     'pandas',
     'celery',
     'raven',
-    'gitpython',
     'scikit-learn',
     'numpy',
 ]

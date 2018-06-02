@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
 
+"""Optional BMS views.
+
+Requires setting the environment variable ``BMS_BASE`` and installation of gitpython.
+"""
+
 import hashlib
 import logging
 
@@ -9,9 +14,9 @@ from flask_security import current_user, roles_required
 
 from pybel_tools.ioutils import get_paths_recursive
 from pybel_web.manager_utils import next_or_jsonify
-from .constants import *
-from .models import Report
-from .proxies import manager
+from pybel_web.constants import *
+from pybel_web.models import Report
+from pybel_web.proxies import manager
 
 log = logging.getLogger(__name__)
 

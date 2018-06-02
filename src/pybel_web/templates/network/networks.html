@@ -75,47 +75,16 @@
             <li class="active">Networks</li>
         </ol>
 
-        {% if current_user.is_authenticated and current_user.is_admin and BMS_BASE %}
+        {% if current_user.is_authenticated and current_user.is_admin %}
             <div class="panel panel-info" id="admin-panel">
                 <div class="panel-heading">
-                    <h3 class="panel-title">Async Parse Folders
+                    <h3 class="panel-title">Admin
                         <button type="button" class="close" data-target="#admin-panel" data-dismiss="alert">
                             <span aria-hidden="true">&times;</span><span class="sr-only">Close</span>
                         </button>
                     </h3>
                 </div>
                 <div class="panel-body">
-                    <a class="btn btn-warning" href="{{ url_for('bms.git_pull', next=url_for('ui.home')) }}">
-                        Pull BMS
-                    </a>
-
-                    <div class="btn-group">
-                        <a class="btn btn-danger" href="{{ url_for('bms.ensure_selventa', next=url_for('ui.home')) }}">
-                            Selventa
-                        </a>
-                        <a class="btn btn-danger" href="{{ url_for('bms.ensure_aetionomy', next=url_for('ui.home')) }}">
-                            AETIONOMY
-                        </a>
-                        <a class="btn btn-danger" href="{{ url_for('bms.ensure_ptsd', next=url_for('ui.home')) }}">
-                            PTSD
-                        </a>
-
-                        <a class="btn btn-danger" href="{{ url_for('bms.ensure_tbi', next=url_for('ui.home')) }}">
-                            TBI
-                        </a>
-                        <a class="btn btn-danger"
-                           href="{{ url_for('bms.ensure_bel4imocede', next=url_for('ui.home')) }}">
-                            BEL4IMOCEDE
-                        </a>
-                        <a class="btn btn-danger"
-                           href="{{ url_for('bms.send_async_upload_cbn', next=url_for('ui.home')) }}">
-                            CBN
-                        </a>
-                        <a class="btn btn-danger" href="{{ url_for('bms.ensure_bms', next=url_for('ui.home')) }}">
-                            BMS
-                        </a>
-                    </div>
-
                     <div class="btn-group">
                         <a class="btn btn-warning"
                            href="{{ url_for('dbs.pillage', next=url_for('ui.view_networks')) }}">
