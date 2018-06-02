@@ -32,7 +32,6 @@ from pybel_web.manager import WebManager
 from pybel_web.manager_utils import (
     fill_out_report, get_network_summary_dict, insert_graph, make_graph_summary, run_cmpa_helper,
 )
-from pybel_web.models import User
 
 celery_logger = get_task_logger(__name__)
 log = logging.getLogger(__name__)

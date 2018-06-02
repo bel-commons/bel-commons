@@ -83,6 +83,8 @@ def set_debug_param(debug):
     elif debug == 2:
         set_debug(logging.DEBUG)
 
+    logging.getLogger('passlib.registry').setLevel(logging.WARNING)
+
 
 def number_of_workers():
     return (multiprocessing.cpu_count() * 2) + 1

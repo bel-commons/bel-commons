@@ -134,7 +134,6 @@ def view_networks():
         'network/networks.html',
         networks=sorted(networks, key=lambda network: network.created, reverse=True),
         current_user=current_user,
-        BMS_BASE=current_app.config.get('BMS_BASE'),
     )
 
 
