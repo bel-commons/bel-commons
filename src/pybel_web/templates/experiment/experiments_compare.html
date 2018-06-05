@@ -97,7 +97,7 @@
 
 {% block scripts %}
     {{ super() }}
-    <script src="http://d3js.org/d3.v3.min.js"></script>
+    <script src="https://d3js.org/d3.v3.min.js"></script>
     <script src="{{ url_for('static', filename='js/d3.parcoords.js') }}"></script>
     <script>
         d3.tsv("{{ url_for('analysis.download_experiment_comparison', experiment_ids=experiment_ids, clusters=clusters, normalize=normalize, seed=seed) }}", function (data) {
