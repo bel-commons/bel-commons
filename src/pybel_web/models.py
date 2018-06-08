@@ -737,7 +737,8 @@ class Query(Base):
         """
         return Query(
             assembly=self.assembly,
-            parent=self
+            parent=self,
+            user=self.user,
         )
 
     def set_seeding(self, query):
@@ -922,6 +923,7 @@ class Query(Base):
             assembly=self.assembly,
             seeding=self.seeding,
             pipeline=_query.pipeline.to_jsons(),
+            user=self.user,
         )
 
     def add_seed_neighbors(self, nodes):
@@ -938,6 +940,7 @@ class Query(Base):
             assembly=self.assembly,
             seeding=_query.seeding_to_jsons(),
             pipeline=self.pipeline,
+            user=self.user,
         )
 
 
