@@ -189,6 +189,15 @@ class WebManager(_Manager):
     def count_reports(self):
         return self.session.query(Report).count()
 
+    def count_users(self):
+        return self.session.query(User).count()
+
+    def count_queries(self):
+        return self.session.query(Query).count()
+
+    def count_assemblies(self):
+        return self.session.query(Assembly).count()
+
     def get_experiment_or_404(self, experiment_id):
         experiment = self.get_experiment_by_id(experiment_id)
 

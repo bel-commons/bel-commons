@@ -3,24 +3,21 @@
 """Tests for the manager."""
 
 import logging
-from uuid import uuid4
 
 import time
+from werkzeug.exceptions import HTTPException
 
 from pybel.constants import INCREASES, PROTEIN
 from pybel.manager.models import Edge, Network, Node
+from pybel.testing.utils import n
 from pybel_web.models import Assembly, EdgeComment, EdgeVote, Query, Report, User
 from tests.cases import TemporaryCacheMethodMixin
-from werkzeug.exceptions import HTTPException
+
 log = logging.getLogger(__name__)
 
 
-def n():
-    return str(uuid4())[:8]
-
-
-def make_network(name):
-    return Network(name=(str(name) or n()), version=n())
+def make_network(name=None):
+    return Network(name=(str(name) if name is not None else n()), version=n())
 
 
 def upgrade_network(network):
@@ -65,7 +62,7 @@ class TestManager(TemporaryCacheMethodMixin):
         self.add_all(networks)
 
         # skip making a report for the last one
-        r1, r2, r3 = reports = [make_report(network) for network in (n1, n2, n2)]
+        r1, r2, r3 = reports = [make_report(network) for network in (n1, n2, n3)]
         r1.public = True
         r2.public = True
         r3.public = False
@@ -107,26 +104,39 @@ class TestManager(TemporaryCacheMethodMixin):
         """Test getting networks accessible to a given user through a project."""
 
     def test_safe_get_network(self):
-        u = User()
-        self.add_all_and_commit([u])
+        u1 = User()
+        u2 = User()
+        self.add_all_and_commit([u1, u2])
 
         with self.assertRaises(HTTPException):
-            self.manager.safe_get_network(user=u, network_id=0)
+            self.manager.safe_get_network(user=u1, network_id=0)
 
         # TODO test conditions for admin, for report, and for actual permission
 
-        network_id = 1
-        x = self.manager.strict_get_network(user=u, network_id=network_id)
+        n1, n2 = (make_network() for _ in range(2))
+        r1 = make_report(n1)
+        r1.user = u1
+        r2 = make_report(n2)
+        r2.user = u2
+        self.add_all_and_commit([n1, r1, n2, r2])
 
+        self.assertEqual(2, self.manager.count_users())
+        self.assertEqual(2, self.manager.count_networks())
+        self.assertEqual(2, self.manager.count_reports())
+
+        self.manager.strict_get_network(user=u1, network_id=n1.id)
+
+        with self.assertRaises(HTTPException):
+            self.manager.strict_get_network(user=u2, network_id=n1.id)
 
     def test_drop_votes(self):
         edge = make_edge()
         user = User(email='test@example.com')
-        self.manager.add_all([edge, user])
-        self.manager.commit()
+        self.manager.session.add_all([edge, user])
+        self.manager.session.commit()
 
         vote = self.manager.get_or_create_vote(edge, user, agreed=True)
-        self.assertIsNone(vote.changed)
+        self.assertIsNotNone(vote.changed)
         self.assertTrue(vote.agreed)
 
         vote = self.manager.get_or_create_vote(edge, user, agreed=False)
@@ -168,10 +178,10 @@ class TestManager(TemporaryCacheMethodMixin):
         e2 = Edge(source=n2, target=n3, relation=INCREASES, bel='p(HGNC:B) increases p(HGNC:C)')
         u1 = User()
         u2 = User()
-        v1 = EdgeComment(user=u1, edge=e1, comment=str(uuid4()))
-        v2 = EdgeComment(user=u2, edge=e1, comment=str(uuid4()))
-        v3 = EdgeComment(user=u1, edge=e1, comment=str(uuid4()))
-        v4 = EdgeComment(user=u1, edge=e2, comment=str(uuid4()))
+        v1 = EdgeComment(user=u1, edge=e1, comment=n())
+        v2 = EdgeComment(user=u2, edge=e1, comment=n())
+        v3 = EdgeComment(user=u1, edge=e1, comment=n())
+        v4 = EdgeComment(user=u1, edge=e2, comment=n())
 
         self.manager.session.add_all([n1, n2, n3, e1, e2, u1, v1, v2, v3, v4])
         self.manager.session.commit()
@@ -235,12 +245,12 @@ class TestManager(TemporaryCacheMethodMixin):
         self.manager.session.add_all([q1, q2, q3, q4, q5])
         self.manager.session.commit()
 
-        self.assertEqual(5, self.manager.session.query(Query).count())
+        self.assertEqual(5, self.manager.count_queries())
 
         self.manager.session.query(Query).delete()
         self.manager.session.commit()
 
-        self.assertEqual(0, self.manager.session.query(Query).count())
+        self.assertEqual(0, self.manager.count_queries())
 
     def test_drop_assembly_cascade_query(self):
         a1 = Assembly()
@@ -252,11 +262,11 @@ class TestManager(TemporaryCacheMethodMixin):
         self.manager.session.add_all([a1, a2, q1, q2, q3])
         self.manager.session.commit()
 
-        self.assertEqual(2, self.manager.session.query(Assembly).count())
-        self.assertEqual(3, self.manager.session.query(Query).count())
+        self.assertEqual(2, self.manager.count_assemblies())
+        self.assertEqual(3, self.manager.count_queries())
 
         self.manager.session.delete(a1)
         self.manager.session.commit()
 
-        self.assertEqual(1, self.manager.session.query(Assembly).count())
-        self.assertEqual(1, self.manager.session.query(Query).count(), msg='Cascade to queries did not work')
+        self.assertEqual(1, self.manager.count_assemblies())
+        self.assertEqual(1, self.manager.count_queries(), msg='Cascade to queries did not work')
