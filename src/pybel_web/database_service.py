@@ -29,7 +29,7 @@ from pybel_tools import pipeline
 from pybel_tools.analysis.ucmpa import RESULT_LABELS
 from pybel_tools.filters.node_filters import exclude_pathology_filter
 from pybel_tools.mutation import add_canonical_names
-from pybel_tools.pipeline import function_is_registered
+from pybel_tools.pipeline import MissingPipelineFunctionError, no_arguments_map
 from pybel_tools.query import Query
 from pybel_tools.selection import get_random_path, get_subgraph_by_annotations, get_subgraph_by_node_filter
 from pybel_tools.summary import (
@@ -1939,7 +1939,7 @@ def get_pipeline_function_names():
 
     return jsonify([
         p.replace("_", " ").capitalize()
-        for p in pipeline.no_arguments_map
+        for p in no_arguments_map
         if q in p.replace("_", " ").casefold()
     ])
 
@@ -2096,7 +2096,7 @@ def get_query_oldest_ancestry(query_id):
 
 
 def add_pipeline_entry(query_id, name, *args, **kwargs):
-    """Adds an entry to the pipeline
+    """Add an entry to the pipeline.
 
     :param int query_id: The identifier of the query
     :param str name: The name of the function to append
@@ -2104,10 +2104,11 @@ def add_pipeline_entry(query_id, name, *args, **kwargs):
     """
     query = manager.safe_get_query(user=current_user, query_id=query_id)
 
-    if not function_is_registered(name):
-        abort(403, 'Invalid function name')
-
-    qo = query.build_appended(name, *args, **kwargs)
+    try:
+        qo = query.build_appended(name, *args, **kwargs)
+    except MissingPipelineFunctionError:
+        abort(403, 'Invalid function name: {}'.format(name))
+        return
 
     if current_user.is_authenticated:
         qo.user = current_user

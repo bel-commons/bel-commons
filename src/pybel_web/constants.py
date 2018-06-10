@@ -5,7 +5,7 @@
 import os
 
 from pybel.constants import PYBEL_DIR, config
-from pybel_tools.pipeline import function_is_registered
+from pybel_tools.pipeline import mapped
 
 VERSION = '0.2.2-dev'
 
@@ -113,6 +113,10 @@ _explorer_toolbox = (
 )
 
 
+def _function_is_registered(name):
+    return name in mapped
+
+
 def get_explorer_toolbox():
     """Gets the explorer toolbox list
 
@@ -120,56 +124,56 @@ def get_explorer_toolbox():
     """
     explorer_toolbox = list(_explorer_toolbox)
 
-    if function_is_registered('enrich_rnas'):
+    if _function_is_registered('enrich_rnas'):
         explorer_toolbox.append((
             'enrich_rnas',
             'Enrich RNA controllers',
             'Adds the miRNA controllers of RNA nodes from miRTarBase'
         ))
 
-    if function_is_registered('enrich_mirnas'):
+    if _function_is_registered('enrich_mirnas'):
         explorer_toolbox.append((
             'enrich_mirnas',
             'Enrich miRNA targets',
             'Adds the RNA targets of miRNA nodes from miRTarBase'
         ))
 
-    if function_is_registered('enrich_genes_with_families'):
+    if _function_is_registered('enrich_genes_with_families'):
         explorer_toolbox.append((
             'enrich_genes_with_families',
             'Enrich Genes with Gene Family Membership',
             'Adds the parents of HGNC Gene Families'
         ))
 
-    if function_is_registered('enrich_families_with_genes'):
+    if _function_is_registered('enrich_families_with_genes'):
         explorer_toolbox.append((
             'enrich_families_with_genes',
             'Enrich Gene Family Membership',
             'Adds the children to HGNC gene familes'
         ))
 
-    if function_is_registered('enrich_bioprocesses'):
+    if _function_is_registered('enrich_bioprocesses'):
         explorer_toolbox.append((
             'enrich_bioprocesses',
             'Enrich Biological Process Hierarchy',
             'Adds parent biological processes'
         ))
 
-    if function_is_registered('enrich_chemical_hierarchy'):
+    if _function_is_registered('enrich_chemical_hierarchy'):
         explorer_toolbox.append((
             'enrich_chemical_hierarchy',
             'Enrich Chemical Hierarchy',
             'Adds parent chemical entries'
         ))
 
-    if function_is_registered('enrich_proteins_with_enzyme_families'):
+    if _function_is_registered('enrich_proteins_with_enzyme_families'):
         explorer_toolbox.append((
             'enrich_proteins_with_enzyme_families',
             'Add Enzyme Class Members',
             'Adds enzyme classes for each protein'
         ))
 
-    if function_is_registered('enrich_enzymes'):
+    if _function_is_registered('enrich_enzymes'):
         explorer_toolbox.append((
             'enrich_enzymes',
             'Enrich Enzyme Classes',
