@@ -222,7 +222,13 @@ class WebManager(_Manager):
         """
         experiment = self.get_experiment_or_404(experiment_id)
 
-        if not experiment.public and (not user.is_authenticated or not user.has_experiment_rights(experiment)):
+        if experiment.public:
+            return experiment
+
+        if not user.is_authenticated:
+            abort(403)
+
+        if not user.has_experiment_rights(experiment):
             abort(403)
 
         return experiment
