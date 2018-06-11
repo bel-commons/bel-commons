@@ -74,7 +74,7 @@ except ImportError:
     go_manager = None
 else:
     log.info('Using Bio2BEL GO')
-    go_manager = bio2bel_go.Manager()
+    go_manager = bio2bel_go.Manager(connection=connection)
     in_place_mutator(go_manager.enrich_bioprocesses)
 
 try:
