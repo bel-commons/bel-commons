@@ -421,7 +421,7 @@ class WebManager(_Manager):
         """
         network = self.get_network_or_404(network_id)
 
-        if user.is_admin:
+        if user.is_authenticated and user.is_admin:
             return network
 
         if network.report and network.report.public:
