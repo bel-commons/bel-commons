@@ -199,6 +199,12 @@ class WebManager(_Manager):
         return self.session.query(Assembly).count()
 
     def get_experiment_or_404(self, experiment_id):
+        """Get an experiment by its database identifier or 404 if it doesn't exist.
+
+        :param int experiment_id:
+        :rtype: Experiment
+        :raises: werkzeug.exceptions.HTTPException
+        """
         experiment = self.get_experiment_by_id(experiment_id)
 
         if experiment is None:
@@ -207,7 +213,7 @@ class WebManager(_Manager):
         return experiment
 
     def safe_get_experiment(self, user, experiment_id):
-        """Get an experiment by its databse identifier or 404 if it doesn't exist.
+        """Get an experiment by its database identifier, 404 if it doesn't exist, 403 if user doesn't have rights.
 
         :param User user:
         :param int experiment_id:

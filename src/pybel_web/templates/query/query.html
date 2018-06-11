@@ -43,7 +43,7 @@
                         </dd>
                     {% endif %}
 
-                    {% if query.children %}
+                    {% if query.children and query.children.count() > 0 %}
                         <dt>Children</dt>
                         <dd>
                             {% for child in query.children %}
@@ -72,17 +72,24 @@
 
         <div class="panel panel-default">
             <div class="panel-heading">
-                <h3 class="panel-title">Networks</h3>
+                <h3 class="panel-title">Networks <span class="badge">{{ query.assembly.networks|length }}</span></h3>
             </div>
 
-            <div class="panel-body">
-                <ul>
-                    {% for network in query.assembly.networks %}
-                        <li>
-                            <a href="{{ url_for('ui.view_network', network_id=network.id) }}">{{ network }}</a>
-                        </li>
-                    {% endfor %}
-                </ul>
+            <div class="list-group">
+                {% for network in query.assembly.networks %}
+                    <div class="list-group-item">
+                        <h4 class="list-group-item-heading">
+                            <a href="{{ url_for('ui.view_network', network_id=network.id) }}">
+                                {{ network }}
+                            </a>
+                        </h4>
+                        {% if network.description %}
+                            <div class="list-group-item-text">
+                                {{ network.description }}
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
             </div>
         </div>
 
