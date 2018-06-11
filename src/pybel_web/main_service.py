@@ -170,7 +170,7 @@ def view_nodes():
         nodes=nodes,
         count=count,
         current_user=current_user,
-        **manager_dict,
+        **manager_dict
     )
 
 
@@ -186,7 +186,7 @@ def view_node(node_hash):
         'node/node.html',
         node=node,
         current_user=current_user,
-        **manager_dict,
+        **manager_dict
     )
 
 
