@@ -250,8 +250,6 @@ def get_dataframe_from_experiments(experiments, *, normalize=None, clusters=None
         df = df.sort_values('Group')
 
     return df
-
-
 @experiment_blueprint.route('/comparison/<list:experiment_ids>.tsv')
 def download_experiment_comparison(experiment_ids):
     """Different data analyses on same query
