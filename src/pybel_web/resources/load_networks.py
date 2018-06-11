@@ -15,6 +15,7 @@ import time
 from sqlalchemy.exc import OperationalError
 
 import pybel
+from bio2bel import AbstractManager
 from pybel import from_path, from_pickle, to_pickle
 from pybel.manager import Manager
 from pybel.struct.mutation import strip_annotations
@@ -42,6 +43,12 @@ _jgf_extension = '.jgf'
 
 
 def _ensure_pickle(path, manager, **kwargs):
+    """
+
+    :param str path:
+    :type manager: pybel.manager.Manager
+    :return: Network
+    """
     gpickle_path = get_corresponding_gpickle_path(path)
 
     if not os.path.exists(gpickle_path):
@@ -53,15 +60,13 @@ def _ensure_pickle(path, manager, **kwargs):
     return insert_graph(manager, graph, public=True)
 
 
-def ensure_pickles(directory, connection=None, blacklist=None, **kwargs):
+def ensure_pickles(directory, manager, blacklist=None, **kwargs):
     """
     :param str directory:
-    :param connection: database connection string to cache, pre-built :class:`Manager`, or None to use default cache
-    :type connection: Optional[str or pybel.manager.Manager]
+    :type manager: pybel.manager.Manager
     :param Optional[list[str]] blacklist: An optional list of file names not to use
     """
     log.info('ensuring pickles in %s', directory)
-    manager = Manager.ensure(connection=connection)
 
     for filename in iter_paths_from_directory(directory):
         path = os.path.join(directory, filename)
@@ -73,18 +78,15 @@ def ensure_pickles(directory, connection=None, blacklist=None, **kwargs):
         _ensure_pickle(path, manager, **kwargs)
 
 
-def upload_pickles(directory, connection=None, blacklist=None):
+def upload_pickles(directory, manager, blacklist=None):
     """Uploads all of the pickles in a given directory
 
     :param str directory:
-    :param connection: database connection string to cache, pre-built :class:`Manager`, or None to use default cache
-    :type connection: Optional[str or pybel.manager.Manager]
+    :type manager: pybel.manager.Manager
     :param Optional[list[str]] blacklist: An optional list of file names not to use
     :rtype: list[Network]
     """
     log.info('loading pickles in %s', directory)
-
-    manager = Manager.ensure(connection=connection)
 
     results = []
 
@@ -114,12 +116,11 @@ def write_manifest(directory, networks):
         json.dump(manifest_data, file, indent=2)
 
 
-def upload_bel_directory(directory, connection=None, blacklist=None):
+def upload_bel_directory(directory, manager, blacklist=None):
     """Handles parsing, pickling, then uploading all BEL files in a given directory
 
     :param str directory:
-    :param connection: database connection string to cache, pre-built :class:`Manager`, or None to use default cache
-    :type connection: Optional[str or pybel.manager.Manager]
+    :type manager: pybel.manager.Manager
     :param Optional[list[str]] blacklist: An optional list of file names not to use. NO FILE EXTENSIONS
     """
     if not (os.path.exists(directory) and os.path.isdir(directory)):
@@ -131,25 +132,23 @@ def upload_bel_directory(directory, connection=None, blacklist=None):
 
     ensure_pickles(
         directory,
-        connection=connection,
+        manager,
         blacklist=[e + '.bel' for e in blacklist] if blacklist is not None else None
     )
     networks = upload_pickles(
         directory,
-        connection=connection,
+        manager,
         blacklist=[e + '.gpickle' for e in blacklist] if blacklist is not None else None
     )
 
     write_manifest(directory, networks)
 
 
-def upload_neurommsig_graphs(connection=None):
+def upload_neurommsig_graphs(manager):
     """Only upload NeuroMMSig Sample Networks
 
-    :param connection: database connection string to cache, pre-built :class:`Manager`, or None to use default cache
-    :type connection: Optional[str or pybel.manager.Manager]
+    :type manager: pybel.manager.Manager
     """
-    manager = Manager.ensure(connection=connection)
 
     if not (os.path.exists(alzheimer_directory) and os.path.isdir(alzheimer_directory)):
         log.warning('directory does not exist: %s', alzheimer_directory)
@@ -197,18 +196,15 @@ def get_jgf_corresponding_gpickle_path(path):
     return path[:-len(_jgf_extension)] + '.gpickle'
 
 
-def upload_jgf_directory(directory, connection=None):
+def upload_jgf_directory(directory, manager):
     """Uploads CBN data to edge store
 
     :param str directory: Directory full of CBN JGIF files
-    :param connection: database connection string to cache, pre-built :class:`Manager`, or None to use default cache
-    :type connection: Optional[str or pybel.manager.Manager]
+    :type manager: pybel.manager.Manager
     """
     if not (os.path.exists(directory) and os.path.isdir(directory)):
         log.warning('directory does not exist: %s', directory)
         return
-
-    manager = Manager.ensure(connection=connection)
 
     t = time.time()
 
@@ -235,62 +231,66 @@ def upload_jgf_directory(directory, connection=None):
     log.info('done in %.2f seconds', time.time() - t)
 
 
-def upload_with_manager(external_manager, connection=None):
-    if external_manager is None:
-        log.info('no %s', external_manager)
+def upload_with_manager(bio2bel_manager, pybel_manager):
+    """Upload Bio2BEL data.
+
+    :param bio2bel.AbstractManager bio2bel_manager: A Bio2BEL Manager
+    :param pybel.manager.Manager pybel_manager:
+    :rtype: Optional[Network]
+    """
+    if bio2bel_manager is None:
+        log.info('skipping missing manager')
         return
 
-    from bio2bel import AbstractManager
-
-    if not isinstance(external_manager, AbstractManager):
-        log.info('manager is not a Bio2BEL manager: %s', external_manager)
+    if not isinstance(bio2bel_manager, AbstractManager):
+        log.info('manager is not a Bio2BEL manager: %s', bio2bel_manager)
         return
 
-    if not external_manager.is_populated():
-        log.info('populating %s', external_manager)
-        external_manager.populate()
+    log.info('%s manager connection: %s', bio2bel_manager.module_name, bio2bel_manager.engine.url)
+
+    if not bio2bel_manager.is_populated():
+        log.info('populating %s', bio2bel_manager)
+        bio2bel_manager.populate()
 
     try:
-        graph = external_manager.to_bel()
+        graph = bio2bel_manager.to_bel()
     except AttributeError:
-        log.warning('%s has no to_bel function', external_manager)
-        return
-    except Exception:
-        log.exception('error with %s', external_manager)
+        log.warning('%s has no to_bel function', bio2bel_manager)
         return
 
-    manager = Manager.ensure(connection=connection)
-
-    insert_graph(manager, graph)
+    return insert_graph(pybel_manager, graph)
 
 
-def upload_managers(connection=None):
-    managers = (
+def upload_managers(pybel_manager):
+    """
+    :type pybel_manager: pybel.manager.Manager
+    """
+    bio2bel_managers = (
         chebi_manager, entrez_manager, expasy_manager, go_manager, hgnc_manager,
         interpro_manager, mirtarbase_manager,
     )
-    for manager in managers:
-        upload_with_manager(manager, connection=connection)
+
+    for bio2bel_manager in bio2bel_managers:
+        upload_with_manager(bio2bel_manager=bio2bel_manager, pybel_manager=pybel_manager)
 
 
-def main(connection=None, skip_cbn=False):
-    """Load BEL
+def main(manager, skip_cbn=False):
+    """Load BEL.
 
-    :param connection: database connection string to cache, pre-built :class:`Manager`, or None to use default cache
-    :type connection: Optional[str or pybel.manager.Manager]
+    :type manager: pybel.manager.Manager
     :param bool skip_cbn: Some of the CBN networks are difficult so this flag lets you skip them.
     """
-    upload_neurommsig_graphs(connection=connection)
-    upload_bel_directory(selventa_directory, connection=connection)
-    upload_bel_directory(alzheimer_directory, connection=connection, blacklist=['alzheimers'])
-    upload_bel_directory(parkinsons_directory, connection=connection, blacklist=['parkinsons'])
+    upload_neurommsig_graphs(manager)
+    upload_bel_directory(selventa_directory, manager)
+    upload_bel_directory(alzheimer_directory, manager, blacklist=['alzheimers'])
+    upload_bel_directory(parkinsons_directory, manager, blacklist=['parkinsons'])
 
     if not skip_cbn:
-        upload_jgf_directory(cbn_human, connection=connection)
-        upload_jgf_directory(cbn_mouse, connection=connection)
-        upload_jgf_directory(cbn_rat, connection=connection)
+        upload_jgf_directory(cbn_human, manager)
+        upload_jgf_directory(cbn_mouse, manager)
+        upload_jgf_directory(cbn_rat, manager)
 
-    upload_managers(connection=connection)
+    upload_managers(manager)
 
 
 if __name__ == '__main__':
