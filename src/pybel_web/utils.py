@@ -8,6 +8,7 @@ from pybel_tools.summary import get_annotations
 from .constants import VERSION
 
 __all__ = [
+    'calculate_overlap_info',
     'get_tree_annotations',
     'get_version',
 ]
