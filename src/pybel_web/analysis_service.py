@@ -263,7 +263,7 @@ def download_experiment_comparison(experiment_ids):
     normalize = request.args.get('normalize', type=int, default=0)
     seed = request.args.get('seed', type=int)
 
-    experiments = manager.safe_get_experiments(experiment_ids, current_user)
+    experiments = manager.safe_get_experiments(user=current_user, experiment_ids=experiment_ids)
     df = get_dataframe_from_experiments(experiments, normalize=normalize, clusters=clusters, seed=seed)
 
     si = StringIO()
