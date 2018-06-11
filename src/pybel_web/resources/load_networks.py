@@ -29,6 +29,12 @@ from pybel_web.external_managers import (
 from pybel_web.manager_utils import insert_graph
 from pybel_web.resources.constants import *
 
+__all__ = [
+    'load_cbn',
+    'load_bio2bel',
+    'load_bms',
+]
+
 log = logging.getLogger(__name__)
 enable_cool_mode()
 
@@ -261,7 +267,7 @@ def upload_with_manager(bio2bel_manager, pybel_manager):
     return insert_graph(pybel_manager, graph)
 
 
-def upload_managers(pybel_manager):
+def load_bio2bel(pybel_manager):
     """
     :type pybel_manager: pybel.manager.Manager
     """
@@ -274,26 +280,27 @@ def upload_managers(pybel_manager):
         upload_with_manager(bio2bel_manager=bio2bel_manager, pybel_manager=pybel_manager)
 
 
-def main(manager, skip_cbn=False):
+def load_cbn(manager):
+    """
+    :type pybel_manager: pybel.manager.Manager
+    """
+    upload_jgf_directory(cbn_human, manager)
+    upload_jgf_directory(cbn_mouse, manager)
+    upload_jgf_directory(cbn_rat, manager)
+
+
+def load_bms(manager):
     """Load BEL.
 
     :type manager: pybel.manager.Manager
-    :param bool skip_cbn: Some of the CBN networks are difficult so this flag lets you skip them.
     """
     upload_neurommsig_graphs(manager)
     upload_bel_directory(selventa_directory, manager)
     upload_bel_directory(alzheimer_directory, manager, blacklist=['alzheimers'])
     upload_bel_directory(parkinsons_directory, manager, blacklist=['parkinsons'])
 
-    if not skip_cbn:
-        upload_jgf_directory(cbn_human, manager)
-        upload_jgf_directory(cbn_mouse, manager)
-        upload_jgf_directory(cbn_rat, manager)
-
-    upload_managers(manager)
-
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(name)s - %(message)s")
     log.setLevel(logging.INFO)
-    main(Manager())
+    load_bms(Manager())

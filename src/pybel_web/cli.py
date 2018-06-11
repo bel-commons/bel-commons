@@ -19,9 +19,9 @@ import logging
 import multiprocessing
 import os
 import sys
+import time
 
 import click
-import time
 from flask_security import SQLAlchemyUserDatastore
 
 import pybel
@@ -651,28 +651,38 @@ if omics_dir is not None or bms_dir is not None:
         @click.pass_obj
         def load_networks(manager, skip_cbn):
             """Load networks."""
-            from .resources.load_networks import main
+            from .resources.load_networks import load_bms, load_cbn
             set_debug(logging.INFO)
-            main(manager, skip_cbn=skip_cbn)
+            load_bms(manager)
+
+            if not skip_cbn:
+                load_cbn(manager)
 
     if omics_dir is not None and bms_dir is not None:
         @examples.command()
         @click.option('--reload-omics', is_flag=True, help='Reload')
         @click.option('-p', '--permutations', type=int, help='Number of permutations to run. Defaults to 25.',
                       default=25)
+        @click.option('--skip-bio2bel', is_flag=True)
         @click.option('--skip-cbn', is_flag=True)
         @click.pass_obj
-        def load(manager, reload_omics, permutations, skip_cbn):
+        def load(manager, reload_omics, permutations, skip_bio2bel, skip_cbn):
             """Load omics, networks, and experiments."""
             from .resources.load_omics import main as load_omics_main
-            from .resources.load_networks import main as load_networks_main
+            from .resources.load_networks import load_bms, load_bio2bel, load_cbn
             from .resources.load_experiments import main as load_experiments_main
 
             set_debug(logging.INFO)
 
             load_omics_main(manager, reload=reload_omics)
-            load_networks_main(manager, skip_cbn=skip_cbn)
+            load_bms(manager)
             load_experiments_main(manager, permutations=permutations)
+
+            if not skip_bio2bel:
+                load_bio2bel(manager)
+
+            if not skip_cbn:
+                load_cbn(manager)
 
 
         @examples.command()
