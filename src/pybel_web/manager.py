@@ -22,7 +22,7 @@ from pybel_tools.summary import count_variants
 from pybel_tools.utils import min_tanimoto_set_similarity, prepare_c3, prepare_c3_time_series
 from .constants import AND
 from .manager_utils import get_network_summary_dict
-from .models import EdgeComment, EdgeVote, Experiment, NetworkOverlap, Omic, Project, Query, Report, Role, User
+from .models import EdgeComment, EdgeVote, Experiment, NetworkOverlap, Omic, Project, Query, Report, Role, User, Assembly
 
 __all__ = [
     'WebManager',
