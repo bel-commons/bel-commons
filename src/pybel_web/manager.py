@@ -216,8 +216,8 @@ class WebManager(_Manager):
         """
         experiment = self.get_experiment_or_404(experiment_id)
 
-        if not user.has_experiment_rights(experiment):
-            abort(403, 'You do not have rights to drop this experiment')
+        if not experiment.public and (not user.is_authenticated or not user.has_experiment_rights(experiment)):
+            abort(403)
 
         return experiment
 
