@@ -146,6 +146,14 @@
                     <dd>{{ experiment.type }}</dd>
                     <dt>Permutations</dt>
                     <dd>{{ experiment.permutations }}</dd>
+                    <dt>Public</dt>
+                    <dd>
+                        {% if experiment.public %}
+                            <span class="glyphicon glyphicon-ok-circle" aria-hidden="true"></span>
+                        {% else %}
+                            <span class="glyphicon glyphicon glyphicon-remove-circle" aria-hidden="true"></span>
+                        {% endif %}
+                    </dd>
                 </dl>
                 <dl class="dl-horizontal">
                     <dt>Omic Identifier</dt>
