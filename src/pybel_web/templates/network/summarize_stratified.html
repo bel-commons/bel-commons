@@ -129,6 +129,8 @@
                     <th>Components</th>
                     <th>Citations</th>
                     <th>Density</th>
+                    <th>Errors</th>
+                    <th>Error Density</th>
                     <th>Node Percentage</th>
                     <th>Edge Percentage</th>
                     <th>Citation Percentage</th>
@@ -143,6 +145,8 @@
                         <td>{{ data['Components'] }}</td>
                         <td>{{ data['Citations'] }}</td>
                         <td>{{ (data['Network density'] * 100) | round(precision=3) }}%</td>
+                        <td>{{ data['errors']}}</td>
+                        <td>{{ (data['error_density'] * 100) | round(precision=3) }}%</td>
                         <td>{{ (data['node_overlap']* 100) | round(precision=3) }}%</td>
                         <td>{{ (data['edge_overlap']* 100) | round(precision=3) }}%</td>
                         <td>{{ (data['citation_overlap']* 100) | round(precision=3) }}%</td>

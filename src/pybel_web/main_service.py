@@ -6,11 +6,11 @@ import datetime
 import logging
 import os
 import sys
+import time
 from collections import defaultdict
 from operator import itemgetter
 
 import flask
-import time
 from flask import Blueprint, Markup, abort, current_app, flash, redirect, render_template, request, url_for
 from flask_security import current_user, login_required, roles_required
 
@@ -25,6 +25,7 @@ from pybel_tools.mutation import (
 from pybel_tools.pipeline import MissingPipelineFunctionError, Pipeline, no_arguments_map
 from pybel_tools.query import QueryMissingNetworksError
 from pybel_tools.summary import info_json
+from pybel_tools.summary.error_summary import calculate_error_by_annotation
 from pybel_tools.utils import get_version as get_pybel_tools_version
 from . import models
 from .constants import get_explorer_toolbox, merged_document_folder
@@ -596,6 +597,8 @@ def view_summarize_stratified(network_id, annotation):
 
     graph_summary = info_json(graph)
 
+    errors = calculate_error_by_annotation(graph, annotation)
+
     summaries = {}
     useful_summaries = {}
 
@@ -604,6 +607,8 @@ def view_summarize_stratified(network_id, annotation):
         summaries[name]['node_overlap'] = subgraph.number_of_nodes() / graph.number_of_nodes()
         summaries[name]['edge_overlap'] = subgraph.number_of_edges() / graph.number_of_edges()
         summaries[name]['citation_overlap'] = summaries[name]['Citations'] / graph_summary['Citations']
+        summaries[name]['errors'] = len(errors[name]) if name in errors else 0
+        summaries[name]['error_density'] = (len(errors[name]) / graph.number_of_nodes()) if name in errors else 0
 
         useful_subgraph = extract_useful_subgraph(subgraph)
         useful_summaries[name] = info_json(useful_subgraph)
