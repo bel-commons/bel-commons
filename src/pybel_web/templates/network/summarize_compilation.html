@@ -189,13 +189,29 @@
             </div>
             <div class="panel-body">
                 <p>This section lists all of the annotations that are defined in the original BEL script.</p>
-                <dl class="dl-horizontal">
-                    {% for key, value in graph.annotation_url.items()|sort %}
-                        <dt>{{ key }}</dt>
-                        <dd><a href="{{ value }}">{{ value }}</a></dd>
-                    {% endfor %}
-                </dl>
             </div>
+            <table class="table table-hover table-responsive table-striped">
+                    <thead>
+                    <tr>
+                        <th>Keyword</th>
+                        <th>URL</th>
+                        <th>Stratify</th>
+                    </tr>
+                    </thead>
+                    <tbody id="myTable">
+                    {% for key, value in graph.annotation_url.items()|sort %}
+                        <tr>
+                            <td>{{ key }}</td>
+                            <td><a href="{{ value }}">{{ value }}</a></td>
+                            <td>
+                                <a href="{{ url_for('ui.view_summarize_stratified', network_id=network.id, annotation=key) }}">
+                                    View Stratified Summary
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
         </div>
 
         {% if unused_annotations is defined and unused_annotations|length > 0 %}

@@ -42,7 +42,8 @@
             <li><a href="{{ url_for('ui.home') }}">Catalog</a></li>
             <li><a href="{{ url_for('ui.view_networks') }}">Networks</a></li>
             <li><a href="{{ url_for('ui.view_network', network_id=network.id) }}">{{ network }}</a></li>
-            <li class="active">Stratified</li>
+            <li>Stratified</li>
+            <li class="active">{{ annotation }}</li>
         </ol>
 
         <div class="page-header">
