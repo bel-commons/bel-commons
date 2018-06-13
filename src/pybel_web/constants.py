@@ -7,7 +7,7 @@ import os
 from pybel.constants import PYBEL_DIR, config
 from pybel_tools.pipeline import mapped
 
-VERSION = '0.2.2-dev'
+VERSION = '0.2.2'
 
 # Configuration parameter names
 PYBEL_WEB_ADMIN_EMAIL = 'PYBEL_WEB_ADMIN_EMAIL'
