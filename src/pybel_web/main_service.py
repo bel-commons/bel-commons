@@ -124,7 +124,7 @@ def view_networks():
        - Biological grammar summary
     2. Explore the full network, or a random subgraph if it is too big.
     3. Create a biological query starting with this network
-    4. Analyze the network with one of the procedures (CMPA, etc.)
+    4. Analyze the network with one of the procedures (Heat Diffusion, etc.)
     5. Execute one of the following actions if the current user is the owner:
        - Drop
        - Make public/private
@@ -657,10 +657,16 @@ def view_download_help():
     return render_template('help_download_format.html')
 
 
-@ui_blueprint.route('/help/parser-errors')
-def view_parser_error_help():
+@ui_blueprint.route('/help/parser')
+def view_parser_help():
     """View the help info for the parser and validator."""
-    return render_template('help_parsing_errors.html')
+    return render_template('help_parser.html')
+
+
+@ui_blueprint.route('/help/heat-diffusion')
+def view_heat_diffusion_help():
+    """View the help info for the heat diffusion workflow."""
+    return render_template('experiment/help_heat_diffusion.html')
 
 
 @ui_blueprint.route('/network/<int:network_1_id>/compare/<int:network_2_id>')

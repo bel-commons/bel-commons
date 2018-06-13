@@ -15,7 +15,7 @@ import os
 
 from pybel.manager import Manager
 from pybel_tools.utils import enable_cool_mode
-from pybel_web.manager_utils import run_cmpa_helper
+from pybel_web.manager_utils import run_heat_diffusion_helper
 from pybel_web.models import Experiment, Omic, Query
 from pybel_web.resources.constants import BMS_BASE
 from .constants import OMICS_DATA_DIR
@@ -125,7 +125,7 @@ def run_experiments(experiments, connection=None):
     log.info('running %d experiments', len(experiments))
 
     for experiment in experiments:
-        run_cmpa_helper(manager, experiment, use_tqdm=True)
+        run_heat_diffusion_helper(manager, experiment, use_tqdm=True)
         log.info('done in %.2f seconds', experiment.time)
         manager.session.add(experiment)
         manager.session.commit()

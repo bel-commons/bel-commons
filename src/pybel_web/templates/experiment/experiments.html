@@ -46,10 +46,17 @@
             </div>
             <div class="panel-body">
                 <p>
-                    Experiments are listed here in reverse chronological order. Additional analyses can be run by
-                    navigating to a network through the <a href="{{ url_for('ui.view_networks') }}">network list</a> or
-                    through the <a href="{{ url_for('ui.view_query_builder') }}">query builder</a>. Also, see the
-                    <a href="{{ url_for('analysis.view_omics') }}">Omics Catalog</a> of publicly uploaded <i>-omics</i>
+                    Experiments are listed here in reverse chronological order. Currently, each corresponds to a
+                    <a href="{{ url_for('ui.view_heat_diffusion_help') }}">Heat Diffusion Experiment</a>, but other
+                    experiment types will be added in the future (e.g., <a
+                        href="https://doi.org/10.1186/1471-2105-14-340">Reverse Causal Reasoning</a>).
+                </p>
+                <p>
+                    Additional analyses can be run directly on a network through the <a
+                        href="{{ url_for('ui.view_networks') }}">network catalog</a> or by first <a
+                        href="{{ url_for('ui.view_query_builder') }}">building a query</a> and clicking the analyze
+                    button in the biological network explorer. Also, see the <a
+                        href="{{ url_for('analysis.view_omics') }}">Omics Catalog</a> of publicly uploaded <i>-omics</i>
                     data sets.
                 </p>
             </div>

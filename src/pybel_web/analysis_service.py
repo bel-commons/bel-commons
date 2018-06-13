@@ -142,7 +142,7 @@ def view_query_uploader(query_id):
     t = time.time()
 
     log.info(
-        'analyzing %s with CMPA (%d trials)',
+        'running heat diffusion workflow on %s with %d trials',
         form.file.data.filename,
         form.permutations.data,
     )
@@ -177,7 +177,7 @@ def view_query_uploader(query_id):
 
     log.debug('stored data for analysis in %.2f seconds', time.time() - t)
 
-    task = current_app.celery.send_task('run-cmpa', args=[
+    task = current_app.celery.send_task('run-heat-diffusion', args=[
         current_app.config['SQLALCHEMY_DATABASE_URI'],
         experiment.id
     ])

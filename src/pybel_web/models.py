@@ -1,17 +1,17 @@
 # -*- coding: utf-8 -*-
 
 import codecs
-import datetime
+import itertools as itt
 import json
 from operator import attrgetter
 from pickle import dumps, loads
 
+import datetime
 from flask_security import RoleMixin, UserMixin
 from sqlalchemy import (
     Boolean, Column, DateTime, Float, ForeignKey, Index, Integer, LargeBinary, String, Table, Text,
     UniqueConstraint,
 )
-import itertools as itt
 from sqlalchemy.orm import backref, relationship
 
 import pybel_tools.query
@@ -133,7 +133,7 @@ class Omic(Base):
 
 
 class Experiment(Base):
-    """Represents a Candidate Mechanism Perturbation Amplitude experiment or RCR experiment"""
+    """Represents an experiment."""
     __tablename__ = EXPERIMENT_TABLE_NAME
 
     id = Column(Integer, primary_key=True)
@@ -150,7 +150,8 @@ class Experiment(Base):
     omic_id = Column(Integer, ForeignKey('{}.id'.format(OMICS_TABLE_NAME)), nullable=False, index=True)
     omic = relationship('Omic', backref=backref('experiments', lazy='dynamic'))
 
-    type = Column(String(8), nullable=False, default='CMPA', index=True, doc='Analysis type. CMPA, RCR, etc.')
+    type = Column(String(8), nullable=False, default='CMPA', index=True,
+                  doc='Analysis type. CMPA (Heat Diffusion), RCR, etc.')
     permutations = Column(Integer, nullable=False, default=100, doc='Number of permutations performed')
     result = Column(LargeBinary(LONGBLOB), doc='The result python dictionary')
 

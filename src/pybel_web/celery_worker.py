@@ -30,7 +30,7 @@ from pybel_web.celery_utils import create_celery
 from pybel_web.constants import get_admin_email, integrity_message, merged_document_folder
 from pybel_web.manager import WebManager
 from pybel_web.manager_utils import (
-    fill_out_report, get_network_summary_dict, insert_graph, make_graph_summary, run_cmpa_helper,
+    fill_out_report, get_network_summary_dict, insert_graph, make_graph_summary, run_heat_diffusion_helper,
 )
 
 celery_logger = get_task_logger(__name__)
@@ -56,7 +56,7 @@ pbw_sender = ("BEL Commons", 'bel-commons@scai.fraunhofer.de')
 
 @celery.task(name='debug-task')
 def run_debug_task():
-    """Runts a debug task"""
+    """Run the debug task."""
     celery_logger.info('running celery debug task')
     log.info('running celery debug task')
     return 6 + 2
@@ -64,7 +64,7 @@ def run_debug_task():
 
 @celery.task(name='summarize-bel')
 def summarize_bel(connection, report_id):
-    """Asynchronously parses a BEL script and emails feedback
+    """Parse a BEL script asynchronously and email feedback.
 
     :param str connection: A connection to build the manager
     :param int report_id: A report to parse
@@ -88,7 +88,7 @@ def summarize_bel(connection, report_id):
             )
 
     def finish_parsing(subject, body):
-        """Sends a message and finishes parsing
+        """Send a message and finish parsing.
 
         :param str subject:
         :param str body:
@@ -134,7 +134,7 @@ def summarize_bel(connection, report_id):
 
 @celery.task(name='upload-bel')
 def upload_bel(connection, report_id, enrich_citations=False):
-    """Asynchronously parses a BEL script and sends email feedback
+    """Parse a BEL script asynchronously and send email feedback.
 
     :param str connection: The connection string
     :param int report_id: Report identifier
@@ -345,9 +345,9 @@ def merge_project(connection, user_id, project_id):
     return 1
 
 
-@celery.task(name='run-cmpa')
-def run_cmpa(connection, experiment_id):
-    """Runs the CMPA analysis
+@celery.task(name='run-heat-diffusion')
+def run_heat_diffusion(connection, experiment_id):
+    """Runs the heat diffusion workflow.
 
     :param str connection: A connection to build the manager
     :param int experiment_id:
@@ -359,7 +359,7 @@ def run_cmpa(connection, experiment_id):
     source_name = experiment.source_name
     email = experiment.user.email
 
-    run_cmpa_helper(manager, experiment)
+    run_heat_diffusion_helper(manager, experiment)
 
     try:
         manager.session.add(experiment)
@@ -373,13 +373,13 @@ def run_cmpa(connection, experiment_id):
     message = 'Experiment {} on query {} with {} has completed'.format(
         experiment_id,
         query_id,
-        source_name
+        source_name,
     )
 
     if mail is not None:
         with app.app_context():
             mail.send_message(
-                subject='CMPA Analysis complete',
+                subject='Heat Diffusion Workflow [{}] is Complete'.format(experiment_id),
                 recipients=[email],
                 body=message,
                 sender=pbw_sender,

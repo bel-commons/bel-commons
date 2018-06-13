@@ -45,7 +45,14 @@
             </div>
             <div class="panel-body">
                 <p>
-                    Each entry is a data set.
+                    Currently, each entry in the Omic Catalog corresponds to the results from a differential gene
+                    expression analysis. Instructions for creating new data sets from the GEO can be found
+                    <a href="{{ url_for('ui.view_dgx_tutorial') }}">here</a>.
+                </p>
+                <p>
+                    The three pre-processed differential gene expression experiments related to Alzheimer's
+                    disease corresponding to the examples in the BEL Commons manuscript are available on <a
+                        href="https://github.com/cthoyt/bel-commons-manuscript/tree/master/data">GitHub</a>.
                 </p>
             </div>
             <table class="table table-hover table-strpied">
@@ -55,7 +62,7 @@
                     <th>Created</th>
                     <th>Description</th>
                     <th>Public</th>
-                    <th></th>
+                    <th>Experiments</th>
                 </tr>
                 </thead>
                 <tbody>

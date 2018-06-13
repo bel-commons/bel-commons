@@ -1960,19 +1960,19 @@ function initD3Force(graph, tree) {
 
     // Get normalized results from NPA analysis given an experiment ID
 
-    var cmpaForm = $("#cmpa-form");
+    var heatDiffusionForm = $("#heat-diffusion-form");
 
-    var cmpaButton = $("#cmpa-button");
+    var heatDiffusionButton = $("#heat-diffusion-button");
 
-    cmpaButton.off("click"); // It will unbind the previous click if multiple graphs has been rendered
+    heatDiffusionButton.off("click"); // It will unbind the previous click if multiple graphs has been rendered
 
-    cmpaButton.on("click", function () {
-        if (cmpaForm.valid()) {
+    heatDiffusionButton.on("click", function () {
+        if (heatDiffusionForm.valid()) {
             var experimentID = $("#analysis_id").val();
 
             $.ajax({
                 url: "/api/query/" + window.query + "/analysis/" + experimentID + "/median",
-                type: cmpaForm.attr("method"),
+                type: heatDiffusionForm.attr("method"),
                 dataType: "json",
                 success: function (data) {
 
@@ -2003,7 +2003,7 @@ function initD3Force(graph, tree) {
         }
     });
 
-    cmpaForm.validate({
+    heatDiffusionForm.validate({
         rules: {
             analysis_id: {
                 required: true,

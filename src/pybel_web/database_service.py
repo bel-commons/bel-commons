@@ -2489,7 +2489,7 @@ def drop_experiment_by_id(experiment_id):
 @api_blueprint.route('/api/experiment/<int:experiment_id>/download')
 @login_required
 def download_analysis(experiment_id):
-    """Downloads data from a given experiment as a CSV
+    """Download data from a given experiment as CSV.
 
     ---
     tags:
@@ -2521,7 +2521,7 @@ def download_analysis(experiment_id):
     cw.writerows(csv_list)
 
     output = make_response(si.getvalue())
-    output.headers["Content-Disposition"] = "attachment; filename=cmpa_{}.csv".format(experiment_id)
+    output.headers["Content-Disposition"] = "attachment; filename=experiment_{}.csv".format(experiment_id)
     output.headers["Content-type"] = "text/csv"
     return output
 

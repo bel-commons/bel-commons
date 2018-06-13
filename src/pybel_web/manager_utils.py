@@ -317,13 +317,14 @@ def create_omic(data, gene_column, data_column, description, source_name, sep, p
 
 
 def calculate_scores(graph, data, runs, use_tqdm=False):
-    """Calculates CMPA scores
+    """Calculate heat diffusion scores.
 
     :param pybel.BELGraph graph: A BEL graph
     :param dict[str,float] data: A dictionary of {name: data}
     :param int runs: The number of permutations
     :param bool use_tqdm:
-    :return: A dictionary of {pybel node tuple: results tuple} from :func:`calculate_average_cmpa_on_subgraphs`
+    :return: A dictionary of {pybel node tuple: results tuple} from
+     :py:func:`pybel_tools.analysis.ucmpa.calculate_average_scores_on_subgraphs`
     :rtype: dict[tuple,tuple]
     """
     remove_nodes_by_namespace(graph, {'MGI', 'RGD'})
@@ -338,8 +339,8 @@ def calculate_scores(graph, data, runs, use_tqdm=False):
     return scores
 
 
-def run_cmpa_helper(manager, experiment, use_tqdm=False):
-    """Helps run a CMPA experiment. Stores information back into original experiment
+def run_heat_diffusion_helper(manager, experiment, use_tqdm=False):
+    """Run the Heat Diffusion Workflow on an experiment and store information back into original experiment.
 
     :param pybel.manager.Manager manager:
     :param pybel_web.models.Experiment experiment:

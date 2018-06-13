@@ -24,8 +24,8 @@ class SeedSubgraphForm(FlaskForm):
             (SEED_TYPE_NEIGHBORS, 'Induce a subgraph over the given nodes and expand to their first neighbors'),
             (SEED_TYPE_DOUBLE_NEIGHBORS, 'Induce a subgraph over the given nodes and expand to their second neighbors'),
             (SEED_TYPE_PATHS, 'Induce a subgraph over the nodes in all shortest paths between the given nodes'),
-            (SEED_TYPE_UPSTREAM, 'Generate an upstream candidate mechanism'),
-            (SEED_TYPE_DOWNSTREAM, 'Generate a downstream candidate mechanism'),
+            (SEED_TYPE_UPSTREAM, 'Induce over upstream causal neighbors (2 layers)'),
+            (SEED_TYPE_DOWNSTREAM, 'Induce over downstream causal neighbors (2 layers)'),
             (SEED_TYPE_INDUCTION, 'Only induce a subgraph over the given nodes'),
         ],
         default=SEED_TYPE_NEIGHBORS)
@@ -47,17 +47,16 @@ class ParserForm(FlaskForm):
         DataRequired(),
         FileAllowed(['bel'], 'Only files with the *.bel extension are allowed')
     ])
-    # suggest_name_corrections = BooleanField('Suggest name corrections')
-    # suggest_naked_name = BooleanField('My document contains unqualified names - suggest appropriate namespaces')
-    allow_nested = BooleanField(
-        'My document contains <a href="http://pybel.readthedocs.io/en/latest/io.html#allow-nested">nested statements</a>')
-    disable_citation_clearing = BooleanField(
-        'My document sometimes has evidences before citations - disable <a href="http://pybel.readthedocs.io/en/latest/io.html#citation-clearing">citation clearing</a>')
+    allow_nested = BooleanField('My document contains <a href="http://pybel.readthedocs.io/en/latest/io.html#allow-'
+                                'nested">nested statements</a>')
+    disable_citation_clearing = BooleanField('My document sometimes has evidences before citations - disable <a href="h'
+                                             'ttp://pybel.readthedocs.io/en/latest/io.html#citation-clearing">citation '
+                                             'clearing</a>')
     feedback = BooleanField('Just email me a summary of my network and error report', default=False)
     public = BooleanField('Make my knowledge assembly publicly available', default=True)
-    infer_origin = BooleanField(
-        'Infer the <a href="https://en.wikipedia.org/wiki/Central_dogma_of_molecular_biology">central dogma</a>',
-        default=False)
+    infer_origin = BooleanField('Enrich protein and RNA nodes with the <a href="https://en.wikipedia.org/wiki/Central_'
+                                'dogma_of_molecular_biology">central dogma of molecular biology</a>',
+                                default=False)
     encoding = RadioField(
         'Encoding',
         choices=[

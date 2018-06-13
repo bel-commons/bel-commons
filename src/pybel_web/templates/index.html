@@ -53,10 +53,6 @@
                     <a class="btn btn-info" href="{{ url_for('reporting.view_networks') }}" role="button">
                         View Pretty Reporting
                     </a>
-                    <a class="btn btn-warning" href="{{ url_for('dbs.drop_queries', next=url_for('ui.home')) }}"
-                       role="button">
-                        Drop All Queries
-                    </a>
                     <a class="btn btn-warning" href="{{ url_for('ui.rollback', next=url_for('ui.home')) }}"
                        role="button"
                        data-toggle="confirmation" data-btn-ok-icon="glyphicon glyphicon-share-alt"
