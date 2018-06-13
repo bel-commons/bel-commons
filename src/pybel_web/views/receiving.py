@@ -2,7 +2,7 @@
 
 import logging
 
-from flask import Blueprint, current_app, jsonify, request
+from flask import Blueprint, abort, current_app, jsonify, request
 from flask_security.utils import verify_password
 
 from ..manager_utils import next_or_jsonify
@@ -19,6 +19,9 @@ receiving_blueprint = Blueprint('receive', __name__, url_prefix='/api/receive')
 
 
 def _get_user():
+    if request.authorization is None:
+        return abort(401, 'Unauthorized')
+
     username = request.authorization.get('username')
     password = request.authorization.get('password')
 
