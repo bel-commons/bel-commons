@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% import "bootstrap/wtf.html" as wtf %}
+{% import "bootstrap/fixes.html" as fixes %}
+{% import "bootstrap/utils.html" as util %}
+
+{% block title %}Heat Diffusion Help{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Heat Diffusion Workflow</h3>
+            </div>
+
+            <div class="panel-body">
+
+                <h4>What is heat diffusion?</h4>
+                <p>
+                    In the context of networks, heat diffusion refers to adding a scalar value to each node (i.e., heat)
+                    and simulating how heat can flow across edges to neighboring nodes, and so on. In networks biology,
+                    this allows for the assessment of connectivity and topology of a network. With directed, causal
+                    networks, such as those encoded in BEL, heat diffusion can allow data-driven identification of
+                    relevant/dysregulated pathways and subgraphs.
+                </p>
+
+
+                <h4>Workflow Description</h4>
+                <ol>
+                    <li>Networks are assembled and preprocessed using the <a
+                            href="{{ url_for('ui.view_query_builder') }}">query builder</a>. Often this will include
+                        filtering nodes and edges from undesirable contexts. For example, knowledge based on
+                        experiments done in certain cancer cell lines or in mice are sometimes inappropriate for
+                        research in neurodegenerative disease. Other transformations and enrichments can also be
+                        applied, such as collapsing orthologs of similar genes. Ultimately, only causal BEL edges are
+                        used because their directionality makes the results more biologically meaningful.
+                    </li>
+                    <li>
+                        Data is loaded from a differential gene expression experiment. The log fold changes, which have
+                        both a magnitude and a sign, are given as "heat" to the nodes representing their corresponding
+                        gene/protein. This workflow uses the common simplification of collapsing the RNA and protein
+                        nodes into their corresponding gene node.
+                    </li>
+                    <li>
+                        Heat diffusion is often ascribed to a continuous mathematical system. In practice, the heat
+                        diffusion algorithm is implemented in a discrete way using concepts from dynamic programming.
+
+                        Because causal BEL edges have a polarity (increases or decreases), the heat diffusion algorithm
+                        can be modified to encode greater biological meaning. When heat crosses a "decreases" edge, its
+                        sign is also flipped.
+
+                        BEL has the advantage of representing not only molecular entities, but also higher order
+                        abstract entities such as biological processes. These nodes are well suited to help interpret a
+                        data set, so their final heats, after diffusion has completed, are reported for visualization
+                        and interpretation.
+                    </li>
+
+                </ol>
+
+                <h4>Implementation Details</h4>
+                <h5>Randomized Approaches</h5>
+                <p>
+                    Since networks may contain contradictions like <code>A increases B</code> and also <code>B
+                    increases A</code> that cannot be easily explained by their associated biological context
+                    annotations, a network is derived that deletes one of them. For a network with only one
+                    contradiction, this only requires deriving two networks to enumerate all possibilities. As more
+                    contradictions arise, there are exponentially many possible derived networks. A randomized
+                    approach is used to sample from these networks and generate scores for each. This can be used to
+                    calculate an average score and also assess the sensitivity of that score.
+                </p>
+
+
+                <h4>Visualization</h4>
+                <p>
+                    Data sets can be directly uploaded and analyzed. The results of these experiments can then be
+                    directly overlaid to the interactive network viewer to provide a data-driven analysis of
+                    given networks or sub-networks.
+                </p>
+
+                <h4>Generalization of this workflow</h4>
+                <p>
+                    Heat diffusion is a general enough methodology that it can be applied to a variety of networks
+                    and different types of data sets. For example, Leiserson <i>et al.</i> used undirected
+                    protein-protein interaction networks with copy number variations as heat to identify functional
+                    modules in the context of cancer.
+                </p>
+                <p>
+                    Other data types, like single-nucleotide polymorphisms (SNPs), clinical measurements, or
+                    neuroimaging features, which have been annotated to our Alzheimer Disease Knowledge assembly with
+                    <a href="https://neurommsig.scai.fraunhofer.de/">NeuroMMSig</a>.
+                </p>
+
+
+                <h4>References</h4>
+                <ul>
+                    <li>
+                        Leiserson, M. D. M., Vandin, F., et al. (2015). Pan-cancer network analysis identifies
+                        combinations of rare somatic mutations across pathways and protein complexes. Nature Genetics,
+                        47(2), 106–14.
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
