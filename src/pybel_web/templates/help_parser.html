@@ -165,7 +165,11 @@
                     <td>Invalid Function Semantic</td>
                     <td>
                         Raised when a <code>namespace:name</code> is used in a BEL term (protein, biological process,
-                        etc.) for which it is not valid.
+                        etc.) for which it is not valid. For example, a non-coding gene can not be used in a protein
+                        tag.
+
+                        <i>Note</i>: the semantics for each <code>namespace:name</code> are defined in the BEL
+                        namespace files.
                     </td>
                 </tr>
                 </tbody>
