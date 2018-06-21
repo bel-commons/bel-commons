@@ -391,7 +391,7 @@ function displayQueryInfo(query) {
         });
     }
 
-    if (query.pipeline.length !== 0) {
+    if (query.pipeline && query.pipeline.length !== 0) {
         queryObject["Pipeline"] = '<ol class="query-box-pipeline">';
         $.each(query.pipeline, function (query_index, query_value) {
             queryObject["Pipeline"] += '<li>' + query_value.function.replace(/_/g, ' ') + '</li>';
