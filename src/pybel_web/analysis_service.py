@@ -12,7 +12,7 @@ import pandas.errors
 from flask import Blueprint, current_app, make_response, redirect, render_template, request, url_for
 from flask_security import current_user, login_required, roles_required
 
-from pybel_tools.analysis.ucmpa import RESULT_LABELS
+from pybel_tools.analysis.heat import RESULT_LABELS
 from .analysis_utils import get_dataframe_from_experiments
 from .forms import DifferentialGeneExpressionForm
 from .manager_utils import create_omic, next_or_jsonify

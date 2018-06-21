@@ -25,7 +25,7 @@ from pybel_tools.analysis.stability import (
     get_decrease_mismatch_triplets, get_increase_mismatch_triplets, get_jens_unstable,
     get_mutually_unstable_correlation_triples, get_regulatory_pairs, get_separate_unstable_correlation_triples,
 )
-from pybel_tools.analysis.ucmpa import calculate_average_scores_on_subgraphs
+from pybel_tools.analysis.heat import calculate_average_scores_on_subgraphs
 from pybel_tools.filters import has_pathology_causal, iter_undefined_families, remove_nodes_by_namespace
 from pybel_tools.generation import generate_bioprocess_mechanisms
 from pybel_tools.integration import overlay_type_data

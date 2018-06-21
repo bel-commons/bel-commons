@@ -2,27 +2,29 @@
 
 """This module contains the user interface blueprint for the application."""
 
-import datetime
 import logging
 import os
 import sys
-import time
 from collections import defaultdict
 from operator import itemgetter
 
+import datetime
 import flask
+import time
 from flask import Blueprint, Markup, abort, current_app, flash, redirect, render_template, request, url_for
 from flask_security import current_user, login_required, roles_required
 
 import pybel_tools.query
 from pybel.manager.models import Annotation, AnnotationEntry, Citation, Edge, Evidence, Namespace, Node
+from pybel.struct.grouping.annotations import get_subgraphs_by_annotation
+from pybel.struct.mutation import remove_associations, remove_pathologies
+from pybel.struct.mutation.utils import remove_isolated_nodes
+from pybel.struct.pipeline import Pipeline
+from pybel.struct.pipeline.decorators import no_arguments_map
+from pybel.struct.pipeline.exc import MissingPipelineFunctionError
 from pybel.utils import get_version as get_pybel_version
 from pybel_tools.biogrammar.double_edges import summarize_competeness
-from pybel_tools.grouping import get_subgraphs_by_annotation
-from pybel_tools.mutation import (
-    collapse_by_central_dogma_to_genes, remove_associations, remove_isolated_nodes, remove_pathologies,
-)
-from pybel_tools.pipeline import MissingPipelineFunctionError, Pipeline, no_arguments_map
+from pybel_tools.mutation import collapse_by_central_dogma_to_genes
 from pybel_tools.query import QueryMissingNetworksError
 from pybel_tools.summary import info_json
 from pybel_tools.summary.error_summary import calculate_error_by_annotation

@@ -16,11 +16,8 @@ from pybel.manager.models import (
     Annotation, AnnotationEntry, Author, Citation, Edge, Evidence, Namespace, NamespaceEntry, Network, Node,
 )
 from pybel.struct.mutation import infer_child_relations
+from pybel.struct.pipeline import in_place_transformation, uni_in_place_transformation
 from pybel_tools.mutation import add_canonical_names, expand_node_neighborhood, expand_nodes_neighborhoods
-from pybel_tools.pipeline import (
-    in_place_mutator as in_place_transformation,
-    uni_in_place_mutator as uni_in_place_transformation,
-)
 from .admin_model_views import (
     AnnotationView, CitationView, EdgeView, EvidenceView, ExperimentView, ModelView, NamespaceView, NetworkView,
     NodeView, QueryView, ReportView, UserView, build_project_view,
