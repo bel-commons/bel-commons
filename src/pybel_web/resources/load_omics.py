@@ -54,16 +54,12 @@ def create_omics_models(directory, metadata):
     return results
 
 
-def upload_omics_models(omics, connection=None):
+def upload_omics_models(omics, manager):
     """Create a manager and upload omics models
 
     :param list[pybel_web.models.Omic] omics:
-    :param connection: database connection string to cache, pre-built :class:`Manager`, or None to use default cache
-    :type connection: Optional[str or pybel.manager.Manager]
+    :type manager: pybel.manager.Manager
     """
-    log.info('creating manager')
-    manager = Manager.ensure(connection=connection)
-
     log.info('adding omics models to session')
     manager.session.add_all(omics)
 
@@ -106,7 +102,7 @@ def work_omics(directory, connection=None, reload=False):
 
     metadata = load_metadata(directory)
     omics = create_omics_models(directory, metadata)
-    upload_omics_models(omics, connection=connection)
+    upload_omics_models(omics, manager=connection)
     write_manifest(directory, omics)
 
 

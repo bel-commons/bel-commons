@@ -207,7 +207,7 @@ def worker(concurrency, broker, debug):
 @click.pass_context
 def manage(ctx, connection):
     """Manage the database"""
-    ctx.obj = Manager.ensure(connection)
+    ctx.obj = Manager.from_connection(connection)
     Base.metadata.bind = ctx.obj.engine
     Base.query = ctx.obj.session.query_property()
 
