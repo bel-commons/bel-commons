@@ -8,9 +8,8 @@ from flask import Blueprint, jsonify, request
 from flask_cors import cross_origin
 
 from pybel import from_url
-from pybel.struct import union
+from pybel.struct import get_annotation_values, union
 from pybel_tools.selection import get_subgraph_by_annotations
-from pybel_tools.summary import get_annotation_values
 from pybel_web.proxies import manager
 from pybel_web.send_utils import serve_network
 
