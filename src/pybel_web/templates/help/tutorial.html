@@ -9,6 +9,11 @@
 {% block content %}
     <div class="container">
 
+        <ol class="breadcrumb">
+            <li><a href="{{ url_for('help.index') }}">Help</a></li>
+            <li class="active">Tutorial</li>
+        </ol>
+
         <div class="page-header">
             <h1>Typical Workflow</h1>
         </div>
@@ -77,8 +82,8 @@
                 <iframe src="https://player.vimeo.com/video/224197768" width="640" height="334" frameborder="0"
                         webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>
 
-                 <p>
-                     Finally, the summary page provides an assessment of the "Biological Grammar", or the biological
+                <p>
+                    Finally, the summary page provides an assessment of the "Biological Grammar", or the biological
                     validity of statements. These analysis include identification of contradictory edges,
                     unstable biological motifs in pairs and triplets of nodes, and other information that is inferred
                     to be missing or incomplete.
@@ -121,7 +126,7 @@
                 <iframe src="https://player.vimeo.com/video/224475309" width="640" height="480" frameborder="0"
                         webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>
 
-                 <p>Finally, the results of queries can be summarized, downloaded in many formats, or explored.</p>
+                <p>Finally, the results of queries can be summarized, downloaded in many formats, or explored.</p>
 
                 <h3>Interactive Network Explorer</h3>
                 <p>
@@ -160,4 +165,6 @@
             </div>
         </div>
     </div>
+
+    {% include "footer.html" %}
 {% endblock %}

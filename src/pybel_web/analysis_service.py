@@ -137,7 +137,7 @@ def view_query_uploader(query_id):
     form = DifferentialGeneExpressionForm()
 
     if not form.validate_on_submit():
-        return render_template('analyze_dgx.html', form=form, query=query)
+        return render_template('experiment/analyze_dgx.html', form=form, query=query)
 
     t = time.time()
 

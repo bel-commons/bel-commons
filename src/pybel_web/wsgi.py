@@ -13,7 +13,7 @@ from pybel_web.constants import PYBEL_WEB_USE_PARSER_API
 from pybel_web.database_service import api_blueprint
 from pybel_web.main_service import ui_blueprint
 from pybel_web.views import (
-    build_parser_service, curation_blueprint, receiving_blueprint, reporting_blueprint,
+    build_parser_service, curation_blueprint, help_blueprint, receiving_blueprint, reporting_blueprint,
     uploading_blueprint,
 )
 
@@ -36,7 +36,7 @@ app = create_application()
 
 app.register_blueprint(ui_blueprint)
 app.register_blueprint(curation_blueprint)
-
+app.register_blueprint(help_blueprint)
 app.register_blueprint(api_blueprint)
 app.register_blueprint(reporting_blueprint)
 

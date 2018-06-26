@@ -21,6 +21,7 @@
 {% block content %}
     <div class="container">
         {{ util.flashed_messages(dismissible=True, container=False) }}
+
         <div class="panel panel-default">
             <div class="panel-heading">
                 <h3 class="panel-title">About</h3>
@@ -60,68 +61,40 @@
             <div class="panel-heading">
                 <h3 class="panel-title">Links and Cards</h3>
             </div>
-            <div class="panel-body">
-                <div class="row">
-                    <div class="col-sm-6 col-md-3">
-                        <h3>Resources</h3>
-                        <ul>
-                            <li>
-                                <a href="http://belief.scai.fraunhofer.de/BeliefDashboard/home/bel">Introduction
-                                    to BEL</a>
-                            </li>
-                            <li>
-                                <a href="{{ url_for('ui.view_how_to_use') }}">How To Use BEL Commons</a>
-                            </li>
-                        </ul>
-                    </div>
 
-                    <div class="col-sm-6 col-md-3">
-                        <h3>API</h3>
-                        <p>
-                            Our RESTful service is documented with the
-                            <a href="https://www.openapis.org/">OpenAPI</a> specification. In the future, we
-                            will also provide a <a href="http://graphql.org/learn/">GraphQL</a>
-                            API using <a href="https://github.com/graphql-python/graphene">graphene</a>.
-                        </p>
-                        <p>
-                            <a href="{{ url_for('flasgger.apidocs') }}" class="btn btn-primary">
-                                Swagger UI
-                            </a>
-                            <a href="{{ url_for('flasgger.apispec_1') }}" class="btn btn-primary">
-                                OpenAPI Spec
-                            </a>
-                        </p>
-                    </div>
-
-                    <div class="col-sm-6 col-md-3">
-                        <h3>Cookbook</h3>
-                        <p>
-                            BEL Commons is built with PyBEL and PyBEL Tools. We have created a repository of Jupyter
-                            notebooks to demonstrate their programmatic capabilities.
-                        </p>
-                        <p>
-                            <a href="https://github.com/pybel/pybel-notebooks" class="btn btn-primary">
-                                PyBEL Notebooks
-                            </a>
-                        </p>
-                    </div>
-
-                    <div class="col-sm-6 col-md-3">
-                        <h3>Artwork</h3>
-                        <p>
-                            The PyBEL logos are derivatives of <a
-                                href="http://game-icons.net/lorc/originals/ringing-bell.html">Ringing bell</a>
-                            by <a href="https://lorcblog.blogspot.com/">Lorc</a>, used under <a
-                                href="http://creativecommons.org/licenses/by/3.0/">CC BY 3.0</a>. The PyBEL
-                            logos are licensed under <a href="http://creativecommons.org/licenses/by/3.0/">CC BY
-                            3.0</a> by <a href="https://github.com/scolby33">Scott Colby</a>.</p>
-                        <p>
-                            <a href="https://github.com/pybel/pybel-art#usage-guidelines-and-information"
-                               class="btn btn-primary">
-                                Usage Guidelines
-                            </a>
-                        </p>
-                    </div>
+            <div class="list-group">
+                <a class="list-group-item" href="{{ url_for('help.index') }}">
+                    <h4 class="list-group-item-heading">
+                        Help Center
+                    </h4>
+                    <p class="list-group-item-text">
+                        A collection of resources and tutorials on using BEL, BEL Commons, and running analyses.
+                    </p>
+                </a>
+                <div class="list-group-item">
+                    <h4 class="list-group-item-heading">
+                        API
+                    </h4>
+                    <p class="list-group-item-text">
+                        Our RESTful service is documented with the <a href="https://www.openapis.org/">OpenAPI</a>
+                        specification. It can be accessed through the <a href="{{ url_for('flasgger.apidocs') }}">Swagger
+                        UI</a> or <a href="{{ url_for('flasgger.apispec_1') }}">programatically</a>.
+                    </p>
+                </div>
+                <div class="list-group-item">
+                    <h4 class="list-group-item-heading">
+                        Artwork
+                    </h4>
+                    <p class="list-group-item-text">
+                        The PyBEL logos are derivatives of <a
+                            href="http://game-icons.net/lorc/originals/ringing-bell.html">Ringing bell</a>
+                        by <a href="https://lorcblog.blogspot.com/">Lorc</a>, used under <a
+                            href="http://creativecommons.org/licenses/by/3.0/">CC BY 3.0</a>. The PyBEL
+                        logos are licensed under <a href="http://creativecommons.org/licenses/by/3.0/">CC BY
+                        3.0</a> by <a href="https://github.com/scolby33">Scott Colby</a>. See its <a
+                            href="https://github.com/pybel/pybel-art#usage-guidelines-and-information">usage
+                        guidelines</a>.
+                    </p>
                 </div>
             </div>
         </div>

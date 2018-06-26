@@ -1,32 +1,23 @@
 # -*- coding: utf-8 -*-
 
-"""Module that contains the command line app.
+"""A command line application for managing BEL Commons.
 
-Why does this file exist, and why not put this in __main__?
-You might be tempted to import things from __main__ later, but that will cause
-problems--the code will get executed twice:
- - When you run `python3 -m pybel_web` python will execute
-   ``__main__.py`` as a script. That means there won't be any
-   ``pybel_web.__main__`` in ``sys.modules``.
- - When you import __main__ it will get executed again (as a module) because
-   there's no ``pybel_web.__main__`` in ``sys.modules``.
-Also see (1) from http://click.pocoo.org/5/setuptools/#setuptools-integration
+Run with ``python -m pybel_web`` or simply as ``pybel-web``.
 """
 
+import sys
+
+import click
 import datetime
 import json
 import logging
 import multiprocessing
 import os
-import sys
 import time
-
-import click
 from flask_security import SQLAlchemyUserDatastore
 
-import pybel
+from pybel import Manager
 from pybel.constants import get_cache_connection
-from pybel.manager import Manager
 from pybel.manager.models import Network
 from pybel.utils import get_version as pybel_version
 from pybel_tools.utils import enable_cool_mode, get_version as pybel_tools_get_version
@@ -38,7 +29,7 @@ from .main_service import ui_blueprint
 from .manager_utils import insert_graph
 from .models import Assembly, Base, EdgeComment, EdgeVote, Experiment, Omic, Project, Query, Report, Role, User
 from .views import (
-    build_parser_service, curation_blueprint, receiving_blueprint, reporting_blueprint,
+    build_parser_service, curation_blueprint, help_blueprint, receiving_blueprint, reporting_blueprint,
     uploading_blueprint,
 )
 
@@ -166,6 +157,7 @@ def run(host, port, debug, config, examples, with_gunicorn, workers):
     app.register_blueprint(ui_blueprint)
     app.register_blueprint(curation_blueprint)
     app.register_blueprint(uploading_blueprint)
+    app.register_blueprint(help_blueprint)
     app.register_blueprint(api_blueprint)
     app.register_blueprint(experiment_blueprint)
     app.register_blueprint(reporting_blueprint)
