@@ -8,12 +8,19 @@
 
 {% block content %}
     <div class="container">
+
+        <ol class="breadcrumb">
+            <li><a href="{{ url_for('help.index') }}">Help</a></li>
+            <li class="active">Differential Gene Expression</li>
+        </ol>
+
         {{ util.flashed_messages(dismissible=True, container=False) }}
 
+        <div class="page-header">
+            <h1>Differential Gene Expression Analysis Tutorial</h1>
+        </div>
+
         <div class="panel panel-default">
-            <div class="panel-heading">
-                <h3 class="panel-title">Query Info</h3>
-            </div>
             <div class="panel-body">
                 <p>
                     This page outlines the ease in which differential gene expression data can be pre-processed

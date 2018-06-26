@@ -5,7 +5,7 @@
 import os
 
 from pybel.constants import PYBEL_DIR, config
-from pybel_tools.pipeline import mapped
+from pybel.struct.pipeline import mapped
 
 VERSION = '0.2.4-dev'
 

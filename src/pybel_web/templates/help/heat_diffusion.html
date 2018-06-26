@@ -4,10 +4,19 @@
 {% import "bootstrap/fixes.html" as fixes %}
 {% import "bootstrap/utils.html" as util %}
 
-{% block title %}Heat Diffusion Help{% endblock %}
+{% block title %}Heat Diffusion Workflow Tutorial{% endblock %}
 
 {% block content %}
     <div class="container">
+        <ol class="breadcrumb">
+            <li><a href="{{ url_for('help.index') }}">Help</a></li>
+            <li class="active">Heat Diffusion</li>
+        </ol>
+
+        <div class="page-header">
+            <h1>Heat Diffusion Workflow Tutorial</h1>
+        </div>
+
         <div class="panel panel-default">
             <div class="panel-heading">
                 <h3 class="panel-title">Heat Diffusion Workflow</h3>
@@ -102,5 +111,6 @@
             </div>
         </div>
     </div>
-{% endblock %}
 
+    {% include "footer.html" %}
+{% endblock %}

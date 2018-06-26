@@ -2,27 +2,28 @@
 
 """This module contains the user interface blueprint for the application."""
 
-import datetime
 import logging
 import os
 import sys
-import time
 from collections import defaultdict
 from operator import itemgetter
 
+import datetime
 import flask
+import time
 from flask import Blueprint, Markup, abort, current_app, flash, redirect, render_template, request, url_for
 from flask_security import current_user, login_required, roles_required
 
 import pybel_tools.query
 from pybel.manager.models import Annotation, AnnotationEntry, Citation, Edge, Evidence, Namespace, Node
+from pybel.struct.grouping.annotations import get_subgraphs_by_annotation
+from pybel.struct.mutation import remove_associations, remove_pathologies
+from pybel.struct.mutation.utils import remove_isolated_nodes
+from pybel.struct.pipeline import Pipeline
+from pybel.struct.pipeline.exc import MissingPipelineFunctionError
 from pybel.utils import get_version as get_pybel_version
 from pybel_tools.biogrammar.double_edges import summarize_competeness
-from pybel_tools.grouping import get_subgraphs_by_annotation
-from pybel_tools.mutation import (
-    collapse_by_central_dogma_to_genes, remove_associations, remove_isolated_nodes, remove_pathologies,
-)
-from pybel_tools.pipeline import MissingPipelineFunctionError, Pipeline, no_arguments_map
+from pybel_tools.mutation import collapse_by_central_dogma_to_genes
 from pybel_tools.query import QueryMissingNetworksError
 from pybel_tools.summary import info_json
 from pybel_tools.summary.error_summary import calculate_error_by_annotation
@@ -528,12 +529,6 @@ def view_about():
     return render_template('meta/about.html', metadata=metadata, managers=manager_dict)
 
 
-@ui_blueprint.route('/dgx_tutorial')
-def view_dgx_tutorial():
-    """Sends the differential gene expression tutorial page"""
-    return render_template('analyze_dgx_tutorial.html')
-
-
 @ui_blueprint.route('/network/<int:network_id>')
 def view_network(network_id):
     """Renders a page with the statistics of the contents of a BEL script
@@ -624,49 +619,6 @@ def view_summarize_stratified(network_id, annotation):
         summaries=summaries,
         useful_summaries=useful_summaries,
     )
-
-
-@ui_blueprint.route('/how_to_use')
-def view_how_to_use():
-    """Show How to use PyBEL-web."""
-    return render_template('meta/how_to_use.html')
-
-
-@ui_blueprint.route('/help/pipeline')
-def view_pipeline_help():
-    """View the help info for the functions."""
-
-    data = []
-    for fname, f in no_arguments_map.items():
-
-        if f.__doc__ is None:
-            log.warning('No documentation for %s', fname)
-            continue
-
-        data.append((fname.replace('_', ' ').title(), f.__doc__.split('\n\n')[0]))
-
-    return render_template(
-        'query/pipeline_help.html',
-        function_dict=data
-    )
-
-
-@ui_blueprint.route('/help/download')
-def view_download_help():
-    """View the help info for the functions."""
-    return render_template('help_download_format.html')
-
-
-@ui_blueprint.route('/help/parser')
-def view_parser_help():
-    """View the help info for the parser and validator."""
-    return render_template('help_parser.html')
-
-
-@ui_blueprint.route('/help/heat-diffusion')
-def view_heat_diffusion_help():
-    """View the help info for the heat diffusion workflow."""
-    return render_template('experiment/help_heat_diffusion.html')
 
 
 @ui_blueprint.route('/network/<int:network_1_id>/compare/<int:network_2_id>')
@@ -761,7 +713,7 @@ def view_user(user_id):
 @roles_required('admin')
 def view_overview():
     """View the overview."""
-    return render_template('overview.html')
+    return render_template('network/overview.html')
 
 
 @ui_blueprint.route('/admin/rollback')

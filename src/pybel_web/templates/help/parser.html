@@ -8,6 +8,16 @@
 
 {% block content %}
     <div class="container">
+
+        <ol class="breadcrumb">
+            <li><a href="{{ url_for('help.index') }}">Help</a></li>
+            <li class="active">Parser and Validator</li>
+        </ol>
+
+        <div class="page-header">
+            <h1>Parser and Validator Help</h1>
+        </div>
+
         <div class="panel panel-default">
             <div class="panel-heading">
                 <h3 class="panel-title">Definition Errors</h3>
@@ -176,5 +186,6 @@
             </table>
         </div>
     </div>
-{% endblock %}
 
+    {% include "footer.html" %}
+{% endblock %}

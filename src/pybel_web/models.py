@@ -743,18 +743,25 @@ class Query(Base):
         )
 
     def set_seeding(self, query):
-        """Sets the seeding value from a PyBEL Tools query
+        """Set the seeding value from a PyBEL Tools query.
 
-        :param pybel_tools.query.Query query:
+        :type query: pybel_tools.query.Query
         """
         self.seeding = query.seeding_to_jsons()
 
-    def set_pipeline(self, query):
-        """Sets the pipeline value from a PyBEL Tools query
+    def set_pipeline_from_pipeline(self, pipeline):
+        """Set the pipeline from a PyBEL Pipeline
 
-        :param pybel_tools.query.Query query:
+        :type pipeline: pybel.struct.pipeline.Pipeline
         """
-        self.pipeline = query.pipeline.to_jsons()
+        self.pipeline = pipeline.dumps()
+
+    def set_pipeline(self, query):
+        """Set the pipeline value from a PyBEL Tools query.
+
+        :type query: pybel_tools.query.Query
+        """
+        self.set_pipeline_from_pipeline(query.pipeline)
 
     def _get_query(self):
         """Converts this object to a :class:`pybel_tools.query.Query` object
@@ -890,8 +897,8 @@ class Query(Base):
         """
         networks = manager.get_networks_by_ids(query.network_ids)
         result = Query.from_networks(networks, user=user)
-        result.seeding = query.seeding_to_jsons()
-        result.pipeline = query.pipeline.to_jsons()
+        result.set_seeding(query)
+        result.set_pipeline(query)
         return result
 
     @staticmethod
@@ -923,7 +930,7 @@ class Query(Base):
             parent_id=self.id,
             assembly=self.assembly,
             seeding=self.seeding,
-            pipeline=_query.pipeline.to_jsons(),
+            pipeline=_query.pipeline.dumps(),
             user=self.user,
         )
 

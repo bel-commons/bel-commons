@@ -41,16 +41,13 @@ def get_manifest(directory):
         return json.load(f)
 
 
-def build_query(directory, connection=None):
+def build_query(directory, manager):
     """Builds a query for the Alzheimer's disease network
 
     :param str directory: Directory containing omics data and a manifest
-    :param connection: database connection string to cache, pre-built :class:`Manager`, or None to use default cache
-    :type connection: Optional[str or pybel.manager.Manager]
+    :type manager: pybel.manager.Manager
     :rtype: pybel_web.models.Query
     """
-    manager = Manager.ensure(connection=connection)
-
     manifest = get_manifest(directory)
 
     network_ids = [
@@ -66,18 +63,15 @@ def build_query(directory, connection=None):
     return query
 
 
-def create_experiment(query, directory, connection=None, permutations=None):
+def create_experiment(query, directory, manager=None, permutations=None):
     """Creates experiment models
 
     :param Query query:
     :param str directory: the directory of omics data resources
-    :param connection: database connection string to cache, pre-built :class:`Manager`, or None to use default cache
-    :type connection: Optional[str or pybel.manager.Manager]
+    :type manager: pybel.manager.Manager
     :param Optional[int] permutations: Number of permutations to run (defaults to 200)
     :rtype: list[Experiment]
     """
-    manager = Manager.ensure(connection=connection)
-
     omics_manifest = get_manifest(directory)
 
     results = []
@@ -97,15 +91,12 @@ def create_experiment(query, directory, connection=None, permutations=None):
     return results
 
 
-def upload_experiments(experiments, connection=None):
+def upload_experiments(experiments, manager):
     """Create a manager and upload experiments models
 
     :param list[pybel_web.models.Experiments] experiments:
-    :param connection: database connection string to cache, pre-built :class:`Manager`, or None to use default cache
-    :type connection: Optional[str or pybel.manager.Manager]
+    :type manager: pybel.manager.Manager
     """
-    manager = Manager.ensure(connection=connection)
-
     log.info('adding experiments to session')
     manager.session.add_all(experiments)
 
@@ -113,15 +104,12 @@ def upload_experiments(experiments, connection=None):
     manager.session.commit()
 
 
-def run_experiments(experiments, connection=None):
+def run_experiments(experiments, manager):
     """Runs experiments and commits after each
 
     :param iter[Experiment] experiments:
-    :param connection: database connection string to cache, pre-built :class:`Manager`, or None to use default cache
-    :type connection: Optional[str or pybel.manager.Manager]
+    :type manager: pybel.manager.Manager
     """
-    manager = Manager.ensure(connection=connection)
-
     log.info('running %d experiments', len(experiments))
 
     for experiment in experiments:
@@ -141,13 +129,13 @@ def work_directory(query, omic_directory, connection=None, permutations=None):
     :param Optional[int] permutations: Number of permutations to run (defaults to 200)
     """
     log.info('making experiments for directory: %s', omic_directory)
-    experiments = create_experiment(query, directory=omic_directory, connection=connection, permutations=permutations)
+    experiments = create_experiment(query, directory=omic_directory, manager=connection, permutations=permutations)
 
     log.info('uploading experiments for directory: %s', omic_directory)
-    upload_experiments(experiments, connection=connection)
+    upload_experiments(experiments, manager=connection)
 
     log.info('running experiments for directory: %s', omic_directory)
-    run_experiments(experiments, connection=connection)
+    run_experiments(experiments, manager=connection)
 
 
 def work_group(network_directory, omics_directories, connection=None, permutations=None):
@@ -159,7 +147,7 @@ def work_group(network_directory, omics_directories, connection=None, permutatio
     :type connection: Optional[str or pybel.manager.Manager]
     :param Optional[int] permutations: Number of permutations to run (defaults to 200)
     """
-    query = build_query(directory=network_directory, connection=connection)
+    query = build_query(directory=network_directory, manager=connection)
     log.info('made query %s for %s', query, network_directory)
 
     for omic_directory in omics_directories:
