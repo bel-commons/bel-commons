@@ -45,7 +45,7 @@ def query_builder():
         if f.__doc__ is not None
     ]
 
-    return render_template('help/transformations.html', function_dict=function_dict)
+    return render_template('help/query_builder.html', function_dict=function_dict)
 
 
 @help_blueprint.route('/download-formats')
