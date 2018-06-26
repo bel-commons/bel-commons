@@ -6,6 +6,18 @@
 
 {% block title %}Users{% endblock %}
 
+{% block scripts %}
+    {{ super() }}
+
+    <script type="text/javascript" src="https://cdn.datatables.net/v/bs/dt-1.10.16/datatables.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/buttons/1.5.1/js/dataTables.buttons.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            $("#user-table").DataTable();
+        });
+    </script>
+{% endblock %}
 
 {% block content %}
     <div class="container">
@@ -20,69 +32,61 @@
             <div class="panel-heading">
                 <h3 class="panel-title">Users</h3>
             </div>
-            <table class="table table-striped table-responsive">
-                <thead>
-                <tr>
-                    <th></th>
-                    <th>Email</th>
-                    <th>Roles</th>
-                    <th>Recent Networks</th>
-                    <th>Actions</th>
-                </tr>
-                </thead>
-                <tbody>
-                {% for user in users %}
+            <div class="panel-body">
+                <table class="table table-striped table-responsive" id="user-table">
+                    <thead>
                     <tr>
-                        <td>
-                            <a href="{{ url_for('ui.view_user', user_id=user.id) }}">
-                                {{ user.id }}
-                            </a>
-                        </td>
-                        <td><a href="mailto:{{ user.email }}">{{ user.email }}</a></td>
-                        <td>
-                            <ul>
-                                {% for role in user.roles %}
-                                    <li>{{ role }}</li>
-                                {% endfor %}
-                            </ul>
-                        </td>
-                        <td>
-                            <ul>
-                                {% for report in user.reports.limit(5) %}
+                        <th>ID</th>
+                        <th>Email</th>
+                        <th>Roles</th>
+                        <th>Latest Network</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for user in users %}
+                        <tr>
+                            <td>
+                                <a href="{{ url_for('ui.view_user', user_id=user.id) }}">
+                                    {{ user.id }}
+                                </a>
+                            </td>
+                            <td><a href="mailto:{{ user.email }}">{{ user.email }}</a></td>
+                            <td>{{ user.roles|join(', ') }}</td>
+                            <td>
+                                {% for report in user.reports.limit(1) %}
                                     {% if report.network is not none %}
-                                        <li>
-                                            <a href="{{ url_for('ui.view_network', network_id=report.network.id) }}">{{ report.network }}</a>
-                                        </li>
+                                        <a href="{{ url_for('ui.view_network', network_id=report.network.id) }}">{{ report.network }}</a>
                                     {% endif %}
                                 {% endfor %}
-                            </ul>
-                        </td>
-                        <td>
-                            {% if user.is_scai %}
-                                <a class="btn btn-danger btn-xs" role="button"
-                                   href="{{ url_for('dbs.drop_user_role', user=user.email, role='scai') }}">Remove
-                                    SCAI</a>
-                            {% else %}
+                            </td>
+                            <td>
+                                {% if user.is_scai %}
+                                    <a class="btn btn-danger btn-xs" role="button"
+                                       href="{{ url_for('dbs.drop_user_role', user=user.email, role='scai') }}">Remove
+                                        SCAI</a>
+                                {% else %}
+                                    <a class="btn btn-info btn-xs" role="button"
+                                       href="{{ url_for('dbs.add_user_role', user=user.email, role='scai') }}">Add
+                                        SCAI</a>
+                                {% endif %}
+                                {% if user.is_admin %}
+                                    <a class="btn btn-danger btn-xs" role="button"
+                                       href="{{ url_for('dbs.drop_user_role', user=user.email, role='admin') }}">Remove
+                                        Admin</a>
+                                {% else %}
+                                    <a class="btn btn-info btn-xs" role="button"
+                                       href="{{ url_for('dbs.add_user_role', user=user.email, role='admin') }}">Add
+                                        Admin</a>
+                                {% endif %}
                                 <a class="btn btn-info btn-xs" role="button"
-                                   href="{{ url_for('dbs.add_user_role', user=user.email, role='scai') }}">Add
-                                    SCAI</a>
-                            {% endif %}
-                            {% if user.is_admin %}
-                                <a class="btn btn-danger btn-xs" role="button"
-                                   href="{{ url_for('dbs.drop_user_role', user=user.email, role='admin') }}">Remove
-                                    Admin</a>
-                            {% else %}
-                                <a class="btn btn-info btn-xs" role="button"
-                                   href="{{ url_for('dbs.add_user_role', user=user.email, role='admin') }}">Add
-                                    Admin</a>
-                            {% endif %}
-                            <a class="btn btn-info btn-xs" role="button"
-                               href="{{ url_for('dbs.drop_user', user_id=user.id, next=url_for('ui.view_users')) }}">Remove</a>
-                        </td>
-                    </tr>
-                {% endfor %}
-                </tbody>
-            </table>
+                                   href="{{ url_for('dbs.drop_user', user_id=user.id, next=url_for('ui.view_users')) }}">Remove</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
