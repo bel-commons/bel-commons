@@ -15,6 +15,18 @@
             $('[data-toggle="tooltip"]').tooltip()
         })
     </script>
+
+    <script type="text/javascript" src="https://cdn.datatables.net/v/bs/dt-1.10.16/datatables.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/buttons/1.5.1/js/dataTables.buttons.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            $("#network-table").DataTable();
+            $("#query-table").DataTable();
+            $("#experiment-table").DataTable();
+            $("#omic-table").DataTable();
+        });
+    </script>
 {% endblock %}
 
 {% block content %}
@@ -162,78 +174,83 @@
             <div class="panel-heading">
                 <h3 class="panel-title">{% if user == current_user %}My {% endif %}Uploaded Networks</h3>
             </div>
-            <table class="table table-striped table-responsive">
-                <thead>
-                <tr>
-                    <th>Network</th>
-                    <th>Date of Upload</th>
-                    <th></th>
-                </tr>
-                </thead>
-                <tbody>
-                {% for report in user.reports | reverse %}
-                    {% if report.network is not none %}
-                        <tr>
-                            <td>
-                                <a href="{{ url_for('ui.view_network', network_id=report.network.id) }}">
-                                    {{ report.network }}
-                                </a>
-                            </td>
-                            <td>{{ report.created }}</td>
-                            <td>
-                                <div class="pull-right">
-                                    <a class="btn btn-default btn-xs"
-                                       href="{{ url_for('ui.view_network', network_id=report.network.id) }}">
-                                        <span class="glyphicon glyphicon-signal" aria-hidden="true"></span>
+
+            <div class="panel-body">
+                <table class="table table-striped table-responsive" id="network-table">
+                    <thead>
+                    <tr>
+                        <th>Network</th>
+                        <th>Date of Upload</th>
+                        <th></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for report in user.reports | reverse %}
+                        {% if report.network is not none %}
+                            <tr>
+                                <td>
+                                    <a href="{{ url_for('ui.view_network', network_id=report.network.id) }}">
+                                        {{ report.network }}
                                     </a>
-                                    <a class="btn btn-default btn-xs"
-                                       href="{{ url_for('ui.view_explore_network', network_id=report.network.id) }}">
-                                        <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
-                                    </a>
-                                    <a class="btn btn-default btn-xs"
-                                       href="{{ url_for('dbs.drop_network', network_id=report.network.id, next=url_for('ui.view_current_user_activity')) }}">
-                                        <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
-                                    </a>
-                                </div>
-                            </td>
-                        </tr>
-                    {% endif %}
-                {% endfor %}
-                </tbody>
-            </table>
+                                </td>
+                                <td>{{ report.created }}</td>
+                                <td>
+                                    <div class="pull-right">
+                                        <a class="btn btn-default btn-xs"
+                                           href="{{ url_for('ui.view_network', network_id=report.network.id) }}">
+                                            <span class="glyphicon glyphicon-signal" aria-hidden="true"></span>
+                                        </a>
+                                        <a class="btn btn-default btn-xs"
+                                           href="{{ url_for('ui.view_explore_network', network_id=report.network.id) }}">
+                                            <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
+                                        </a>
+                                        <a class="btn btn-default btn-xs"
+                                           href="{{ url_for('dbs.drop_network', network_id=report.network.id, next=url_for('ui.view_current_user_activity')) }}">
+                                            <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endif %}
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
 
         <div class="panel panel-default">
             <div class="panel-heading">
                 <h3 class="panel-title">{% if user == current_user %}My {% endif %}Omics</h3>
             </div>
-            <table class="table table-striped table-responsive">
-                <thead>
-                <tr>
-                    <th>Identifier</th>
-                    <th>Name</th>
-                    <th>Description</th>
-                    <th>Public</th>
-                    <th></th>
-                </tr>
-                </thead>
-                <tbody>
-                {% for omic in user.omics %}
+            <div class="panel-body">
+                <table class="table table-striped table-responsive" id="omic-table">
+                    <thead>
                     <tr>
-                        <td>{{ omic.id }}</td>
-                        <td>{{ omic.source_name }}</td>
-                        <td>{{ omic.description }}</td>
-                        <td>
-                            {% if omic.public %}
-                                <span class="glyphicon glyphicon-ok-circle" aria-hidden="true"></span>
-                            {% else %}
-                                <span class="glyphicon glyphicon glyphicon-remove-circle" aria-hidden="true"></span>
-                            {% endif %}
-                        </td>
+                        <th>Identifier</th>
+                        <th>Name</th>
+                        <th>Description</th>
+                        <th>Public</th>
+                        <th></th>
                     </tr>
-                {% endfor %}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                    {% for omic in user.omics %}
+                        <tr>
+                            <td>{{ omic.id }}</td>
+                            <td>{{ omic.source_name }}</td>
+                            <td>{{ omic.description }}</td>
+                            <td>
+                                {% if omic.public %}
+                                    <span class="glyphicon glyphicon-ok-circle" aria-hidden="true"></span>
+                                {% else %}
+                                    <span class="glyphicon glyphicon glyphicon-remove-circle" aria-hidden="true"></span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
 
         <div class="panel panel-default">
@@ -248,16 +265,18 @@
                     with the available NeuroMMSig subgraphs.
                 </p>
             </div>
-
-            {{ pbw.render_experiment_table(user.experiments) }}
+            <div class="panel-body">
+                {{ pbw.render_experiment_table(user.experiments) }}
+            </div>
         </div>
 
         <div class="panel panel-default">
             <div class="panel-heading">
                 <h3 class="panel-title">{% if user == current_user %}My {% endif %}Queries</h3>
             </div>
-
-            {{ pbw.render_query_table(user.get_sorted_queries()) }}
+            <div class="panel-body">
+                {{ pbw.render_query_table(user.get_sorted_queries()) }}
+            </div>
         </div>
     </div>
 
