@@ -5,7 +5,6 @@
 import json
 import logging
 import os
-
 from flask import g, render_template
 from flask_admin import Admin
 from flask_sqlalchemy import SQLAlchemy, get_state
@@ -15,9 +14,9 @@ from pybel.examples import *
 from pybel.manager.models import (
     Annotation, AnnotationEntry, Author, Citation, Edge, Evidence, Namespace, NamespaceEntry, Network, Node,
 )
-from pybel.struct.mutation import infer_child_relations
+from pybel.struct.mutation import expand_node_neighborhood, expand_nodes_neighborhoods, infer_child_relations
 from pybel.struct.pipeline import in_place_transformation, uni_in_place_transformation
-from pybel_tools.mutation import add_canonical_names, expand_node_neighborhood, expand_nodes_neighborhoods
+from pybel_tools.mutation import add_canonical_names
 from .admin_model_views import (
     AnnotationView, CitationView, EdgeView, EvidenceView, ExperimentView, ModelView, NamespaceView, NetworkView,
     NodeView, QueryView, ReportView, UserView, build_project_view,
