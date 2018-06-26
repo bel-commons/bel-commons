@@ -1,23 +1,28 @@
 # -*- coding: utf-8 -*-
 
+"""A blueprint for differential gene expression (-omics) experiments and their analysis."""
+
+import flask
 import json
 import logging
+import numpy as np
+import pandas.errors
 import time
+from flask import Blueprint, current_app, make_response, redirect, render_template, request, url_for
+from flask_security import current_user, login_required, roles_required
 from io import StringIO
 from operator import itemgetter
 
-import flask
-import numpy as np
-import pandas.errors
-from flask import Blueprint, current_app, make_response, redirect, render_template, request, url_for
-from flask_security import current_user, login_required, roles_required
-
 from pybel_tools.analysis.heat import RESULT_LABELS
-from .analysis_utils import get_dataframe_from_experiments
-from .forms import DifferentialGeneExpressionForm
-from .manager_utils import create_omic, next_or_jsonify
-from .models import Experiment, Omic, Query
-from .proxies import manager
+from ..analysis_utils import get_dataframe_from_experiments
+from ..forms import DifferentialGeneExpressionForm
+from ..manager_utils import create_omic, next_or_jsonify
+from ..models import Experiment, Omic, Query
+from ..proxies import manager
+
+__all__ = [
+    'experiment_blueprint',
+]
 
 log = logging.getLogger(__name__)
 

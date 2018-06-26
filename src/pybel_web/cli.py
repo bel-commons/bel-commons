@@ -21,7 +21,6 @@ from pybel.constants import get_cache_connection
 from pybel.manager.models import Network
 from pybel.utils import get_version as pybel_version
 from pybel_tools.utils import enable_cool_mode, get_version as pybel_tools_get_version
-from .analysis_service import experiment_blueprint
 from .application import create_application
 from .constants import PYBEL_WEB_REGISTER_EXAMPLES, PYBEL_WEB_USE_PARSER_API, get_admin_email
 from .database_service import api_blueprint
@@ -29,8 +28,8 @@ from .main_service import ui_blueprint
 from .manager_utils import insert_graph
 from .models import Assembly, Base, EdgeComment, EdgeVote, Experiment, Omic, Project, Query, Report, Role, User
 from .views import (
-    build_parser_service, curation_blueprint, help_blueprint, receiving_blueprint, reporting_blueprint,
-    uploading_blueprint,
+    build_parser_service, curation_blueprint, experiment_blueprint, help_blueprint, receiving_blueprint,
+    reporting_blueprint, uploading_blueprint,
 )
 
 log = logging.getLogger('pybel_web')

@@ -7,14 +7,13 @@ Run with GUnicorn: ``gunicorn -w 4 -b 0.0.0.0:5000 pybel_web.run:app``
 
 import logging
 
-from pybel_web.analysis_service import experiment_blueprint
 from pybel_web.application import create_application
 from pybel_web.constants import PYBEL_WEB_USE_PARSER_API
 from pybel_web.database_service import api_blueprint
 from pybel_web.main_service import ui_blueprint
 from pybel_web.views import (
-    build_parser_service, curation_blueprint, help_blueprint, receiving_blueprint, reporting_blueprint,
-    uploading_blueprint,
+    build_parser_service, curation_blueprint, experiment_blueprint, help_blueprint, receiving_blueprint,
+    reporting_blueprint, uploading_blueprint,
 )
 
 datefmt = '%H:%M:%S'
