@@ -54,9 +54,7 @@ class ParserForm(FlaskForm):
                                              'clearing</a>')
     feedback = BooleanField('Just email me a summary of my network and error report', default=False)
     public = BooleanField('Make my knowledge assembly publicly available', default=True)
-    infer_origin = BooleanField('Enrich protein and RNA nodes with the <a href="https://en.wikipedia.org/wiki/Central_'
-                                'dogma_of_molecular_biology">central dogma of molecular biology</a>',
-                                default=False)
+    infer_origin = BooleanField('Enrich protein nodes with their corresponding RNA and gene nodes', default=False)
     encoding = RadioField(
         'Encoding',
         choices=[

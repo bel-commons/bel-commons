@@ -21,7 +21,7 @@ from pybel.constants import METADATA_CONTACT, METADATA_DESCRIPTION, METADATA_LIC
 from pybel.manager.citation_utils import enrich_pubmed_citations
 from pybel.parser.exc import InconsistentDefinitionError
 from pybel.resources.exc import ResourceError
-from pybel_tools.mutation import add_canonical_names, add_identifiers, infer_central_dogma
+from pybel_tools.mutation import add_canonical_names, add_identifiers, enrich_protein_and_rna_origins
 from pybel_tools.utils import enable_cool_mode
 from pybel_web.application import create_application
 from pybel_web.celery_utils import create_celery
@@ -238,7 +238,7 @@ def upload_bel(connection, report_id, enrich_citations=False):
     add_identifiers(graph)
 
     if report.infer_origin:
-        infer_central_dogma(graph)
+        enrich_protein_and_rna_origins(graph)
 
     if enrich_citations:
         try:

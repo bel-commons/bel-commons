@@ -22,7 +22,7 @@ from pybel.manager.models import (
 )
 from pybel.resources.definitions import write_annotation, write_namespace
 from pybel.struct import union
-from pybel.struct.pipeline.decorators import no_arguments_map
+from pybel.struct.pipeline.decorators import no_arguments_map, deprecated
 from pybel.struct.pipeline.exc import MissingPipelineFunctionError
 from pybel.struct.summary import get_pubmed_identifiers
 from pybel.utils import get_version as get_pybel_version, hash_node
@@ -1939,7 +1939,7 @@ def get_pipeline_function_names():
     return jsonify([
         p.replace("_", " ").capitalize()
         for p in no_arguments_map
-        if q in p.replace("_", " ").casefold()
+        if p not in deprecated and q in p.replace("_", " ").casefold()
     ])
 
 

@@ -2,34 +2,33 @@
 
 """This module contains the user interface blueprint for the application."""
 
-import logging
-import os
 import sys
 from collections import defaultdict
-from operator import itemgetter
 
 import datetime
 import flask
+import logging
+import os
 import time
 from flask import Blueprint, Markup, abort, current_app, flash, redirect, render_template, request, url_for
 from flask_security import current_user, login_required, roles_required
+from operator import itemgetter
 
 import pybel_tools.query
 from pybel.manager.models import Annotation, AnnotationEntry, Citation, Edge, Evidence, Namespace, Node
 from pybel.struct.grouping.annotations import get_subgraphs_by_annotation
-from pybel.struct.mutation import remove_associations, remove_pathologies
-from pybel.struct.mutation.utils import remove_isolated_nodes
+from pybel.struct.mutation import collapse_to_genes, remove_associations, remove_isolated_nodes, remove_pathologies
 from pybel.struct.pipeline import Pipeline
 from pybel.struct.pipeline.exc import MissingPipelineFunctionError
 from pybel.utils import get_version as get_pybel_version
 from pybel_tools.biogrammar.double_edges import summarize_competeness
-from pybel_tools.mutation import collapse_by_central_dogma_to_genes
 from pybel_tools.query import QueryMissingNetworksError
 from pybel_tools.summary import info_json
 from pybel_tools.summary.error_summary import calculate_error_by_annotation
 from pybel_tools.utils import get_version as get_pybel_tools_version
+from pybel_web.explorer_toolbox import get_explorer_toolbox
 from . import models
-from .constants import get_explorer_toolbox, merged_document_folder
+from .constants import merged_document_folder
 from .external_managers import manager_dict
 from .manager_utils import next_or_jsonify
 from .models import Assembly, EdgeComment, EdgeVote, Experiment, Omic, Query, User
@@ -50,7 +49,7 @@ preprint_message = Markup("We're getting ready to publish this web application! 
 extract_useful_subgraph = Pipeline.from_functions([
     remove_pathologies,
     remove_associations,
-    collapse_by_central_dogma_to_genes,
+    collapse_to_genes,
     remove_isolated_nodes
 ])
 

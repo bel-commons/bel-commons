@@ -4,9 +4,9 @@
 corresponding to objects"""
 
 import itertools as itt
-import logging
 from collections import Counter
 
+import logging
 import networkx as nx
 import pandas as pd
 import time
@@ -17,19 +17,20 @@ from pybel.canonicalize import calculate_canonical_name
 from pybel.constants import GENE, RELATION
 from pybel.manager.models import Network
 from pybel.struct.filters import filter_edges
+from pybel.struct.mutation import collapse_to_genes
 from pybel.struct.summary import count_functions, get_syntax_errors, get_unused_namespaces
 from pybel.tokens import node_to_tuple
 from pybel.utils import hash_node
+from pybel_tools.analysis.heat import calculate_average_scores_on_subgraphs
 from pybel_tools.analysis.stability import (
     get_chaotic_pairs, get_chaotic_triplets, get_contradiction_summary, get_dampened_pairs, get_dampened_triplets,
     get_decrease_mismatch_triplets, get_increase_mismatch_triplets, get_jens_unstable,
     get_mutually_unstable_correlation_triples, get_regulatory_pairs, get_separate_unstable_correlation_triples,
 )
-from pybel_tools.analysis.heat import calculate_average_scores_on_subgraphs
 from pybel_tools.filters import has_pathology_causal, iter_undefined_families, remove_nodes_by_namespace
 from pybel_tools.generation import generate_bioprocess_mechanisms
 from pybel_tools.integration import overlay_type_data
-from pybel_tools.mutation import collapse_by_central_dogma_to_genes, rewire_variants_to_genes
+from pybel_tools.mutation import rewire_variants_to_genes
 from pybel_tools.summary import (
     count_error_types, count_pathologies, count_relations, count_unique_authors, count_unique_citations,
     get_citation_years, get_modifications_count, get_most_common_errors, get_naked_names,
@@ -328,7 +329,7 @@ def calculate_scores(graph, data, runs, use_tqdm=False):
     :rtype: dict[tuple,tuple]
     """
     remove_nodes_by_namespace(graph, {'MGI', 'RGD'})
-    collapse_by_central_dogma_to_genes(graph)
+    collapse_to_genes(graph)
     rewire_variants_to_genes(graph)
 
     overlay_type_data(graph, data, LABEL, GENE, 'HGNC', overwrite=False, impute=0)

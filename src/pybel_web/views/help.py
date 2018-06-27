@@ -6,7 +6,7 @@ import logging
 
 from flask import Blueprint, render_template
 
-from pybel.struct.pipeline import no_arguments_map
+from pybel.struct.pipeline.decorators import no_arguments_map, deprecated
 
 __all__ = [
     'help_blueprint',
@@ -42,7 +42,7 @@ def query_builder():
     function_dict = [
         (fname.replace('_', ' ').title(), f.__doc__.split('\n\n')[0])
         for fname, f in no_arguments_map.items()
-        if f.__doc__ is not None
+        if f.__doc__ is not None and fname not in deprecated
     ]
 
     return render_template('help/query_builder.html', function_dict=function_dict)

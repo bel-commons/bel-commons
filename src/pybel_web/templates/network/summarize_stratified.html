@@ -66,6 +66,52 @@
             </div>
         </div>
 
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Full Summary Stratified by {{ annotation }}</h3>
+            </div>
+            <div class="panel-body">
+                <p>
+                    This is a summary of the sub-graphs. It includes information that fits the schema of BEL,
+                    but is less useful for reasoning. See below for a "target" summary with pre-processing done to each
+                    sub-graph.
+                </p>
+            </div>
+            <table class="table table-striped table-hover" id="stratified-full">
+                <thead>
+                <tr>
+                    <th>{{ annotation }}</th>
+                    <th>Nodes</th>
+                    <th>Edges</th>
+                    <th>Components</th>
+                    <th>Citations</th>
+                    <th>Density</th>
+                    <th>Errors</th>
+                    <th>Error Density</th>
+                    <th>Node Percentage</th>
+                    <th>Edge Percentage</th>
+                    <th>Citation Percentage</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for name, data in summaries.items() %}
+                    <tr>
+                        <td>{{ name }}</td>
+                        <td>{{ data['Nodes'] }}</td>
+                        <td>{{ data['Edges'] }}</td>
+                        <td>{{ data['Components'] }}</td>
+                        <td>{{ data['Citations'] }}</td>
+                        <td>{{ (data['Network density'] * 100) | round(precision=3) }}%</td>
+                        <td>{{ data['errors'] }}</td>
+                        <td>{{ (data['error_density'] * 100) | round(precision=3) }}%</td>
+                        <td>{{ (data['node_overlap']* 100) | round(precision=3) }}%</td>
+                        <td>{{ (data['edge_overlap']* 100) | round(precision=3) }}%</td>
+                        <td>{{ (data['citation_overlap']* 100) | round(precision=3) }}%</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
 
         <div class="panel panel-default">
             <div class="panel-heading">
@@ -74,8 +120,7 @@
             <div class="panel-body">
                 <p>
                     Graphs have been sliced to be more useful. The pathologies and associative relationships are
-                    removed, the central dogma is collapsed, and isolated nodes are removed. See below for a summary
-                    of the unmodified graphs.
+                    removed, proteins and RNAs are collapsed to genes, and isolated nodes are removed.
                 </p>
             </div>
             <table class="table table-striped table-hover" id="stratified-useful">
@@ -109,53 +154,5 @@
                 </tbody>
             </table>
         </div>
-
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                <h3 class="panel-title">Full Summary Stratified by {{ annotation }}</h3>
-            </div>
-            <div class="panel-body">
-                <p>
-                    This is a summary of the graphs, unchanged. It includes information that fits the schema of BEL,
-                    but is less useful for reasoning.
-                </p>
-            </div>
-            <table class="table table-striped table-hover" id="stratified-full">
-                <thead>
-                <tr>
-                    <th>{{ annotation }}</th>
-                    <th>Nodes</th>
-                    <th>Edges</th>
-                    <th>Components</th>
-                    <th>Citations</th>
-                    <th>Density</th>
-                    <th>Errors</th>
-                    <th>Error Density</th>
-                    <th>Node Percentage</th>
-                    <th>Edge Percentage</th>
-                    <th>Citation Percentage</th>
-                </tr>
-                </thead>
-                <tbody>
-                {% for name, data in summaries.items() %}
-                    <tr>
-                        <td>{{ name }}</td>
-                        <td>{{ data['Nodes'] }}</td>
-                        <td>{{ data['Edges'] }}</td>
-                        <td>{{ data['Components'] }}</td>
-                        <td>{{ data['Citations'] }}</td>
-                        <td>{{ (data['Network density'] * 100) | round(precision=3) }}%</td>
-                        <td>{{ data['errors']}}</td>
-                        <td>{{ (data['error_density'] * 100) | round(precision=3) }}%</td>
-                        <td>{{ (data['node_overlap']* 100) | round(precision=3) }}%</td>
-                        <td>{{ (data['edge_overlap']* 100) | round(precision=3) }}%</td>
-                        <td>{{ (data['citation_overlap']* 100) | round(precision=3) }}%</td>
-                    </tr>
-                {% endfor %}
-                </tbody>
-            </table>
-        </div>
-
-
     </div>
 {% endblock %}
