@@ -977,12 +977,7 @@ function initD3Force(graph, tree) {
 
     var w = graphDiv.width(), h = graphDiv.height();
 
-    var focusNode = null, highlightNode = null;
-
     // Highlight color variables
-
-
-    var highlightColor = "#4EB2D4"; // Highlight color of the edge
 
     // Size when zooming scale
     var size = d3.scalePow().exponent(1)
