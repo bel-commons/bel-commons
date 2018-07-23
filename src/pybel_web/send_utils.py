@@ -4,15 +4,16 @@ import logging
 from io import BytesIO, StringIO
 
 from flask import Response, jsonify, send_file
+
+from pybel import to_bel_lines, to_bytes, to_csv, to_graphml, to_gsea, to_jgif, to_json, to_sif
+from pybel.canonicalize import node_to_bel
 from pybel.constants import (
     CAUSAL_DECREASE_RELATIONS, CAUSAL_INCREASE_RELATIONS, DECREASES, FUSION, HASH, INCREASES, MEMBERS, RELATION,
     TWO_WAY_RELATIONS, VARIANTS,
 )
-
-from pybel import to_bel_lines, to_bytes, to_csv, to_cx, to_graphml, to_gsea, to_jgif, to_json, to_sif
-from pybel.canonicalize import node_to_bel
 from pybel.struct.summary import get_pubmed_identifiers
 from pybel.utils import hash_edge, hash_node
+from pybel_cx import to_cx
 from pybel_tools.mutation.metadata import serialize_authors
 
 __all__ = [
