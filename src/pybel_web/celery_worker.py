@@ -67,7 +67,7 @@ def summarize_bel(connection, report_id):
     :param str connection: A connection to build the manager
     :param int report_id: A report to parse
     """
-    manager = WebManager.from_connection(connection)
+    manager = WebManager(connection=connection)
 
     t = time.time()
     report = manager.get_report_by_id(report_id)
@@ -137,7 +137,7 @@ def upload_bel(connection, report_id, enrich_citations=False):
     :param str connection: The connection string
     :param int report_id: Report identifier
     """
-    manager = WebManager.from_connection(connection)
+    manager = WebManager(connection=connection)
 
     t = time.time()
     report = manager.get_report_by_id(report_id)
@@ -306,7 +306,7 @@ def merge_project(connection, user_id, project_id):
     :param int user_id: The database identifier of the user
     :param int project_id: The database identifier of the project
     """
-    manager = WebManager.from_connection(connection)
+    manager = WebManager(connection=connection)
 
     t = time.time()
 
@@ -350,7 +350,7 @@ def run_heat_diffusion(connection, experiment_id):
     :param str connection: A connection to build the manager
     :param int experiment_id:
     """
-    manager = WebManager.from_connection(connection)
+    manager = WebManager(connection=connection)
     experiment = manager.get_experiment_by_id(experiment_id)
 
     query_id = experiment.query_id
@@ -394,7 +394,7 @@ def upload_json(connection, user_id, payload):
     :param int user_id: the ID of the user to associate with the graph
     :param payload: JSON dictionary for :func:`pybel.from_json`
     """
-    manager = WebManager.from_connection(connection)
+    manager = WebManager(connection=connection)
     user = manager.get_user_by_id(user_id)
 
     try:

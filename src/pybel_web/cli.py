@@ -6,6 +6,7 @@ Run with ``python -m pybel_web`` or simply as ``pybel-web``.
 """
 
 import sys
+import time
 
 import click
 import datetime
@@ -13,10 +14,8 @@ import json
 import logging
 import multiprocessing
 import os
-import time
 from flask_security import SQLAlchemyUserDatastore
 
-from pybel import Manager
 from pybel.constants import get_cache_connection
 from pybel.manager.models import Network
 from pybel.utils import get_version as pybel_version
@@ -25,6 +24,7 @@ from .application import create_application
 from .constants import PYBEL_WEB_REGISTER_EXAMPLES, PYBEL_WEB_USE_PARSER_API, get_admin_email
 from .database_service import api_blueprint
 from .main_service import ui_blueprint
+from .manager import WebManager
 from .manager_utils import insert_graph
 from .models import Assembly, Base, EdgeComment, EdgeVote, Experiment, Omic, Project, Query, Report, Role, User
 from .views import (
@@ -198,7 +198,7 @@ def worker(concurrency, broker, debug):
 @click.pass_context
 def manage(ctx, connection):
     """Manage the database"""
-    ctx.obj = Manager.from_connection(connection)
+    ctx.obj = WebManager(connection=connection)
     Base.metadata.bind = ctx.obj.engine
     Base.query = ctx.obj.session.query_property()
 

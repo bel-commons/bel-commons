@@ -2,27 +2,27 @@
 
 """Extensions to the PyBEL manager to support PyBEL-Web."""
 
-import datetime
 import itertools as itt
-import logging
-from collections import defaultdict
-from functools import lru_cache
-
-import networkx
 import time
+from collections import defaultdict
+
+import datetime
+import logging
+import networkx
 from flask import abort, render_template
 from flask_security import SQLAlchemyUserDatastore
+from functools import lru_cache
 from sqlalchemy import and_, func
 
-from pybel.manager import Network
-from pybel.manager.cache_manager import _Manager
-from pybel.manager.models import Annotation, Citation, Evidence, Namespace
-from pybel.struct.summary import count_namespaces
-from pybel_tools.summary import count_variants
+from pybel import Manager
+from pybel.manager.models import Annotation, Citation, Evidence, Namespace, Network
+from pybel.struct.summary import count_namespaces, count_variants
 from pybel_tools.utils import min_tanimoto_set_similarity, prepare_c3, prepare_c3_time_series
 from .constants import AND
 from .manager_utils import get_network_summary_dict
-from .models import EdgeComment, EdgeVote, Experiment, NetworkOverlap, Omic, Project, Query, Report, Role, User, Assembly
+from .models import (
+    Assembly, EdgeComment, EdgeVote, Experiment, NetworkOverlap, Omic, Project, Query, Report, Role, User,
+)
 
 __all__ = [
     'WebManager',
@@ -75,11 +75,11 @@ def to_snake_case(function_name):
     return function_name.replace(" ", "_").lower()
 
 
-class WebManager(_Manager):
+class WebManager(Manager):
     """Extensions to the PyBEL manager and :class:`SQLAlchemyUserDataStore` to support PyBEL-Web."""
 
-    def __init__(self, engine, session):
-        super(_Manager, self).__init__(engine=engine, session=session)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
         self.user_datastore = SQLAlchemyUserDatastore(self, User, Role)
 
