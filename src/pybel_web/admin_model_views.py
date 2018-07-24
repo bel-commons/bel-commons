@@ -86,7 +86,7 @@ class QueryView(ModelView):
 
 
 def build_network_ajax_manager(manager):
-    """
+    """Build an AJAX manager class for use with Flask-Admin.
 
     :param pybel_web.manager.WebManager manager:
     :rtype: QueryAjaxModelLoader
@@ -136,7 +136,7 @@ def build_network_ajax_manager(manager):
 
 
 def build_project_view(manager):
-    """Builds a Flask-Admin model view for a project
+    """Build a Flask-Admin model view for a project.
 
     :param pybel_web.manager.WebManager manager: A PyBEL manager
     :rtype: flask_admin.contrib.sqla.ModelView

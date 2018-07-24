@@ -32,7 +32,7 @@ log = logging.getLogger(__name__)
 
 
 def sanitize_annotation(annotation_list):
-    """Converts annotation (Annotation:value) to tuple
+    """Convert an annotation (Annotation:value) to tuple.
 
     :param list[str] annotation_list:
     :return: annotation dictionary
@@ -48,7 +48,7 @@ def sanitize_annotation(annotation_list):
 
 
 def unique_networks(networks):
-    """Only yields unique networks
+    """Yield only unique networks from an iterator.
 
     :param iter[Network] networks: An iterable of networks
     :return: An iterable over the unique network identifiers in the original iterator
