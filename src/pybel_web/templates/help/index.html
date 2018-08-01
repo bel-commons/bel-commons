@@ -1,125 +1,107 @@
-{% extends "base.html" %}
-
-{% import "bootstrap/wtf.html" as wtf %}
-{% import "bootstrap/fixes.html" as fixes %}
-{% import "bootstrap/utils.html" as util %}
-
-{% block title %}BEL Commons Help Center{% endblock %}
-
-{% block content %}
-    <div class="container">
-
-        <ol class="breadcrumb">
-            <li class="active">Help</li>
-        </ol>
-
-        <div class="page-header">
-            <h1>BEL Commons Help Center</h1>
-        </div>
-
-
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                <h3 class="panel-title">BEL Resources</h3>
-            </div>
-
-            <div class="list-group">
-                <a class="list-group-item" href="http://belief.scai.fraunhofer.de/BeliefDashboard/home/bel">
-                    <h4 class="list-group-item-heading">
-                        Introduction to BEL
-                    </h4>
-                    <p class="list-group-item-text">
-                        An introduction to BEL from the BELIEF semi-automated curation web application.
-                    </p>
-                </a>
-
-                <a class="list-group-item" href="{{ url_for('help.tutorial') }}">
-                    <h4 class="list-group-item-heading">
-                        Getting Started with BEL Commons
-                    </h4>
-                    <p class="list-group-item-text">
-                        A quick introduction to some of the features in BEL Commons.
-                    </p>
-                </a>
-
-
-                <a class="list-group-item" href="https://github.com/pybel/pybel-notebooks">
-                    <h4 class="list-group-item-heading">
-                        PyBEL Cookbook
-                    </h4>
-                    <p class="list-group-item-text">
-                        A collection of tutorials in Jupyter notebooks to get you started with programmatic use of BEL
-                        in
-                        the Python language.
-                    </p>
-                </a>
-            </div>
-        </div>
-
-
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                <h3 class="panel-title">BEL Commons Functionality</h3>
-            </div>
-
-            <div class="list-group">
-                <a class="list-group-item" href="{{ url_for('help.parser') }}">
-                    <h4 class="list-group-item-heading">
-                        Parser and Validator Help
-                    </h4>
-                    <p class="list-group-item-text">
-                        A list of messages and help with feedback from the parser and validator.
-                    </p>
-                </a>
-                <a class="list-group-item" href="{{ url_for('help.query_builder') }}">
-                    <h4 class="list-group-item-heading">
-                        Query Builder Help
-                    </h4>
-                    <p class="list-group-item-text">
-                        A list of transformation functions available for use in the Query Builder.
-                    </p>
-                </a>
-                <a class="list-group-item" href="{{ url_for('help.download_formats') }}">
-                    <h4 class="list-group-item-heading">
-                        Download Formats Help
-                    </h4>
-                    <p class="list-group-item-text">
-                        A list of formats in which BEL networks can be downloaded as well as links to resources and
-                        software applications that handle each.
-                    </p>
-                </a>
-            </div>
-
-        </div>
-
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                <h3 class="panel-title">Analysis Tutorials</h3>
-            </div>
-
-            <div class="list-group">
-                <a class="list-group-item" href="{{ url_for('help.dgx') }}">
-                    <h4 class="list-group-item-heading">
-                        Differential Gene Expression Analysis Tutorial
-                    </h4>
-                    <p class="list-group-item-text">
-                        A tutorial for finding experiments on the Gene Expression Omnibus (GEO) and performing
-                        differential gene expression experiments that can be used with the heat diffusion workflow.
-                    </p>
-                </a>
-                <a class="list-group-item" href="{{ url_for('help.heat_diffusion') }}">
-                    <h4 class="list-group-item-heading">
-                        Heat Diffusion Workflow Tutorial
-                    </h4>
-                    <p class="list-group-item-text">
-                        A tutorial for using BEL Commons to contextualize differential gene expression data and
-                        determine which biological processes are dysregulated.
-                    </p>
-                </a>
-            </div>
-
-        </div>
+<div class="panel panel-default">
+    <div class="panel-heading">
+        <h3 class="panel-title">BEL Resources</h3>
     </div>
 
-    {% include "footer.html" %}
-{% endblock %}
+    <div class="list-group">
+        <a class="list-group-item" href="http://belief.scai.fraunhofer.de/BeliefDashboard/home/bel">
+            <h4 class="list-group-item-heading">
+                Introduction to BEL
+            </h4>
+            <p class="list-group-item-text">
+                An introduction to BEL from the BELIEF semi-automated curation web application
+            </p>
+        </a>
+
+        <a class="list-group-item" href="http://openbel.org/language/version_2.0/bel_specification_version_2.0.html">
+            <h4 class="list-group-item-heading">
+                BEL Specification
+            </h4>
+            <p class="list-group-item-text">
+                A full guide to the syntax and semantics of BEL
+            </p>
+        </a>
+
+        <a class="list-group-item" href="https://github.com/pybel/pybel-notebooks">
+            <h4 class="list-group-item-heading">
+                PyBEL Cookbook
+            </h4>
+            <p class="list-group-item-text">
+                A collection of tutorials in Jupyter notebooks to get you started with programmatic use of BEL
+                in the Python language
+            </p>
+        </a>
+    </div>
+</div>
+
+<div class="panel panel-default">
+    <div class="panel-heading">
+        <h3 class="panel-title">BEL Commons Help</h3>
+    </div>
+
+    <div class="list-group">
+        <a class="list-group-item" href="{{ url_for('help.parser') }}">
+            <h4 class="list-group-item-heading">
+                Parser and Validator Help
+            </h4>
+            <p class="list-group-item-text">
+                A list of messages and help with feedback from the parser and validator
+            </p>
+        </a>
+        <a class="list-group-item" href="{{ url_for('help.query_builder') }}">
+            <h4 class="list-group-item-heading">
+                Query Builder Help
+            </h4>
+            <p class="list-group-item-text">
+                A list of transformation functions available for use in the Query Builder
+            </p>
+        </a>
+        <a class="list-group-item" href="{{ url_for('help.download_formats') }}">
+            <h4 class="list-group-item-heading">
+                Download Formats Help
+            </h4>
+            <p class="list-group-item-text">
+                A glossary of the formats in which BEL networks can be downloaded as well as links to resources and
+                software applications that handle each
+            </p>
+        </a>
+    </div>
+
+</div>
+
+<div class="panel panel-default">
+    <div class="panel-heading">
+        <h3 class="panel-title">Tutorials</h3>
+    </div>
+
+    <div class="list-group">
+        <a class="list-group-item" href="{{ url_for('help.tutorial') }}">
+            <h4 class="list-group-item-heading">
+                Getting Started with BEL Commons
+            </h4>
+            <p class="list-group-item-text">
+                A quick introduction to some of the features in BEL Commons
+            </p>
+        </a>
+
+        <a class="list-group-item" href="{{ url_for('help.dgx') }}">
+            <h4 class="list-group-item-heading">
+                Differential Gene Expression Analysis Tutorial
+            </h4>
+            <p class="list-group-item-text">
+                A tutorial for finding experiments on the Gene Expression Omnibus (GEO) and performing
+                differential gene expression experiments that can be used with the heat diffusion workflow.
+            </p>
+        </a>
+        <a class="list-group-item" href="{{ url_for('help.heat_diffusion') }}">
+            <h4 class="list-group-item-heading">
+                Heat Diffusion Workflow Tutorial
+            </h4>
+            <p class="list-group-item-text">
+                A tutorial for using BEL Commons to contextualize differential gene expression data and
+                determine which biological processes are dysregulated.
+            </p>
+        </a>
+    </div>
+
+</div>

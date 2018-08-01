@@ -4,9 +4,9 @@
 
 import logging
 
-from flask import Blueprint, render_template
+from flask import Blueprint, redirect, render_template, url_for
 
-from pybel.struct.pipeline.decorators import no_arguments_map, deprecated
+from pybel.struct.pipeline.decorators import deprecated, no_arguments_map
 
 __all__ = [
     'help_blueprint',
@@ -20,7 +20,7 @@ help_blueprint = Blueprint('help', __name__, url_prefix='/help')
 @help_blueprint.route('/')
 def index():
     """View the index of all help pages."""
-    return render_template('help/index.html')
+    return redirect(url_for('ui.view_about'))
 
 
 @help_blueprint.route('/tutorial')
