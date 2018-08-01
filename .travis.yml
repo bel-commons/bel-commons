@@ -1,37 +1,55 @@
 sudo: false
 cache: pip
+
 services:
   - mysql
+
 language: python
+
 python:
   - 3.6
+
+stages:
+  - lint
+  - docs
+  - test
+
 env:
-  - PYBEL_TEST_CONNECTOR=pymysql
+  - TOXENV=py
+    PYBEL_TEST_CONNECTOR=pymysql
     PYBEL_TEST_CONNECTION=mysql+pymysql://travis@localhost/test?charset=utf8
-matrix:
+
+jobs:
   include:
-    - env: TOXENV=py
-    - env: TOXENV=docs
-    - env: TOXENV=manifest
-    - env: TOXENV=rst-lint
+    # lint stage
+    - stage: lint
+      env: TOXENV=manifest
     - env: TOXENV=flake8
-    - env: TOXENV=doc8
     - env: TOXENV=pylint
+    # docs stage
+    - stage: docs
+      env: TOXENV=doc8
+    - env: TOXENV=readme
+    - env: TOXENV=docs
+
+matrix:
   allow_failures:
     - env: TOXENV=flake8
-    - env: TOXENV=doc8
     - env: TOXENV=pylint
 
 before_script:
   - mysql -e 'CREATE DATABASE test CHARACTER SET utf8 COLLATE utf8_general_ci;'
   - mysql -e "GRANT ALL PRIVILEGES ON test.* to 'travis'@'%' WITH GRANT OPTION;"
+
 install:
-  - pip install --upgrade pip
-  - pip install codecov coverage tox
+    - sh -c 'if [ "$TOXENV" = "py" ]; then pip install tox codecov; else pip install tox; fi'
+
 script:
   - tox
+
 after_success:
-  - tox -e coverage-report
-  - codecov
+    - sh -c 'if [ "$TOXENV" = "py" ]; then tox -e coverage-report; codecov; fi'
+
+
 notifications:
   slack: pybel:n2KbWKBum3musnBg3L76gGwq
