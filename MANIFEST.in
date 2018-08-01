@@ -15,7 +15,7 @@ global-exclude docs/*
 global-exclude *.py[cod] __pycache__ *.so *.dylib .DS_Store
 
 exclude .bumpversion.cfg
-include *.rst *.txt LICENSE tox.ini *.yml docs/Makefile .coveragerc .codecov.yml .codeclimate.yml alembic.ini
+include *.rst *.txt LICENSE *.ini *.yml docs/Makefile .coveragerc .codecov.yml .codeclimate.yml .flake8
 
 include Dockerfile .dockerignore
 global-exclude examples *.owl
