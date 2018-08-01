@@ -586,6 +586,9 @@ class User(Base, UserMixin):
     def __eq__(self, other):
         return self.email == other.email
 
+    def __repr__(self):
+        return '<User email={}>'.format(self.email)
+
     def __str__(self):
         return self.email
 
