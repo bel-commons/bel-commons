@@ -5,17 +5,19 @@
 Run with ``python -m pybel_web`` or simply as ``pybel-web``.
 """
 
-import sys
-import time
-
-import click
 import datetime
 import json
 import logging
 import multiprocessing
 import os
+import sys
+import time
+
+import click
+from click_default_group import DefaultGroup
 from flask_security import SQLAlchemyUserDatastore
 
+from pybel import from_path, from_pickle
 from pybel.constants import get_cache_connection
 from pybel.manager.models import Network
 from pybel.utils import get_version as pybel_version
@@ -81,7 +83,7 @@ def number_of_workers():
 
 
 def make_gunicorn_app(app, host, port, workers):
-    """Make a GUnicorn App
+    """Make a GUnicorn App.
 
     :param flask.Flask app:
     :param str host:
@@ -120,7 +122,8 @@ _main_help = "BEL Commons Command Line Interface on {}\n with " \
 @click.group(help=_main_help)
 @click.version_option()
 def main():
-    pass
+    """Run the PyBEL-Web command line interface."""
+
 
 
 @main.command()
@@ -128,11 +131,11 @@ def main():
 @click.option('--port', type=int, default=5000, help='Flask port. Defaults to 5000')
 @click.option('-v', '--debug', count=True, help="Turn on debugging. More v's, more debugging")
 @click.option('--config', type=click.File('r'), help='Additional configuration in a JSON file')
-@click.option('-e', '--examples', is_flag=True, help='Ensure examples')
+@click.option('-e', '--ensure-examples', is_flag=True, help='Ensure examples')
 @click.option('--with-gunicorn', is_flag=True)
 @click.option('-w', '--workers', type=int, default=number_of_workers(), help='Number of workers')
-def run(host, port, debug, config, examples, with_gunicorn, workers):
-    """Run the web application"""
+def run(host, port, debug, config, ensure_examples, with_gunicorn, workers):
+    """Run the web application."""
     set_debug_param(debug)
     if debug < 3:
         enable_cool_mode()
@@ -149,7 +152,7 @@ def run(host, port, debug, config, examples, with_gunicorn, workers):
     t = time.time()
 
     config = json.load(config) if config is not None else {}
-    config.setdefault(PYBEL_WEB_REGISTER_EXAMPLES, examples)
+    config.setdefault(PYBEL_WEB_REGISTER_EXAMPLES, ensure_examples)
 
     app = create_application(**config)
 
@@ -179,7 +182,7 @@ def run(host, port, debug, config, examples, with_gunicorn, workers):
 @click.option('-b', '--broker', default='amqp://guest:guest@localhost:5672//')
 @click.option('--debug', default='INFO', type=click.Choice(['INFO', 'DEBUG']))
 def worker(concurrency, broker, debug):
-    """Run the celery worker"""
+    """Run the celery worker."""
     from .celery_worker import celery
     from celery.bin import worker
 
@@ -197,7 +200,7 @@ def worker(concurrency, broker, debug):
 @click.option('-c', '--connection', help='Cache connection. Defaults to {}'.format(get_cache_connection()))
 @click.pass_context
 def manage(ctx, connection):
-    """Manage the database"""
+    """Manage the database."""
     ctx.obj = WebManager(connection=connection)
     Base.metadata.bind = ctx.obj.engine
     Base.query = ctx.obj.session.query_property()
@@ -206,7 +209,7 @@ def manage(ctx, connection):
 @manage.command()
 @click.pass_obj
 def setup(manager):
-    """Create the database"""
+    """Create the database."""
     manager.create_all()
 
 
@@ -214,7 +217,7 @@ def setup(manager):
 @click.option('-f', '--file', type=click.File('r'), default=sys.stdout, help='Input user/role file')
 @click.pass_obj
 def load(manager, file):
-    """Load dumped stuff for loading later (in lieu of having proper migrations)"""
+    """Load dumped stuff for loading later (in lieu of having proper migrations)."""
     ds = SQLAlchemyUserDatastore(manager, User, Role)
 
     for line in file:
@@ -251,7 +254,7 @@ def load(manager, file):
 @click.option('-u', '--user-dump', type=click.File('w'), default=sys.stdout, help='Place to dump user data')
 @click.pass_obj
 def drop(manager, yes, user_dump):
-    """Drop the database"""
+    """Drop the database."""
     if yes or click.confirm('Drop database at {}?'.format(manager.connection)):
         click.echo('Dumping users to {}'.format(user_dump))
         for s in _iterate_user_strings(manager):
@@ -288,7 +291,7 @@ def sanitize_reports(manager):
 
 @manage.group()
 def networks():
-    """Parse, upload, and manage networks"""
+    """Parse, upload, and manage networks."""
 
 
 @networks.command()
@@ -296,10 +299,10 @@ def networks():
 @click.option('--public', is_flag=True)
 @click.pass_obj
 def parse(manager, path, public):
-    """Parses a BEL script and uploads"""
+    """Parses a BEL script and uploads."""
     enable_cool_mode()
     t = time.time()
-    graph = pybel.from_path(path, manager=manager)
+    graph = from_path(path, manager=manager)
     log.info('parsing done in %.2f seconds', time.time() - t)
     insert_graph(manager, graph, public=public)
 
@@ -317,13 +320,13 @@ def upload(manager, path):
             insert_graph(manager, graph)
 
     else:
-        graph = pybel.from_pickle(path)
+        graph = from_pickle(path)
         insert_graph(manager, graph)
 
 
 @manage.group()
 def users():
-    """Create and manage users"""
+    """Manage users."""
 
 
 @users.command()
@@ -341,7 +344,7 @@ def ls(manager):
 @click.option('-s', '--scai', is_flag=True, help="Add SCAI role")
 @click.pass_obj
 def add(manager, email, password, admin, scai):
-    """Creates a new user"""
+    """Create a new user."""
     ds = SQLAlchemyUserDatastore(manager, User, Role)
     try:
         user = ds.create_user(email=email, password=password, confirmed_at=datetime.datetime.now())
@@ -361,7 +364,7 @@ def add(manager, email, password, admin, scai):
 @click.argument('email')
 @click.pass_obj
 def rm(manager, email):
-    """Deletes a user"""
+    """Delete a user."""
     ds = SQLAlchemyUserDatastore(manager, User, Role)
     user_ = ds.find_user(email=email)
     ds.delete_user(user_)
@@ -372,7 +375,7 @@ def rm(manager, email):
 @click.argument('email')
 @click.pass_obj
 def make_admin(manager, email):
-    """Makes a given user an admin"""
+    """Make a given user an admin."""
     ds = SQLAlchemyUserDatastore(manager, User, Role)
     try:
         ds.add_role_to_user(email, 'admin')
@@ -386,7 +389,7 @@ def make_admin(manager, email):
 @click.argument('role')
 @click.pass_obj
 def add_role(manager, email, role):
-    """Adds a role to a user"""
+    """Add a role to a user."""
     ds = SQLAlchemyUserDatastore(manager, User, Role)
     try:
         ds.add_role_to_user(email, role)
@@ -397,7 +400,7 @@ def add_role(manager, email, role):
 
 @manage.group()
 def roles():
-    """Manage roles"""
+    """Manage roles."""
 
 
 @roles.command()
@@ -405,7 +408,7 @@ def roles():
 @click.option('-d', '--description')
 @click.pass_obj
 def add(manager, name, description):
-    """Creates a new role"""
+    """Create a new role."""
     ds = SQLAlchemyUserDatastore(manager, User, Role)
     try:
         ds.create_role(name=name, description=description)
@@ -418,7 +421,7 @@ def add(manager, name, description):
 @click.argument('name')
 @click.pass_obj
 def rm(manager, name):
-    """Deletes a user"""
+    """Delete a user."""
     ds = SQLAlchemyUserDatastore(manager, User, Role)
     user = ds.find_role(name)
     if user:
@@ -429,7 +432,7 @@ def rm(manager, name):
 @roles.command()
 @click.pass_obj
 def ls(manager):
-    """Lists roles"""
+    """List roles."""
     click.echo('\t'.join(('id', 'name', 'description')))
     for role in manager.session.query(Role).all():
         click.echo('\t'.join((str(role.id), role.name, role.description)))
@@ -437,13 +440,13 @@ def ls(manager):
 
 @manage.group()
 def projects():
-    """Manage projects"""
+    """Manage projects."""
 
 
 @projects.command()
 @click.pass_obj
 def ls(manager):
-    """Lists projects"""
+    """List projects."""
     click.echo('\t'.join(('id', 'name', 'users')))
     for project in manager.session.query(Project).all():
         click.echo('\t'.join((str(project.id), project.name, ','.join(map(str, project.users)))))
@@ -453,6 +456,7 @@ def ls(manager):
 @click.option('-o', '--output', type=click.File('w'), default=sys.stdout)
 @click.pass_obj
 def export(manager, output):
+    """Export projects as a JSON file."""
     json.dump(
         [
             project.to_json()
@@ -463,11 +467,11 @@ def export(manager, output):
 
 
 @manage.group()
-def query():
-    """Manage queries"""
+def queries():
+    """Manage queries."""
 
 
-@query.command()
+@queries.command()
 @click.option('--query-id', type=int)
 @click.option('-y', '--yes', is_flag=True)
 @click.pass_obj
@@ -482,12 +486,32 @@ def drop(manager, query_id, yes):
         manager.session.commit()
 
 
+@queries.command()
+@click.option('-l', '--limit', type=int, default=10, help='Limit, defaults to 10.')
+@click.option('-o', '--offset', type=int)
+@click.pass_obj
+def ls(manager, limit, offset):
+    """List queries."""
+    click.echo('\t'.join(('id', 'created', 'assembly')))
+
+    q = manager.session.query(Query).order_by(Query.created.desc())
+
+    if limit:
+        q = q.limit(limit)
+
+    if offset:
+        q = q.offset(offset)
+
+    for query in q.all():
+        click.echo('\t'.join(map(str, (query.id, query.created, query.assembly))))
+
+
 @manage.group()
-def assembly():
-    """Manage assemblies"""
+def assemblies():
+    """Manage assemblies."""
 
 
-@assembly.command()
+@assemblies.command()
 @click.option('--assembly-id', type=int)
 @click.option('-y', '--yes', is_flag=True)
 @click.pass_obj
@@ -504,13 +528,13 @@ def drop(manager, assembly_id, yes):
 
 @manage.group()
 def experiments():
-    """Manage experiments"""
+    """Manage experiments."""
 
 
 @experiments.command()
 @click.pass_obj
 def ls(manager):
-    """Lists experiments"""
+    """List experiments."""
     click.echo('\t'.join(('id', 'type', 'omics description', 'completed')))
     for experiment in manager.session.query(Experiment).order_by(Experiment.created.desc()).all():
         click.echo('\t'.join(map(str, (
@@ -526,7 +550,7 @@ def ls(manager):
 @click.option('-y', '--yes', is_flag=True)
 @click.pass_obj
 def drop(manager, experiment_id, yes):
-    """Drops either a single or all Experiment models"""
+    """Drop either a single or all Experiment models."""
     if experiment_id:
         manager.session.query(Experiment).get(experiment_id).delete()
         manager.session.commit()
@@ -538,13 +562,13 @@ def drop(manager, experiment_id, yes):
 
 @manage.group()
 def omics():
-    """Manages -omics data input for experiments"""
+    """Manage -omics."""
 
 
 @omics.command()
 @click.pass_obj
 def ls(manager):
-    """Lists -omics data sets"""
+    """List -omics data sets."""
     click.echo('\t'.join(('id', 'name', 'description')))
     for omic in manager.session.query(Omic).all():
         click.echo('\t'.join((str(omic.id), omic.source_name, omic.description)))
@@ -555,7 +579,7 @@ def ls(manager):
 @click.option('-y', '--yes', is_flag=True)
 @click.pass_obj
 def drop(manager, omic_id, yes):
-    """Drops either a single or all Omics models"""
+    """Drop either a single or all -omics models."""
     if omic_id:
         manager.session.query(Omic).get(omic_id).delete()
         manager.session.commit()
@@ -565,35 +589,10 @@ def drop(manager, omic_id, yes):
         manager.session.commit()
 
 
-@manage.group()
-def queries():
-    """Manages queries"""
-
-
-@queries.command()
-@click.option('-l', '--limit', type=int, default=10, help='Limit, defaults to 10.')
-@click.option('-o', '--offset', type=int)
-@click.pass_obj
-def ls(manager, limit, offset):
-    """Lists queries"""
-    click.echo('\t'.join(('id', 'created', 'assembly')))
-
-    q = manager.session.query(Query).order_by(Query.created.desc())
-
-    if limit:
-        q = q.limit(limit)
-
-    if offset:
-        q = q.offset(offset)
-
-    for query in q.all():
-        click.echo('\t'.join(map(str, (query.id, query.created, query.assembly))))
-
-
 @manage.command()
 @click.pass_obj
 def summarize(manager):
-    """Summarizes the contents of the database"""
+    """Summarize the contents of the database/"""
     click.echo('Users: {}'.format(manager.session.query(User).count()))
     click.echo('Roles: {}'.format(manager.session.query(Role).count()))
     click.echo('Projects: {}'.format(manager.session.query(Project).count()))

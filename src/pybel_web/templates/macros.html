@@ -84,11 +84,11 @@
                     <div class="col-lg-6">
                         <h5>Annotations</h5>
                         <dl class="dl-horizontal">
-                            {% for annotation_entry in annotation_entries %}
-                                <dt>{{ annotation_entry.annotation.name }}</dt>
+                            {% for namespace_entry in annotation_entries %}
+                                <dt>{{ namespace_entry.namespace.name }}</dt>
                                 <dd>
-                                    <a href="{{ url_for('ui.view_annotation_entry', annotation_entry_id=annotation_entry.id) }}">
-                                        {{ annotation_entry.name }}
+                                    <a href="{{ url_for('ui.view_name', name_id=namespace_entry.id) }}">
+                                        {{ namespace_entry.name }}
                                     </a>
                                 </dd>
                             {% endfor %}

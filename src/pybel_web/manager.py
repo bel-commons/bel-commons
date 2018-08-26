@@ -2,20 +2,20 @@
 
 """Extensions to the PyBEL manager to support PyBEL-Web."""
 
-import itertools as itt
-import time
-from collections import defaultdict
-
 import datetime
 import logging
+from collections import defaultdict
+from functools import lru_cache
+
+import itertools as itt
 import networkx
+import time
 from flask import abort, render_template
 from flask_security import SQLAlchemyUserDatastore
-from functools import lru_cache
 from sqlalchemy import and_, func
 
 from pybel import Manager
-from pybel.manager.models import Annotation, Citation, Evidence, Namespace, Network
+from pybel.manager.models import Citation, Evidence, Namespace, Network
 from pybel.struct.summary import count_namespaces, count_variants
 from pybel_tools.utils import min_tanimoto_set_similarity, prepare_c3, prepare_c3_time_series
 from .constants import AND
@@ -32,7 +32,7 @@ log = logging.getLogger(__name__)
 
 
 def sanitize_annotation(annotation_list):
-    """Convert an annotation (Annotation:value) to tuple.
+    """Convert an annotation (annotation:value) to tuple.
 
     :param list[str] annotation_list:
     :return: annotation dictionary
@@ -47,7 +47,7 @@ def sanitize_annotation(annotation_list):
     return dict(annotation_dict)
 
 
-def unique_networks(networks):
+def iter_unique_networks(networks):
     """Yield only unique networks from an iterator.
 
     :param iter[Network] networks: An iterable of networks
@@ -97,7 +97,8 @@ class WebManager(Manager):
         )
 
     def _iterate_networks_for_user(self, user):
-        """
+        """Iterate over a user's networks.
+
         :param models.User user: A user
         :rtype: iter[Network]
         """
@@ -263,10 +264,10 @@ class WebManager(Manager):
         """Get an annotation by its database identifier or abort 404 if it doesn't exist.
 
         :param annotation_id: The annotation's database identifier
-        :rtype: pybel.manager.models.Annotation
+        :rtype: pybel.manager.models.Namespace
         :raises: werkzeug.exceptions.HTTPException
         """
-        annotation = self.session.query(Annotation).get(annotation_id)
+        annotation = self.session.query(Namespace).get(annotation_id)
 
         if annotation is None:
             abort(404)
@@ -488,7 +489,7 @@ class WebManager(Manager):
 
         return project
 
-    def get_networks_with_permission(self, user):
+    def get_networks_with_permission(self, user, limit=None, offset=None):
         """Gets all networks tagged as public or uploaded by the current user
 
         :return: A list of all networks tagged as public or uploaded by the current user
@@ -500,7 +501,7 @@ class WebManager(Manager):
         if user.is_admin:
             return self.list_recent_networks()
 
-        return list(unique_networks(self.iter_networks_with_permission(user)))
+        return list(iter_unique_networks(self.iter_networks_with_permission(user)))
 
     def get_edge_vote_by_user(self, edge, user):
         """Look up a vote by the edge and user.

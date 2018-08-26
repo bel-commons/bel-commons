@@ -2,20 +2,20 @@
 
 """This module contains the user interface blueprint for the application."""
 
-import sys
-from collections import defaultdict
-
 import datetime
-import flask
 import logging
 import os
+import sys
+from collections import defaultdict
+from operator import itemgetter
+
+import flask
 import time
 from flask import Blueprint, Markup, abort, current_app, flash, redirect, render_template, request, url_for
 from flask_security import current_user, login_required, roles_required
-from operator import itemgetter
 
 import pybel_tools.query
-from pybel.manager.models import Annotation, AnnotationEntry, Citation, Edge, Evidence, Namespace, Node
+from pybel.manager.models import Citation, Edge, Evidence, Namespace, NamespaceEntry, Node
 from pybel.struct.grouping.annotations import get_subgraphs_by_annotation
 from pybel.struct.mutation import collapse_to_genes, remove_associations, remove_isolated_nodes, remove_pathologies
 from pybel.struct.pipeline import Pipeline
@@ -445,59 +445,49 @@ def view_namespaces():
     )
 
 
-@ui_blueprint.route('/annotation')
-def view_annotations():
-    """Displays a page listing the annotations."""
-    return render_template(
-        'annotation/annotations.html',
-        annotations=manager.session.query(Annotation).order_by(Annotation.keyword).all(),
-        current_user=current_user,
-    )
+@ui_blueprint.route('/namespace/<namespace_id>')
+def view_namespace(namespace_id):
+    """View a namespace.
 
-
-@ui_blueprint.route('/annotation/<annotation_id>')
-def view_annotation(annotation_id):
-    """View an annotation namespace
-
-    :param int annotation_id: The annospace id
+    :param int namespace_id: The namespace's database identifier
     """
-    annotation = manager.session.query(Annotation).get(annotation_id)
+    namespace = manager.get_namespace_by_id_or_404(namespace_id)
 
     return render_template(
-        'annotation/annotation.html',
-        annotation=annotation,
+        'namespace/namespace.html',
+        namespace=namespace,
     )
 
 
-@ui_blueprint.route('/annotation_entry/')
+@ui_blueprint.route('/name/')
 @roles_required('admin')
-def view_annotation_entries():
-    """View a summary of all annotation entries"""
-    # TODO get annotation entries with most edges
-    # TODO get annotations with least edges (non-zero)
-    # TODO get co-occurrence of annotation entries
+def view_namespace_entries():
+    """View a summary of all namespace entries."""
+    # TODO get namespace entries with most edges
+    # TODO get namespaces with least edges (non-zero)
+    # TODO get co-occurrence of namespace entries
 
-    annotation_entries = manager.session.query(AnnotationEntry).limit(10).all()
-    annotation_entry_count = manager.count_annotation_entries()
+    namespace_entries = manager.session.query(NamespaceEntry).limit(10).all()
+    namespace_entry_count = manager.count_namespace_entries()
 
     return render_template(
-        'annotation/annotation_entries.html',
-        annotation_entries=annotation_entries,
-        annotation_entry_count=annotation_entry_count,
+        'namespace/namespace_entries.html',
+        namespace_entries=namespace_entries,
+        namespace_entry_count=namespace_entry_count,
     )
 
 
-@ui_blueprint.route('/annotation_entry/<int:annotation_entry_id>')
-def view_annotation_entry(annotation_entry_id):
-    """View an annotation entry
+@ui_blueprint.route('/name/<name_id>')
+def view_name(name_id):
+    """View a namespace entry.
 
-    :param int annotation_entry_id: The annotation entry id
+    :param int name_id: The namespace entry id
     """
-    annotation_entry = manager.session.query(AnnotationEntry).get(annotation_entry_id)
+    namespace_entry = manager.session.query(NamespaceEntry).get(name_id)
 
     return render_template(
-        'annotation/annotation_entry.html',
-        annotation_entry=annotation_entry,
+        'namespace/namespace_entry.html',
+        namespace_entry=namespace_entry,
         current_user=current_user,
     )
 

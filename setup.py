@@ -25,10 +25,9 @@ CLASSIFIERS = [
 ]
 INSTALL_REQUIRES = [
     'ols_client>=0.0.8',
-    'pybel>=0.11.11',
-    'pybel-tools>=0.6.1',
-    'pybel_cx>=0.1.1',
-    'networkx==1.11',
+    'pybel>=0.12.0,<0.13.0',
+    'pybel-tools>=0.7.0,<0.8.0',
+    'networkx>=2.1',
     'requests',
     'sqlalchemy',
     'flask==0.12.2',
@@ -58,6 +57,9 @@ EXTRAS_REQUIRE = {
         'bio2bel_interpro',
         'bio2bel_go',
     ],
+    'cx': [
+        'pybel_cx>=0.1.1',
+    ]
 }
 TESTS_REQUIRE = []
 ENTRY_POINTS = {

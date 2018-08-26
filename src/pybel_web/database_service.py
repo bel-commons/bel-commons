@@ -17,9 +17,7 @@ from sqlalchemy import func, or_
 
 from pybel.constants import NAME, NAMESPACE, NAMESPACE_DOMAIN_OTHER
 from pybel.manager.citation_utils import enrich_citation_model, get_pubmed_citation_response
-from pybel.manager.models import (
-    Annotation, AnnotationEntry, Author, Citation, Edge, Namespace, Network, Node, network_edge,
-)
+from pybel.manager.models import Author, Citation, Edge, Namespace, Network, Node, network_edge, NamespaceEntry
 from pybel.resources.definitions import write_annotation, write_namespace
 from pybel.struct import union
 from pybel.struct.pipeline.decorators import no_arguments_map, deprecated
@@ -268,20 +266,6 @@ def download_list_annotation(network_id, annotation):
 # ANNOTATIONS
 ####################################
 
-@api_blueprint.route('/api/annotation')
-def list_annotations():
-    """Lists all annotations
-
-    ---
-    tags:
-        - annotation
-    """
-    return jsonify([
-        annotation.to_json(include_id=True)
-        for annotation in manager.list_annotations()
-    ])
-
-
 @api_blueprint.route('/api/annotation/<annotation_id>/drop')
 @roles_required('admin')
 def drop_annotation_by_id(annotation_id):
@@ -305,25 +289,9 @@ def drop_annotation_by_id(annotation_id):
     return next_or_jsonify('Dropped annotation: {}'.format(annotation))
 
 
-@api_blueprint.route('/api/annotation/drop')
-@roles_required('admin')
-def drop_annotations():
-    """Drops all annotations
-
-    ---
-    tags:
-        - annotation
-    """
-    log.info('dropping all annotations')
-    manager.session.query(Annotation).delete()
-    manager.session.commit()
-
-    return next_or_jsonify('Dropped all annotations')
-
-
 @api_blueprint.route('/api/annotation/suggestion/')
 def suggest_annotation():
-    """Creates a suggestion for annotations
+    """Create a suggestion for annotations.
 
     ---
     tags:
@@ -341,16 +309,16 @@ def suggest_annotation():
     if not q:
         return jsonify([])
 
-    entries = manager.session.query(AnnotationEntry).filter(AnnotationEntry.name_contains(q))
+    namespace_entries = manager.session.query(NamespaceEntry).filter(NamespaceEntry.name_contains(q))
 
     return jsonify([
         {
-            'id': entry.id,
-            'url': entry.annotation.url,
-            'annotation': entry.annotation.keyword,
-            'value': entry.name
+            'id': namespace_entry.id,
+            'url': namespace_entry.namespace.url,
+            'annotation': namespace_entry.namespace.keyword,
+            'value': namespace_entry.name
         }
-        for entry in entries
+        for namespace_entry in namespace_entries
     ])
 
 
@@ -621,7 +589,7 @@ def drop_networks():
 
 
 def _help_claim_network(network, user):
-    """Claims a network and fills out its report
+    """Claim a network and fills out its report.
 
     :param Network network: A network to claim
     :param User user: The user who will claim it
@@ -631,7 +599,6 @@ def _help_claim_network(network, user):
         return
 
     graph = network.as_bel()
-    add_canonical_names(graph)
     network.store_bel(graph)
 
     manager.session.add(network)

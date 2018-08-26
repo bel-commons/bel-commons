@@ -3,39 +3,37 @@
 """Utilities in this package should not depend on anything (especially proxies), and should instead take arguments
 corresponding to objects"""
 
-import itertools as itt
-from collections import Counter
-
 import logging
+
+import itertools as itt
 import networkx as nx
 import pandas as pd
 import time
 from flask import abort, flash, jsonify, redirect, request
 
 import pybel
-from pybel.canonicalize import calculate_canonical_name
 from pybel.constants import GENE, RELATION
 from pybel.manager.models import Network
 from pybel.struct.filters import filter_edges
 from pybel.struct.mutation import collapse_to_genes
-from pybel.struct.summary import count_functions, get_syntax_errors, get_unused_namespaces
-from pybel.tokens import node_to_tuple
-from pybel.utils import hash_node
+from pybel.struct.summary import (
+    count_citations, count_functions, count_relations, get_syntax_errors, get_top_hubs, get_top_pathologies,
+    get_unused_namespaces,
+)
 from pybel_tools.analysis.heat import calculate_average_scores_on_subgraphs
 from pybel_tools.analysis.stability import (
     get_chaotic_pairs, get_chaotic_triplets, get_contradiction_summary, get_dampened_pairs, get_dampened_triplets,
     get_decrease_mismatch_triplets, get_increase_mismatch_triplets, get_jens_unstable,
     get_mutually_unstable_correlation_triples, get_regulatory_pairs, get_separate_unstable_correlation_triples,
 )
-from pybel_tools.filters import has_pathology_causal, iter_undefined_families, remove_nodes_by_namespace
+from pybel_tools.filters import has_pathology_causal, remove_nodes_by_namespace
 from pybel_tools.generation import generate_bioprocess_mechanisms
 from pybel_tools.integration import overlay_type_data
 from pybel_tools.mutation import rewire_variants_to_genes
 from pybel_tools.summary import (
-    count_error_types, count_pathologies, count_relations, count_unique_authors, count_unique_citations,
-    get_citation_years, get_modifications_count, get_most_common_errors, get_naked_names,
-    get_namespaces_with_incorrect_names, get_undefined_annotations, get_undefined_namespaces, get_unused_annotations,
-    get_unused_list_annotation_values,
+    count_error_types, count_unique_authors, get_citation_years, get_modifications_count,
+    get_most_common_errors, get_naked_names, get_namespaces_with_incorrect_names, get_undefined_annotations,
+    get_undefined_namespaces, get_unused_annotations, get_unused_list_annotation_values,
 )
 from .constants import LABEL
 from .models import Omic, Report, User
@@ -43,62 +41,53 @@ from .models import Omic, Report, User
 log = logging.getLogger(__name__)
 
 
-def get_top_hubs(graph, count=15):
-    """Gets the top hubs in the graph by BEL
-
-    :param pybel.BELGraph graph: A BEL graph
-    :param int count:
-    :rtype: dict[str,int]
-    """
-    return {
-        calculate_canonical_name(graph, node): v
-        for node, v in Counter(graph.degree()).most_common(count)
-    }
-
-
-def count_top_pathologies(graph, count=15):
-    """Gets the top highest relationship-having edges in the graph by BEL
-
-    :param pybel.BELGraph graph: A BEL graph
-    :param int count:
-    :rtype: dict[str,int]
-    """
-    return {
-        calculate_canonical_name(graph, node): v
-        for node, v in count_pathologies(graph).most_common(count)
-    }
-
-
-def canonical_hash(graph, node):
-    """Hashes the node
-
-    :param pybel.BELGraph graph:
-    :param tuple node:
-    :rtype: str
-    """
-    data = graph.node[node]
-    canonical_node_tuple = node_to_tuple(data)
-    return hash_node(canonical_node_tuple)
-
-
-def get_network_summary_dict(graph):
-    """Creates a summary dictionary
+def make_graph_summary(graph):
+    """Make a graph summary for sticking in the report including the summary from :func:`get_network_summary_dict`.
 
     :param pybel.BELGraph graph:
     :rtype: dict
     """
-    node_bel_cache = {}
+    log.debug('summarizing %s', graph)
+    t = time.time()
 
-    def dcn(node):
-        """Decanonicalizes a node tuple to a BEL string
+    number_nodes = graph.number_of_nodes()
 
-        :param tuple node: A BEL node
-        """
-        if node in node_bel_cache:
-            return node_bel_cache[node]
+    try:
+        average_degree = graph.number_of_edges() / graph.number_of_nodes()
+    except ZeroDivisionError:
+        average_degree = 0.0
 
-        node_bel_cache[node] = graph.node_to_bel(node)
-        return node_bel_cache[node]
+    rv = dict(
+        number_nodes=number_nodes,
+        number_edges=graph.number_of_edges(),
+        number_warnings=len(graph.warnings),
+        number_citations=count_citations(graph),
+        number_authors=count_unique_authors(graph),
+        number_components=nx.number_weakly_connected_components(graph),
+        network_density=nx.density(graph),
+        average_degree=average_degree,
+        summary_dict=get_network_summary_dict(graph),
+    )
+
+    log.debug('summarized %s in %.2f seconds', graph, time.time() - t)
+
+    return rv
+
+
+def get_network_summary_dict(graph):
+    """Create a summary dictionary.
+
+    :param pybel.BELGraph graph:
+    :rtype: dict
+    """
+
+    def dcn(node_tuple):
+        """Get the BEL string from a node tuple."""
+        return graph.nodes[node_tuple].as_bel()
+
+    def canonical_hash(node_tuple):
+        """Get the SHA512 string from a node tuple."""
+        return graph.nodes[node_tuple].as_sha512()
 
     def get_pair_tuple(source_tuple, target_tuple):
         """
@@ -109,9 +98,9 @@ def get_network_summary_dict(graph):
         """
         return (
             dcn(source_tuple),
-            canonical_hash(graph, source_tuple),
+            canonical_hash(source_tuple),
             dcn(target_tuple),
-            canonical_hash(graph, target_tuple)
+            canonical_hash(target_tuple),
         )
 
     def get_triplet_tuple(a_tuple, b_tuple, c_tuple):
@@ -124,11 +113,11 @@ def get_network_summary_dict(graph):
         """
         return (
             dcn(a_tuple),
-            canonical_hash(graph, a_tuple),
+            canonical_hash(a_tuple),
             dcn(b_tuple),
-            canonical_hash(graph, b_tuple),
+            canonical_hash(b_tuple),
             dcn(c_tuple),
-            canonical_hash(graph, c_tuple)
+            canonical_hash(c_tuple),
         )
 
     return dict(
@@ -162,15 +151,17 @@ def get_network_summary_dict(graph):
         )),
 
         causal_pathologies=sorted({
-            get_pair_tuple(u, v) + (graph.edge[u][v][k][RELATION],)
+            get_pair_tuple(u, v) + (graph[u][v][k][RELATION],)
             for u, v, k in filter_edges(graph, has_pathology_causal)
         }),
-
-        undefined_families=[
-            (dcn(node), canonical_hash(graph, node))
-            for node in iter_undefined_families(graph, ['SFAM', 'GFAM'])
-        ],
-
+        hub_data={
+            graph.nodes[node].as_sha512(): degree
+            for node, degree in get_top_hubs(graph)
+        },
+        disease_data={
+            graph.nodes[node].as_sha512(): count
+            for node, count in get_top_pathologies(graph)
+        },
         undefined_namespaces=get_undefined_namespaces(graph),
         undefined_annotations=get_undefined_annotations(graph),
         namespaces_with_incorrect_names=get_namespaces_with_incorrect_names(graph),
@@ -184,43 +175,8 @@ def get_network_summary_dict(graph):
         error_count=count_error_types(graph),
         modifications_count=get_modifications_count(graph),
         error_groups=get_most_common_errors(graph),
-        hub_data=get_top_hubs(graph),
-        disease_data=count_top_pathologies(graph),
         syntax_errors=get_syntax_errors(graph),
     )
-
-
-def make_graph_summary(graph):
-    """Makes a graph summary for sticking in the report including the summary from :func:`get_network_summary_dict`
-
-    :param pybel.BELGraph graph:
-    :rtype: dict
-    """
-    log.debug('summarizing %s', graph)
-    t = time.time()
-
-    number_nodes = graph.number_of_nodes()
-
-    try:
-        average_degree = sum(graph.in_degree().values()) / float(number_nodes)
-    except ZeroDivisionError:
-        average_degree = 0.0
-
-    rv = dict(
-        number_nodes=number_nodes,
-        number_edges=graph.number_of_edges(),
-        number_warnings=len(graph.warnings),
-        number_citations=count_unique_citations(graph),
-        number_authors=count_unique_authors(graph),
-        number_components=nx.number_weakly_connected_components(graph),
-        network_density=nx.density(graph),
-        average_degree=average_degree,
-        summary_dict=get_network_summary_dict(graph),
-    )
-
-    log.debug('summarized %s in %.2f seconds', graph, time.time() - t)
-
-    return rv
 
 
 def fill_out_report(network, report, graph_summary):
@@ -244,7 +200,7 @@ def fill_out_report(network, report, graph_summary):
 
 
 def insert_graph(manager, graph, user=1, public=False):
-    """Insert a graph and also make a report
+    """Insert a graph and also make a report.
 
     :param pybel.manager.Manager manager: A PyBEL manager
     :param pybel.BELGraph graph: A BEL graph

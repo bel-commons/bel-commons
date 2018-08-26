@@ -5,7 +5,7 @@
 {% import "bootstrap/utils.html" as util %}
 {% import "macros.html" as pbw %}
 
-{% block title %}{{ annotation_entry.name }}{% endblock %}
+{% block title %}{{ namespace_entry.name }}{% endblock %}
 
 {% block content %}
     <div class="container">
@@ -13,48 +13,48 @@
 
         <ol class="breadcrumb">
             <li><a href="{{ url_for('ui.home') }}">Catalog</a></li>
-            <li><a href="{{ url_for('ui.view_annotations') }}">Annotations</a></li>
+            <li><a href="{{ url_for('ui.view_namespaces') }}">Namespaces</a></li>
             <li>
-                <a href="{{ url_for('ui.view_annotation', annotation_id=annotation_entry.annotation.id) }}">{{ annotation_entry.annotation.name }}</a>
+                <a href="{{ url_for('ui.view_namespace', namespace_id=namespace_entry.namespace.id) }}">{{ namespace_entry.namespace.name }}</a>
             </li>
-            <li class="active">{{ annotation_entry.name }}</li>
+            <li class="active">{{ namespace_entry.name }}</li>
         </ol>
 
         <div class="page-header">
-            <h1><code>{{ annotation_entry.name }}</code></h1>
+            <h1><code>{{ namespace_entry.name }}</code></h1>
         </div>
 
         <div class="panel panel-default">
             <div class="panel-body">
                 <dl class="dl-horizontal">
                     <dt>Name</dt>
-                    <dd>{{ annotation_entry.name }}</dd>
-                    <dt>Annospace Keyword</dt>
-                    <dd>{{ annotation_entry.annotation.keyword }}</dd>
-                    <dt>Annospace Name</dt>
+                    <dd>{{ namespace_entry.name }}</dd>
+                    <dt>Namespace Keyword</dt>
+                    <dd>{{ namespace_entry.namespace.keyword }}</dd>
+                    <dt>Namespace</dt>
                     <dd>
-                        <a href="{{ url_for('ui.view_annotation', annotation_id=annotation_entry.annotation.id) }}">
-                            {{ annotation_entry.annotation.name }}
+                        <a href="{{ url_for('ui.view_namespace', namespace_id=namespace_entry.namespace.id) }}">
+                            {{ namespace_entry.namespace.name }}
                         </a>
                     </dd>
-                    <dt>Annospace Version</dt>
-                    <dd>{{ annotation_entry.annotation.version }}</dd>
-                    {% if annotation_entry.annotation.url %}
-                        <dt>Annospace URL</dt>
+                    <dt>Namespace Version</dt>
+                    <dd>{{ namespace_entry.namespace.version }}</dd>
+                    {% if namespace_entry.namespace.url %}
+                        <dt>Namespace URL</dt>
                         <dd>
-                            <a href="{{ annotation_entry.annotation.url }}">
-                                {{ annotation_entry.annotation.url }}
+                            <a href="{{ namespace_entry.namespace.url }}">
+                                {{ namespace_entry.namespace.url }}
                             </a>
                         </dd>
                     {% else %}
                         <dt>Pattern</dt>
-                        <dd>{{ annotation_entry.annotation.pattern }}</dd>
+                        <dd>{{ namespace_entry.namespace.pattern }}</dd>
                     {% endif %}
                 </dl>
             </div>
         </div>
 
-        {% set edges = annotation_entry.edges.limit(5).all() %}
+        {% set edges = namespace_entry.edges.limit(5).all() %}
         {% if edges|length > 0 %}
             <div class="panel panel-default">
                 <div class="panel-heading">
@@ -64,7 +64,7 @@
                 {{ pbw.render_edge_list(edges) }}
 
                 <div class="panel-footer">
-                    <p>Showing {{ edges|length }} of {{ annotation_entry.edges.count() }} edges</p>
+                    <p>Showing {{ edges|length }} of {{ namespace_entry.edges.count() }} edges</p>
                 </div>
             </div>
         {% endif %}

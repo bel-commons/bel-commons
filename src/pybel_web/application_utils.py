@@ -11,9 +11,7 @@ from flask_sqlalchemy import SQLAlchemy, get_state
 from raven.contrib.flask import Sentry
 
 from pybel.examples import *
-from pybel.manager.models import (
-    Annotation, AnnotationEntry, Author, Citation, Edge, Evidence, Namespace, NamespaceEntry, Network, Node,
-)
+from pybel.manager.models import Author, Citation, Edge, Evidence, Namespace, NamespaceEntry, Network, Node
 from pybel.struct.mutation import expand_node_neighborhood, expand_nodes_neighborhoods, infer_child_relations
 from pybel.struct.pipeline import in_place_transformation, uni_in_place_transformation
 from pybel_tools.mutation import add_canonical_names
@@ -200,8 +198,6 @@ class PyBELSQLAlchemy(SQLAlchemy):
         admin.add_view(ModelView(Role, self.session))
         admin.add_view(NamespaceView(Namespace, self.session))
         admin.add_view(ModelView(NamespaceEntry, self.session))
-        admin.add_view(AnnotationView(Annotation, self.session))
-        admin.add_view(ModelView(AnnotationEntry, self.session))
         admin.add_view(NetworkView(Network, self.session))
         admin.add_view(NodeView(Node, self.session))
         admin.add_view(EdgeView(Edge, self.session))

@@ -2,19 +2,23 @@
 
 import logging
 from io import BytesIO, StringIO
+from operator import methodcaller
 
 from flask import Response, jsonify, send_file
 
 from pybel import to_bel_lines, to_bytes, to_csv, to_graphml, to_gsea, to_jgif, to_json, to_sif
-from pybel.canonicalize import node_to_bel
 from pybel.constants import (
-    CAUSAL_DECREASE_RELATIONS, CAUSAL_INCREASE_RELATIONS, DECREASES, FUSION, HASH, INCREASES, MEMBERS, RELATION,
+    CAUSAL_DECREASE_RELATIONS, CAUSAL_INCREASE_RELATIONS, DECREASES, FUSION, INCREASES, MEMBERS, RELATION,
     TWO_WAY_RELATIONS, VARIANTS,
 )
 from pybel.struct.summary import get_pubmed_identifiers
-from pybel.utils import hash_edge, hash_node
-from pybel_cx import to_cx
+from pybel.utils import hash_node
 from pybel_tools.mutation.metadata import serialize_authors
+
+try:
+    from pybel_cx import to_cx
+except ImportError:
+    to_cx = None
 
 __all__ = [
     'to_json_custom',
@@ -38,10 +42,10 @@ def to_json_custom(graph, _id='id', source='source', target='target'):
     mapping = {}
 
     result['nodes'] = []
-    for i, node in enumerate(sorted(graph, key=hash_node)):
-        nd = graph.node[node].copy()
+    for i, (node, data) in enumerate(sorted(graph.nodes(data=True), key=methodcaller('as_tuple'))):
+        nd = data.copy()
         nd[_id] = hash_node(node)
-        nd['bel'] = node_to_bel(nd)
+        nd['bel'] = data.as_bel()
         if VARIANTS in nd or FUSION in nd or MEMBERS in nd:
             nd['cname'] = nd['bel']
         result['nodes'].append(nd)
@@ -51,7 +55,7 @@ def to_json_custom(graph, _id='id', source='source', target='target'):
 
     rr = {}
 
-    for u, v, data in graph.edges_iter(data=True):
+    for u, v, key, data in graph.edges(keys=True, data=True):
 
         if data[RELATION] in TWO_WAY_RELATIONS and (u, v) != tuple(sorted((u, v))):
             continue  # don't keep two way edges twice
@@ -68,7 +72,7 @@ def to_json_custom(graph, _id='id', source='source', target='target'):
             edge_set.add(entry_code)
 
         payload = {
-            'id': data.get(HASH, hash_edge(u, v, data)),
+            'id': key,
             'bel': graph.edge_to_bel(u, v, data=data)
         }
         payload.update(data)
@@ -99,7 +103,7 @@ def serve_network(graph, serve_format=None):
     elif serve_format in {'nl', 'nodelink'}:
         return jsonify(to_json(graph))
 
-    elif serve_format == 'cx':
+    elif serve_format == 'cx' and to_cx is not None:
         return jsonify(to_cx(graph))
 
     elif serve_format == 'jgif':

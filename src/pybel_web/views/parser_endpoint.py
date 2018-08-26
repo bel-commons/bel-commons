@@ -8,7 +8,7 @@ import time
 from flask import jsonify, request
 
 from pybel import BELGraph
-from pybel.parser import BelParser
+from pybel.parser import BELParser
 from ..send_utils import serve_network
 
 __all__ = [
@@ -38,7 +38,7 @@ def build_parser_service(app, conversion_function=None):
             time.asctime())
     )
 
-    parser = BelParser(graph)
+    parser = BELParser(graph)
 
     @app.route('/api/parser/status')
     def get_status():
