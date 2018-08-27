@@ -5,6 +5,7 @@
 import csv
 import logging
 import pickle
+from functools import lru_cache
 from io import StringIO
 from operator import itemgetter
 
@@ -12,23 +13,21 @@ import networkx as nx
 import time
 from flask import Blueprint, abort, current_app, flash, jsonify, make_response, redirect, request
 from flask_security import current_user, login_required, roles_required
-from functools import lru_cache
 from sqlalchemy import func, or_
 
 from pybel.constants import NAME, NAMESPACE, NAMESPACE_DOMAIN_OTHER
 from pybel.manager.citation_utils import enrich_citation_model, get_pubmed_citation_response
-from pybel.manager.models import Author, Citation, Edge, Namespace, Network, Node, network_edge, NamespaceEntry
+from pybel.manager.models import Author, Citation, Edge, Namespace, NamespaceEntry, Network, Node, network_edge
 from pybel.resources.definitions import write_annotation, write_namespace
-from pybel.struct import union
-from pybel.struct.pipeline.decorators import no_arguments_map, deprecated
+from pybel.struct import get_random_path, get_subgraph_by_annotations, union
+from pybel.struct.pipeline.decorators import deprecated, no_arguments_map
 from pybel.struct.pipeline.exc import MissingPipelineFunctionError
 from pybel.struct.summary import get_pubmed_identifiers
-from pybel.utils import get_version as get_pybel_version, hash_node
+from pybel.utils import get_version as get_pybel_version
 from pybel_tools.analysis.heat import RESULT_LABELS
 from pybel_tools.filters.node_filters import exclude_pathology_filter
-from pybel_tools.mutation import add_canonical_names
 from pybel_tools.query import Query
-from pybel_tools.selection import get_random_path, get_subgraph_by_annotations, get_subgraph_by_node_filter
+from pybel_tools.selection import get_subgraph_by_node_filter
 from pybel_tools.summary import (
     get_authors, get_incorrect_names_by_namespace, get_naked_names, get_undefined_namespace_names, info_json, info_list,
 )
@@ -1036,7 +1035,7 @@ def get_paths(query_id, source_id, target_id):
         paths = nx.all_simple_paths(network, source=source, target=target, cutoff=cutoff)
         return jsonify([
             [
-                hash_node(node)
+                node.sha512
                 for node in path
             ]
             for path in paths
@@ -1058,7 +1057,7 @@ def get_paths(query_id, source_id, target_id):
         shortest_path = nx.shortest_path(network, source=source, target=network.neighbors(source)[0])
 
     return jsonify([
-        hash_node(node)
+        node.sha512
         for node in shortest_path
     ])
 
@@ -1082,7 +1081,7 @@ def get_random_paths(query_id):
     path = get_random_path(graph)
 
     return jsonify([
-        hash_node(node)
+        node.sha512
         for node in path
     ])
 

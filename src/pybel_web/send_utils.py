@@ -12,7 +12,6 @@ from pybel.constants import (
     TWO_WAY_RELATIONS, VARIANTS,
 )
 from pybel.struct.summary import get_pubmed_identifiers
-from pybel.utils import hash_node
 from pybel_tools.mutation.metadata import serialize_authors
 
 try:
@@ -44,7 +43,7 @@ def to_json_custom(graph, _id='id', source='source', target='target'):
     result['nodes'] = []
     for i, (node, data) in enumerate(sorted(graph.nodes(data=True), key=methodcaller('as_tuple'))):
         nd = data.copy()
-        nd[_id] = hash_node(node)
+        nd[_id] = data.sha512
         nd['bel'] = data.as_bel()
         if VARIANTS in nd or FUSION in nd or MEMBERS in nd:
             nd['cname'] = nd['bel']
