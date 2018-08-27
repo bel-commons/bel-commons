@@ -14,7 +14,6 @@ import sys
 import time
 
 import click
-from click_default_group import DefaultGroup
 from flask_security import SQLAlchemyUserDatastore
 
 from pybel import from_path, from_pickle
@@ -123,7 +122,6 @@ _main_help = "BEL Commons Command Line Interface on {}\n with " \
 @click.version_option()
 def main():
     """Run the PyBEL-Web command line interface."""
-
 
 
 @main.command()
