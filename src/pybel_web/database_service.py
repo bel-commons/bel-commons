@@ -2073,6 +2073,7 @@ def add_pipeline_entry(query_id, name, *args, **kwargs):
     try:
         qo = query.build_appended(name, *args, **kwargs)
     except MissingPipelineFunctionError:
+        log.error('missing pipeline function: %s', name)
         abort(403, 'Invalid function name: {}'.format(name))
         return
 
