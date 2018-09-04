@@ -10,7 +10,7 @@ _explorer_toolbox = (
     ('collapse_all_variants', 'Collapse Variants', 'Collapse Variants to their Parent Nodes'),
     ('collapse_to_protein_interactions', 'Protein Interaction Network',
      'Reduce the Network to Interactions between Proteins'),
-    ('expand_protein_rna_origins', 'Expand Protein Origins',
+    ('enrich_protein_and_rna_origins', 'Expand Protein Origins',
      'Adds RNAs corresponding to Proteins, then adds Genes corresponding to RNAs and miRNAs'),
     ('prune_protein_rna_origins', 'Prune Genes/RNAs',
      'Delete genes/RNAs that only have transcription/translation edges'),
