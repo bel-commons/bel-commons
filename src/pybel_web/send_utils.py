@@ -113,7 +113,7 @@ def serve_network(graph, serve_format=None):
             data,
             mimetype='application/octet-stream',
             as_attachment=True,
-            attachment_filename='graph.gpickle'
+            attachment_filename='{}.gpickle'.format(graph.name)
         )
 
     elif serve_format == 'bel':
@@ -128,7 +128,7 @@ def serve_network(graph, serve_format=None):
         return send_file(
             bio,
             mimetype='text/xml',
-            attachment_filename='graph.graphml',
+            attachment_filename='{}.graphml'.format(graph.name),
             as_attachment=True
         )
 
@@ -139,7 +139,7 @@ def serve_network(graph, serve_format=None):
         data = BytesIO(bio.read().encode('utf-8'))
         return send_file(
             data,
-            attachment_filename="graph.sif",
+            attachment_filename="{}.sif".format(graph.name),
             as_attachment=True
         )
 
@@ -151,7 +151,7 @@ def serve_network(graph, serve_format=None):
         return send_file(
             data,
             mimetype="text/tab-separated-values",
-            attachment_filename="graph.tsv",
+            attachment_filename="{}.tsv".format(graph.name),
             as_attachment=True
         )
 
@@ -162,7 +162,7 @@ def serve_network(graph, serve_format=None):
         data = BytesIO(bio.read().encode('utf-8'))
         return send_file(
             data,
-            attachment_filename="graph.grp",
+            attachment_filename="{}.grp".format(graph.name),
             as_attachment=True
         )
 
@@ -177,7 +177,7 @@ def serve_network(graph, serve_format=None):
         return send_file(
             data,
             mimetype="text/tab-separated-values",
-            attachment_filename="citations.txt",
+            attachment_filename="{}-citations.txt".format(graph.name),
             as_attachment=True
         )
 

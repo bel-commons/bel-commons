@@ -626,13 +626,13 @@ $(document).ready(function () {
             url: "/api/query/" + window.query + "/export/bel",
             dataType: "text"
         }).done(function (response) {
-            downloadText(response, "MyNetwork.bel")
+            downloadText(response, "query-" + window.query + ".bel")
         });
     });
 
     // // Export network as an image
     d3.select("#save-svg-graph").on("click", function () {
-        saveSvgAsPng(d3.select('#graph-svg').nodes()[0], 'MyNetwork.png');
+        saveSvgAsPng(d3.select('#graph-svg').nodes()[0], "query-" + window.query + ".png");
     });
 
     updateQueryTable(window.query);  // Renders table info of the given query

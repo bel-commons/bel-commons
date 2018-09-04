@@ -937,6 +937,8 @@ def download_network(query_id, serve_format):
               - citations
     """
     graph = manager.safe_get_graph_from_query_id(user=current_user, query_id=query_id)
+    graph.name = 'query-{query_id}'.format(query_id=query_id)
+    graph.version = str(time.asctime())
     return serve_network(graph, serve_format=serve_format)
 
 
