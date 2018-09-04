@@ -6,11 +6,12 @@ import json
 import logging
 import os
 
-from flask import g, render_template
+from flask import Flask, g, render_template
 from flask_admin import Admin
 from flask_sqlalchemy import SQLAlchemy, get_state
 from raven.contrib.flask import Sentry
 
+from pybel import BELGraph
 from pybel.examples import *
 from pybel.manager.models import Author, Citation, Edge, Evidence, Namespace, NamespaceEntry, Network, Node
 from pybel.struct.mutation import expand_node_neighborhood, expand_nodes_neighborhoods, infer_child_relations
@@ -119,65 +120,56 @@ class PyBELSQLAlchemy(SQLAlchemy):
         """Register all the transformation functions with PyBEL tools decorators."""
 
         @uni_in_place_transformation
-        def expand_nodes_neighborhoods_by_ids(universe, graph, node_hashes):
+        def expand_nodes_neighborhoods_by_ids(universe: BELGraph, graph: BELGraph, node_hashes):
             """Expand around the neighborhoods of a list of nodes by identifier.
 
-            :param pybel.BELGraph universe: A BEL graph
-            :param pybel.BELGraph graph: A BEL graph
+            :param universe: A BEL graph
+            :param graph: A BEL graph
             :param list[str] node_hashes: A list of node hashes
             """
             nodes = [
-                self.manager.get_node_tuple_by_hash(node_hash)
+                self.manager.get_dsl_by_hash(node_hash)
                 for node_hash in node_hashes
             ]
             return expand_nodes_neighborhoods(universe, graph, nodes)
 
         @uni_in_place_transformation
-        def expand_node_neighborhood_by_id(universe, graph, node_hash):
+        def expand_node_neighborhood_by_id(universe: BELGraph, graph: BELGraph, node_hash: str) -> None:
             """Expand around the neighborhoods of a node by identifier.
 
-            :param pybel.BELGraph universe: A BEL graph
-            :param pybel.BELGraph graph: A BEL graph
-            :param str node_hash: The node hash
+            :param universe: A BEL graph
+            :param graph: A BEL graph
+            :param node_hash: The node hash
             """
-            node = self.manager.get_node_tuple_by_hash(node_hash)
+            node = self.manager.get_dsl_by_hash(node_hash)
             return expand_node_neighborhood(universe, graph, node)
 
         @in_place_transformation
-        def delete_nodes_by_ids(graph, node_hashes):
+        def delete_nodes_by_ids(graph: BELGraph, node_hashes: list) -> None:
             """Remove a list of nodes by identifier.
 
-            :param pybel.BELGraph graph: A BEL graph
             :param list[str] node_hashes: A list of node hashes
             """
             nodes = [
-                self.manager.get_node_tuple_by_hash(node_hash)
+                self.manager.get_dsl_by_hash(node_hash)
                 for node_hash in node_hashes
             ]
             graph.remove_nodes_from(nodes)
 
         @in_place_transformation
-        def delete_node_by_id(graph, node_hash):
-            """Remove a node by identifier.
-
-            :param pybel.BELGraph graph: A BEL graph
-            :param str node_hash: A node hash
-            """
-            node = self.manager.get_node_tuple_by_hash(node_hash)
+        def delete_node_by_id(graph: BELGraph, node_hash: str) -> None:
+            """Remove a node by its SHA512."""
+            node = self.manager.get_dsl_by_hash(node_hash)
             graph.remove_node(node)
 
         @in_place_transformation
-        def propagate_node_by_hash(graph, node_hash):
-            """Infer relationships from a node.
-
-            :param pybel.BELGraph graph: A BEL graph
-            :param str node_hash: A node hash
-            """
-            node = self.manager.get_node_tuple_by_hash(node_hash)
+        def propagate_node_by_hash(graph: BELGraph, node_hash: str) -> None:
+            """Infer relationships from a node by its SHA512."""
+            node = self.manager.get_dsl_by_hash(node_hash)
             infer_child_relations(graph, node)
 
     def _register_users(self):
-        """Add the default users to the user datastore."""
+        """Add the default users to the user data store."""
         if os.path.exists(default_users_path):
             with open(default_users_path) as f:
                 default_users_manifest = json.load(f)
@@ -187,11 +179,8 @@ class PyBELSQLAlchemy(SQLAlchemy):
         if pybel_config_user_manifest is not None:
             self.manager.register_users_from_manifest(pybel_config_user_manifest)
 
-    def _register_admin_service(self):
-        """Add a Flask-Admin database front-end.
-
-        :rtype: flask_admin.Admin
-        """
+    def _register_admin_service(self) -> Admin:
+        """Add a Flask-Admin database front-end."""
         admin = Admin(self.app, template_mode='bootstrap3')
 
         admin.add_view(UserView(User, self.session))
@@ -230,9 +219,6 @@ class PyBELSQLAlchemy(SQLAlchemy):
                 insert_graph(self.manager, graph, user=test_user, public=False)
 
     @staticmethod
-    def get_manager(app):
-        """
-        :param flask.Flask app: A Flask app
-        :rtype: pybel_web.manager.WebManager
-        """
+    def get_manager(app: Flask) -> WebManager:
+        """Get the manager for this app."""
         return get_state(app).db.manager
