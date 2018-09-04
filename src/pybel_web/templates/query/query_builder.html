@@ -187,40 +187,40 @@
                             <div class="col-lg-offset-2 col-lg-10">
                                 <div class="radio">
                                     <label>
-                                        <input checked id="seed_method-0" name="seed_method" type="radio"
-                                               value="induction">
-                                        Induce a subgraph over the given nodes
-                                    </label>
-                                </div>
-                                <div class="radio">
-                                    <label>
-                                        <input id="seed_method-1" name="seed_method" type="radio" value="neighbors">
-                                        Induce a subgraph over the given nodes and expand to their first neighbors
+                                        <input checked id="seed_method-1" name="seed_method" type="radio"
+                                               value="neighbors">
+                                        Expand to first neighbors
                                     </label>
                                 </div>
                                 <div class="radio">
                                     <label>
                                         <input id="seed_method-2" name="seed_method" type="radio" value="dneighbors">
-                                        Induce a subgraph over the given nodes and expand to their second neighbors
+                                        Expand to first/second neighbors
+                                    </label>
+                                </div>
+                                <div class="radio">
+                                    <label>
+                                        <input id="seed_method-0" name="seed_method" type="radio" value="induction">
+                                        Induce edges between nodes
                                     </label>
                                 </div>
                                 <div class="radio">
                                     <label>
                                         <input id="seed_method-3" name="seed_method" type="radio"
                                                value="shortest_paths">
-                                        Induce a subgraph over the nodes in all shortest paths between the given nodes
+                                        Induce a sub-graph over the nodes in all shortest paths between the given nodes
                                     </label>
                                 </div>
                                 <div class="radio">
                                     <label>
                                         <input id="seed_method-4" name="seed_method" type="radio" value="upstream">
-                                        Generate an upstream candidate mechanism
+                                        Expand to upstream causal relations in first/second neighbors
                                     </label>
                                 </div>
                                 <div class="radio">
                                     <label>
                                         <input id="seed_method-5" name="seed_method" type="radio" value="downstream">
-                                        Generate a downstream candidate mechanism
+                                        Expand to downstream causal relations in first/second neighbors
                                     </label>
                                 </div>
                             </div>
