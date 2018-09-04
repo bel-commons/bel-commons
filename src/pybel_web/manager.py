@@ -785,7 +785,7 @@ class WebManager(Manager):
         node_hashes = form.getlist(value)
 
         return [
-            self.get_node_tuple_by_hash(node_hash)
+            self.get_dsl_by_hash(node_hash)
             for node_hash in node_hashes
         ]
 
