@@ -7,6 +7,7 @@ from operator import methodcaller
 from flask import Response, jsonify, send_file
 
 from pybel import to_bel_lines, to_bytes, to_csv, to_graphml, to_gsea, to_jgif, to_json, to_sif
+from pybel.canonicalize import edge_to_bel
 from pybel.constants import (
     CAUSAL_DECREASE_RELATIONS, CAUSAL_INCREASE_RELATIONS, DECREASES, FUSION, INCREASES, MEMBERS, RELATION,
     TWO_WAY_RELATIONS, VARIANTS,
@@ -28,7 +29,7 @@ log = logging.getLogger(__name__)
 
 
 def to_json_custom(graph, _id='id', source='source', target='target'):
-    """Prepares JSON for the biological network explorer
+    """Prepares JSON for the biological network explorer.
 
     :type graph: pybel.BELGraph
     :param str _id: The key to use for the identifier of a node, which is calculated with an enumeration
@@ -42,12 +43,13 @@ def to_json_custom(graph, _id='id', source='source', target='target'):
 
     result['nodes'] = []
     for i, node in enumerate(sorted(graph, key=methodcaller('as_bel'))):
-        nd = node.copy()
-        nd[_id] = node.sha512
-        nd['bel'] = node.as_bel()
-        if VARIANTS in nd or FUSION in nd or MEMBERS in nd:
-            nd['cname'] = nd['bel']
-        result['nodes'].append(nd)
+        data = node.copy()
+        data[_id] = node.sha512
+        data['bel'] = node.as_bel()
+        if any(attr in data for attr in (VARIANTS, FUSION, MEMBERS)):
+            data['cname'] = data['bel']
+
+        result['nodes'].append(data)
         mapping[node] = i
 
     edge_set = set()
@@ -71,7 +73,7 @@ def to_json_custom(graph, _id='id', source='source', target='target'):
 
         payload = {
             'id': key,
-            'bel': graph.edge_to_bel(u, v, data=data)
+            'bel': edge_to_bel(u, v, data)
         }
         payload.update(data)
 
@@ -98,7 +100,7 @@ def serve_network(graph, serve_format=None):
     if serve_format is None:
         return jsonify(to_json_custom(graph))
 
-    elif serve_format in {'nl', 'nodelink'}:
+    elif serve_format in {'nl', 'nodelink', 'json'}:
         return jsonify(to_json(graph))
 
     elif serve_format == 'cx' and to_cx is not None:

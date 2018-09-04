@@ -721,7 +721,7 @@ def export_network(network_id, serve_format):
               - gsea
     """
     graph = manager.safe_get_graph(user=current_user, network_id=network_id)
-    return serve_network(graph, serve_format)
+    return serve_network(graph, serve_format=serve_format)
 
 
 @api_blueprint.route('/api/network/<int:network_id>/summarize')
@@ -2714,7 +2714,7 @@ def export_project_network(project_id, serve_format):
 
     network = union(networks)
 
-    return serve_network(network, serve_format)
+    return serve_network(network, serve_format=serve_format)
 
 
 ####################################
