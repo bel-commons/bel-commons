@@ -41,10 +41,10 @@ def to_json_custom(graph, _id='id', source='source', target='target'):
     mapping = {}
 
     result['nodes'] = []
-    for i, (node, data) in enumerate(sorted(graph.nodes(data=True), key=methodcaller('as_tuple'))):
-        nd = data.copy()
-        nd[_id] = data.sha512
-        nd['bel'] = data.as_bel()
+    for i, node in enumerate(sorted(graph, key=methodcaller('as_bel'))):
+        nd = node.copy()
+        nd[_id] = node.sha512
+        nd['bel'] = node.as_bel()
         if VARIANTS in nd or FUSION in nd or MEMBERS in nd:
             nd['cname'] = nd['bel']
         result['nodes'].append(nd)
@@ -55,7 +55,6 @@ def to_json_custom(graph, _id='id', source='source', target='target'):
     rr = {}
 
     for u, v, key, data in graph.edges(keys=True, data=True):
-
         if data[RELATION] in TWO_WAY_RELATIONS and (u, v) != tuple(sorted((u, v))):
             continue  # don't keep two way edges twice
 

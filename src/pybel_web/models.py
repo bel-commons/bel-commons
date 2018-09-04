@@ -18,8 +18,10 @@ import pybel_tools.query
 from pybel import from_lines
 from pybel.manager.models import Base, EDGE_TABLE_NAME, Edge, LONGBLOB, NETWORK_TABLE_NAME, Network
 from pybel.struct import union
-from pybel.utils import list2tuple
 from pybel_tools.query import SEED_DATA, SEED_METHOD
+from pybel.struct.query import Seeding
+from pybel.struct.pipeline import Pipeline
+from pybel.tokens import parse_result_to_dsl
 
 EXPERIMENT_TABLE_NAME = 'pybel_experiment'
 REPORT_TABLE_NAME = 'pybel_report'
@@ -709,7 +711,8 @@ class Assembly(Base):
 
 
 class Query(Base):
-    """Describes a :class:`pybel_tools.query.Query`"""
+    """Describes a :class:`pybel_tools.query.Query`."""
+
     __tablename__ = QUERY_TABLE_NAME
 
     id = Column(Integer, primary_key=True)
@@ -746,39 +749,44 @@ class Query(Base):
         )
 
     def set_seeding(self, query):
-        """Set the seeding value from a PyBEL Tools query.
+        """Set the seeding container from a PyBEL Query.
 
         :type query: pybel_tools.query.Query
         """
-        self.seeding = query.seeding_to_jsons()
+        self.seeding = query.seeding.dumps()
 
-    def set_pipeline_from_pipeline(self, pipeline):
-        """Set the pipeline from a PyBEL Pipeline
+    def get_seeding(self):
+        """Get the seeding container.
 
-        :type pipeline: pybel.struct.pipeline.Pipeline
+        :rtype: Seeding
         """
-        self.pipeline = pipeline.dumps()
+        return Seeding.loads(self.seeding)
 
     def set_pipeline(self, query):
         """Set the pipeline value from a PyBEL Tools query.
 
         :type query: pybel_tools.query.Query
         """
-        self.set_pipeline_from_pipeline(query.pipeline)
+        self.pipeline = query.pipeline.dumps()
+
+    def get_pipeline(self):
+        """Get the pipeline.
+
+        :rtype: Pipeline
+        """
+        return Pipeline.loads(self.pipeline)
 
     def _get_query(self):
-        """Converts this object to a :class:`pybel_tools.query.Query` object
+        """Convert this object to a :class:`pybel_tools.query.Query` object.
 
         :rtype: pybel_tools.query.Query
         """
         if not hasattr(self, '_query'):
-            self._query = pybel_tools.query.Query(network_ids=[network.id for network in self.assembly.networks])
-
-            if self.seeding:
-                self._query.seeding = self.seeding_to_json()
-
-            if self.pipeline:
-                self._query.pipeline.protocol = self.pipeline_to_json()
+            self._query = pybel_tools.query.Query(
+                network_ids=self.network_ids,
+                seeding=self.get_seeding(),
+                pipeline=self.get_pipeline(),
+            )
 
         return self._query
 
@@ -789,6 +797,14 @@ class Query(Base):
         :rtype: list[Network]
         """
         return self.assembly.networks
+
+    @property
+    def network_ids(self):
+        """
+
+        :rtype: list[int]
+        """
+        return [network.id for network in self.networks]
 
     def to_json(self, include_id=True):
         """Serializes this object to JSON
@@ -804,32 +820,19 @@ class Query(Base):
         return result
 
     def seeding_to_json(self):
-        """Returns seeding json
+        """Return seeding json.
 
         :rtype: list[dict]
         """
-        if self.seeding is None:
-            return []
-
-        seeding = json.loads(self.seeding)
-
-        result = []
-        for seed in seeding:
-            if seed[SEED_METHOD] not in {'pubmed', 'authors', 'annotation'}:
-                seed[SEED_DATA] = list2tuple(seed[SEED_DATA])
-            result.append(seed)
-
-        return result
+        return self.get_seeding().to_json()
 
     def pipeline_to_json(self):
-        """Returns the pipeline as json
+        """Return the pipeline as json.
 
         :rtype: list[dict]
         """
-        if self.pipeline is None:
-            return []
-
-        return json.loads(self.pipeline)
+        pipeline = self.get_pipeline()
+        return pipeline.to_json()
 
     def run(self, manager):
         """A wrapper around the :meth:`pybel_tools.query.Query.run` function of the enclosed
@@ -839,8 +842,7 @@ class Query(Base):
         :return: The result of this query
         :rtype: Optional[pybel.BELGraph]
         """
-        _query = self._get_query()
-        return _query.run(manager)
+        return self._get_query().run(manager)
 
     @staticmethod
     def from_assembly(assembly, user=None):
@@ -859,7 +861,7 @@ class Query(Base):
 
     @staticmethod
     def from_networks(networks, user=None):
-        """Builds a query from a network
+        """Build a query from a network.
 
         :param list[Network] networks: A network
         :param Optional[User] user: The user who owns this query
@@ -905,17 +907,16 @@ class Query(Base):
         return result
 
     @staticmethod
-    def from_query_args(manager, network_ids, user=None, seed_list=None, pipeline=None):
+    def from_query_args(manager, network_ids, user=None, seeding=None, pipeline=None):
         """Build an ORM model from the arguments for a PyBEL-Tools query.
 
-        :param pybel.manager.Manager manager:
         :param list[int] network_ids: A list of network identifiers
         :param Optional[User] user:
-        :param Optional[list[dict]] seed_list:
+        :param Optional[Seeding] seeding:
         :param Optional[Pipeline] pipeline: Instance of a pipeline
         :rtype: Query
         """
-        q = pybel_tools.query.Query(network_ids, seeding=seed_list, pipeline=pipeline)
+        q = pybel_tools.query.Query(network_ids, seeding=seeding, pipeline=pipeline)
         return Query.from_query(manager, q, user=user)
 
     def build_appended(self, name, *args, **kwargs):
@@ -929,13 +930,15 @@ class Query(Base):
         _query = self._get_query()
         _query.pipeline.append(name, *args, **kwargs)
 
-        return Query(
+        query = Query(
             parent_id=self.id,
             assembly=self.assembly,
             seeding=self.seeding,
             pipeline=_query.pipeline.dumps(),
             user=self.user,
         )
+
+        return query
 
     def add_seed_neighbors(self, nodes):
         """Add a seed by neighbors and return a new query.
@@ -944,12 +947,12 @@ class Query(Base):
         :rtype: Query
         """
         _query = self._get_query()
-        _query.append_seeding_neighbors([node.to_tuple() for node in nodes])
+        _query.append_seeding_neighbors([node.as_bel() for node in nodes])
 
         return Query(
             parent_id=self.id,
             assembly=self.assembly,
-            seeding=_query.seeding_to_jsons(),
+            seeding=_query.seeding.dumps(),
             pipeline=self.pipeline,
             user=self.user,
         )

@@ -4,7 +4,7 @@ pybel-tools>=0.7.0,<0.8.0
 ols_client>=0.0.8
 sqlalchemy
 requests
-flask==0.12.2
+flask
 flask-bootstrap==3.3.7.1
 flask-wtf
 flask-security==3.0.0
@@ -20,7 +20,7 @@ raven
 wtforms
 scikit-learn
 numpy
-bio2bel>=0.0.12
+bio2bel
 
 # Extras
 pybel-cx>=0.1.1

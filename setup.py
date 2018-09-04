@@ -30,7 +30,7 @@ INSTALL_REQUIRES = [
     'networkx>=2.1',
     'requests',
     'sqlalchemy',
-    'flask==0.12.2',
+    'flask',
     'flask-bootstrap',
     'flask-wtf',
     'flask-security',

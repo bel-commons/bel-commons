@@ -942,7 +942,7 @@ def download_network(query_id, serve_format):
 
 @api_blueprint.route('/api/query/<int:query_id>/relabel')
 def get_network(query_id):
-    """Builds a graph from the given network id and sends it (relabeled) for the explorer
+    """Build a graph from the given network id and send it (relabeled) for the explorer.
 
     ---
     tags:
@@ -1114,7 +1114,7 @@ def get_nodes_by_betweenness_centrality(query_id, node_number):
     bw_dict = nx.betweenness_centrality(graph)
 
     return jsonify([
-        hash_node(node)
+        node.sha512
         for node, score in sorted(bw_dict.items(), key=itemgetter(1), reverse=True)[:node_number]
     ])
 

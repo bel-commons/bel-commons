@@ -833,7 +833,7 @@ class WebManager(Manager):
         """Checks if the user has the rights to run the given query
 
         :param models.User user: A user object
-        :param models.Query query: A query object
+        :param int query_id: A query identifier
         :rtype: Optional[Query]
         """
         query = self.get_query_or_404(query_id)
