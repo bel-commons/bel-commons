@@ -5,6 +5,7 @@
 import json
 import logging
 import os
+
 from flask import g, render_template
 from flask_admin import Admin
 from flask_sqlalchemy import SQLAlchemy, get_state
@@ -14,9 +15,8 @@ from pybel.examples import *
 from pybel.manager.models import Author, Citation, Edge, Evidence, Namespace, NamespaceEntry, Network, Node
 from pybel.struct.mutation import expand_node_neighborhood, expand_nodes_neighborhoods, infer_child_relations
 from pybel.struct.pipeline import in_place_transformation, uni_in_place_transformation
-from pybel_tools.mutation import add_canonical_names
 from .admin_model_views import (
-    AnnotationView, CitationView, EdgeView, EvidenceView, ExperimentView, ModelView, NamespaceView, NetworkView,
+    CitationView, EdgeView, EvidenceView, ExperimentView, ModelView, NamespaceView, NetworkView,
     NodeView, QueryView, ReportView, UserView, build_project_view,
 )
 from .constants import (
@@ -219,7 +219,6 @@ class PyBELSQLAlchemy(SQLAlchemy):
         """Add example BEL graphs that should always be present."""
         for graph in (sialic_acid_graph, egf_graph, statin_graph, homology_graph):
             if not self.manager.has_name_version(graph.name, graph.version):
-                add_canonical_names(graph)
                 log.info('uploading public example graph: %s', graph)
                 insert_graph(self.manager, graph, public=True)
 
@@ -227,7 +226,6 @@ class PyBELSQLAlchemy(SQLAlchemy):
 
         for graph in (braf_graph,):
             if not self.manager.has_name_version(graph.name, graph.version):
-                add_canonical_names(graph)
                 log.info('uploading internal example graph: %s', graph)
                 insert_graph(self.manager, graph, user=test_user, public=False)
 

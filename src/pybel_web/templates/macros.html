@@ -127,10 +127,16 @@
             </ul>
         </td>
         <td>
-            {{ query.seeding_to_json()|length }}
+            {% set seeding = query.seeding_to_json() %}
+            {% if seeding %}
+                {{ seeding|length }}
+            {% endif %}
         </td>
         <td>
-            {{ query.pipeline_to_json()|length }}
+            {% set pipeline = query.pipeline_to_json() %}
+            {% if pipeline %}
+                {{ pipeline|length }}
+            {% endif %}
         </td>
         <td>
             <div class="dropdown">

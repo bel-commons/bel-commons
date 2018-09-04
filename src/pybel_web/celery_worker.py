@@ -17,14 +17,11 @@ from flask import render_template
 from sqlalchemy.exc import IntegrityError, OperationalError
 
 from pybel import from_json, to_bel_path, to_bytes
-from pybel.constants import HASH, METADATA_CONTACT, METADATA_DESCRIPTION, METADATA_LICENSES
+from pybel.constants import METADATA_CONTACT, METADATA_DESCRIPTION, METADATA_LICENSES
 from pybel.manager.citation_utils import enrich_pubmed_citations
 from pybel.parser.exc import InconsistentDefinitionError
 from pybel.resources.exc import ResourceError
 from pybel.struct.mutation import enrich_protein_and_rna_origins
-from pybel.tokens import node_to_tuple
-from pybel_tools.mutation import add_canonical_names
-from pybel_tools.utils import enable_cool_mode
 from pybel_web.application import create_application
 from pybel_web.celery_utils import create_celery
 from pybel_web.constants import get_admin_email, integrity_message, merged_document_folder
@@ -37,7 +34,9 @@ celery_logger = get_task_logger(__name__)
 log = logging.getLogger(__name__)
 
 logging.basicConfig(level=logging.DEBUG)
-enable_cool_mode()  # turn off warnings for compilation
+logging.getLogger('urllib3.connectionpool').setLevel(logging.ERROR)
+logging.getLogger('pybel.parser').setLevel(logging.CRITICAL)
+
 celery_logger.setLevel(logging.DEBUG)
 log.setLevel(logging.DEBUG)
 
@@ -52,21 +51,6 @@ dumb_belief_stuff = {
 }
 
 pbw_sender = ("BEL Commons", 'bel-commons@scai.fraunhofer.de')
-
-
-def add_identifiers(graph):  # FIXME this function shouldn't have to exist.
-    """Adds stable node and edge identifiers to the graph, in-place using the PyBEL
-    node and edge hashes as a hexadecimal str.
-
-    :param pybel.BELGraph graph: A BEL Graph
-    """
-    for node, data in graph.iter_node_data_pairs():
-        if HASH in data:
-            continue
-
-        canonical_node_tuple = node_to_tuple(data)
-        canonical_node_hash = graph.hash_node(canonical_node_tuple)
-        graph.node[node][HASH] = canonical_node_hash
 
 
 @celery.task(name='debug-task')
@@ -133,7 +117,7 @@ def summarize_bel(connection, report_id):
 
     time_difference = time.time() - t
 
-    send_summary_mail(manager, graph, report, time_difference)
+    send_summary_mail(graph, report, time_difference)
 
     report.time = time_difference
     report.completed = True
@@ -249,10 +233,6 @@ def upload_bel(connection, report_id, enrich_citations=False):
 
         message = 'Granted rights for {} to {} after parsing {}'.format(network, report.user, source_name)
         return finish_parsing('Granted Rights from {}'.format(source_name), message)
-
-    celery_logger.info('enriching graph')
-    add_canonical_names(graph)
-    add_identifiers(graph)
 
     if report.infer_origin:
         enrich_protein_and_rna_origins(graph)

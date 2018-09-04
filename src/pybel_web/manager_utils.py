@@ -73,6 +73,14 @@ def make_graph_summary(graph):
 
     return rv
 
+def dcn(node):
+    """Get the BEL string from a node tuple."""
+    return node.as_bel()
+
+def canonical_hash(node):
+    """Get the SHA512 string from a node tuple."""
+    return node.as_sha512()
+
 
 def get_network_summary_dict(graph):
     """Create a summary dictionary.
@@ -80,45 +88,11 @@ def get_network_summary_dict(graph):
     :param pybel.BELGraph graph:
     :rtype: dict
     """
+    def get_pair_tuple(a, b):
+        return a.as_bel(), a.sha512, b.as_bel(), b.sha512
 
-    def dcn(node_tuple):
-        """Get the BEL string from a node tuple."""
-        return graph.nodes[node_tuple].as_bel()
-
-    def canonical_hash(node_tuple):
-        """Get the SHA512 string from a node tuple."""
-        return graph.nodes[node_tuple].as_sha512()
-
-    def get_pair_tuple(source_tuple, target_tuple):
-        """
-
-        :param source_tuple:
-        :param target_tuple:
-        :return:
-        """
-        return (
-            dcn(source_tuple),
-            canonical_hash(source_tuple),
-            dcn(target_tuple),
-            canonical_hash(target_tuple),
-        )
-
-    def get_triplet_tuple(a_tuple, b_tuple, c_tuple):
-        """
-
-        :param a_tuple:
-        :param b_tuple:
-        :param c_tuple:
-        :return:
-        """
-        return (
-            dcn(a_tuple),
-            canonical_hash(a_tuple),
-            dcn(b_tuple),
-            canonical_hash(b_tuple),
-            dcn(c_tuple),
-            canonical_hash(c_tuple),
-        )
+    def get_triplet_tuple(a, b, c):
+        return a.as_bel(), a.sha512, b.as_bel(), b.sha512,c.as_bel(), c.sha512
 
     return dict(
         regulatory_pairs=[
@@ -155,11 +129,11 @@ def get_network_summary_dict(graph):
             for u, v, k in filter_edges(graph, has_pathology_causal)
         }),
         hub_data={
-            graph.nodes[node].as_sha512(): degree
+            node.sha512: degree
             for node, degree in get_top_hubs(graph)
         },
         disease_data={
-            graph.nodes[node].as_sha512(): count
+            node.sha512: count
             for node, count in get_top_pathologies(graph)
         },
         undefined_namespaces=get_undefined_namespaces(graph),

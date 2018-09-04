@@ -9,9 +9,9 @@ from flask_wtf.file import FileAllowed, FileField
 from wtforms.fields import BooleanField, HiddenField, IntegerField, RadioField, StringField, SubmitField
 from wtforms.validators import DataRequired
 
-from pybel_tools.selection.induce_subgraph import (
-    SEED_TYPE_DOUBLE_NEIGHBORS, SEED_TYPE_DOWNSTREAM, SEED_TYPE_INDUCTION,
-    SEED_TYPE_NEIGHBORS, SEED_TYPE_PATHS, SEED_TYPE_UPSTREAM,
+from pybel.struct.query.constants import (
+    SEED_TYPE_DOUBLE_NEIGHBORS, SEED_TYPE_DOWNSTREAM, SEED_TYPE_INDUCTION, SEED_TYPE_NEIGHBORS, SEED_TYPE_PATHS,
+    SEED_TYPE_UPSTREAM,
 )
 
 

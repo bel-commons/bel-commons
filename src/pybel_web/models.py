@@ -758,9 +758,10 @@ class Query(Base):
     def get_seeding(self):
         """Get the seeding container.
 
-        :rtype: Seeding
+        :rtype: Optional[Seeding]
         """
-        return Seeding.loads(self.seeding)
+        if self.seeding:
+            return Seeding.loads(self.seeding)
 
     def set_pipeline(self, query):
         """Set the pipeline value from a PyBEL Tools query.
@@ -772,9 +773,10 @@ class Query(Base):
     def get_pipeline(self):
         """Get the pipeline.
 
-        :rtype: Pipeline
+        :rtype: Optional[Pipeline]
         """
-        return Pipeline.loads(self.pipeline)
+        if self.pipeline:
+            return Pipeline.loads(self.pipeline)
 
     def _get_query(self):
         """Convert this object to a :class:`pybel_tools.query.Query` object.
@@ -822,17 +824,20 @@ class Query(Base):
     def seeding_to_json(self):
         """Return seeding json.
 
-        :rtype: list[dict]
+        :rtype: Optional[list[dict]]
         """
-        return self.get_seeding().to_json()
+        seeding = self.get_seeding()
+        if seeding:
+            return seeding.to_json()
 
     def pipeline_to_json(self):
         """Return the pipeline as json.
 
-        :rtype: list[dict]
+        :rtype: Optional[list[dict]]
         """
         pipeline = self.get_pipeline()
-        return pipeline.to_json()
+        if pipeline:
+            return pipeline.to_json()
 
     def run(self, manager):
         """A wrapper around the :meth:`pybel_tools.query.Query.run` function of the enclosed
