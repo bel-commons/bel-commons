@@ -64,7 +64,7 @@ def _ensure_pickle(path, manager, **kwargs):
     else:
         graph = from_pickle(gpickle_path)
 
-    return insert_graph(manager, graph, public=True)
+    return insert_graph(manager, graph, public=True, use_tqdm=True)
 
 
 def ensure_pickles(directory: str, manager: Manager, blacklist=None, **kwargs):
@@ -98,7 +98,7 @@ def upload_pickles(directory: str, manager: Manager, blacklist: Optional[List[st
     results = []
 
     for graph in iter_from_pickles_from_directory(directory, blacklist=blacklist):
-        network = insert_graph(manager, graph, public=True)
+        network = insert_graph(manager, graph, public=True, use_tqdm=True)
         results.append(network)
 
     return results
@@ -184,7 +184,7 @@ def upload_neurommsig_graphs(manager: Manager):
         # output to directory as gpickle
         to_pickle(subgraph, os.path.join(neurommsig_directory, '{}.gpickle'.format(subgraph_name)))
 
-        network = insert_graph(manager, subgraph, public=True)
+        network = insert_graph(manager, subgraph, public=True, use_tqdm=True)
         networks.append(network)
 
     write_manifest(neurommsig_directory, networks)
@@ -223,7 +223,7 @@ def upload_jgf_directory(directory: str, manager: Manager):
             to_pickle(graph, gpickle_path)
 
         try:
-            insert_graph(manager, graph, public=True)
+            insert_graph(manager, graph, public=True, use_tqdm=True)
         except OperationalError:
             manager.session.rollback()
             log.info('could not insert %s', graph)
@@ -269,7 +269,7 @@ def upload_with_manager(bio2bel_manager: AbstractManager, manager: Manager) -> O
         log.warning('%s has no to_bel function', bio2bel_manager)
         return
 
-    return insert_graph(manager, graph)
+    return insert_graph(manager, graph, use_tqdm=True)
 
 
 def load_cbn(manager: Manager):

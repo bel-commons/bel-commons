@@ -1458,67 +1458,6 @@ def get_edges_by_target_bel(target_bel):
     return jsonify(edges)
 
 
-@api_blueprint.route('/api/citation/pubmed/<pubmed_identifier>/edges')
-def get_edges_by_pubmed(pubmed_identifier):
-    """Gets edges that have a given PubMed identifier
-
-    ---
-    tags:
-      - citation
-    parameters:
-      - name: pubmed_identifier
-        in: path
-        description: A NCBI PubMed identifier
-        required: true
-        type: string
-    """
-    edges = manager.query_edges(citation=pubmed_identifier)
-    return jsonify(edges)
-
-
-@api_blueprint.route('/api/author/<author>/edges')
-def get_edges_by_author(author):
-    """Gets edges with a given author
-
-    ---
-    tags:
-      - author
-    parameters:
-      - name: author
-        in: path
-        description: An author name
-        required: true
-        type: string
-    """
-    citations = manager.query_citations(author=author)
-    edges = manager.query_edges(citation=citations)
-    return jsonify(edges)
-
-
-@api_blueprint.route('/api/annotation/<annotation>/value/<value>/edges')
-def get_edges_by_annotation(annotation, value):
-    """Gets edges with the given annotation/value combination
-
-    ---
-    tags:
-      - annotation
-    parameters:
-      - name: annotation
-        in: path
-        description: An annotation keyword
-        required: true
-        type: string
-    parameters:
-      - name: value
-        in: path
-        description: An entry in the given annotation
-        required: true
-        type: string
-    """
-    edges = manager.query_edges(annotations={annotation: value})
-    return jsonify(edges)
-
-
 @api_blueprint.route('/api/edge/<edge_hash>')
 def get_edge_by_hash(edge_hash):
     """Gets an edge data dictionary by hash

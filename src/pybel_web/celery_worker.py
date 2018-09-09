@@ -9,9 +9,10 @@ redundant this nomenclature is.
 import hashlib
 import logging
 import os
+import random
+import time
 
 import requests.exceptions
-import time
 from celery.utils.log import get_task_logger
 from flask import render_template
 from sqlalchemy.exc import IntegrityError, OperationalError
@@ -55,13 +56,14 @@ pbw_sender = ("BEL Commons", 'bel-commons@scai.fraunhofer.de')
 
 @celery.task(name='debug-task')
 def run_debug_task():
-    """Run the debug task."""
+    """Run the debug task that sleeps for a trivial amount of time."""
     celery_logger.info('running celery debug task')
     log.info('running celery debug task')
+    time.sleep(random.randint(6, 10))
     return 6 + 2
 
 
-@celery.task(name='summarize-bel')
+@celery.task(name='summarize-bel', ignore_result=True)
 def summarize_bel(connection: str, report_id: int):
     """Parse a BEL script asynchronously and email feedback.
 

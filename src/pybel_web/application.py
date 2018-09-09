@@ -154,12 +154,8 @@ def create_application(**kwargs) -> Flask:
     bootstrap.init_app(app)
     swagger.init_app(app)
 
-    celery_broker_url = app.config.get(CELERY_BROKER_URL)
-    if celery_broker_url is not None:
-        log.info('using celery broker: %s', celery_broker_url)
+    if CELERY_BROKER_URL in app.config:
         celery.init_app(app)
-    else:
-        log.info('not using celery broker')
 
     mail_server = app.config.get(MAIL_SERVER)
     if mail_server is not None:

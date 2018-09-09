@@ -8,18 +8,18 @@ services:
     volumes:
      - .:/app
     environment:
-      PYBEL_CONNECTION: mysql+mysqldb://root:root@mysql/pybel?charset=utf8
+      PYBEL_CONNECTION: mysql+mysqldb://root:root@database/pybel?charset=utf8
       CELERY_BROKER_URL: amqp://queue
+      CELERY_BACKEND_URL: db+mysql+mysqldb://root:root@database/pybel?charset=utf8
       SECRET_KEY: ${SECRET_KEY}
       SECURITY_PASSWORD_SALT: ${SECURITY_PASSWORD_SALT}
     restart: always
-    command: pybel-web run -vv
-    #command: gunicorn -b 0.0.0.0:5000 pybel_web.run:app --log-level=INFO
+    command: gunicorn -b 0.0.0.0:5000 pybel_web.wsgi:app --log-level=INFO
     # add more workers later -w ${PYBEL_GUNICORN_NUMBER_WORKERS}
     ports:
-      - "5000:5000"
+      - 80:5000
     depends_on:
-     - mysql
+     - database
      - queue
      - worker
 
@@ -28,17 +28,18 @@ services:
     volumes:
      - .:/app
     environment:
-      PYBEL_CONNECTION: mysql+mysqldb://root:root@mysql/pybel?charset=utf8
+      PYBEL_CONNECTION: mysql+mysqldb://root:root@database/pybel?charset=utf8
       CELERY_BROKER_URL: amqp://queue
+      CELERY_BACKEND_URL: db+mysql+mysqldb://root:root@database/pybel?charset=utf8
       SECRET_KEY: ${SECRET_KEY}
       SECURITY_PASSWORD_SALT: ${SECURITY_PASSWORD_SALT}
     restart: always
     command: celery worker -A pybel_web.celery_worker.celery -l INFO
     depends_on:
-     - mysql
+     - database
      - queue
 
-  mysql:
+  database:
     image: mysql:5.7
     volumes:
        - db_data:/var/lib/mysql
@@ -52,7 +53,7 @@ services:
     command: mysqld --character-set-server=utf8 --collation-server=utf8_unicode_ci --init-connect='SET NAMES UTF8;' --innodb-flush-log-at-trx-commit=0 --max-allowed-packet=256M
 
   queue:
-    image: rabbitmq:3.6.12-alpine
+    image: rabbitmq:3.7.7-alpine
 
 volumes:
     db_data:

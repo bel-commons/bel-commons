@@ -2,7 +2,7 @@
 
 """Run BEL Commons as a WSGI application.
 
-Run with GUnicorn: ``gunicorn -w 4 -b 0.0.0.0:5000 pybel_web.run:app``
+Run with GUnicorn: ``gunicorn -w 4 -b 0.0.0.0:5000 pybel_web.wsgi:app``
 """
 
 import logging

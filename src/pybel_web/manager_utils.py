@@ -164,7 +164,7 @@ def fill_out_report(network: Network, report: Report, graph_summary):
     report.completed = True
 
 
-def insert_graph(manager, graph, user=1, public=False):
+def insert_graph(manager, graph, user=1, public=False, use_tqdm=False):
     """Insert a graph and also make a report.
 
     :param pybel.manager.Manager manager: A PyBEL manager
@@ -179,7 +179,7 @@ def insert_graph(manager, graph, user=1, public=False):
         log.info('database already has %s', graph)
         return manager.get_network_by_name_version(graph.name, graph.version)
 
-    network = manager.insert_graph(graph)
+    network = manager.insert_graph(graph, use_tqdm=use_tqdm)
 
     report = Report(public=public)
 
@@ -202,7 +202,7 @@ def insert_graph(manager, graph, user=1, public=False):
 
 
 def create_omic(data, gene_column, data_column, description, source_name, sep, public=False, user=None):
-    """Creates an omics model
+    """Create an omics model.
 
     :param str or file data:
     :param str gene_column:

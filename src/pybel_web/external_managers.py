@@ -24,7 +24,6 @@ __all__ = [
     'drugbank_manager',
     'phosphosite_manager',
     'hmdd_manager',
-    'famplex_manager',
 ]
 
 log = logging.getLogger(__name__)
@@ -173,15 +172,6 @@ else:
     log.info('Using Bio2BEL MeSH')
     mesh_manager = bio2bel_mesh.Manager(connection=connection)
     mesh_manager.create_all()
-
-try:
-    import bio2bel_famplex
-except ImportError:
-    famplex_manager = None
-else:
-    log.info('Using Bio2BEL FamPlex')
-    famplex_manager = bio2bel_famplex.Manager()
-    famplex_manager.create_all()
 
 manager_dict = {
     name: manager

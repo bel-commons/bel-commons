@@ -3,6 +3,7 @@
 import os
 
 _default_bms_dir = os.path.join(os.path.expanduser('~'), 'dev', 'bms')
+_default_hbp_dir = os.path.join(os.path.expanduser('~'), 'dev', 'hbp')
 _default_omics_dir = os.path.join(os.path.expanduser('~'), 'dev', 'bel-commons-manuscript', 'data')
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -18,7 +19,13 @@ BMS_BASE = (
 if BMS_BASE is None:
     raise RuntimeError('{} is not set in the environment'.format(_bms_base_env_name))
 
-alzheimer_directory = os.path.join(BMS_BASE, 'aetionomy', 'alzheimers')
+HBP_BASE = (
+    _default_hbp_dir
+    if os.path.exists(_default_hbp_dir)
+    else os.environ.get('HBP_BASE')
+)
+
+alzheimer_directory = os.path.join(HBP_BASE, 'curation', 'bel')
 parkinsons_directory = os.path.join(BMS_BASE, 'aetionomy', 'parkinsons')
 epilepsy_directory = os.path.join(BMS_BASE, 'aetionomy', 'epilepsy')
 neurommsig_directory = os.path.join(BMS_BASE, 'aetionomy', 'neurommsig')

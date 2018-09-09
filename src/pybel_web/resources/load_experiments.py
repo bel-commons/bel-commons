@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""This file runs experiments on the sample BEL and -omics data then uploads it.
+"""This script runs experiments on the sample BEL and -omics data then uploads it.
 
 Prerequisites
 -------------
@@ -12,6 +12,7 @@ Prerequisites
 import json
 import logging
 import os
+from typing import Dict, List, Optional
 
 from pybel.manager import Manager
 from pybel_tools.utils import enable_cool_mode
@@ -27,12 +28,8 @@ enable_cool_mode()
 # 1. build query from all of alzheimer's disease using manifest from AD folder
 # 2. run experiment and upload
 
-def get_manifest(directory):
-    """Gets the manifest from a directory
-
-    :param str directory:
-    :rtype: list[dict]
-    """
+def get_manifest(directory: str) -> List[Dict]:
+    """Get the manifest from a directory."""
     manifest_path = os.path.join(directory, 'manifest.json')
     if not os.path.exists(manifest_path):
         raise RuntimeError('manifest missing from {}'.format(directory))
@@ -44,9 +41,7 @@ def get_manifest(directory):
 def build_query(directory: str, manager: Manager) -> Query:
     """Build a query for the Alzheimer's disease network.
 
-    :param directory: Directory containing omics data and a manifest
-    :type manager: pybel.manager.Manager
-    :rtype: pybel_web.models.Query
+    :param directory: Directory containing -omics data and a manifest
     """
     manifest = get_manifest(directory)
 
@@ -63,14 +58,14 @@ def build_query(directory: str, manager: Manager) -> Query:
     return query
 
 
-def create_experiment(query: Query, directory: str, manager: Manager, permutations=None):
+def create_experiment(query: Query, directory: str, manager: Manager, permutations: Optional[int] = None) -> List[
+    Experiment]:
     """Create experiment models.
 
     :param query:
     :param str directory: the directory of -*omics* data resources
     :param manager:
-    :param Optional[int] permutations: Number of permutations to run (defaults to 200)
-    :rtype: list[Experiment]
+    :param permutations: Number of permutations to run (defaults to 200)
     """
     omics_manifest = get_manifest(directory)
 
@@ -91,12 +86,8 @@ def create_experiment(query: Query, directory: str, manager: Manager, permutatio
     return results
 
 
-def upload_experiments(experiments, manager: Manager):
-    """Create a manager and upload experiments models
-
-    :param list[pybel_web.models.Experiments] experiments:
-    :type manager: pybel.manager.Manager
-    """
+def upload_experiments(experiments: List[Experiment], manager: Manager):
+    """Upload experiments models."""
     log.info('adding experiments to session')
     manager.session.add_all(experiments)
 
@@ -104,12 +95,8 @@ def upload_experiments(experiments, manager: Manager):
     manager.session.commit()
 
 
-def run_experiments(experiments, manager: Manager):
-    """Run experiments and commits after each.
-
-    :param iter[Experiment] experiments:
-    :type manager: pybel.manager.Manager
-    """
+def run_experiments(experiments: List[Experiment], manager: Manager) -> None:
+    """Run experiments and commits after each."""
     log.info('running %d experiments', len(experiments))
 
     for experiment in experiments:
@@ -119,12 +106,10 @@ def run_experiments(experiments, manager: Manager):
         manager.session.commit()
 
 
-def work_directory(query: Query, omic_directory: str, manager: Manager, permutations=None):
+def work_directory(query: Query, omic_directory: str, manager: Manager, permutations: Optional[int] = None) -> None:
     """
 
-    :param Query query:
-    :param str omic_directory:
-    :param Optional[int] permutations: Number of permutations to run (defaults to 200)
+    :param permutations: Number of permutations to run (defaults to 200)
     """
     log.info('making experiments for directory: %s', omic_directory)
     experiments = create_experiment(query, directory=omic_directory, manager=manager, permutations=permutations)
@@ -136,7 +121,8 @@ def work_directory(query: Query, omic_directory: str, manager: Manager, permutat
     run_experiments(experiments, manager=manager)
 
 
-def work_group(network_directory, omics_directories, manager, permutations=None):
+def work_group(network_directory: str, omics_directories: List[str], manager: Manager,
+               permutations: Optional[int] = None):
     """
 
     :param str network_directory:
