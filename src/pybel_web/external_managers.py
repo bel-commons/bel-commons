@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""This module contains the optional managers"""
+"""This module contains the optional managers."""
 
 import logging
 
@@ -18,6 +18,13 @@ __all__ = [
     'sider_manager',
     'mesh_manager',
     'manager_dict',
+    'ctd_manager',
+    'mir2disease_manager',
+    'hmdb_manager',
+    'drugbank_manager',
+    'phosphosite_manager',
+    'hmdd_manager',
+    'famplex_manager',
 ]
 
 log = logging.getLogger(__name__)
@@ -30,7 +37,7 @@ except ImportError:
     chebi_manager = None
 else:
     log.info('Using Bio2BEL ChEBI')
-    chebi_manager = bio2bel_chebi.Manager(connection=connection)
+    chebi_manager = bio2bel_chebi.Manager()
     chebi_manager.create_all()
     in_place_transformation(chebi_manager.enrich_chemical_hierarchy)
 
@@ -40,7 +47,7 @@ except ImportError:
     hgnc_manager = None
 else:
     log.info('Using Bio2BEL HGNC')
-    hgnc_manager = bio2bel_hgnc.Manager(connection=connection)
+    hgnc_manager = bio2bel_hgnc.Manager()
     hgnc_manager.create_all()
     in_place_transformation(hgnc_manager.enrich_genes_with_families)
     in_place_transformation(hgnc_manager.enrich_families_with_genes)
@@ -73,7 +80,7 @@ except ImportError:
     go_manager = None
 else:
     log.info('Using Bio2BEL GO')
-    go_manager = bio2bel_go.Manager(connection=connection)
+    go_manager = bio2bel_go.Manager()
     in_place_transformation(go_manager.enrich_bioprocesses)
 
 try:
@@ -166,6 +173,15 @@ else:
     log.info('Using Bio2BEL MeSH')
     mesh_manager = bio2bel_mesh.Manager(connection=connection)
     mesh_manager.create_all()
+
+try:
+    import bio2bel_famplex
+except ImportError:
+    famplex_manager = None
+else:
+    log.info('Using Bio2BEL FamPlex')
+    famplex_manager = bio2bel_famplex.Manager()
+    famplex_manager.create_all()
 
 manager_dict = {
     name: manager

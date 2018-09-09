@@ -3,8 +3,9 @@
 """Tests for the manager."""
 
 import logging
-
 import time
+import unittest
+
 from werkzeug.exceptions import HTTPException
 
 from pybel.constants import INCREASES, PROTEIN
@@ -16,24 +17,30 @@ from tests.cases import TemporaryCacheMethodMixin
 log = logging.getLogger(__name__)
 
 
-def make_network(name=None):
-    return Network(name=(str(name) if name is not None else n()), version=n())
+def make_network(name: str = None):
+    return Network(
+        name=(str(name) if name is not None else n()),
+        version=n(),
+    )
 
 
-def upgrade_network(network):
-    return Network(name=network.name, version=n())
+def upgrade_network(network: Network):
+    return Network(
+        name=network.name,
+        version=n(),
+    )
 
 
-def make_report(network):
+def make_report(network: Network) -> Report:
     return Report(network=network)
 
 
-def make_node():
+def make_node() -> Node:
     u = n()
     return Node(type=PROTEIN, bel='p(HGNC:{})'.format(u))
 
 
-def make_edge(n1=None, n2=None):
+def make_edge(n1=None, n2=None) -> Edge:
     if n1 is None:
         n1 = make_node()
     if n2 is None:
@@ -199,8 +206,7 @@ class TestManager(TemporaryCacheMethodMixin):
         self.assertEqual(1, self.manager.session.query(EdgeComment).count())
 
     def test_drop_query_cascade_to_parent(self):
-        """Tests that dropping a query gets passed to its parent, and doesn't muck up anything else"""
-
+        """Test that dropping a query gets passed to its parent, and doesn't muck up anything else."""
         q1 = Query()
         self.manager.session.add(q1)
         self.manager.session.commit()
@@ -270,3 +276,7 @@ class TestManager(TemporaryCacheMethodMixin):
 
         self.assertEqual(1, self.manager.count_assemblies())
         self.assertEqual(1, self.manager.count_queries(), msg='Cascade to queries did not work')
+
+
+if __name__ == '__main__':
+    unittest.main()

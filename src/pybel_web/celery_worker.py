@@ -23,8 +23,8 @@ from pybel.parser.exc import InconsistentDefinitionError
 from pybel.resources.exc import ResourceError
 from pybel.struct.mutation import enrich_protein_and_rna_origins
 from pybel_web.application import create_application
-from pybel_web.celery_utils import create_celery
 from pybel_web.constants import get_admin_email, integrity_message, merged_document_folder
+from pybel_web.core.celery import PyBELCelery
 from pybel_web.manager import WebManager
 from pybel_web.manager_utils import (
     fill_out_report, get_network_summary_dict, insert_graph, make_graph_summary, run_heat_diffusion_helper,
@@ -42,7 +42,7 @@ log.setLevel(logging.DEBUG)
 
 app = create_application()
 mail = app.extensions.get('mail')
-celery = create_celery(app)
+celery = PyBELCelery.get_celery(app)
 
 dumb_belief_stuff = {
     METADATA_DESCRIPTION: {'Document description'},
@@ -62,11 +62,11 @@ def run_debug_task():
 
 
 @celery.task(name='summarize-bel')
-def summarize_bel(connection, report_id):
+def summarize_bel(connection: str, report_id: int):
     """Parse a BEL script asynchronously and email feedback.
 
-    :param str connection: A connection to build the manager
-    :param int report_id: A report to parse
+    :param connection: A connection to build the manager
+    :param report_id: A report to parse
     """
     manager = WebManager(connection=connection)
 
@@ -86,7 +86,7 @@ def summarize_bel(connection, report_id):
                 sender=pbw_sender,
             )
 
-    def finish_parsing(subject, body):
+    def finish_parsing(subject: str, body: str) -> str:
         """Send a message and finish parsing.
 
         :param str subject:

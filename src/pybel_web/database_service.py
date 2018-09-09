@@ -5,17 +5,17 @@
 import csv
 import logging
 import pickle
+import time
 from functools import lru_cache
 from io import StringIO
 from operator import itemgetter
 
 import networkx as nx
-import time
 from flask import Blueprint, abort, current_app, flash, jsonify, make_response, redirect, request
 from flask_security import current_user, login_required, roles_required
 from sqlalchemy import func, or_
 
-from pybel.constants import NAME, NAMESPACE, NAMESPACE_DOMAIN_OTHER
+from pybel.constants import NAMESPACE, NAMESPACE_DOMAIN_OTHER
 from pybel.manager.citation_utils import enrich_citation_model, get_pubmed_citation_response
 from pybel.manager.models import Author, Citation, Edge, Namespace, NamespaceEntry, Network, Node, network_edge
 from pybel.resources.definitions import write_annotation, write_namespace
@@ -29,7 +29,7 @@ from pybel_tools.filters.node_filters import exclude_pathology_filter
 from pybel_tools.query import Query
 from pybel_tools.selection import get_subgraph_by_node_filter
 from pybel_tools.summary import (
-    get_authors, get_incorrect_names_by_namespace, get_naked_names, get_undefined_namespace_names, info_json, info_list,
+    get_authors, get_incorrect_names_by_namespace, get_naked_names, get_undefined_namespace_names, info_list,
 )
 from . import models
 from .constants import AND, BLACK_LIST, PATHOLOGY_FILTER, PATHS_METHOD, RANDOM_PATH, UNDIRECTED
@@ -52,14 +52,14 @@ api_blueprint = Blueprint('dbs', __name__)
 
 @api_blueprint.route('/api/namespaces')
 def list_namespaces():
-    """Lists all namespaces
+    """List all namespaces.
 
     ---
     tags:
         - namespace
     """
     return jsonify([
-        namespace.to_json(include_id=True)
+        namespace.to_json()
         for namespace in manager.list_namespaces()
     ])
 
@@ -1158,12 +1158,12 @@ def get_query_summary(query_id):
     }
 
     t = time.time()
-    network = manager.safe_get_graph_from_query_id(user=current_user, query_id=query_id)
+    graph = manager.safe_get_graph_from_query_id(user=current_user, query_id=query_id)
     rv['time'] = time.time() - t
 
-    if network is not None and network.node:
+    if graph is not None and graph.node:
         rv['status'] = True
-        rv['payload'] = info_json(network)
+        rv['payload'] = graph.summary_dict()
     else:
         rv['status'] = False
 
@@ -1645,7 +1645,7 @@ def jsonify_nodes(nodes):
     :return: A jsonified response to send
     """
     return jsonify([
-        node.to_json(include_id=True)
+        node.to_json()
         for node in nodes
     ])
 
@@ -1806,51 +1806,47 @@ def get_all_nodes():
     ])
 
 
-def get_enriched_node_json(node):
-    """Enrich the node data with some of the Bio2BEL managers
+def get_enriched_node_json(node: Node):
+    """Enrich the node data with some of the Bio2BEL managers.
 
-    :param pybel.manager.models.Node node:
-    :rtype: dict
+    :rtype: Optional[dict]
     """
-    node_data = node.to_json()
-    node_data['bel'] = node.bel
+    node = node.to_json()
+    node['bel'] = node.as_bel()
 
-    if NAMESPACE not in node_data:
+    if NAMESPACE not in node:
         return
 
-    namespace = node_data[NAMESPACE]
-    name = node_data[NAME]
-    node_data['annotations'] = {}
+    namespace = node[NAMESPACE]
+    name = node.name
 
-    if namespace == 'HGNC' and hgnc_manager:
+    node['annotations'] = {}
+
+    if namespace.upper() == 'HGNC' and hgnc_manager:
         model = hgnc_manager.get_gene_by_hgnc_symbol(name)
-        node_data['annotations']['HGNC'] = {'missing': True} if model is None else model.to_dict()
+        node['annotations']['HGNC'] = {'missing': True} if model is None else model.to_dict()
 
-    elif namespace == 'CHEBI' and chebi_manager:
-        model = chebi_manager.get_chemical_by_chebi_name(name)
-        node_data['annotations']['CHEBI'] = {'missing': True} if model is None else model.to_json()
+    elif namespace.upper() == 'CHEBI' and chebi_manager:
+        model = chebi_manager.get_chemical_by_chebi_id(name)
+        if model is None:
+            model = chebi_manager.get_chemical_by_chebi_name(name)
+        node['annotations']['CHEBI'] = {'missing': True} if model is None else model.to_json()
 
-    elif namespace in {'EGID', 'ENTREZ'} and entrez_manager:
+    elif namespace.upper() in {'EGID', 'ENTREZ', 'NCBIGENE'} and entrez_manager:
         model = entrez_manager.get_gene_by_entrez_id(name)
-        node_data['annotations']['ENTREZ'] = {'missing': True} if model is None else model.to_json()
+        node['annotations']['ENTREZ'] = {'missing': True} if model is None else model.to_json()
 
-    elif namespace in {'EXPASY', 'EC'} and expasy_manager:
+    elif namespace.upper() in {'EXPASY', 'EC', 'ECCODE'} and expasy_manager:
         model = expasy_manager.get_enzyme_by_id(name)
-        node_data['annotations']['EXPASY'] = {'missing': True} if model is None else model.to_json()
+        node['annotations']['EXPASY'] = {'missing': True} if model is None else model.to_json()
 
-    elif namespace in {'GOCC', 'GOCCID', 'GOBP', 'GOBPID', 'GO'} and go_manager:
-        go_identifier = go_manager.guess_identifier(node_data)
-
-        if go_identifier is None:
-            node_data['annotations']['GO'] = {'missing': True}
-        else:
-            go_data = go_manager.get_go_by_id(go_identifier)
-
-            node_data['annotations']['GO'] = go_data
+    elif namespace.lower() in {'gocc', 'goccid', 'gobp', 'gobpid', 'go'} and go_manager:
+        model = go_manager.lookup_term(node)
+        node['annotations']['GO'] = {'missing': True} if model is None else model.to_json()
 
     elif namespace in {'MESH', 'MESHC', 'MESHPP', 'MESHD'} and mesh_manager:
         model = mesh_manager.get_term_by_name(name)
-        node_data['annotations']['MESH'] = {'missing': True} if model is None else model.to_json()
+        node['annotations']['MESH'] = {'missing': True} if model is None else model.to_json()
 
     elif namespace == 'RGD':
         pass
@@ -1858,7 +1854,7 @@ def get_enriched_node_json(node):
     elif namespace == 'MGI':
         pass
 
-    return node_data
+    return node
 
 
 @api_blueprint.route('/api/node/suggestion/')
@@ -2111,7 +2107,7 @@ def get_query_from_isolated_node(query_id, node_hash):
         type: string
     """
     parent_query = manager.safe_get_query(user=current_user, query_id=query_id)
-    node = manager.get_node_tuple_by_hash(node_hash)
+    node = manager.get_dsl_by_hash(node_hash)
 
     child_query = Query(network_ids=[
         network.id
@@ -2378,7 +2374,7 @@ def get_analysis(query_id, experiment_id):
     data = pickle.loads(experiment.result)
     results = [
         {
-            'node': hash_node(node),
+            'node': node.sha512,
             'data': data[node]
         }
         for node in graph
@@ -2414,7 +2410,7 @@ def get_analysis_median(query_id, experiment_id):
     data = pickle.loads(experiment.result)
     # position 3 is the 'median' score
     results = {
-        hash_node(node): data[node][3]
+        node.sha512: data[node][3]
         for node in graph
         if node in data
     }

@@ -2,16 +2,16 @@
 
 """This module contains model views for the Flask-admin interface."""
 
-from itertools import chain
-
 from flask import redirect, request
 from flask_admin.contrib.sqla import ModelView as ModelViewBase
 from flask_admin.contrib.sqla.ajax import QueryAjaxModelLoader
 from flask_admin.model.ajax import DEFAULT_PAGE_SIZE
 from flask_security import current_user, url_for_security
+from itertools import chain
 from sqlalchemy import or_
 
 from pybel.manager.models import Network
+from pybel_web.manager import WebManager
 from .models import Project
 
 
@@ -85,15 +85,11 @@ class QueryView(ModelView):
     column_display_pk = True
 
 
-def build_network_ajax_manager(manager):
-    """Build an AJAX manager class for use with Flask-Admin.
-
-    :param pybel_web.manager.WebManager manager:
-    :rtype: QueryAjaxModelLoader
-    """
+def build_network_ajax_manager(manager: WebManager) -> QueryAjaxModelLoader:
+    """Build an AJAX manager class for use with Flask-Admin."""
 
     class NetworkAjaxModelLoader(QueryAjaxModelLoader):
-        """Custom Network AJAX loader for Flask Admin"""
+        """A custom Network AJAX loader for Flask Admin."""
 
         def __init__(self):
             super(NetworkAjaxModelLoader, self).__init__('networks', manager.session, Network,
@@ -135,12 +131,8 @@ def build_network_ajax_manager(manager):
     return NetworkAjaxModelLoader()
 
 
-def build_project_view(manager):
-    """Build a Flask-Admin model view for a project.
-
-    :param pybel_web.manager.WebManager manager: A PyBEL manager
-    :rtype: flask_admin.contrib.sqla.ModelView
-    """
+def build_project_view(manager: WebManager) -> ModelView:
+    """Build a Flask-Admin model view for a project."""
 
     class ProjectView(ModelViewBase):
         """Special view to allow users of given projects to manage them"""

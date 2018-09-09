@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+"""A blueprint for uploading BEL documents."""
 
 import hashlib
 import logging
@@ -8,9 +9,13 @@ import time
 from flask import Blueprint, current_app, flash, redirect, render_template, url_for
 from flask_security import current_user, login_required, roles_required
 
-from ..forms import ParserForm
-from ..models import Report
-from ..proxies import manager
+from pybel_web.forms import ParserForm
+from pybel_web.models import Report
+from pybel_web.proxies import celery, manager
+
+__all__ = [
+    'uploading_blueprint',
+]
 
 log = logging.getLogger(__name__)
 
@@ -21,7 +26,7 @@ uploading_blueprint = Blueprint('parser', __name__)
 @roles_required('admin')
 def run_debug():
     """Run the debug task."""
-    task = current_app.celery.send_task('debug-task')
+    task = celery.send_task('debug-task')
     log.info('Parse task from %s', task.id)
     flash('Queued Celery debug task: {}.'.format(task.id))
     return redirect(url_for('.view_parser'))
@@ -70,15 +75,13 @@ def view_parser():
 
     time.sleep(2)
 
-    connection = current_app.config['SQLALCHEMY_DATABASE_URI']
-
     if form.feedback.data:
-        task = current_app.celery.send_task('summarize-bel', args=[connection, report_id])
+        task = celery.send_task('summarize-bel', args=[current_app.config['SQLALCHEMY_DATABASE_URI'], report_id])
         log.info('Email summary task from %s: report=%s/task=%s', current_user_str, report_id, task.id)
         flash('Queued email summary task {} for {}.'.format(report_id, report_name))
 
     else:
-        task = current_app.celery.send_task('upload-bel', args=[connection, report_id])
+        task = celery.send_task('upload-bel', args=[current_app.config['SQLALCHEMY_DATABASE_URI'], report_id])
         log.info('Parse task from %s: report=%s/task=%s', current_user_str, report_id, task.id)
         flash('Queued parsing task {} for {}.'.format(report_id, report_name))
 

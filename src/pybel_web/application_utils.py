@@ -8,217 +8,138 @@ import os
 
 from flask import Flask, g, render_template
 from flask_admin import Admin
-from flask_sqlalchemy import SQLAlchemy, get_state
+from flask_security import SQLAlchemyUserDatastore
 from raven.contrib.flask import Sentry
 
-from pybel import BELGraph
+from pybel import BELGraph, Manager
 from pybel.examples import *
 from pybel.manager.models import Author, Citation, Edge, Evidence, Namespace, NamespaceEntry, Network, Node
 from pybel.struct.mutation import expand_node_neighborhood, expand_nodes_neighborhoods, infer_child_relations
 from pybel.struct.pipeline import in_place_transformation, uni_in_place_transformation
 from .admin_model_views import (
-    CitationView, EdgeView, EvidenceView, ExperimentView, ModelView, NamespaceView, NetworkView,
-    NodeView, QueryView, ReportView, UserView, build_project_view,
+    CitationView, EdgeView, EvidenceView, ExperimentView, ModelView, NamespaceView, NetworkView, NodeView, QueryView,
+    ReportView, UserView, build_project_view,
 )
-from .constants import (
-    PYBEL_WEB_REGISTER_ADMIN, PYBEL_WEB_REGISTER_EXAMPLES, PYBEL_WEB_REGISTER_TRANSFORMATIONS,
-    PYBEL_WEB_REGISTER_USERS, PYBEL_WEB_USER_MANIFEST, SENTRY_DSN,
-)
+from .constants import PYBEL_WEB_USER_MANIFEST, SENTRY_DSN
 from .manager import WebManager
 from .manager_utils import insert_graph
-from .models import Assembly, Base, EdgeComment, EdgeVote, Experiment, NetworkOverlap, Query, Report, Role, User
+from .models import Assembly, EdgeComment, EdgeVote, Experiment, NetworkOverlap, Query, Report, Role, User
 from .resources.users import default_users_path
-
-__all__ = [
-    'PyBELSQLAlchemy',
-]
 
 log = logging.getLogger(__name__)
 logging.getLogger('urllib3.connectionpool').setLevel(logging.WARNING)
 
 
-class PyBELSQLAlchemy(SQLAlchemy):
-    """An extension of Flask-SQLAlchemy to support the PyBEL Web manager."""
+def register_transformations(manager: Manager):
+    """Register several manager-based PyBEL transformation functions."""
 
-    #: :type: pybel_web.manager.WebManager
-    manager = None
+    @uni_in_place_transformation
+    def expand_nodes_neighborhoods_by_ids(universe: BELGraph, graph: BELGraph, node_hashes):
+        """Expand around the neighborhoods of a list of nodes by identifier."""
+        nodes = [
+            manager.get_dsl_by_hash(node_hash)
+            for node_hash in node_hashes
+        ]
+        return expand_nodes_neighborhoods(universe, graph, nodes)
 
-    #: :type: Optional[raven.contrib.flask.Sentry]
-    sentry = None
+    @uni_in_place_transformation
+    def expand_node_neighborhood_by_id(universe: BELGraph, graph: BELGraph, node_hash: str) -> None:
+        """Expand around the neighborhoods of a node by identifier."""
+        node = manager.get_dsl_by_hash(node_hash)
+        return expand_node_neighborhood(universe, graph, node)
 
-    def init_app(self, app):
+    @in_place_transformation
+    def delete_nodes_by_ids(graph: BELGraph, node_hashes: list) -> None:
+        """Remove a list of nodes by identifier."""
+        nodes = [
+            manager.get_dsl_by_hash(node_hash)
+            for node_hash in node_hashes
+        ]
+        graph.remove_nodes_from(nodes)
+
+    @in_place_transformation
+    def delete_node_by_id(graph: BELGraph, node_hash: str) -> None:
+        """Remove a node by its SHA512."""
+        node = manager.get_dsl_by_hash(node_hash)
+        graph.remove_node(node)
+
+    @in_place_transformation
+    def propagate_node_by_hash(graph: BELGraph, node_hash: str) -> None:
+        """Infer relationships from a node by its SHA512."""
+        node = manager.get_dsl_by_hash(node_hash)
+        infer_child_relations(graph, node)
+
+
+def register_users(app: Flask, manager: WebManager):
+    if os.path.exists(default_users_path):
+        with open(default_users_path) as f:
+            default_users_manifest = json.load(f)
+        manager.register_users_from_manifest(default_users_manifest)
+
+    pybel_config_user_manifest = app.config.get(PYBEL_WEB_USER_MANIFEST)
+    if pybel_config_user_manifest is not None:
+        manager.register_users_from_manifest(pybel_config_user_manifest)
+
+
+def register_error_handlers(app: Flask, sentry: Sentry):
+    """Register the 500 and 403 error handlers."""
+
+    @app.errorhandler(500)
+    def internal_server_error(error):
+        """Call this filter when there's an internal server error.
+
+        Run a rollback and send some information to Sentry.
         """
-        :param flask.Flask app: A Flask app
-        """
-        super().init_app(app)
+        kwargs = {}
+        if app.config.get(SENTRY_DSN):
+            kwargs.update(dict(
+                event_id=g.sentry_event_id,
+                public_dsn=sentry.client.get_public_dsn('https')
+            ))
 
-        self.manager = WebManager(engine=self.engine, session=self.session)
+        return render_template('errors/500.html', **kwargs)
 
-        self.app.config.setdefault(PYBEL_WEB_REGISTER_TRANSFORMATIONS, True)
-        self.app.config.setdefault(PYBEL_WEB_REGISTER_USERS, True)
-        self.app.config.setdefault(PYBEL_WEB_REGISTER_ADMIN, True)
-        self.app.config.setdefault(PYBEL_WEB_REGISTER_EXAMPLES, False)
+    @app.errorhandler(403)
+    def forbidden_error(error):
+        """You must not cross this error"""
+        return render_template('errors/403.html')
 
-        sentry_dsn = self.app.config.get(SENTRY_DSN)
-        if sentry_dsn is not None:
-            log.info('initiating Sentry: %s', sentry_dsn)
-            self.sentry = Sentry(self.app, dsn=sentry_dsn)
 
-        Base.metadata.bind = self.engine
-        Base.query = self.session.query_property()
+def register_examples(manager: Manager, user_datastore: SQLAlchemyUserDatastore):
+    for graph in (sialic_acid_graph, egf_graph, statin_graph, homology_graph):
+        if not manager.has_name_version(graph.name, graph.version):
+            log.info('uploading public example graph: %s', graph)
+            insert_graph(manager, graph, public=True)
 
-        try:
-            Base.metadata.create_all()
-        except Exception:
-            log.exception('Failed to create all')
+    test_user = user_datastore.find_user(email='test@scai.fraunhofer.de')
 
-        self._register_error_handlers()
-        if app.config[PYBEL_WEB_REGISTER_TRANSFORMATIONS]:
-            self._register_transformations()
-        if app.config[PYBEL_WEB_REGISTER_USERS]:
-            self._register_users()
-        if app.config[PYBEL_WEB_REGISTER_ADMIN]:
-            self._register_admin_service()
-        if app.config[PYBEL_WEB_REGISTER_EXAMPLES]:
-            self._register_examples()
+    for graph in (braf_graph,):
+        if not manager.has_name_version(graph.name, graph.version):
+            log.info('uploading internal example graph: %s', graph)
+            insert_graph(manager, graph, user=test_user, public=False)
 
-    @property
-    def user_datastore(self):
-        """
-        :rtype: flask_security.SQLAlchemyUserDatastore
-        """
-        return self.manager.user_datastore
 
-    def _register_error_handlers(self):
-        """Register the 500 and 403 error handlers."""
+def register_admin_service(app: Flask, manager: WebManager) -> Admin:
+    """Add a Flask-Admin database front-end."""
+    admin = Admin(app, template_mode='bootstrap3')
 
-        @self.app.errorhandler(500)
-        def internal_server_error(error):
-            """Call this filter when there's an internal server error.
+    admin.add_view(UserView(User, manager.session))
+    admin.add_view(ModelView(Role, manager.session))
+    admin.add_view(NamespaceView(Namespace, manager.session))
+    admin.add_view(ModelView(NamespaceEntry, manager.session))
+    admin.add_view(NetworkView(Network, manager.session))
+    admin.add_view(NodeView(Node, manager.session))
+    admin.add_view(EdgeView(Edge, manager.session))
+    admin.add_view(CitationView(Citation, manager.session))
+    admin.add_view(EvidenceView(Evidence, manager.session))
+    admin.add_view(ModelView(Author, manager.session))
+    admin.add_view(ReportView(Report, manager.session))
+    admin.add_view(ExperimentView(Experiment, manager.session))
+    admin.add_view(QueryView(Query, manager.session))
+    admin.add_view(ModelView(Assembly, manager.session))
+    admin.add_view(ModelView(EdgeVote, manager.session))
+    admin.add_view(ModelView(EdgeComment, manager.session))
+    admin.add_view(ModelView(NetworkOverlap, manager.session))
+    admin.add_view(build_project_view(manager))
 
-            Run a rollback and send some information to Sentry.
-            """
-            kwargs = {}
-
-            if self.app.config.get(SENTRY_DSN):
-                kwargs.update(dict(
-                    event_id=g.sentry_event_id,
-                    public_dsn=self.sentry.client.get_public_dsn('https')
-                ))
-
-            return render_template(
-                'errors/500.html',
-                **kwargs
-            )
-
-        @self.app.errorhandler(403)
-        def forbidden_error(error):
-            """You must not cross this error"""
-            return render_template('errors/403.html')
-
-    def _register_transformations(self):
-        """Register all the transformation functions with PyBEL tools decorators."""
-
-        @uni_in_place_transformation
-        def expand_nodes_neighborhoods_by_ids(universe: BELGraph, graph: BELGraph, node_hashes):
-            """Expand around the neighborhoods of a list of nodes by identifier.
-
-            :param universe: A BEL graph
-            :param graph: A BEL graph
-            :param list[str] node_hashes: A list of node hashes
-            """
-            nodes = [
-                self.manager.get_dsl_by_hash(node_hash)
-                for node_hash in node_hashes
-            ]
-            return expand_nodes_neighborhoods(universe, graph, nodes)
-
-        @uni_in_place_transformation
-        def expand_node_neighborhood_by_id(universe: BELGraph, graph: BELGraph, node_hash: str) -> None:
-            """Expand around the neighborhoods of a node by identifier.
-
-            :param universe: A BEL graph
-            :param graph: A BEL graph
-            :param node_hash: The node hash
-            """
-            node = self.manager.get_dsl_by_hash(node_hash)
-            return expand_node_neighborhood(universe, graph, node)
-
-        @in_place_transformation
-        def delete_nodes_by_ids(graph: BELGraph, node_hashes: list) -> None:
-            """Remove a list of nodes by identifier.
-
-            :param list[str] node_hashes: A list of node hashes
-            """
-            nodes = [
-                self.manager.get_dsl_by_hash(node_hash)
-                for node_hash in node_hashes
-            ]
-            graph.remove_nodes_from(nodes)
-
-        @in_place_transformation
-        def delete_node_by_id(graph: BELGraph, node_hash: str) -> None:
-            """Remove a node by its SHA512."""
-            node = self.manager.get_dsl_by_hash(node_hash)
-            graph.remove_node(node)
-
-        @in_place_transformation
-        def propagate_node_by_hash(graph: BELGraph, node_hash: str) -> None:
-            """Infer relationships from a node by its SHA512."""
-            node = self.manager.get_dsl_by_hash(node_hash)
-            infer_child_relations(graph, node)
-
-    def _register_users(self):
-        """Add the default users to the user data store."""
-        if os.path.exists(default_users_path):
-            with open(default_users_path) as f:
-                default_users_manifest = json.load(f)
-            self.manager.register_users_from_manifest(default_users_manifest)
-
-        pybel_config_user_manifest = self.app.config.get(PYBEL_WEB_USER_MANIFEST)
-        if pybel_config_user_manifest is not None:
-            self.manager.register_users_from_manifest(pybel_config_user_manifest)
-
-    def _register_admin_service(self) -> Admin:
-        """Add a Flask-Admin database front-end."""
-        admin = Admin(self.app, template_mode='bootstrap3')
-
-        admin.add_view(UserView(User, self.session))
-        admin.add_view(ModelView(Role, self.session))
-        admin.add_view(NamespaceView(Namespace, self.session))
-        admin.add_view(ModelView(NamespaceEntry, self.session))
-        admin.add_view(NetworkView(Network, self.session))
-        admin.add_view(NodeView(Node, self.session))
-        admin.add_view(EdgeView(Edge, self.session))
-        admin.add_view(CitationView(Citation, self.session))
-        admin.add_view(EvidenceView(Evidence, self.session))
-        admin.add_view(ModelView(Author, self.session))
-        admin.add_view(ReportView(Report, self.session))
-        admin.add_view(ExperimentView(Experiment, self.session))
-        admin.add_view(QueryView(Query, self.session))
-        admin.add_view(ModelView(Assembly, self.session))
-        admin.add_view(ModelView(EdgeVote, self.session))
-        admin.add_view(ModelView(EdgeComment, self.session))
-        admin.add_view(ModelView(NetworkOverlap, self.session))
-        admin.add_view(build_project_view(self.manager))
-
-        return admin
-
-    def _register_examples(self):
-        """Add example BEL graphs that should always be present."""
-        for graph in (sialic_acid_graph, egf_graph, statin_graph, homology_graph):
-            if not self.manager.has_name_version(graph.name, graph.version):
-                log.info('uploading public example graph: %s', graph)
-                insert_graph(self.manager, graph, public=True)
-
-        test_user = self.user_datastore.find_user(email='test@scai.fraunhofer.de')
-
-        for graph in (braf_graph,):
-            if not self.manager.has_name_version(graph.name, graph.version):
-                log.info('uploading internal example graph: %s', graph)
-                insert_graph(self.manager, graph, user=test_user, public=False)
-
-    @staticmethod
-    def get_manager(app: Flask) -> WebManager:
-        """Get the manager for this app."""
-        return get_state(app).db.manager
+    return admin

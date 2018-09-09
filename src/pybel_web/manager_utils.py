@@ -3,12 +3,12 @@
 """Utilities in this package should not depend on anything (especially proxies), and should instead take arguments
 corresponding to objects"""
 
-import logging
-
 import itertools as itt
+import logging
+import time
+
 import networkx as nx
 import pandas as pd
-import time
 from flask import abort, flash, jsonify, redirect, request
 
 import pybel
@@ -73,14 +73,6 @@ def make_graph_summary(graph):
 
     return rv
 
-def dcn(node):
-    """Get the BEL string from a node tuple."""
-    return node.as_bel()
-
-def canonical_hash(node):
-    """Get the SHA512 string from a node tuple."""
-    return node.as_sha512()
-
 
 def get_network_summary_dict(graph):
     """Create a summary dictionary.
@@ -88,11 +80,12 @@ def get_network_summary_dict(graph):
     :param pybel.BELGraph graph:
     :rtype: dict
     """
+
     def get_pair_tuple(a, b):
         return a.as_bel(), a.sha512, b.as_bel(), b.sha512
 
     def get_triplet_tuple(a, b, c):
-        return a.as_bel(), a.sha512, b.as_bel(), b.sha512,c.as_bel(), c.sha512
+        return a.as_bel(), a.sha512, b.as_bel(), b.sha512, c.as_bel(), c.sha512
 
     return dict(
         regulatory_pairs=[
@@ -153,11 +146,9 @@ def get_network_summary_dict(graph):
     )
 
 
-def fill_out_report(network, report, graph_summary):
-    """Fills out a report
+def fill_out_report(network: Network, report: Report, graph_summary):
+    """Fill out the report for the network.
 
-    :param Network network:
-    :param Report report:
     :param dict graph_summary: Summary generated from :func:`make_graph_summary`
     """
     report.network = network

@@ -6,11 +6,11 @@ import datetime
 import logging
 import os
 import sys
+import time
 from collections import defaultdict
 from operator import itemgetter
 
 import flask
-import time
 from flask import Blueprint, Markup, abort, current_app, flash, redirect, render_template, request, url_for
 from flask_security import current_user, login_required, roles_required
 
@@ -20,20 +20,16 @@ from pybel.struct.grouping.annotations import get_subgraphs_by_annotation
 from pybel.struct.mutation import collapse_to_genes, remove_associations, remove_isolated_nodes, remove_pathologies
 from pybel.struct.pipeline import Pipeline
 from pybel.struct.pipeline.exc import MissingPipelineFunctionError
-from pybel.utils import get_version as get_pybel_version
+from pybel.struct.query import QueryMissingNetworksError
 from pybel_tools.biogrammar.double_edges import summarize_competeness
-from pybel_tools.query import QueryMissingNetworksError
-from pybel_tools.summary import info_json
 from pybel_tools.summary.error_summary import calculate_error_by_annotation
-from pybel_tools.utils import get_version as get_pybel_tools_version
+from pybel_web.constants import merged_document_folder
 from pybel_web.explorer_toolbox import get_explorer_toolbox
-from . import models
-from .constants import merged_document_folder
-from .external_managers import manager_dict
-from .manager_utils import next_or_jsonify
-from .models import Assembly, EdgeComment, EdgeVote, Experiment, Omic, Query, User
-from .proxies import manager
-from .utils import calculate_overlap_info, get_version as get_bel_commons_version
+from pybel_web.external_managers import manager_dict
+from pybel_web.manager_utils import next_or_jsonify
+from pybel_web.models import Assembly, EdgeComment, EdgeVote, Experiment, Omic, Query, User
+from pybel_web.proxies import celery, manager
+from pybel_web.utils import calculate_overlap_info, get_version as get_bel_commons_version
 
 __all__ = [
     'ui_blueprint',
@@ -63,10 +59,9 @@ def _format_big_number(n):
         return str(n)
 
 
-def redirect_to_view_explorer_query(query):
+def redirect_to_view_explorer_query(query: Query):
     """Returns the response for the biological network explorer in a given query to :func:`view_explorer_query`
 
-    :param Query query: A query
     :rtype: flask.Response
     """
     return redirect(url_for('ui.view_explorer_query', query_id=query.id))
@@ -428,7 +423,7 @@ def get_pipeline():
         return redirect(url_for('.view_query_builder'))
 
     else:
-        query = models.Query.from_query(manager, q, current_user)
+        query = Query.from_query(manager, q, current_user)
         manager.session.add(query)
         manager.session.commit()
 
@@ -507,6 +502,9 @@ def view_terms_and_conditions():
 @ui_blueprint.route('/about')
 def view_about():
     """Send the about page."""
+    from pybel.utils import get_version as get_pybel_version
+    from pybel_tools.utils import get_version as get_pybel_tools_version
+
     metadata = [
         ('Python Version', sys.version),
         ('PyBEL Version', get_pybel_version()),
@@ -579,7 +577,7 @@ def view_summarize_stratified(network_id, annotation):
     graph = network.as_bel()
     graphs = get_subgraphs_by_annotation(graph, annotation)
 
-    graph_summary = info_json(graph)
+    graph_summary = graph.summary_dict()
 
     errors = calculate_error_by_annotation(graph, annotation)
 
@@ -587,7 +585,7 @@ def view_summarize_stratified(network_id, annotation):
     useful_summaries = {}
 
     for name, subgraph in graphs.items():
-        summaries[name] = info_json(subgraph)
+        summaries[name] = subgraph.summary_dict()
         summaries[name]['node_overlap'] = subgraph.number_of_nodes() / graph.number_of_nodes()
         summaries[name]['edge_overlap'] = subgraph.number_of_edges() / graph.number_of_edges()
         summaries[name]['citation_overlap'] = summaries[name]['Citations'] / graph_summary['Citations']
@@ -595,7 +593,7 @@ def view_summarize_stratified(network_id, annotation):
         summaries[name]['error_density'] = (len(errors[name]) / graph.number_of_nodes()) if name in errors else 0
 
         useful_subgraph = extract_useful_subgraph(subgraph)
-        useful_summaries[name] = info_json(useful_subgraph)
+        useful_summaries[name] = useful_subgraph.summary_dict()
         useful_summaries[name]['node_overlap'] = subgraph.number_of_nodes() / graph.number_of_nodes()
         useful_summaries[name]['edge_overlap'] = subgraph.number_of_edges() / graph.number_of_edges()
         useful_summaries[name]['citation_overlap'] = summaries[name]['Citations'] / graph_summary['Citations']
@@ -668,16 +666,19 @@ def download_saved_file(fid):
 # The following endpoints are admin only #
 ##########################################
 
+@ui_blueprint.route('/debug-celery')
+def debug_celery():
+    """Send a debug task to celery."""
+    task = celery.send_task('debug-task')
+    flash('Task sent: {task}'.format(task=task))
+    return redirect(url_for('ui.home'))
+
+
 @ui_blueprint.route('/user')
 @roles_required('admin')
 def view_users():
     """Render a list of users."""
     return render_template('user/users.html', users=manager.session.query(User))
-
-
-def render_user(user):
-    """Render a user and their pending reports."""
-    return render_template('user/user.html', user=user, pending_reports=user.pending_reports(), manager=manager)
 
 
 @ui_blueprint.route('/user/current')
@@ -696,6 +697,11 @@ def view_user(user_id):
     """
     user = manager.get_user_by_id(user_id)
     return render_user(user)
+
+
+def render_user(user):
+    """Render a user and their pending reports."""
+    return render_template('user/user.html', user=user, pending_reports=user.pending_reports(), manager=manager)
 
 
 @ui_blueprint.route('/overview')
@@ -741,7 +747,7 @@ def send_async_project_merge(user_id, project_id):
     :param int user_id: The identifier of the user sending the task
     :param int project_id: The identifier of the project to merge
     """
-    task = current_app.celery.send_task('merge-project', args=[
+    task = celery.send_task('merge-project', args=[
         current_app.config['SQLALCHEMY_DATABASE_URI'],
         user_id,
         project_id
@@ -757,7 +763,7 @@ def build_summary_link_query(network_id):
     :param int network_id: The identifier of the network
     """
     nodes = [
-        manager.get_node_tuple_by_hash(node_hash)
+        manager.get_dsl_by_hash(node_hash)
         for node_hash in request.args.getlist('nodes')
     ]
 

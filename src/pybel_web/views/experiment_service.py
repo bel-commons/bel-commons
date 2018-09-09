@@ -2,23 +2,26 @@
 
 """A blueprint for differential gene expression (-omics) experiments and their analysis."""
 
-import flask
 import json
 import logging
-import numpy as np
-import pandas.errors
 import time
-from flask import Blueprint, current_app, make_response, redirect, render_template, request, url_for
-from flask_security import current_user, login_required, roles_required
+from collections import defaultdict
 from io import StringIO
 from operator import itemgetter
 
+import flask
+import numpy as np
+import pandas as pd
+import pandas.errors
+from flask import Blueprint, current_app, make_response, redirect, render_template, request, url_for
+from flask_security import current_user, login_required, roles_required
+from sklearn.cluster import KMeans
+
 from pybel_tools.analysis.heat import RESULT_LABELS
-from ..analysis_utils import get_dataframe_from_experiments
+from pybel_web.proxies import celery, manager
 from ..forms import DifferentialGeneExpressionForm
 from ..manager_utils import create_omic, next_or_jsonify
 from ..models import Experiment, Omic, Query
-from ..proxies import manager
 
 __all__ = [
     'experiment_blueprint',
@@ -182,7 +185,7 @@ def view_query_uploader(query_id):
 
     log.debug('stored data for analysis in %.2f seconds', time.time() - t)
 
-    task = current_app.celery.send_task('run-heat-diffusion', args=[
+    task = celery.send_task('run-heat-diffusion', args=[
         current_app.config['SQLALCHEMY_DATABASE_URI'],
         experiment.id
     ])
@@ -267,3 +270,50 @@ def view_query_experiment_comparison(query_id):
     """
     query = manager.safe_get_query(user=current_user, query_id=query_id)
     return render_experiment_comparison(query.experiments)
+
+
+def get_dataframe_from_experiments(experiments, *, normalize=None, clusters=None, seed=None):
+    """Build a Pandas DataFrame from the list of experiments.
+
+    :param iter[Experiment] experiments: Experiments to work on
+    :param bool normalize:
+    :param Optional[int] clusters: Number of clusters to use in k-means
+    :param Optional[int] seed: Random number seed
+    :rtype: pandas.DataFrame
+    """
+    x_label = ['Type', 'Namespace', 'Name']
+
+    entries = defaultdict(list)
+
+    for experiment in experiments:
+        if experiment.result is None:
+            continue
+
+        x_label.append('[{}] {}'.format(experiment.id, experiment.source_name))
+
+        for (func, namespace, name), values in sorted(experiment.get_data_list()):
+            median_value = values[3]
+            entries[func, namespace, name].append(median_value)
+
+    result = [
+        list(entry) + list(values)
+        for entry, values in entries.items()
+    ]
+
+    df = pd.DataFrame(result, columns=x_label)
+    df = df.fillna(0).round(4)
+
+    data_columns = x_label[3:]
+
+    if normalize:
+        df[data_columns] = df[data_columns].apply(lambda x: (x - np.min(x)) / (np.max(x) - np.min(x)))
+
+    if clusters is not None:
+        log.info('using %d-means clustering', clusters)
+        log.info('using seed: %s', seed)
+        km = KMeans(n_clusters=clusters, random_state=seed)
+        km.fit(df[data_columns])
+        df['Group'] = km.labels_ + 1
+        df = df.sort_values('Group')
+
+    return df

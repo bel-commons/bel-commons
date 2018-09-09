@@ -133,17 +133,17 @@ function handleExpasyNodeInfo(nodeObject, data) {
 }
 
 function handleGoNodeInfo(nodeObject, data) {
-    if (data.id) {
-        nodeObject['GO Identifier'] = data.id
+    if (data.go_id) {
+        nodeObject['GO Identifier'] = data.go_id
     }
     if (data.name) {
         nodeObject['GO Name'] = data.name
     }
-    if (data.def) {
-        nodeObject['GO Definition'] = data.def
+    if (data.namespace) {
+        nodeObject['GO Namespace'] = data.namespace
     }
-    if (data.alt_id) {
-        nodeObject['GO Alternate Identifiers'] = data.alt_id.join(' | ')
+    if (data.description) {
+        nodeObject['GO Definition'] = data.definition
     }
 }
 

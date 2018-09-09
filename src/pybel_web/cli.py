@@ -27,7 +27,7 @@ from .database_service import api_blueprint
 from .main_service import ui_blueprint
 from .manager import WebManager
 from .manager_utils import insert_graph
-from .models import Assembly, Base, EdgeComment, EdgeVote, Experiment, Omic, Project, Query, Report, Role, User
+from .models import Assembly, EdgeComment, EdgeVote, Experiment, Omic, Project, Query, Report, Role, User
 from .views import (
     build_parser_service, curation_blueprint, experiment_blueprint, help_blueprint, receiving_blueprint,
     reporting_blueprint, uploading_blueprint,
@@ -37,7 +37,7 @@ log = logging.getLogger('pybel_web')
 
 
 def _iterate_user_strings(manager_):
-    """Iterates over strings to print describing users
+    """Iterate over strings to print describing users.
 
     :param pybel.manager.Manager manager_:
     :rtype: iter[str]
@@ -129,10 +129,11 @@ def main():
 @click.option('--port', type=int, default=5000, help='Flask port. Defaults to 5000')
 @click.option('-v', '--debug', count=True, help="Turn on debugging. More v's, more debugging")
 @click.option('--config', type=click.File('r'), help='Additional configuration in a JSON file')
+@click.option('--enable-parser', is_flag=True)
 @click.option('-e', '--ensure-examples', is_flag=True, help='Ensure examples')
 @click.option('--with-gunicorn', is_flag=True)
 @click.option('-w', '--workers', type=int, default=number_of_workers(), help='Number of workers')
-def run(host, port, debug, config, ensure_examples, with_gunicorn, workers):
+def run(host, port, debug, config, enable_parser, ensure_examples, with_gunicorn, workers):
     """Run the web application."""
     set_debug_param(debug)
     if debug < 3:
@@ -163,7 +164,7 @@ def run(host, port, debug, config, ensure_examples, with_gunicorn, workers):
     app.register_blueprint(reporting_blueprint)
     app.register_blueprint(receiving_blueprint)
 
-    if app.config.get(PYBEL_WEB_USE_PARSER_API):
+    if enable_parser or app.config.get(PYBEL_WEB_USE_PARSER_API):
         build_parser_service(app)
 
     log.info('Done building %s in %.2f seconds', app, time.time() - t)
@@ -200,15 +201,8 @@ def worker(concurrency, broker, debug):
 def manage(ctx, connection):
     """Manage the database."""
     ctx.obj = WebManager(connection=connection)
-    Base.metadata.bind = ctx.obj.engine
-    Base.query = ctx.obj.session.query_property()
-
-
-@manage.command()
-@click.pass_obj
-def setup(manager):
-    """Create the database."""
-    manager.create_all()
+    ctx.obj.bind()
+    ctx.obj.create_all()
 
 
 @manage.command()

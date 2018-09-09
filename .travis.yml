@@ -15,8 +15,7 @@ stages:
   - test
 
 env:
-  - TOXENV=py
-    PYBEL_TEST_CONNECTOR=pymysql
+  - TOXENV=py PYBEL_TEST_CONNECTOR=pymysql
     PYBEL_TEST_CONNECTION=mysql+pymysql://travis@localhost/test?charset=utf8
 
 jobs:

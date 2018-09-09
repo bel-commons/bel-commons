@@ -25,8 +25,8 @@ CLASSIFIERS = [
 ]
 INSTALL_REQUIRES = [
     'ols_client>=0.0.8',
-    'pybel',
-    'pybel-tools',
+    'pybel>=0.12.0',
+    'pybel-tools>=0.7.0',
     'networkx>=2.1',
     'requests',
     'sqlalchemy',

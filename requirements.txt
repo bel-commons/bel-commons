@@ -1,6 +1,6 @@
 networkx>=2.1
-pybel
-pybel-tools
+pybel>=0.12.0
+pybel-tools>=0.7.0
 ols_client>=0.0.8
 sqlalchemy
 requests
