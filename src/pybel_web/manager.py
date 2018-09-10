@@ -3,21 +3,22 @@
 """Extensions to the PyBEL manager to support PyBEL-Web."""
 
 import datetime
+import itertools as itt
 import logging
+import time
 from collections import defaultdict
 from functools import lru_cache
+from typing import Dict, Iterable, List, Mapping, Optional, Set, Tuple
 
-import itertools as itt
 import networkx
-import time
-from flask import abort, render_template
+from flask import Response, abort, render_template
 from flask_security import SQLAlchemyUserDatastore
+from pybel_tools.utils import min_tanimoto_set_similarity, prepare_c3, prepare_c3_time_series
 from sqlalchemy import and_, func
 
-from pybel import Manager
-from pybel.manager.models import Citation, Evidence, Namespace, Network
+from pybel import BELGraph, Manager
+from pybel.manager.models import Author, Citation, Edge, Evidence, Namespace, Network, Node
 from pybel.struct.summary import count_namespaces, count_variants
-from pybel_tools.utils import min_tanimoto_set_similarity, prepare_c3, prepare_c3_time_series
 from .constants import AND
 from .manager_utils import get_network_summary_dict
 from .models import (
@@ -47,13 +48,8 @@ def sanitize_annotation(annotation_list):
     return dict(annotation_dict)
 
 
-def iter_unique_networks(networks):
-    """Yield only unique networks from an iterator.
-
-    :param iter[Network] networks: An iterable of networks
-    :return: An iterable over the unique network identifiers in the original iterator
-    :rtype: iter[Network]
-    """
+def iter_unique_networks(networks: Iterable[Network]) -> Iterable[Network]:
+    """Yield only unique networks from an iterator."""
     seen_ids = set()
 
     for network in networks:
@@ -65,12 +61,11 @@ def iter_unique_networks(networks):
             yield network
 
 
-def to_snake_case(function_name):
-    """Converts method.__name__ from capital and spaced to lower and underscore separated
+def to_snake_case(function_name: str) -> str:
+    """Convert method.__name__ from capital and spaced to lower and underscore separated.
 
-    :param str function_name:
+    :param function_name:
     :return: function name sanitized
-    :rtype: str
     """
     return function_name.replace(" ", "_").lower()
 
@@ -80,46 +75,13 @@ class WebManager(Manager):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
         self.user_datastore = SQLAlchemyUserDatastore(self, User, Role)
 
-    def iter_recent_public_networks(self):
-        """List the recent networks from that have been made public.
-
-        Wraps :meth:`pybel.manager.Manager.list_recent_networks()` and checks their associated reports.
-
-        :rtype: iter[Network]
-        """
-        return (
-            network
-            for network in self.list_recent_networks()
-            if network.report and network.report.public
-        )
-
-    def _iterate_networks_for_user(self, user):
-        """Iterate over a user's networks.
-
-        :param models.User user: A user
-        :rtype: iter[Network]
-        """
-        yield from self.iter_recent_public_networks()
-        yield from user.iter_available_networks()
-
-        # TODO reinvestigate how "organizations" are handled
-        if user.is_scai:
-            role = self.user_datastore.find_or_create_role(name='scai')
-            for user in role.users:
-                yield from user.iter_owned_networks()
-
-    def iter_networks_with_permission(self, user):
-        """Gets an iterator over all the networks from all the sources
-
-        :param models.User user: A user
-        :rtype: iter[Network]
-        """
+    def iter_networks_with_permission(self, user: User) -> Iterable[Network]:
+        """Get an iterator over all the networks from all the sources."""
         if not user.is_authenticated:
             log.debug('getting only public networks for anonymous user')
-            yield from self.iter_recent_public_networks()
+            yield from iter_recent_public_networks(self)
 
         elif user.is_admin:
             log.debug('getting all recent networks for admin')
@@ -127,79 +89,60 @@ class WebManager(Manager):
 
         else:
             log.debug('getting all networks for user [%s]', self)
-            yield from self._iterate_networks_for_user(user)
+            yield from iterate_networks_for_user(manager=self, user_datastore=self.user_datastore, user=user)
 
-    def get_network_ids_with_permission(self, user):
-        """Gets the set of networks ids tagged as public or uploaded by the user
+    def get_network_ids_with_permission(self, user: User) -> Set[int]:
+        """Get the set of networks ids tagged as public or uploaded by the user.
 
-        :param User user: A user
+        :param user: A user
         :return: A list of all networks tagged as public or uploaded by the user
-        :rtype: set[int]
         """
-        networks = self.iter_networks_with_permission(user)
-        return {network.id for network in networks}
+        return {
+            network.id
+            for network in self.iter_networks_with_permission(user)
+        }
 
-    def register_users_from_manifest(self, manifest):
-        """Register the users and roles in a manifest.
-
-        :param dict manifest: A manifest dictionary, which contains two keys: ``roles`` and ``users``. The ``roles``
-         key corresponds to a list of dictionaries containing ``name`` and ``description`` entries. The ``users`` key
-         corresponds to a list of dictionaries containing ``email``, ``password``, and ``name`` entries
-         as well as a optional ``roles`` entry with a corresponding list relational to the names in the ``roles``
-         entry in the manifest.
-        """
-        for role in manifest['roles']:
-            self.user_datastore.find_or_create_role(**role)
-
-        for user_manifest in manifest['users']:
-            email = user_manifest['email']
-            user = self.user_datastore.find_user(email=email)
-            if user is None:
-                log.info('creating user: %s', email)
-                user = self.user_datastore.create_user(
-                    confirmed_at=datetime.datetime.now(),
-                    email=email,
-                    password=user_manifest['password'],
-                    name=user_manifest['name']
-                )
-
-            for role_name in user_manifest.get('roles', []):
-                if self.user_datastore.add_role_to_user(user, role_name):
-                    log.info('registered %s as %s', user, role_name)
-
-        self.user_datastore.commit()
-
-    def get_project_by_id(self, project_id):
+    def get_project_by_id(self, project_id) -> Optional[Project]:
+        """Get a project by its database identifier, if it exists."""
         return self.session.query(Project).get(project_id)
 
-    def get_experiment_by_id(self, experiment_id):
+    def get_experiment_by_id(self, experiment_id) -> Optional[Experiment]:
+        """Get an experiment by its database identifier, if it exists."""
         return self.session.query(Experiment).get(experiment_id)
 
-    def get_omic_by_id(self, omic_id):
+    def get_omic_by_id(self, omic_id) -> Optional[Omic]:
+        """Get an -omics data set by its database identifier, if it exists."""
         return self.session.query(Omic).get(omic_id)
 
-    def get_query_by_id(self, query_id):
+    def get_query_by_id(self, query_id) -> Optional[Query]:
+        """Get a query by its database identifier, if it exists."""
         return self.session.query(Query).get(query_id)
 
-    def get_user_by_id(self, user_id):
+    def get_user_by_id(self, user_id) -> Optional[User]:
+        """Get a user by its database identifier, if it exists."""
         return self.session.query(User).get(user_id)
 
-    def get_report_by_id(self, report_id):
+    def get_report_by_id(self, report_id) -> Optional[Report]:
+        """Get a report by its database identifier, if it exists."""
         return self.session.query(Report).get(report_id)
 
-    def count_reports(self):
+    def count_reports(self) -> int:
+        """Count the reports in the database."""
         return self.session.query(Report).count()
 
-    def count_users(self):
+    def count_users(self) -> int:
+        """Count the users in the database."""
         return self.session.query(User).count()
 
-    def count_queries(self):
+    def count_queries(self) -> int:
+        """Count the queries in the database."""
         return self.session.query(Query).count()
 
-    def count_assemblies(self):
+    def count_assemblies(self) -> int:
+        """Count the assemblies in the database."""
         return self.session.query(Assembly).count()
 
-    def get_experiment_or_404(self, experiment_id):
+    def get_experiment_or_404(self, experiment_id: int) -> Experiment:
         """Get an experiment by its database identifier or 404 if it doesn't exist.
 
         :param int experiment_id:
@@ -213,12 +156,11 @@ class WebManager(Manager):
 
         return experiment
 
-    def safe_get_experiment(self, user, experiment_id):
+    def safe_get_experiment(self, user: User, experiment_id: int) -> Experiment:
         """Get an experiment by its database identifier, 404 if it doesn't exist, 403 if user doesn't have rights.
 
-        :param User user:
-        :param int experiment_id:
-        :rtype: Experiment
+        :param user:
+        :param experiment_id:
         :raises: werkzeug.exceptions.HTTPException
         """
         experiment = self.get_experiment_or_404(experiment_id)
@@ -234,51 +176,45 @@ class WebManager(Manager):
 
         return experiment
 
-    def safe_get_experiments(self, user, experiment_ids):
+    def safe_get_experiments(self, user: User, experiment_ids: Iterable[int]) -> List[Experiment]:
         """Get a list of experiments by their database identifiers or abort 404 if any don't exist.
 
-        :param User user:
-        :param list[int] experiment_ids:
-        :rtype: list[Experiment]
+        :raises: werkzeug.exceptions.HTTPException
         """
         return [
             self.safe_get_experiment(user=user, experiment_id=experiment_id)
             for experiment_id in experiment_ids
         ]
 
-    def get_namespace_by_id_or_404(self, namespace_id):
+    def get_namespace_by_id(self, namespace_id) -> Optional[Namespace]:
+        """Get a namespace by its identifier, if it exists."""
+        return self.session.query(Namespace).get(namespace_id)
+
+    def get_namespace_by_id_or_404(self, namespace_id: int) -> Namespace:
         """Get a namespace by its database identifier or abort 404 if it doesn't exist.
 
         :param namespace_id: The namespace's database identifier
-        :rtype: pybel.manager.models.Namespace
         :raises: werkzeug.exceptions.HTTPException
         """
-        namespace = self.session.query(Namespace).get(namespace_id)
+        namespace = self.get_namespace_by_id(namespace_id)
 
         if namespace is None:
             abort(404)
 
         return namespace
 
-    def get_annotation_or_404(self, annotation_id):
+    def get_annotation_or_404(self, annotation_id: int) -> Namespace:
         """Get an annotation by its database identifier or abort 404 if it doesn't exist.
 
         :param annotation_id: The annotation's database identifier
-        :rtype: pybel.manager.models.Namespace
         :raises: werkzeug.exceptions.HTTPException
         """
-        annotation = self.session.query(Namespace).get(annotation_id)
+        return self.get_namespace_by_id_or_404(annotation_id)
 
-        if annotation is None:
-            abort(404)
-
-        return annotation
-
-    def get_citation_by_id_or_404(self, citation_id):
+    def get_citation_by_id_or_404(self, citation_id: int) -> Citation:
         """Get a citation by its database identifier or abort 404 if it doesn't exist.
 
         :param citation_id: The citation's database identifier
-        :rtype: pybel.manager.models.Citation
         :raises: werkzeug.exceptions.HTTPException
         """
         citation = self.session.query(Citation).get(citation_id)
@@ -286,11 +222,10 @@ class WebManager(Manager):
             abort(404)
         return citation
 
-    def get_citation_by_pmid_or_404(self, pubmed_identifier):
+    def get_citation_by_pmid_or_404(self, pubmed_identifier: str) -> Citation:
         """Get a citation by its PubMed identifier or abort 404 if it doesn't exist.
 
         :param pubmed_identifier:
-        :rtype: pybel.manager.models.Citation
         :raises: werkzeug.exceptions.HTTPException
         """
         citation = self.get_citation_by_pmid(pubmed_identifier=pubmed_identifier)
@@ -300,11 +235,10 @@ class WebManager(Manager):
 
         return citation
 
-    def get_author_by_name_or_404(self, name):
+    def get_author_by_name_or_404(self, name: str) -> Author:
         """Get an author by their name or abort 404 if they don't exist.
 
-        :param str name: The author's name
-        :rtype: pybel.manager.models.Author
+        :param name: The author's name
         :raises: werkzeug.exceptions.HTTPException
         """
         author = self.get_author_by_name(name)
@@ -314,11 +248,10 @@ class WebManager(Manager):
 
         return author
 
-    def get_evidence_by_id_or_404(self, evidence_id):
+    def get_evidence_by_id_or_404(self, evidence_id: int) -> Evidence:
         """Get an evidence by its database identifier or abort 404 if it doesn't exist.
 
-        :param int evidence_id: The evidence's database identifier
-        :rtype: pybel.manager.models.Evidence
+        :param evidence_id: The evidence's database identifier
         :raises: werkzeug.exceptions.HTTPException
         """
         evidence = self.session.query(Evidence).get(evidence_id)
@@ -328,11 +261,10 @@ class WebManager(Manager):
 
         return evidence
 
-    def get_network_or_404(self, network_id):
+    def get_network_or_404(self, network_id: int) -> Network:
         """Gets a network by its database identifier or aborts 404 if it doesn't exist.
 
-        :param int network_id: The identifier of the network
-        :rtype: Network
+        :param network_id: The identifier of the network
         :raises: werkzeug.exceptions.HTTPException
         """
         network = self.get_network_by_id(network_id)
@@ -356,11 +288,10 @@ class WebManager(Manager):
 
         return query
 
-    def get_node_by_hash_or_404(self, node_hash):
-        """Gets a node's hash or sends a 404 missing message
+    def get_node_by_hash_or_404(self, node_hash: str) -> Node:
+        """Get a node if it exists or send a 404.
 
-        :param str node_hash: A PyBEL node hash
-        :rtype: pybel.manager.models.Node
+        :param node_hash: A PyBEL node hash
         :raises: werkzeug.exceptions.HTTPException
         """
         node = self.get_node_by_hash(node_hash)
@@ -370,11 +301,10 @@ class WebManager(Manager):
 
         return node
 
-    def get_edge_by_hash_or_404(self, edge_hash):
-        """Gets an edge if it exists or sends a 404
+    def get_edge_by_hash_or_404(self, edge_hash: str) -> Edge:
+        """Get an edge if it exists or send a 404.
 
-        :param str edge_hash: A PyBEL edge hash
-        :rtype: Edge
+        :param edge_hash: A PyBEL edge hash
         :raises: werkzeug.exceptions.HTTPException
         """
         edge = self.get_edge_by_hash(edge_hash)
@@ -384,11 +314,10 @@ class WebManager(Manager):
 
         return edge
 
-    def get_project_or_404(self, project_id):
-        """Get a project by id and aborts 404 if doesn't exist
+    def get_project_or_404(self, project_id: int) -> Project:
+        """Get a project by its database identifier or send a 404.
 
-        :param int project_id: The identifier of the project
-        :rtype: Project
+        :param project_id: The identifier of the project
         :raises: werkzeug.exceptions.HTTPException
         """
         project = self.get_project_by_id(project_id)
@@ -398,11 +327,10 @@ class WebManager(Manager):
 
         return project
 
-    def get_user_or_404(self, user_id):
-        """
+    def get_user_or_404(self, user_id: int) -> User:
+        """Get a user by identifier if it exists or send a 404.
 
         :param user_id:
-        :return: User
         :raises: werkzeug.exceptions.HTTPException
         """
         user = self.get_user_by_id(user_id)
@@ -412,24 +340,19 @@ class WebManager(Manager):
 
         return user
 
-    def drop_queries_by_user_id(self, user_id):
+    def drop_queries_by_user_id(self, user_id: int) -> None:
+        """Drop queries associated with the given user."""
         self.session.query(Query).filter(Query.user_id == user_id).delete()
         self.session.commit()
 
-    def _network_has_permission(self, user, network_id):
-        """
-        :param User user:
-        :param int network_id:
-        :rtype: bool
-        """
+    def _network_has_permission(self, user: User, network_id: int) -> bool:
         return network_id in self.get_network_ids_with_permission(user)
 
-    def safe_get_network(self, user, network_id):
+    def safe_get_network(self, user: User, network_id: int) -> Network:
         """Get a network and abort if the user does not have permissions to view.
 
-        :param User user:
-        :param int network_id: The identifier of the network
-        :rtype: Network
+        :param user:
+        :param network_id: The identifier of the network
         :raises: werkzeug.exceptions.HTTPException
         """
         network = self.get_network_or_404(network_id)
@@ -445,26 +368,17 @@ class WebManager(Manager):
 
         abort(403)
 
-    def safe_get_graph(self, user, network_id):
-        """Get the network as a BEL graph or aborts if the user does not have permission to view.
-
-        :param User user:
-        :type network_id: int
-        :rtype: pybel.BELGraph
-        """
+    def safe_get_graph(self, user: User, network_id: int) -> Optional[BELGraph]:
+        """Get the network as a BEL graph or aborts if the user does not have permission to view."""
         network = self.safe_get_network(user=user, network_id=network_id)
+        if network is not None:
+            return network.as_bel()
 
-        if network is None:
-            return
-
-        return network.as_bel()
-
-    def strict_get_network(self, user, network_id):
+    def strict_get_network(self, user: User, network_id: int) -> Network:
         """Get a network and abort if the user does not have super rights.
 
-        :param User user:
-        :param int network_id: The identifier of the network
-        :rtype: Network
+        :param user:
+        :param network_id: The identifier of the network
         :raises: werkzeug.exceptions.HTTPException
         """
         network = self.get_network_or_404(network_id)
@@ -474,12 +388,11 @@ class WebManager(Manager):
 
         abort(403, 'User {} does not have super user rights to network {}'.format(user, network))
 
-    def safe_get_project(self, user, project_id):
+    def safe_get_project(self, user: User, project_id: int) -> Project:
         """Get a project by identifier, aborts 404 if doesn't exist and aborts 403 if current user does not have rights.
 
-        :param User user:
-        :param int project_id: The identifier of the project
-        :rtype: Project
+        :param user:
+        :param project_id: The identifier of the project
         :raises: werkzeug.exceptions.HTTPException
         """
         project = self.get_project_or_404(project_id)
@@ -489,37 +402,34 @@ class WebManager(Manager):
 
         return project
 
-    def get_networks_with_permission(self, user, limit=None, offset=None):
-        """Gets all networks tagged as public or uploaded by the current user
+    def get_networks_with_permission(self, user: User) -> List[Network]:
+        """Get all networks tagged as public or uploaded by the current user.
 
         :return: A list of all networks tagged as public or uploaded by the current user
-        :rtype: list[Network]
         """
         if not user.is_authenticated:
-            return list(self.iter_recent_public_networks())
+            return list(iter_recent_public_networks(self))
 
         if user.is_admin:
             return self.list_recent_networks()
 
         return list(iter_unique_networks(self.iter_networks_with_permission(user)))
 
-    def get_edge_vote_by_user(self, edge, user):
+    def get_edge_vote_by_user(self, edge: Edge, user: User) -> Optional[EdgeVote]:
         """Look up a vote by the edge and user.
 
-        :param Edge edge: The edge that is being evaluated
-        :param User user: The user making the vote
-        :rtype: Optional[EdgeVote]
+        :param edge: The edge that is being evaluated
+        :param user: The user making the vote
         """
         vote_filter = and_(EdgeVote.edge == edge, EdgeVote.user == user)
         return self.session.query(EdgeVote).filter(vote_filter).one_or_none()
 
-    def get_or_create_vote(self, edge, user, agreed=None):
+    def get_or_create_vote(self, edge: Edge, user: User, agreed: Optional[bool] = None) -> EdgeVote:
         """Get a vote for the given edge and user.
 
-        :param Edge edge: The edge that is being evaluated
-        :param User user: The user making the vote
-        :param bool agreed: Optional value of agreement to put into vote
-        :rtype: EdgeVote
+        :param edge: The edge that is being evaluated
+        :param user: The user making the vote
+        :param agreed: Optional value of agreement to put into vote
         """
         vote = self.get_edge_vote_by_user(edge, user)
 
@@ -540,7 +450,7 @@ class WebManager(Manager):
 
         return vote
 
-    def help_get_edge_entry(self, edge, user):
+    def help_get_edge_entry(self, edge: Edge, user: User):
         """Get edge information by edge identifier.
 
         :param Edge edge: The  given edge
@@ -568,12 +478,11 @@ class WebManager(Manager):
 
         return data
 
-    def get_node_overlaps(self, network):
+    def get_node_overlaps(self, network: Network) -> Mapping[int, Tuple[Network, float]]:
         """Calculate overlaps to all other networks in the database.
 
-        :param Network network:
+        :param network:
         :return: A dictionary from {int network_id: (network, float similarity)} for this network to all other networks
-        :rtype: dict[int,tuple[Network,float]]
         """
         t = time.time()
 
@@ -615,7 +524,7 @@ class WebManager(Manager):
 
         return rv
 
-    def get_top_overlaps(self, network, user, number=10):
+    def get_top_overlaps(self, network: Network, user: User, number: int = 10):
         """
 
         :param Network network:
@@ -633,13 +542,12 @@ class WebManager(Manager):
         ]
         return overlaps[:number]
 
-    def safe_render_network_summary(self, user, network, template):
-        """Renders the graph summary page
+    def safe_render_network_summary(self, user: User, network: Network, template: str) -> Response:
+        """Render the graph summary page.
 
-        :param User user:
-        :param Network network:
-        :param str template:
-        :rtype: flask.Response
+        :param user:
+        :param network:
+        :param template:
         """
         graph = network.as_bel()
 
@@ -687,24 +595,21 @@ class WebManager(Manager):
             **er
         )
 
-    def render_network_summary_safe(self, network_id, user, template):
-        """Renders a network if the current user has the necessary rights
+    def render_network_summary_safe(self, network_id: int, user: User, template: str) -> Response:
+        """Render a network if the current user has the necessary rights
 
-        :param int network_id: The network to render
-        :param User user:
-        :param str template: The name of the template to render
-        :rtype: flask.Response
+        :param network_id: The network to render
+        :param user:
+        :param template: The name of the template to render
         """
         network = self.safe_get_network(user=user, network_id=network_id)
         return self.safe_render_network_summary(user=user, network=network, template=template)
 
-    def get_recent_reports(self, weeks=2):
-        """Gets reports from the last two weeks
+    def get_recent_reports(self, weeks: int = 2) -> Iterable[str]:
+        """Get reports from the last two weeks.
 
-        :param pybel.manager.Manager self: A cache manager
-        :param int weeks: The number of weeks to look backwards (builds :class:`datetime.timedelta`)
+        :param weeks: The number of weeks to look backwards (builds :class:`datetime.timedelta`)
         :return: An iterable of the string that should be reported
-        :rtype: iter[str]
         """
         now = datetime.datetime.utcnow()
         delta = datetime.timedelta(weeks=weeks)
@@ -734,11 +639,10 @@ class WebManager(Manager):
                                                        b.number_warnings)
             yield ''
 
-    def get_query_ancestor_id(self, query_id):  # TODO refactor this to be part of Query class
-        """Gets the oldest ancestor of the given query
+    def get_query_ancestor_id(self, query_id: int) -> Query:  # TODO refactor this to be part of Query class
+        """Get the oldest ancestor of the given query.
 
-        :param int query_id: The original query database identifier
-        :rtype: Query
+        :param  query_id: The original query database identifier
         """
         query = self.get_query_by_id(query_id)
 
@@ -748,13 +652,12 @@ class WebManager(Manager):
         return self.get_query_ancestor_id(query.parent_id)
 
     @lru_cache(maxsize=256)
-    def query_from_network_with_current_user(self, user, network_id, autocommit=True):
-        """Makes a query from the given network
+    def query_from_network_with_current_user(self, user: User, network_id: int, autocommit: bool = True) -> Query:
+        """Make a query from the given network.
 
-        :param User user: The user making the query
-        :param int network_id: The network's database identifier
-        :param bool autocommit: Should the query be committed immediately
-        :rtype: Query
+        :param user: The user making the query
+        :param network_id: The network's database identifier
+        :param autocommit: Should the query be committed immediately
         """
         network = self.safe_get_network(user=user, network_id=network_id)
         query = Query.from_network(network, user=user)
@@ -766,7 +669,7 @@ class WebManager(Manager):
         return query
 
     def convert_seed_value(self, key, form, value):
-        """ Normalize the form to type:data format
+        """Normalize the form to type:data format
 
         :param str key: seed method
         :param ImmutableMultiDict form: Form dictionary
@@ -792,7 +695,6 @@ class WebManager(Manager):
     def query_form_to_dict(self, form):
         """Converts a request.form multidict to the query JSON format.
 
-        :param pybel_web.manager.WebManager self:
         :param werkzeug.datastructures.ImmutableMultiDict form:
         :return: json representation of the query
         :rtype: dict
@@ -829,12 +731,11 @@ class WebManager(Manager):
 
         return query_dict
 
-    def _safe_get_query_helper(self, user, query_id):
+    def _safe_get_query_helper(self, user: User, query_id: int) -> Optional[Query]:
         """Checks if the user has the rights to run the given query
 
-        :param models.User user: A user object
-        :param int query_id: A query identifier
-        :rtype: Optional[Query]
+        :param user: A user object
+        :param query_id: A query identifier
         """
         query = self.get_query_or_404(query_id)
 
@@ -849,16 +750,15 @@ class WebManager(Manager):
         if not any(network.id not in permissive_network_ids for network in query.assembly.networks):
             return query
 
-    def safe_get_query(self, user, query_id):
+    def safe_get_query(self, user: User, query_id: int) -> Query:
         """Get a query by its database identifier.
 
         - Raises an HTTPException with 404 if the query does not exist.
         - Raises an HTTPException with 403 if the user does not have the appropriate permissions for all networks in
           the query's assembly.
 
-        :param User user:
-        :param int query_id: The database identifier for a query
-        :rtype: Query
+        :param user:
+        :param query_id: The database identifier for a query
         :raises: werkzeug.exceptions.HTTPException
         """
         query = self._safe_get_query_helper(user, query_id)
@@ -869,12 +769,11 @@ class WebManager(Manager):
         return query
 
     @lru_cache(maxsize=256)
-    def safe_get_graph_from_query_id(self, user, query_id):
+    def safe_get_graph_from_query_id(self, user: User, query_id: int) -> Optional[BELGraph]:
         """Process the GET request returning the filtered network.
 
-        :param User user:
-        :param int query_id: The database query identifier
-        :rtype: Optional[pybel.BELGraph]
+        :param user:
+        :param query_id: The database query identifier
         :raises: werkzeug.exceptions.HTTPException
         """
         log.debug('getting query [id=%d] from database', query_id)
@@ -892,3 +791,57 @@ class WebManager(Manager):
             raise e
 
         return result
+
+
+def iter_recent_public_networks(manager: Manager) -> Iterable[Network]:
+    """Iterate over the recent networks from that have been made public."""
+    return (
+        network
+        for network in manager.list_recent_networks()
+        if network.report and network.report.public
+    )
+
+
+def register_users_from_manifest(user_datastore: SQLAlchemyUserDatastore, manifest: Dict) -> None:
+    """Register the users and roles in a manifest.
+
+    :param user_datastore: A user data store
+    :param dict manifest: A manifest dictionary, which contains two keys: ``roles`` and ``users``. The ``roles``
+     key corresponds to a list of dictionaries containing ``name`` and ``description`` entries. The ``users`` key
+     corresponds to a list of dictionaries containing ``email``, ``password``, and ``name`` entries
+     as well as a optional ``roles`` entry with a corresponding list relational to the names in the ``roles``
+     entry in the manifest.
+    """
+    for role in manifest['roles']:
+        user_datastore.find_or_create_role(**role)
+
+    for user_manifest in manifest['users']:
+        email = user_manifest['email']
+        user = user_datastore.find_user(email=email)
+        if user is None:
+            log.info('creating user: %s', email)
+            user = user_datastore.create_user(
+                confirmed_at=datetime.datetime.now(),
+                email=email,
+                password=user_manifest['password'],
+                name=user_manifest['name']
+            )
+
+        for role_name in user_manifest.get('roles', []):
+            if user_datastore.add_role_to_user(user, role_name):
+                log.info('registered %s as %s', user, role_name)
+
+    user_datastore.commit()
+
+
+def iterate_networks_for_user(manager: Manager, user_datastore: SQLAlchemyUserDatastore, user: User) -> Iterable[
+    Network]:
+    """Iterate over a user's networks."""
+    yield from iter_recent_public_networks(manager)
+    yield from user.iter_available_networks()
+
+    # TODO reinvestigate how "organizations" are handled
+    if user.is_scai:
+        role = user_datastore.find_or_create_role(name='scai')
+        for user in role.users:
+            yield from user.iter_owned_networks()

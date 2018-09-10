@@ -180,13 +180,13 @@ def create_application(**kwargs) -> Flask:
         register_transformations(db.manager)
 
     if app.config[PYBEL_WEB_REGISTER_USERS]:
-        register_users(app, db.manager)
+        register_users(app, user_datastore=user_datastore)
 
     if app.config[PYBEL_WEB_REGISTER_EXAMPLES]:
-        register_examples(db.manager, user_datastore)
+        register_examples(manager=db.manager, user_datastore=user_datastore)
 
     if app.config[PYBEL_WEB_REGISTER_ADMIN]:
-        register_admin_service(app, db.manager)
+        register_admin_service(app=app, manager=db.manager, user_datastore=user_datastore)
 
     return app
 

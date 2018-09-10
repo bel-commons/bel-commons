@@ -1,27 +1,28 @@
 # -*- coding: utf-8 -*-
 
+"""SQLAlchemy models for PyBEL Web."""
+
 import codecs
+import datetime
 import itertools as itt
-import json
 from operator import attrgetter
 from pickle import dumps, loads
+from typing import List, Mapping, Optional, Tuple
 
-import datetime
 from flask_security import RoleMixin, UserMixin
+from pandas import DataFrame
 from sqlalchemy import (
-    Boolean, Column, DateTime, Float, ForeignKey, Index, Integer, LargeBinary, String, Table, Text,
-    UniqueConstraint,
+    Boolean, Column, DateTime, Float, ForeignKey, Index, Integer, LargeBinary, String, Table, Text, UniqueConstraint,
 )
 from sqlalchemy.orm import backref, relationship
 
-import pybel_tools.query
-from pybel import from_lines
+import pybel.struct.query
+from pybel import BELGraph, Manager
+from pybel.dsl import BaseEntity
 from pybel.manager.models import Base, EDGE_TABLE_NAME, Edge, LONGBLOB, NETWORK_TABLE_NAME, Network
 from pybel.struct import union
-from pybel_tools.query import SEED_DATA, SEED_METHOD
-from pybel.struct.query import Seeding
 from pybel.struct.pipeline import Pipeline
-from pybel.tokens import parse_result_to_dsl
+from pybel.struct.query import Seeding
 
 EXPERIMENT_TABLE_NAME = 'pybel_experiment'
 REPORT_TABLE_NAME = 'pybel_report'
@@ -42,7 +43,8 @@ OMICS_TABLE_NAME = 'pybel_omic'
 
 
 class Omic(Base):
-    """Represents a file filled with omic data"""
+    """Represents a file filled with omic data."""
+
     __tablename__ = OMICS_TABLE_NAME
 
     id = Column(Integer, primary_key=True)
@@ -78,22 +80,16 @@ class Omic(Base):
 
         return self.source_name
 
-    def set_source_df(self, df):
-        """Sets the source with a DataFrame by picklying it
-
-        :param pandas.DataFrame df:
-        """
+    def set_source_df(self, df: DataFrame):
+        """Sets the source with a DataFrame by pickling it."""
         self.source = dumps(df)
 
-    def get_source_df(self):
-        """Loads the pickled pandas DataFrame from the source file
-
-        :rtype: pandas.DataFrame
-        """
+    def get_source_df(self) -> DataFrame:
+        """Load the pickled pandas DataFrame from the source file."""
         return loads(self.source)
 
     def get_source_dict(self):
-        """Get a dictionary from gene to value
+        """Get a dictionary from gene to value.
 
         :rtype: dict[str,float]
         """
@@ -111,7 +107,7 @@ class Omic(Base):
         return result
 
     def to_json(self, include_id=True):
-        """Serializes as a dictionary
+        """Serialize as a dictionary.
 
         :param bool include_id:
         :rtype: dict
@@ -136,6 +132,7 @@ class Omic(Base):
 
 class Experiment(Base):
     """Represents an experiment."""
+
     __tablename__ = EXPERIMENT_TABLE_NAME
 
     id = Column(Integer, primary_key=True)
@@ -160,57 +157,46 @@ class Experiment(Base):
     completed = Column(Boolean, default=False)
     time = Column(Float, nullable=True)
 
-    def get_source_df(self):
-        """Loads the pickled pandas DataFrame from the source file
-
-        :rtype: pandas.DataFrame
-        """
+    def get_source_df(self) -> DataFrame:
+        """Load the pickled pandas DataFrame from the source file."""
         return self.omic.get_source_df()
 
-    def dump_results(self, scores):
-        """Dumps the results and marks this experiment as complete
+    def dump_results(self, scores: Mapping[BaseEntity, Tuple]):
+        """Dump the results and marks this experiment as complete.
 
-        :param dict[tuple,tuple] scores: The scores to store in this experiment
+        :param scores: The scores to store in this experiment
         """
         self.result = dumps(scores)
         self.completed = True
 
-    def get_results_df(self):
-        """Loads the pickled pandas DataFrame back into an object
-
-        :rtype: pandas.DataFrame
-        """
+    def get_results_df(self) -> Mapping[BaseEntity, Tuple]:
+        """Load the pickled pandas DataFrame back into an object."""
         return loads(self.result)
 
-    def get_data_list(self):
-        """Loads the data into a usable list
-
-        :rtype: list[tuple]
-        """
-        result = self.get_results_df()
+    def get_data_list(self) -> List[Tuple[BaseEntity, Tuple]]:
+        """Load the data into a usable list."""
         return [
-            (k, v)
-            for k, v in result.items()
-            if v[0]
+            (node, scores)
+            for node, scores in self.get_results_df().items()
+            if scores[0]
         ]
 
     def __repr__(self):
         return '<Experiment omic={}, query={}>'.format(self.omic.id, self.query.id)
 
     @property
-    def source_name(self):
-        """Gets a pretty version of the source data's name
-
-        :rtype: str
-        """
+    def source_name(self) -> str:
+        """Get a pretty version of the source data's name."""
         return self.omic.pretty_source_name
 
 
 class Report(Base):
-    """Stores information about compilation and uploading events"""
+    """Stores information about compilation and uploading events."""
+
     __tablename__ = REPORT_TABLE_NAME
 
     id = Column(Integer, primary_key=True)
+    task_uuid = Column(String(36), nullable=True, doc='The celery queue UUID')
 
     user_id = Column(Integer, ForeignKey('{}.id'.format(USER_TABLE_NAME)), doc='The user who uploaded the network')
     user = relationship('User', backref=backref('reports', lazy='dynamic'))
@@ -249,62 +235,37 @@ class Report(Base):
     )
     network = relationship(Network, backref=backref('report', uselist=False))
 
-    def get_lines(self):
-        """Decodes the lines stored in this
-
-        :rtype: list[str]
-        """
+    def get_lines(self) -> List[str]:
+        """Decode the lines stored in this."""
         return codecs.decode(self.source, self.encoding or 'utf-8').split('\n')
 
-    def parse_graph(self, manager):
-        """Parses the graph from the latent BEL Script
-
-        :param pybel.manager.Manager manager: A cache manager
-        :rtype: pybel.BELGraph
-        """
-        return from_lines(
-            self.get_lines(),
-            manager=manager,
-            allow_nested=self.allow_nested,
-            citation_clearing=self.citation_clearing,
-        )
-
     def dump_calculations(self, calculations_dict):
-        """Stores a calculations dict
+        """Store a calculations dict.
 
         :param dict calculations_dict:
         """
         self.calculations = dumps(calculations_dict)
 
     def get_calculations(self):
-        """Gets the summary calculations dictionary from this network
+        """Get the summary calculations dictionary from this network.
 
         :rtype: dict
         """
         return loads(self.calculations)
 
     @property
-    def is_displayable(self):
-        """Is this network small enough to confidently display?
-
-        :rtype: bool
-        """
+    def is_displayable(self) -> bool:
+        """Is this network small enough to confidently display?"""
         return self.number_nodes and self.number_nodes < 100
 
     @property
-    def incomplete(self):
-        """Is this still running?
-
-        :rtype: bool
-        """
+    def incomplete(self) -> bool:
+        """Is this still running?"""
         return self.completed is None and not self.message
 
     @property
-    def failed(self):
-        """Did this fail?
-
-        :rtype: bool
-        """
+    def failed(self) -> bool:
+        """Did this fail?"""
         return self.completed is not None and not self.completed
 
     @property
@@ -554,11 +515,10 @@ class User(Base, UserMixin):
             if report.incomplete
         ]
 
-    def get_vote(self, edge):
-        """Gets the vote that goes with this edge
+    def get_vote(self, edge: Edge):
+        """Get the vote that goes with this edge.
 
-        :param Edge edge:
-        :rtype: Optional[EdgeVote]
+        :rtype: EdgeVote
         """
         return self.votes.filter(EdgeVote.edge == edge).one_or_none()
 
@@ -570,12 +530,8 @@ class User(Base, UserMixin):
         """
         return self.is_authenticated and (self.is_admin or project.has_user(self))
 
-    def has_experiment_rights(self, experiment):
-        """Check if the user has rights to this experiment.
-
-        :param Experiment experiment:
-        :rtype: bool
-        """
+    def has_experiment_rights(self, experiment: Experiment) -> bool:
+        """Check if the user has rights to this experiment."""
         return (
                 experiment.public or
                 self.is_admin or
@@ -615,12 +571,8 @@ class User(Base, UserMixin):
 
         return result
 
-    def owns_network(self, network):
-        """Check if the user uploaded the network.
-
-        :type network: Network
-        :rtype: bool
-        """
+    def owns_network(self, network: Network) -> bool:
+        """Check if the user uploaded the network."""
         return network.report and network.report.user == self
 
 
@@ -633,7 +585,8 @@ assembly_network = Table(
 
 
 class Assembly(Base):
-    """Describes an assembly of networks"""
+    """Describes an assembly of networks."""
+
     __tablename__ = ASSEMBLY_TABLE_NAME
 
     id = Column(Integer, primary_key=True)
@@ -748,11 +701,8 @@ class Query(Base):
             user=self.user,
         )
 
-    def set_seeding(self, query):
-        """Set the seeding container from a PyBEL Query.
-
-        :type query: pybel_tools.query.Query
-        """
+    def set_seeding(self, query: pybel.struct.query.Query):
+        """Set the seeding container from a PyBEL Query."""
         self.seeding = query.seeding.dumps()
 
     def get_seeding(self):
@@ -763,11 +713,8 @@ class Query(Base):
         if self.seeding:
             return Seeding.loads(self.seeding)
 
-    def set_pipeline(self, query):
-        """Set the pipeline value from a PyBEL Tools query.
-
-        :type query: pybel_tools.query.Query
-        """
+    def set_pipeline(self, query: pybel.struct.query.Query):
+        """Set the pipeline value from a PyBEL Tools query."""
         self.pipeline = query.pipeline.dumps()
 
     def get_pipeline(self):
@@ -778,13 +725,10 @@ class Query(Base):
         if self.pipeline:
             return Pipeline.loads(self.pipeline)
 
-    def _get_query(self):
-        """Convert this object to a :class:`pybel_tools.query.Query` object.
-
-        :rtype: pybel_tools.query.Query
-        """
+    def _get_query(self) -> pybel.struct.query.Query:
+        """Convert this object to a query object."""
         if not hasattr(self, '_query'):
-            self._query = pybel_tools.query.Query(
+            self._query = pybel.struct.query.Query(
                 network_ids=self.network_ids,
                 seeding=self.get_seeding(),
                 pipeline=self.get_pipeline(),
@@ -793,19 +737,13 @@ class Query(Base):
         return self._query
 
     @property
-    def networks(self):
-        """Gets the networks from the contained assembly
-
-        :rtype: list[Network]
-        """
+    def networks(self) -> List[Network]:
+        """Get the networks from the contained assembly."""
         return self.assembly.networks
 
     @property
-    def network_ids(self):
-        """
-
-        :rtype: list[int]
-        """
+    def network_ids(self) -> List[int]:
+        """Get the network identifiers from the contained assembly."""
         return [network.id for network in self.networks]
 
     def to_json(self, include_id=True):
@@ -839,22 +777,14 @@ class Query(Base):
         if pipeline:
             return pipeline.to_json()
 
-    def run(self, manager):
-        """A wrapper around the :meth:`pybel_tools.query.Query.run` function of the enclosed
-        :class:`pybel_tools.pipeline.Query` object.
-
-        :type manager: pybel.manager.Manager
-        :return: The result of this query
-        :rtype: Optional[pybel.BELGraph]
-        """
+    def run(self, manager: Manager) -> Optional[BELGraph]:
+        """A wrapper around the run function function of the enclosed query."""
         return self._get_query().run(manager)
 
     @staticmethod
-    def from_assembly(assembly, user=None):
-        """Builds a query from an assembly
+    def from_assembly(assembly: Assembly, user: Optional[User] = None):
+        """Build a query from an assembly.
 
-        :param Assembly assembly: An assembly
-        :param Optional[User] user: The user who owns this query
         :rtype: Query
         """
         query = Query(assembly=assembly)
@@ -897,12 +827,9 @@ class Query(Base):
         return Query.from_networks(networks=[network], user=user)
 
     @staticmethod
-    def from_query(manager, query, user=None):
+    def from_query(manager: Manager, query: pybel.struct.query.Query, user: Optional[User] = None):
         """Build an ORM query from a PyBEL-Tools query.
 
-        :param pybel.manager.Manager manager: A database manager
-        :param pybel_tools.query.Query query: A query
-        :param Optional[User] user: A user
         :rtype: Query
         """
         networks = manager.get_networks_by_ids(query.network_ids)
@@ -921,7 +848,7 @@ class Query(Base):
         :param Optional[Pipeline] pipeline: Instance of a pipeline
         :rtype: Query
         """
-        q = pybel_tools.query.Query(network_ids, seeding=seeding, pipeline=pipeline)
+        q = pybel.struct.query.Query(network_ids, seeding=seeding, pipeline=pipeline)
         return Query.from_query(manager, q, user=user)
 
     def build_appended(self, name, *args, **kwargs):

@@ -10,8 +10,10 @@ import time
 import networkx as nx
 import pandas as pd
 from flask import abort, flash, jsonify, redirect, request
-
+from typing import Mapping, Tuple, List, Optional
 import pybel
+from pybel import BELGraph
+from pybel.dsl import BaseEntity
 from pybel.constants import GENE, RELATION
 from pybel.manager.models import Network
 from pybel.struct.filters import filter_edges
@@ -238,12 +240,12 @@ def create_omic(data, gene_column, data_column, description, source_name, sep, p
     return result
 
 
-def calculate_scores(graph, data, runs, use_tqdm=False):
+def calculate_scores(graph: BELGraph, data, runs: int, use_tqdm:bool=False) -> Mapping[BaseEntity, Tuple]:
     """Calculate heat diffusion scores.
 
-    :param pybel.BELGraph graph: A BEL graph
+    :param graph: A BEL graph
     :param dict[str,float] data: A dictionary of {name: data}
-    :param int runs: The number of permutations
+    :param runs: The number of permutations
     :param bool use_tqdm:
     :return: A dictionary of {pybel node tuple: results tuple} from
      :py:func:`pybel_tools.analysis.ucmpa.calculate_average_scores_on_subgraphs`
@@ -257,7 +259,6 @@ def calculate_scores(graph, data, runs, use_tqdm=False):
 
     candidate_mechanisms = generate_bioprocess_mechanisms(graph, LABEL)
     scores = calculate_average_scores_on_subgraphs(candidate_mechanisms, LABEL, runs=runs, use_tqdm=use_tqdm)
-
     return scores
 
 

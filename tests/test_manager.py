@@ -6,12 +6,13 @@ import logging
 import time
 import unittest
 
+from pybel_web.manager import iter_recent_public_networks
+from pybel_web.models import Assembly, EdgeComment, EdgeVote, Query, Report, User
 from werkzeug.exceptions import HTTPException
 
 from pybel.constants import INCREASES, PROTEIN
 from pybel.manager.models import Edge, Network, Node
 from pybel.testing.utils import n
-from pybel_web.models import Assembly, EdgeComment, EdgeVote, Query, Report, User
 from tests.cases import TemporaryCacheMethodMixin
 
 log = logging.getLogger(__name__)
@@ -79,7 +80,7 @@ class TestManager(TemporaryCacheMethodMixin):
         self.assertEqual(4, self.manager.count_networks())
         self.assertEqual(3, self.manager.count_reports())
 
-        public_networks = list(self.manager.iter_recent_public_networks())
+        public_networks = list(iter_recent_public_networks(self.manager))
         self.assertIn(n1, public_networks)
         self.assertIn(n2, public_networks)
         self.assertEqual(2, len(public_networks))
@@ -95,7 +96,7 @@ class TestManager(TemporaryCacheMethodMixin):
         self.assertEqual(5, self.manager.count_networks())
         self.assertEqual(4, self.manager.count_reports())
 
-        public_networks = list(self.manager.iter_recent_public_networks())
+        public_networks = list(iter_recent_public_networks(self.manager))
         self.assertNotIn(n1, public_networks)
         self.assertIn(n1v2, public_networks)
         self.assertIn(n2, public_networks)

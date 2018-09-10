@@ -30,7 +30,7 @@ For production, ``uwsgi`` seems to work pretty well.
 __version__ = '0.2.4'
 
 __title__ = 'pybel_web'
-__description__ = 'PyBEL Web'
+__description__ = 'A web application exposing core PyBEL functionalities'
 __url__ = 'https://github.com/pybel/pybel-web'
 
 __author__ = 'Charles Tapley Hoyt'

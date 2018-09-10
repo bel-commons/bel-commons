@@ -21,7 +21,7 @@ from .admin_model_views import (
     ReportView, UserView, build_project_view,
 )
 from .constants import PYBEL_WEB_USER_MANIFEST, SENTRY_DSN
-from .manager import WebManager
+from .manager import register_users_from_manifest
 from .manager_utils import insert_graph
 from .models import Assembly, EdgeComment, EdgeVote, Experiment, NetworkOverlap, Query, Report, Role, User
 from .resources.users import default_users_path
@@ -70,15 +70,15 @@ def register_transformations(manager: Manager):
         infer_child_relations(graph, node)
 
 
-def register_users(app: Flask, manager: WebManager):
+def register_users(app: Flask, user_datastore: SQLAlchemyUserDatastore):
     if os.path.exists(default_users_path):
         with open(default_users_path) as f:
             default_users_manifest = json.load(f)
-        manager.register_users_from_manifest(default_users_manifest)
+        register_users_from_manifest(user_datastore=user_datastore, manifest=default_users_manifest)
 
     pybel_config_user_manifest = app.config.get(PYBEL_WEB_USER_MANIFEST)
     if pybel_config_user_manifest is not None:
-        manager.register_users_from_manifest(pybel_config_user_manifest)
+        register_users_from_manifest(user_datastore=user_datastore, manifest=pybel_config_user_manifest)
 
 
 def register_error_handlers(app: Flask, sentry: Sentry):
@@ -119,7 +119,7 @@ def register_examples(manager: Manager, user_datastore: SQLAlchemyUserDatastore)
             insert_graph(manager, graph, user=test_user, public=False)
 
 
-def register_admin_service(app: Flask, manager: WebManager) -> Admin:
+def register_admin_service(app: Flask, manager: Manager, user_datastore: SQLAlchemyUserDatastore) -> Admin:
     """Add a Flask-Admin database front-end."""
     admin = Admin(app, template_mode='bootstrap3')
 
@@ -140,6 +140,6 @@ def register_admin_service(app: Flask, manager: WebManager) -> Admin:
     admin.add_view(ModelView(EdgeVote, manager.session))
     admin.add_view(ModelView(EdgeComment, manager.session))
     admin.add_view(ModelView(NetworkOverlap, manager.session))
-    admin.add_view(build_project_view(manager))
+    admin.add_view(build_project_view(manager=manager, user_datastore=user_datastore))
 
     return admin

@@ -24,7 +24,9 @@ jobs:
     - stage: lint
       env: TOXENV=manifest
     - env: TOXENV=flake8
-    - env: TOXENV=pylint
+    - env: TOXENV=pyroma
+    - env: TOXENV=xenon
+    - env: TOXENV=mypy
     # docs stage
     - stage: docs
       env: TOXENV=doc8
@@ -34,7 +36,9 @@ jobs:
 matrix:
   allow_failures:
     - env: TOXENV=flake8
-    - env: TOXENV=pylint
+    - env: TOXENV=pyroma
+    - env: TOXENV=xenon
+    - env: TOXENV=mypy
 
 before_script:
   - mysql -e 'CREATE DATABASE test CHARACTER SET utf8 COLLATE utf8_general_ci;'

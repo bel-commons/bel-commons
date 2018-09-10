@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-"""
+"""Tests for the Flask app.
+
 Reference for testing Flask
 
 - Flask Documentation http://flask.pocoo.org/docs/0.12/testing/
@@ -14,12 +15,12 @@ import unittest
 
 from flask import url_for
 from flask_security import current_user
-
-from pybel.constants import PYBEL_CONNECTION
-from pybel.testing.cases import TemporaryCacheMixin
 from pybel_web.application import PyBELSQLAlchemy, create_application
 from pybel_web.database_service import api_blueprint
 from pybel_web.main_service import ui_blueprint
+
+from pybel.constants import PYBEL_CONNECTION
+from pybel.testing.cases import TemporaryCacheMixin
 
 log = logging.getLogger(__name__)
 log.setLevel(10)

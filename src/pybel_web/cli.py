@@ -14,13 +14,12 @@ import sys
 import time
 
 import click
-from flask_security import SQLAlchemyUserDatastore
+from pybel_tools.utils import enable_cool_mode, get_version as pybel_tools_get_version
 
 from pybel import from_path, from_pickle
 from pybel.constants import get_cache_connection
 from pybel.manager.models import Network
 from pybel.utils import get_version as pybel_version
-from pybel_tools.utils import enable_cool_mode, get_version as pybel_tools_get_version
 from .application import create_application
 from .constants import PYBEL_WEB_REGISTER_EXAMPLES, PYBEL_WEB_USE_PARSER_API, get_admin_email
 from .database_service import api_blueprint
@@ -36,10 +35,10 @@ from .views import (
 log = logging.getLogger('pybel_web')
 
 
-def _iterate_user_strings(manager_):
+def _iterate_user_strings(manager_: WebManager):
     """Iterate over strings to print describing users.
 
-    :param pybel.manager.Manager manager_:
+    :param manager_:
     :rtype: iter[str]
     """
     for user in manager_.session.query(User).all():
@@ -186,7 +185,6 @@ def worker(concurrency, broker, debug):
     from celery.bin import worker
 
     pybel_worker = worker.worker(app=celery)
-
     pybel_worker.run(
         broker=broker,
         loglevel=debug,
@@ -208,15 +206,14 @@ def manage(ctx, connection):
 @manage.command()
 @click.option('-f', '--file', type=click.File('r'), default=sys.stdout, help='Input user/role file')
 @click.pass_obj
-def load(manager, file):
+def load(manager: WebManager, file):
     """Load dumped stuff for loading later (in lieu of having proper migrations)."""
-    ds = SQLAlchemyUserDatastore(manager, User, Role)
+    ds = manager.user_datastore
 
     for line in file:
-
         line = line.strip().split('\t')
         email, password = line[:2]
-        u = ds.find_user(email=email)
+        u = manager.user_datastore.find_user(email=email)
 
         if not u:
             u = ds.create_user(
@@ -259,13 +256,12 @@ def drop(manager, yes, user_dump):
 
 @manage.command()
 @click.pass_obj
-def sanitize_reports(manager):
+def sanitize_reports(manager: WebManager):
     """Add admin as the owner of all non-reported graphs"""
-    ds = SQLAlchemyUserDatastore(manager, User, Role)
-    u = ds.find_user(email=get_admin_email())
+    u = manager.user_datastore.find_user(email=get_admin_email())
     click.echo('Adding {} as owner of unreported uploads'.format(u))
 
-    for n in manager.session.query(Network):
+    for n in manager.list_networks():
         if n.report is not None:
             continue
 
@@ -335,9 +331,9 @@ def ls(manager):
 @click.option('-a', '--admin', is_flag=True, help="Add admin role")
 @click.option('-s', '--scai', is_flag=True, help="Add SCAI role")
 @click.pass_obj
-def add(manager, email, password, admin, scai):
+def add(manager: WebManager, email, password, admin, scai):
     """Create a new user."""
-    ds = SQLAlchemyUserDatastore(manager, User, Role)
+    ds = manager.user_datastore
     try:
         user = ds.create_user(email=email, password=password, confirmed_at=datetime.datetime.now())
 
@@ -355,9 +351,9 @@ def add(manager, email, password, admin, scai):
 @users.command()
 @click.argument('email')
 @click.pass_obj
-def rm(manager, email):
+def rm(manager: WebManager, email):
     """Delete a user."""
-    ds = SQLAlchemyUserDatastore(manager, User, Role)
+    ds = manager.user_datastore
     user_ = ds.find_user(email=email)
     ds.delete_user(user_)
     ds.commit()
@@ -366,9 +362,9 @@ def rm(manager, email):
 @users.command()
 @click.argument('email')
 @click.pass_obj
-def make_admin(manager, email):
+def make_admin(manager: WebManager, email):
     """Make a given user an admin."""
-    ds = SQLAlchemyUserDatastore(manager, User, Role)
+    ds = manager.user_datastore
     try:
         ds.add_role_to_user(email, 'admin')
         ds.commit()
@@ -380,9 +376,9 @@ def make_admin(manager, email):
 @click.argument('email')
 @click.argument('role')
 @click.pass_obj
-def add_role(manager, email, role):
+def add_role(manager: WebManager, email, role):
     """Add a role to a user."""
-    ds = SQLAlchemyUserDatastore(manager, User, Role)
+    ds = manager.user_datastore
     try:
         ds.add_role_to_user(email, role)
         ds.commit()
@@ -399,9 +395,9 @@ def roles():
 @click.argument('name')
 @click.option('-d', '--description')
 @click.pass_obj
-def add(manager, name, description):
+def add(manager: WebManager, name, description):
     """Create a new role."""
-    ds = SQLAlchemyUserDatastore(manager, User, Role)
+    ds = manager.user_datastore
     try:
         ds.create_role(name=name, description=description)
         ds.commit()
@@ -412,9 +408,9 @@ def add(manager, name, description):
 @roles.command()
 @click.argument('name')
 @click.pass_obj
-def rm(manager, name):
+def rm(manager: WebManager, name):
     """Delete a user."""
-    ds = SQLAlchemyUserDatastore(manager, User, Role)
+    ds = manager.user_datastore
     user = ds.find_role(name)
     if user:
         ds.delete(user)

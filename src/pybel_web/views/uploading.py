@@ -4,8 +4,8 @@
 
 import hashlib
 import logging
-
 import time
+
 from flask import Blueprint, current_app, flash, redirect, render_template, url_for
 from flask_security import current_user, login_required, roles_required
 
@@ -73,15 +73,15 @@ def view_parser():
     current_user_str = str(current_user)
     manager.session.close()
 
-    time.sleep(2)
+    time.sleep(2)  # half hearted attempt to not get a race condition
 
+    connection = current_app.config['SQLALCHEMY_DATABASE_URI']
     if form.feedback.data:
-        task = celery.send_task('summarize-bel', args=[current_app.config['SQLALCHEMY_DATABASE_URI'], report_id])
+        task = celery.send_task('summarize-bel', args=[connection, report_id])
         log.info('Email summary task from %s: report=%s/task=%s', current_user_str, report_id, task.id)
         flash('Queued email summary task {} for {}.'.format(report_id, report_name))
-
     else:
-        task = celery.send_task('upload-bel', args=[current_app.config['SQLALCHEMY_DATABASE_URI'], report_id])
+        task = celery.send_task('upload-bel', args=[connection, report_id])
         log.info('Parse task from %s: report=%s/task=%s', current_user_str, report_id, task.id)
         flash('Queued parsing task {} for {}.'.format(report_id, report_name))
 
