@@ -9,33 +9,34 @@ import time
 from functools import lru_cache
 from io import StringIO
 from operator import itemgetter
+from typing import Iterable, Mapping, Optional
 
 import networkx as nx
-from flask import Blueprint, abort, current_app, flash, jsonify, make_response, redirect, request
+from flask import Blueprint, Response, abort, current_app, flash, jsonify, make_response, redirect, request
 from flask_security import current_user, login_required, roles_required
 from sqlalchemy import func, or_
 
+import pybel_web.core.models
 from pybel.constants import NAMESPACE, NAMESPACE_DOMAIN_OTHER
 from pybel.manager.citation_utils import enrich_citation_model, get_pubmed_citation_response
-from pybel.manager.models import Author, Citation, Edge, Namespace, NamespaceEntry, Network, Node, network_edge
+from pybel.manager.models import Author, Citation, Edge, NamespaceEntry, Network, Node, network_edge
 from pybel.resources.definitions import write_annotation, write_namespace
-from pybel.struct import get_random_path, get_subgraph_by_annotations, union
+from pybel.struct import get_random_path, get_subgraph_by_annotations
 from pybel.struct.pipeline.decorators import deprecated, no_arguments_map
 from pybel.struct.pipeline.exc import MissingPipelineFunctionError
+from pybel.struct.query import Query
 from pybel.struct.summary import get_pubmed_identifiers
 from pybel.utils import get_version as get_pybel_version
 from pybel_tools.analysis.heat import RESULT_LABELS
 from pybel_tools.filters.node_filters import exclude_pathology_filter
-from pybel_tools.query import Query
 from pybel_tools.selection import get_subgraph_by_node_filter
 from pybel_tools.summary import (
     get_authors, get_incorrect_names_by_namespace, get_naked_names, get_undefined_namespace_names, info_list,
 )
-from . import models
 from .constants import AND, BLACK_LIST, PATHOLOGY_FILTER, PATHS_METHOD, RANDOM_PATH, UNDIRECTED
 from .external_managers import *
 from .manager_utils import fill_out_report, make_graph_summary, next_or_jsonify
-from .models import EdgeComment, Project, Report, User
+from .models import EdgeComment, Project, Report, User, UserQuery
 from .proxies import manager
 from .send_utils import serve_network, to_json_custom
 from .utils import get_tree_annotations
@@ -50,7 +51,7 @@ api_blueprint = Blueprint('dbs', __name__)
 # NAMESPACE
 ####################################
 
-@api_blueprint.route('/api/namespaces')
+@api_blueprint.route('/api/namespace')
 def list_namespaces():
     """List all namespaces.
 
@@ -62,53 +63,6 @@ def list_namespaces():
         namespace.to_json()
         for namespace in manager.list_namespaces()
     ])
-
-
-@api_blueprint.route('/api/namespace/<int:namespace_id>/drop')
-@roles_required('admin')
-def drop_namespace_by_id(namespace_id):
-    """Drops a namespace given its identifier
-
-    ---
-    tags:
-        - namespace
-    parameters:
-      - name: namespace_id
-        in: path
-        description: The database namespace identifier
-        required: true
-        type: integer
-    """
-    namespace = manager.get_namespace_by_id_or_404(namespace_id)
-
-    log.info('dropping namespace %s', namespace_id)
-
-    manager.session.delete(namespace)
-    manager.session.commit()
-
-    return next_or_jsonify(
-        'Dropped namespace: {}'.format(namespace),
-        namespace={
-            'id': namespace.id,
-            'name': namespace.name
-        }
-    )
-
-
-@api_blueprint.route('/api/namespace/drop')
-@roles_required('admin')
-def drop_namespaces():
-    """Drops all namespaces
-
-    ---
-    tags:
-        - namespace
-    """
-    log.info('dropping all namespaces')
-    manager.session.query(Namespace).delete()
-    manager.session.commit()
-
-    return next_or_jsonify('Dropped all namespaces')
 
 
 def _build_namespace_helper(graph, namespace, names):
@@ -158,14 +112,13 @@ def download_undefined_namespace(network_id, namespace):
     return _build_namespace_helper(graph, namespace, names)
 
 
-@api_blueprint.route('/api/network/<int:network_id>/builder/namespace/incorrect/<namespace>')
-def download_missing_namespace(network_id, namespace):
+@api_blueprint.route('/api/network/<int:network_id>/builder/namespace/incorrect/<namespace_keyword>')
+def download_missing_namespace(network_id: int, namespace_keyword: str):
     """Outputs a namespace built from the missing names in the given namespace
 
     ---
     tags:
         - network
-        - namespace
     parameters:
       - name: network_id
         in: path
@@ -179,8 +132,8 @@ def download_missing_namespace(network_id, namespace):
         type: string
     """
     graph = manager.safe_get_graph(user=current_user, network_id=network_id)
-    names = get_incorrect_names_by_namespace(graph, namespace)  # TODO put into report data
-    return _build_namespace_helper(graph, namespace, names)
+    names = get_incorrect_names_by_namespace(graph, namespace_keyword)  # TODO put into report data
+    return _build_namespace_helper(graph, namespace_keyword, names)
 
 
 @api_blueprint.route('/api/network/<int:network_id>/builder/namespace/naked')
@@ -265,28 +218,6 @@ def download_list_annotation(network_id, annotation):
 # ANNOTATIONS
 ####################################
 
-@api_blueprint.route('/api/annotation/<annotation_id>/drop')
-@roles_required('admin')
-def drop_annotation_by_id(annotation_id):
-    """Drops an annotation given its identifier
-
-    ---
-    tags:
-        - annotation
-    parameters:
-      - name: annotation_id
-        in: path
-        description: The database identifier of an annotation
-        required: true
-        type: integer
-    """
-    annotation = manager.get_annotation_or_404(annotation_id)
-
-    manager.session.delete(annotation)
-    manager.session.commit()
-
-    return next_or_jsonify('Dropped annotation: {}'.format(annotation))
-
 
 @api_blueprint.route('/api/annotation/suggestion/')
 def suggest_annotation():
@@ -348,9 +279,44 @@ def get_network_metadata(network_id):
     return jsonify(**network.to_json(include_id=True))
 
 
+@api_blueprint.route('/api/network')
+def get_network_list():
+    """Get a list of networks.
+
+    ---
+    tags:
+        - network
+    """
+    return jsonify([
+        network.to_json(include_id=True)
+        for network in manager.list_networks()
+    ])
+
+
+@api_blueprint.route('/api/network', methods=['DELETE'])
+@roles_required('admin')
+def drop_networks():
+    """Delete all networks.
+
+    ---
+    tags:
+        - network
+
+    responses:
+      200:
+        description: All networks were dropped
+    """
+    log.info('dropping all networks')
+
+    for network_id, in manager.session.query(Network.id).all():
+        drop_network_helper(network_id)
+
+    return next_or_jsonify('Dropped all networks')
+
+
 @api_blueprint.route('/api/network/suggestion/')
 def suggest_network():
-    """Creates a suggestion for networks
+    """Suggest networks based on the name/description.
 
     ---
     tags:
@@ -380,7 +346,7 @@ def suggest_network():
 
 @api_blueprint.route('/api/network/<int:network_id>/namespaces')
 def namespaces_by_network(network_id):
-    """Gets all of the namespaces in a network
+    """Get all of the namespaces in a network.
 
     ---
     tags:
@@ -401,7 +367,7 @@ def namespaces_by_network(network_id):
 
 @api_blueprint.route('/api/network/<int:network_id>/annotations')
 def annotations_by_network(network_id):
-    """Gets all of the annotations in a network
+    """Get all of the annotations in a network.
 
     ---
     tags:
@@ -510,12 +476,8 @@ def nodes_by_network(network_id):
     return jsonify_nodes(network.nodes)
 
 
-def drop_network_helper(network_id):
-    """Drops a network
-
-    :type network_id: int
-    :rtype: flask.Response
-    """
+def drop_network_helper(network_id: int) -> Response:
+    """Drop a network."""
     network = manager.strict_get_network(user=current_user, network_id=network_id)
 
     log.info('dropping network %s', network_id)
@@ -541,10 +503,10 @@ def drop_network_helper(network_id):
         return next_or_jsonify('Dropped network #{}'.format(network_id), network_id=network_id, action='drop network')
 
 
-@api_blueprint.route('/api/network/<int:network_id>/drop')
+@api_blueprint.route('/api/network/<int:network_id>', methods=['DELETE'])
 @login_required
-def drop_network(network_id):
-    """Drops a specific graph
+def drop_network(network_id: int):
+    """Delete a network.
 
     :param int network_id: The identifier of the network to drop
 
@@ -566,34 +528,8 @@ def drop_network(network_id):
     return drop_network_helper(network_id)
 
 
-@api_blueprint.route('/api/network/drop')
-@roles_required('admin')
-def drop_networks():
-    """Drops all networks
-
-    ---
-    tags:
-        - network
-
-    responses:
-      200:
-        description: All networks were dropped
-    """
-    log.info('dropping all networks')
-
-    for network_id, in manager.session.query(Network.id).all():
-        drop_network_helper(network_id)
-
-    return next_or_jsonify('Dropped all networks')
-
-
-def _help_claim_network(network, user):
-    """Claim a network and fills out its report.
-
-    :param Network network: A network to claim
-    :param User user: The user who will claim it
-    :rtype: Optional[Report]
-    """
+def _help_claim_network(network: Network, user: User) -> Optional[Report]:
+    """Claim a network and fills out its report."""
     if network.report:
         return
 
@@ -621,10 +557,10 @@ def _help_claim_network(network, user):
 
 @api_blueprint.route('/api/network/<int:network_id>/claim')
 @roles_required('admin')
-def claim_network(network_id):
-    """Adds a report for the given network
+def claim_network(network_id: int):
+    """Add a report for the given network.
 
-    :param int network_id: A network's database identifier
+    :param network_id: A network's database identifier
 
     ---
     tags:
@@ -659,7 +595,7 @@ def claim_network(network_id):
 @api_blueprint.route('/api/network/pillage')
 @roles_required('admin')
 def pillage():
-    """Claims all unclaimed networks"""
+    """Claim all unclaimed networks."""
     counter = 0
     t = time.time()
 
@@ -673,20 +609,6 @@ def pillage():
             counter += 1
 
     return next_or_jsonify('Claimed {} networks in {:.2f} seconds'.format(counter, time.time() - t))
-
-
-@api_blueprint.route('/api/network')
-def get_network_list():
-    """Gets a list of networks
-
-    ---
-    tags:
-        - network
-    """
-    return jsonify([
-        network.to_json(include_id=True)
-        for network in manager.list_networks()
-    ])
 
 
 @api_blueprint.route('/api/network/<int:network_id>/export/<serve_format>')
@@ -1141,7 +1063,7 @@ def get_all_pmids(query_id):
 
 @api_blueprint.route('/api/query/<int:query_id>/summarize')
 def get_query_summary(query_id):
-    """Gets a summary of the results from a given query
+    """Get the summary of the results from a given query.
 
     ---
     tags:
@@ -1390,20 +1312,6 @@ def get_edges():
     ])
 
 
-@api_blueprint.route('/api/edge/drop')
-@roles_required('admin')
-def drop_edges():
-    """Drop all edges.
-
-    ---
-    tags:
-        - edge
-    """
-    log.warning('dropping all edges')
-    manager.drop_edges()
-    return next_or_jsonify('dropped all edges')
-
-
 @api_blueprint.route('/api/edge/by_bel/statement/<bel>')
 def get_edges_by_bel(bel):
     """Get edges that match the given BEL
@@ -1577,12 +1485,8 @@ def store_comment(edge_hash):
 # NODES
 ####################################
 
-def jsonify_nodes(nodes):
-    """Convert a list of nodes to json.
-
-    :param list[Node] nodes:
-    :return: A jsonified response to send
-    """
+def jsonify_nodes(nodes: Iterable[Node]) -> Response:
+    """Convert a list of nodes to json."""
     return jsonify([
         node.to_json()
         for node in nodes
@@ -1592,7 +1496,7 @@ def jsonify_nodes(nodes):
 @api_blueprint.route('/api/node/')
 @roles_required('admin')
 def get_nodes():
-    """Gets all nodes
+    """Get all nodes.
 
     ---
     tags:
@@ -1623,21 +1527,6 @@ def get_nodes():
     return jsonify_nodes(bq)
 
 
-@api_blueprint.route('/api/node/drop')
-@roles_required('admin')
-def drop_nodes():
-    """Drops all nodes
-
-    ---
-    tags:
-        - node
-    """
-    log.warning('dropping all nodes')
-    manager.session.query(Node).delete()
-    manager.session.commit()
-    return next_or_jsonify('Dropped all nodes')
-
-
 @api_blueprint.route('/api/node/<node_hash>')
 def get_node_by_hash(node_hash):
     """Gets a node
@@ -1659,32 +1548,9 @@ def get_node_by_hash(node_hash):
     return jsonify(rv)
 
 
-@api_blueprint.route('/api/node/<node_hash>/drop')
-@roles_required('admin')
-def drop_node(node_hash):
-    """Drop a node.
-
-    :param node_hash: A PyBEL node hash
-
-    ---
-    tags:
-        - node
-    parameters:
-      - name: node_hash
-        in: path
-        description: The PyBEL hash of a node
-        required: true
-        type: string
-    """
-    node = manager.get_node_by_hash_or_404(node_hash)
-    manager.session.delete(node)
-    manager.session.commit()
-    return next_or_jsonify('Dropped node: {}'.format(node.bel))
-
-
 @api_blueprint.route('/api/node/by_bel/<bel>')
 def nodes_by_bel(bel):
-    """Gets all nodes that match the given BEL
+    """Get all nodes that match the given BEL.
 
     ---
     tags:
@@ -1708,7 +1574,7 @@ def nodes_by_name(name):
 
 @api_blueprint.route('/api/namespace/<namespace>/nodes')
 def nodes_by_namespace(namespace):
-    """Gets all nodes with identifiers from the given namespace
+    """Get all nodes with identifiers from the given namespace.
 
     ---
     tags:
@@ -1720,7 +1586,7 @@ def nodes_by_namespace(namespace):
 
 @api_blueprint.route('/api/namespace/<namespace>/name/<name>/nodes')
 def nodes_by_namespace_name(namespace, name):
-    """Gets all nodes with the given namespace and name
+    """Get all nodes with the given namespace and name.
 
     ---
     tags:
@@ -1730,26 +1596,8 @@ def nodes_by_namespace_name(namespace, name):
     return jsonify_nodes(nodes)
 
 
-@api_blueprint.route('/api/node')
-@roles_required('admin')
-def get_all_nodes():
-    """Gets all nodes
-
-    ---
-    tags:
-        - node
-    """
-    return jsonify([
-        node.to_json(include_id=True)
-        for node in manager.session.query(Node).all()
-    ])
-
-
-def get_enriched_node_json(node: Node):
-    """Enrich the node data with some of the Bio2BEL managers.
-
-    :rtype: Optional[dict]
-    """
+def get_enriched_node_json(node: Node) -> Optional[Mapping]:
+    """Enrich the node data with some of the Bio2BEL managers."""
     node = node.to_json()
     node['bel'] = node.as_bel()
 
@@ -1847,10 +1695,10 @@ def get_pipeline_function_names():
     ])
 
 
-@api_blueprint.route('/api/query/<int:query_id>/drop')
+@api_blueprint.route('/api/query/<int:query_id>', methods=['DELETE'])
 @login_required
-def drop_query_by_id(query_id):
-    """Drop a query.
+def drop_query_by_id(query_id: int):
+    """Delete a query.
 
     User must own the query to drop it.
 
@@ -1875,7 +1723,7 @@ def drop_query_by_id(query_id):
     return next_or_jsonify('Dropped query #{}'.format(query_id))
 
 
-@api_blueprint.route('/api/query/drop')
+@api_blueprint.route('/api/query', methods=['DELETE'])
 @roles_required('admin')
 def drop_queries():
     """Drop all queries.
@@ -1886,13 +1734,16 @@ def drop_queries():
     tags:
         - query
     """
-    manager.session.query(models.Query).delete()
+    manager.session.query(UserQuery).delete()
+    manager.session.commit()
+
+    manager.session.query(pybel_web.core.models.Query).delete()
     manager.session.commit()
 
     return next_or_jsonify('Dropped all queries')
 
 
-@api_blueprint.route('/api/user/<int:user_id>/drop-queries/')
+@api_blueprint.route('/api/user/<int:user_id>/query', methods=['DELETE'])
 @login_required
 def drop_user_queries(user_id):
     """Drop all queries associated with the user.
@@ -1917,8 +1768,8 @@ def drop_user_queries(user_id):
 
 
 @api_blueprint.route('/api/query/<int:query_id>/info')
-def query_to_network(query_id):
-    """Returns info from a given query identifier
+def query_to_network(query_id: int):
+    """Return info from a given query identifier.
 
     ---
     tags:
@@ -1934,8 +1785,8 @@ def query_to_network(query_id):
 
     rv = query.to_json(include_id=True)
 
-    if query.user:
-        rv['creator'] = str(query.user)
+    if query.user_query and query.user_query.user:
+        rv['creator'] = str(query.user_query.user)
 
     network_ids = rv['network_ids']
     rv['networks'] = [
@@ -1948,7 +1799,7 @@ def query_to_network(query_id):
 
 @api_blueprint.route('/api/query/<int:query_id>/parent')
 def get_query_parent(query_id):
-    """Returns the parent of the query
+    """Return the parent of the query.
 
     ---
     tags:
@@ -1976,7 +1827,7 @@ def get_query_parent(query_id):
 
 @api_blueprint.route('/api/query/<int:query_id>/ancestor')
 def get_query_oldest_ancestry(query_id):
-    """Returns the parent of the query
+    """Return the parent of the query.
 
     ---
     tags:
@@ -1998,12 +1849,11 @@ def get_query_oldest_ancestry(query_id):
     })
 
 
-def add_pipeline_entry(query_id, name, *args, **kwargs):
+def add_pipeline_entry(query_id: int, name: str, *args, **kwargs) -> Response:
     """Add an entry to the pipeline.
 
-    :param int query_id: The identifier of the query
-    :param str name: The name of the function to append
-    :rtype: flask.Response
+    :param query_id: The identifier of the query
+    :param name: The name of the function to append
     """
     query = manager.safe_get_query(user=current_user, query_id=query_id)
 
@@ -2011,8 +1861,7 @@ def add_pipeline_entry(query_id, name, *args, **kwargs):
         qo = query.build_appended(name, *args, **kwargs)
     except MissingPipelineFunctionError:
         log.error('missing pipeline function: %s', name)
-        abort(403, 'Invalid function name: {}'.format(name))
-        return
+        return abort(403, 'Invalid function name: {}'.format(name))
 
     if current_user.is_authenticated:
         qo.user = current_user
@@ -2055,8 +1904,8 @@ def get_query_from_isolated_node(query_id, node_hash):
     child_query.append_seeding_induction([node])
 
     child_query_model = parent_query.get_assembly_query()
-    child_query_model.set_seeding(child_query)
-    child_query_model.set_pipeline(child_query)
+    child_query_model.set_seeding_from_query(child_query)
+    child_query_model.set_pipeline_from_query(child_query)
 
     if current_user.is_authenticated:
         child_query_model.user = current_user
@@ -2253,7 +2102,7 @@ def drop_user_role(user, role):
     return jsonify({'status': 200})
 
 
-@api_blueprint.route('/api/user/<int:user_id>/drop')
+@api_blueprint.route('/api/user/<int:user_id>', methods=['DELETE'])
 @roles_required('admin')
 def drop_user(user_id):
     """Drop a user.
@@ -2357,10 +2206,10 @@ def get_analysis_median(query_id, experiment_id):
     return jsonify(results)
 
 
-@api_blueprint.route('/api/experiment/<int:experiment_id>/drop')
+@api_blueprint.route('/api/experiment/<int:experiment_id>', methods=['DELETE'])
 @login_required
 def drop_experiment_by_id(experiment_id):
-    """Drops an experiment
+    """Delete an experiment.
 
     ---
     tags:
@@ -2538,10 +2387,10 @@ def get_project_metadata(project_id):
     return jsonify(**project.to_json())
 
 
-@api_blueprint.route('/api/project/<int:project_id>/drop')
+@api_blueprint.route('/api/project/<int:project_id>', methods=['DELETE'])
 @login_required
 def drop_project_by_id(project_id):
-    """Drops a given project from the database
+    """Drop a project.
 
     :param int project_id: THe project's database identifier
 
@@ -2644,12 +2493,8 @@ def export_project_network(project_id, serve_format):
               - gsea
     """
     project = manager.safe_get_project(user=current_user, project_id=project_id)
-
-    networks = [network.as_bel() for network in project.networks]
-
-    network = union(networks)
-
-    return serve_network(network, serve_format=serve_format)
+    graph = project.as_bel()
+    return serve_network(graph, serve_format=serve_format)
 
 
 ####################################

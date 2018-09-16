@@ -17,7 +17,8 @@ from typing import Dict, List, Optional
 from pybel.manager import Manager
 from pybel_tools.utils import enable_cool_mode
 from pybel_web.manager_utils import run_heat_diffusion_helper
-from pybel_web.models import Experiment, Omic, Query
+from pybel_web.models import Experiment, Omic
+from pybel_web.core.models import Query
 from pybel_web.resources.constants import BMS_BASE
 from .constants import OMICS_DATA_DIR
 

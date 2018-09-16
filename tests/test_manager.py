@@ -7,7 +7,8 @@ import time
 import unittest
 
 from pybel_web.manager import iter_recent_public_networks
-from pybel_web.models import Assembly, EdgeComment, EdgeVote, Query, Report, User
+from pybel_web.models import EdgeComment, EdgeVote, Report, User
+from pybel_web.core.models import Assembly, Query
 from werkzeug.exceptions import HTTPException
 
 from pybel.constants import INCREASES, PROTEIN

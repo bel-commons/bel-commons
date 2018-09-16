@@ -14,7 +14,7 @@ import flask
 from flask import Blueprint, Markup, abort, current_app, flash, redirect, render_template, request, url_for
 from flask_security import current_user, login_required, roles_required
 
-import pybel_tools.query
+import pybel.struct.query
 from pybel.manager.models import Citation, Edge, Evidence, Namespace, NamespaceEntry, Node
 from pybel.struct.grouping.annotations import get_subgraphs_by_annotation
 from pybel.struct.mutation import collapse_to_genes, remove_associations, remove_isolated_nodes, remove_pathologies
@@ -24,10 +24,11 @@ from pybel.struct.query import QueryMissingNetworksError
 from pybel_tools.biogrammar.double_edges import summarize_competeness
 from pybel_tools.summary.error_summary import calculate_error_by_annotation
 from pybel_web.constants import merged_document_folder
+from pybel_web.core.models import Query
 from pybel_web.explorer_toolbox import get_explorer_toolbox
 from pybel_web.external_managers import manager_dict
 from pybel_web.manager_utils import next_or_jsonify
-from pybel_web.models import Assembly, EdgeComment, EdgeVote, Experiment, Omic, Query, User
+from pybel_web.models import EdgeComment, EdgeVote, Experiment, Omic, User, UserAssembly, UserQuery
 from pybel_web.proxies import celery, manager
 from pybel_web.utils import calculate_overlap_info, get_version as get_bel_commons_version
 
@@ -50,7 +51,7 @@ extract_useful_subgraph = Pipeline.from_functions([
 ])
 
 
-def _format_big_number(n):
+def _format_big_number(n: int) -> str:
     if n > 1000000:
         return '{}M'.format(int(round(n / 1000000)))
     elif n > 1000:
@@ -59,11 +60,8 @@ def _format_big_number(n):
         return str(n)
 
 
-def redirect_to_view_explorer_query(query: Query):
-    """Returns the response for the biological network explorer in a given query to :func:`view_explorer_query`
-
-    :rtype: flask.Response
-    """
+def redirect_to_view_explorer_query(query: Query) -> flask.Response:
+    """Return the response for the biological network explorer in a given query to :func:`view_explorer_query`."""
     return redirect(url_for('ui.view_explorer_query', query_id=query.id))
 
 
@@ -89,12 +87,12 @@ def home():
             ('Network', manager.count_networks(), url_for('.view_networks')),
             ('Edge', manager.count_edges(), url_for('.view_edges')),
             ('Node', manager.count_nodes(), url_for('.view_nodes')),
-            ('Query', manager.session.query(Query).count(), url_for('.view_queries')),
+            ('Query', manager.session.query(UserQuery).count(), url_for('.view_queries')),
             ('Omic', manager.session.query(Omic).count(), url_for('analysis.view_omics')),
             ('Experiment', manager.session.query(Experiment).count(), url_for('analysis.view_experiments')),
             ('Citation', manager.session.query(Citation).count(), url_for('.view_citations')),
             ('Evidence', manager.session.query(Evidence).count(), url_for('.view_evidences')),
-            ('Assembly', manager.session.query(Assembly).count(), None),
+            ('Assembly', manager.session.query(UserAssembly).count(), None),
             ('Vote', manager.session.query(EdgeVote).count(), None),
             ('Comment', manager.session.query(EdgeComment).count(), None),
         ]
@@ -136,7 +134,7 @@ def view_networks():
 @ui_blueprint.route('/node')
 @roles_required('admin')
 def view_nodes():
-    """Renders a page viewing all edges"""
+    """Render a page viewing all edges."""
     nodes = manager.session.query(Node)
 
     func = request.args.get('function')
@@ -171,10 +169,10 @@ def view_nodes():
 
 
 @ui_blueprint.route('/node/<node_hash>')
-def view_node(node_hash):
-    """View a node summary with a list of all edges incident to the node
+def view_node(node_hash: str):
+    """View a node summary with a list of all edges incident to the node.
 
-    :param str node_hash: The node's hash
+    :param node_hash: The node's hash
     """
     node = manager.get_node_by_hash_or_404(node_hash)
 
@@ -188,7 +186,7 @@ def view_node(node_hash):
 
 @ui_blueprint.route('/evidence')
 def view_evidences():
-    """View a list of Evidence models"""
+    """View a list of Evidence models."""
     limit = request.args.get('limit', type=int, default=10)
     offset = request.args.get('offset', type=int)
 
@@ -206,8 +204,8 @@ def view_evidences():
 
 
 @ui_blueprint.route('/evidence/<int:evidence_id>')
-def view_evidence(evidence_id):
-    """View a single Evidence model"""
+def view_evidence(evidence_id: int):
+    """View a single Evidence model."""
     evidence = manager.session.query(Evidence).get(evidence_id)
     if evidence is None:
         abort(404)
@@ -215,11 +213,11 @@ def view_evidence(evidence_id):
 
 
 @ui_blueprint.route('/node/<source_hash>/edges/<target_hash>')
-def view_relations(source_hash, target_hash):
-    """View a list of all relations between two nodes
+def view_relations(source_hash: str, target_hash: str):
+    """View a list of all relations between two nodes.
 
-    :param str source_hash: The source node's hash
-    :param str target_hash: The target node's hash
+    :param source_hash: The source node's hash
+    :param target_hash: The target node's hash
     """
     source = manager.get_node_by_hash_or_404(source_hash)
     target = manager.get_node_by_hash_or_404(target_hash)
@@ -250,26 +248,26 @@ def view_relations(source_hash, target_hash):
 @ui_blueprint.route('/edge')
 @roles_required('admin')
 def view_edges():
-    """Renders a page viewing all edges"""
+    """Render a page viewing all edges."""
     return render_template('edge/edges.html', edges=manager.session.query(Edge).limit(15), current_user=current_user)
 
 
 @ui_blueprint.route('/edge/<edge_hash>')
-def view_edge(edge_hash):
-    """Renders a page viewing a single edges
+def view_edge(edge_hash: str):
+    """Render a page viewing a single edge.
 
-    :param str edge_hash: The identifier of the edge to display
+    :param edge_hash: The identifier of the edge to display
     """
     return render_template('edge/edge.html', edge=manager.get_edge_by_hash(edge_hash), current_user=current_user)
 
 
 @ui_blueprint.route('/edge/<edge_hash>/vote/<int:vote>')
 @login_required
-def vote_edge(edge_hash, vote):
+def vote_edge(edge_hash: str, vote: int):
     """Render a page viewing a single edges.
 
-    :param str edge_hash: The identifier of the edge to display
-    :param int vote:
+    :param edge_hash: The identifier of the edge to display
+    :param vote:
     """
     edge = manager.get_edge_by_hash(edge_hash)
     manager.get_or_create_vote(edge, current_user, agreed=(vote != 0))
@@ -277,8 +275,8 @@ def vote_edge(edge_hash, vote):
 
 
 @ui_blueprint.route('/query/<int:query_id>')
-def view_query(query_id):
-    """Renders a single query page"""
+def view_query(query_id: int):
+    """Render a single query page."""
     query = manager.safe_get_query(user=current_user, query_id=query_id)
     return render_template('query/query.html', query=query, manager=manager, current_user=current_user)
 
@@ -286,13 +284,13 @@ def view_query(query_id):
 @ui_blueprint.route('/query')
 @roles_required('admin')
 def view_queries():
-    """Renders the query catalog"""
-    q = manager.session.query(Query)
+    """Render the query catalog."""
+    q = manager.session.query(UserQuery)
 
     if not current_user.is_admin:
-        q = q.filter(Query.public)
+        q = q.filter(UserQuery.public)
 
-    q = q.order_by(Query.created.desc())
+    q = q.order_by(UserQuery.created.desc())
 
     return render_template(
         'query/queries.html',
@@ -305,7 +303,7 @@ def view_queries():
 @ui_blueprint.route('/citation')
 @roles_required('admin')
 def view_citations():
-    """Renders the query catalog"""
+    """Render the query catalog."""
     limit = request.args.get('limit', type=int, default=10)
 
     q = manager.session.query(Citation)
@@ -321,70 +319,70 @@ def view_citations():
 
 
 @ui_blueprint.route('/citation/<int:citation_id>')
-def view_citation(citation_id):
-    """View a citation"""
+def view_citation(citation_id: int):
+    """View a citation."""
     citation = manager.session.query(Citation).get(citation_id)
     return render_template('citation/citation.html', citation=citation)
 
 
 @ui_blueprint.route('/citation/pubmed/<pmid>')
-def view_pubmed(pmid):
-    """View all evidences and relations extracted from the article with the given PubMed identifier
+def view_pubmed(pmid: str):
+    """View all evidences and relations extracted from the article with the given PubMed identifier.
 
-    :param str pmid: The PubMed identifier
+    :param pmid: The PubMed identifier
     """
     citation = manager.get_citation_by_pmid(pmid)
     return redirect(url_for('.view_citation', citation_id=citation.id))
 
 
 @ui_blueprint.route('/network/<int:network_id>/explore')
-def view_explore_network(network_id):
-    """Renders a page for the user to explore a network
+def view_explore_network(network_id: int):
+    """Render a page for the user to explore a network.
 
-    :param int network_id: The identifier of the network to explore
+    :param network_id: The identifier of the network to explore
     """
     query = manager.query_from_network_with_current_user(user=current_user, network_id=network_id)
     return redirect_to_view_explorer_query(query)
 
 
 @ui_blueprint.route('/explore/<int:query_id>')
-def view_explorer_query(query_id):
-    """Renders a page for the user to explore a network
+def view_explorer_query(query_id: int):
+    """Render a page for the user to explore a network.
 
-    :param int query_id: The identifier of the query
+    :param query_id: The identifier of the query
     """
     query = manager.safe_get_query(user=current_user, query_id=query_id)
-    return render_template('network/explorer.html', query=query, explorer_toolbox=get_explorer_toolbox())
+    return render_template('network/explorer.html', query_id=query.id, explorer_toolbox=get_explorer_toolbox())
 
 
 @ui_blueprint.route('/node/<node_hash>/explore/')
-def view_explorer_node(node_hash):
-    """Builds an induction query around the node then sends it
+def view_explorer_node(node_hash: str):
+    """Build and send an induction query around the given node.
 
-    :param str node_hash: The hash of the node
+    :param node_hash: The hash of the node
     """
     node = manager.get_node_by_hash_or_404(node_hash)
 
-    query_original = Query.from_networks(networks=node.networks, user=current_user)
+    query_original = UserQuery.from_networks(networks=node.networks, user=current_user)
     manager.session.flush()
 
-    query = query_original.add_seed_neighbors([node])
+    query = query_original.add_seed_neighbors(node.as_bel())
     manager.session.add(query)
     manager.session.commit()
 
-    return redirect(url_for('.view_explorer_query', query_id=query.id))
+    return redirect_to_view_explorer_query(query)
 
 
 @ui_blueprint.route('/project/<int:project_id>/explore')
 @login_required
-def view_explore_project(project_id):
-    """Renders a page for the user to explore the full network from a project
+def view_explore_project(project_id: int):
+    """Render a page for the user to explore the full network from a project.
 
-    :param int project_id: The identifier of the project to explore
+    :param project_id: The identifier of the project to explore
     """
     project = manager.get_project_by_id(project_id)
 
-    query = Query.from_project(project, user=current_user)
+    query = UserQuery.from_project(project=project, user=current_user)
     query.assembly.name = '{} query of {}'.format(time.asctime(), project.name)
 
     manager.session.add(query)
@@ -412,7 +410,7 @@ def get_pipeline():
     d = manager.query_form_to_dict(request.form)
 
     try:
-        q = pybel_tools.query.Query.from_json(d)
+        q = pybel.struct.query.Query.from_json(d)
 
     except QueryMissingNetworksError as e:
         flask.flash('Error building query: {}'.format(e))
@@ -423,11 +421,11 @@ def get_pipeline():
         return redirect(url_for('.view_query_builder'))
 
     else:
-        query = Query.from_query(manager, q, current_user)
-        manager.session.add(query)
+        user_query = UserQuery.from_query(manager=manager, query=q, user=current_user)
+        manager.session.add(user_query)
         manager.session.commit()
 
-        return redirect_to_view_explorer_query(query)
+        return redirect_to_view_explorer_query(user_query.query)
 
 
 @ui_blueprint.route('/namespace')
@@ -440,11 +438,11 @@ def view_namespaces():
     )
 
 
-@ui_blueprint.route('/namespace/<namespace_id>')
-def view_namespace(namespace_id):
+@ui_blueprint.route('/namespace/<int:namespace_id>')
+def view_namespace(namespace_id: int):
     """View a namespace.
 
-    :param int namespace_id: The namespace's database identifier
+    :param namespace_id: The namespace's database identifier
     """
     namespace = manager.get_namespace_by_id_or_404(namespace_id)
 
@@ -536,30 +534,30 @@ def view_summarize_compilation(network_id):
 
 
 @ui_blueprint.route('/network/<int:network_id>/warnings')
-def view_summarize_warnings(network_id):
-    """Renders a page with the parsing errors from a BEL script
+def view_summarize_warnings(network_id: int):
+    """Render a page with the parsing errors from a BEL script.
 
-    :param int network_id: The identifier of the network to summarize
+    :param network_id: The identifier of the network to summarize
     """
     return manager.render_network_summary_safe(network_id, user=current_user,
                                                template='network/summarize_warnings.html')
 
 
 @ui_blueprint.route('/network/<int:network_id>/biogrammar')
-def view_summarize_biogrammar(network_id):
-    """Renders a page with the summary of the biogrammar analysis of a BEL script
+def view_summarize_biogrammar(network_id: int):
+    """Render a page with the summary of the biogrammar analysis of a BEL script.
 
-    :param int network_id: The identifier of the network to summarize
+    :param network_id: The identifier of the network to summarize
     """
     return manager.render_network_summary_safe(network_id, user=current_user,
                                                template='network/summarize_biogrammar.html')
 
 
 @ui_blueprint.route('/network/<int:network_id>/completeness')
-def view_summarize_completeness(network_id):
-    """Renders a page with the summary of the completeness analysis of a BEL script
+def view_summarize_completeness(network_id: int):
+    """Render a page with the summary of the completeness analysis of a BEL script.
 
-    :param int network_id: The identifier of the network to summarize
+    :param network_id: The identifier of the network to summarize
     """
     network = manager.get_network_by_id(network_id)
     graph = network.as_bel()
@@ -571,8 +569,8 @@ def view_summarize_completeness(network_id):
 
 
 @ui_blueprint.route('/network/<int:network_id>/stratified/<annotation>')
-def view_summarize_stratified(network_id, annotation):
-    """Show stratified summary of graph's subgraphs by annotation."""
+def view_summarize_stratified(network_id: int, annotation: str):
+    """Show stratified summary of graph's sub-graphs by annotation."""
     network = manager.safe_get_network(user=current_user, network_id=network_id)
     graph = network.as_bel()
     graphs = get_subgraphs_by_annotation(graph, annotation)
@@ -609,11 +607,11 @@ def view_summarize_stratified(network_id, annotation):
 
 
 @ui_blueprint.route('/network/<int:network_1_id>/compare/<int:network_2_id>')
-def view_network_comparison(network_1_id, network_2_id):
+def view_network_comparison(network_1_id: int, network_2_id: int):
     """View the comparison between two networks.
 
-    :param int network_1_id: Identifier for the first network
-    :param int network_2_id: Identifier for the second network
+    :param network_1_id: Identifier for the first network
+    :param network_2_id: Identifier for the second network
     """
     network_1 = manager.safe_get_network(user=current_user, network_id=network_1_id)
     network_2 = manager.safe_get_network(user=current_user, network_id=network_2_id)
@@ -627,11 +625,11 @@ def view_network_comparison(network_1_id, network_2_id):
 
 
 @ui_blueprint.route('/query/<int:query_1_id>/compare/<int:query_2_id>')
-def view_query_comparison(query_1_id, query_2_id):
+def view_query_comparison(query_1_id: int, query_2_id: int):
     """View the comparison between the result of two queries.
 
-    :param int query_1_id: The identifier of the first query
-    :param int query_2_id: The identifier of the second query
+    :param query_1_id: The identifier of the first query
+    :param query_2_id: The identifier of the second query
     """
     g1 = manager.safe_get_graph_from_query_id(user=current_user, query_id=query_1_id)
     g2 = manager.safe_get_graph_from_query_id(user=current_user, query_id=query_2_id)
@@ -690,16 +688,16 @@ def view_current_user_activity():
 
 @ui_blueprint.route('/user/<int:user_id>')
 @roles_required('admin')
-def view_user(user_id):
+def view_user(user_id: int):
     """Return the given user's history.
 
-    :param int user_id: The identifier of the user to summarize
+    :param user_id: The identifier of the user to summarize
     """
     user = manager.get_user_by_id(user_id)
     return render_user(user)
 
 
-def render_user(user):
+def render_user(user: User) -> flask.Response:
     """Render a user and their pending reports."""
     return render_template('user/user.html', user=user, pending_reports=user.pending_reports(), manager=manager)
 
@@ -732,7 +730,7 @@ def nuke():
 @ui_blueprint.route('/admin/configuration')
 @roles_required('admin')
 def view_config():
-    """Render the configuration"""
+    """Render the configuration."""
     return render_template('meta/deployment.html', config=current_app.config)
 
 
@@ -741,11 +739,11 @@ def view_config():
 #######################################
 
 @ui_blueprint.route('/project/<int:project_id>/merge/<int:user_id>')
-def send_async_project_merge(user_id, project_id):
+def send_async_project_merge(user_id: int, project_id: int):
     """A helper endpoint to submit a project to the asynchronous task queue to merge its associated networks.
 
-    :param int user_id: The identifier of the user sending the task
-    :param int project_id: The identifier of the project to merge
+    :param user_id: The identifier of the user sending the task
+    :param project_id: The identifier of the project to merge
     """
     task = celery.send_task('merge-project', args=[
         current_app.config['SQLALCHEMY_DATABASE_URI'],
@@ -757,35 +755,35 @@ def send_async_project_merge(user_id, project_id):
 
 
 @ui_blueprint.route('/network/<int:network_id>/induction-query/')
-def build_summary_link_query(network_id):
-    """Builds a query with the given network by inducing a subgraph over the nodes included in the request
+def build_summary_link_query(network_id: int):
+    """Build a query with the given network by inducing a sub-graph over the nodes included in the request.
 
-    :param int network_id: The identifier of the network
+    :param network_id: The identifier of the network
     """
     nodes = [
         manager.get_dsl_by_hash(node_hash)
         for node_hash in request.args.getlist('nodes')
     ]
 
-    q = pybel_tools.query.Query([network_id])
+    q = pybel.struct.query.Query([network_id])
     q.append_seeding_induction(nodes)
-    query = Query.from_query(manager, q, current_user)
-    manager.session.add(query)
+    user_query = UserQuery.from_query(manager=manager, query=q, user=current_user)
+    manager.session.add(user_query)
     manager.session.commit()
 
-    return redirect_to_view_explorer_query(query)
+    return redirect_to_view_explorer_query(user_query.query)
 
 
 @ui_blueprint.route('/network/<int:network_id>/sample/')
-def build_subsample_query(network_id):
-    """Builds and executes a query that induces a random subnetwork over the given network
+def build_subsample_query(network_id: int):
+    """Build and execute a query that induces a random sub-network over the given network.
 
-    :param int network_id: The identifier of the network
+    :param network_id: The identifier of the network
     """
-    q = pybel_tools.query.Query(network_id)
+    q = pybel.struct.query.Query(network_id)
     q.append_seeding_sample()
-    query = Query.from_query(manager, q, current_user)
-    manager.session.add(query)
+    user_query = UserQuery.from_query(manager=manager, query=q, user=current_user)
+    manager.session.add(user_query)
     manager.session.commit()
 
-    return redirect_to_view_explorer_query(query)
+    return redirect_to_view_explorer_query(user_query.query)

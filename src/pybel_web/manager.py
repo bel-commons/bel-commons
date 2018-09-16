@@ -13,17 +13,16 @@ from typing import Dict, Iterable, List, Mapping, Optional, Set, Tuple
 import networkx
 from flask import Response, abort, render_template
 from flask_security import SQLAlchemyUserDatastore
-from pybel_tools.utils import min_tanimoto_set_similarity, prepare_c3, prepare_c3_time_series
 from sqlalchemy import and_, func
 
 from pybel import BELGraph, Manager
 from pybel.manager.models import Author, Citation, Edge, Evidence, Namespace, Network, Node
 from pybel.struct.summary import count_namespaces, count_variants
+from pybel_tools.utils import min_tanimoto_set_similarity, prepare_c3, prepare_c3_time_series
+from pybel_web.core.models import Assembly, Query
 from .constants import AND
 from .manager_utils import get_network_summary_dict
-from .models import (
-    Assembly, EdgeComment, EdgeVote, Experiment, NetworkOverlap, Omic, Project, Query, Report, Role, User,
-)
+from .models import EdgeComment, EdgeVote, Experiment, NetworkOverlap, Omic, Project, Report, Role, User, UserQuery
 
 __all__ = [
     'WebManager',
@@ -32,13 +31,8 @@ __all__ = [
 log = logging.getLogger(__name__)
 
 
-def sanitize_annotation(annotation_list):
-    """Convert an annotation (annotation:value) to tuple.
-
-    :param list[str] annotation_list:
-    :return: annotation dictionary
-    :rtype: dict[str,list[str]]
-    """
+def sanitize_annotation(annotation_list: List[str]) -> Mapping[str, List[str]]:
+    """Convert an annotation (annotation:value) to tuple."""
     annotation_dict = defaultdict(list)
 
     for annotation_string in annotation_list:
@@ -274,7 +268,7 @@ class WebManager(Manager):
 
         return network
 
-    def get_query_or_404(self, query_id):
+    def get_query_or_404(self, query_id: int) -> Query:
         """Get a query by its database identifier or abort 404 message if it doesn't exist.
 
         :param int query_id: The database identifier for a query
@@ -640,10 +634,7 @@ class WebManager(Manager):
             yield ''
 
     def get_query_ancestor_id(self, query_id: int) -> Query:  # TODO refactor this to be part of Query class
-        """Get the oldest ancestor of the given query.
-
-        :param  query_id: The original query database identifier
-        """
+        """Get the oldest ancestor of the given query."""
         query = self.get_query_by_id(query_id)
 
         if not query.parent_id:
@@ -660,16 +651,16 @@ class WebManager(Manager):
         :param autocommit: Should the query be committed immediately
         """
         network = self.safe_get_network(user=user, network_id=network_id)
-        query = Query.from_network(network, user=user)
+        user_query = UserQuery.from_network(network, user=user)
 
         if autocommit:
-            self.session.add(query)
+            self.session.add(user_query)
             self.session.commit()
 
-        return query
+        return user_query.query
 
     def convert_seed_value(self, key, form, value):
-        """Normalize the form to type:data format
+        """Normalize the form to type:data format.
 
         :param str key: seed method
         :param ImmutableMultiDict form: Form dictionary
@@ -693,7 +684,7 @@ class WebManager(Manager):
         ]
 
     def query_form_to_dict(self, form):
-        """Converts a request.form multidict to the query JSON format.
+        """Convert a request.form multidict to the query JSON format.
 
         :param werkzeug.datastructures.ImmutableMultiDict form:
         :return: json representation of the query
@@ -732,7 +723,7 @@ class WebManager(Manager):
         return query_dict
 
     def _safe_get_query_helper(self, user: User, query_id: int) -> Optional[Query]:
-        """Checks if the user has the rights to run the given query
+        """Check if the user has the rights to run the given query.
 
         :param user: A user object
         :param query_id: A query identifier

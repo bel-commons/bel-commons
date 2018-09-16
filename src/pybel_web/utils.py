@@ -3,8 +3,7 @@
 import logging
 
 from pybel import BELGraph
-from pybel.struct.summary import get_annotation_values_by_annotation, get_pubmed_identifiers
-from pybel_tools.summary import get_annotations
+from pybel.struct.summary import get_annotation_values_by_annotation, get_annotations, get_pubmed_identifiers
 from .constants import VERSION
 
 __all__ = [

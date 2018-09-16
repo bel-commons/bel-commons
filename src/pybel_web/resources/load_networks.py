@@ -148,7 +148,6 @@ def upload_bel_directory(directory: str, manager: Manager, blacklist: Optional[L
 
 def upload_neurommsig_graphs(manager: Manager):
     """Only upload NeuroMMSig Sample Networks."""
-
     if not (os.path.exists(alzheimer_directory) and os.path.isdir(alzheimer_directory)):
         log.warning('directory does not exist: %s', alzheimer_directory)
         return
@@ -164,6 +163,7 @@ def upload_neurommsig_graphs(manager: Manager):
         graph = from_pickle(gpickle_path)
     elif os.path.exists(path):
         graph = from_path(path, manager=manager)
+        to_pickle(graph, gpickle_path)
     else:
         raise RuntimeError('missing NeuroMMSig source file: {}'.format(path))
 

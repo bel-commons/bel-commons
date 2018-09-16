@@ -14,19 +14,19 @@ import sys
 import time
 
 import click
-from pybel_tools.utils import enable_cool_mode, get_version as pybel_tools_get_version
 
 from pybel import from_path, from_pickle
 from pybel.constants import get_cache_connection
-from pybel.manager.models import Network
 from pybel.utils import get_version as pybel_version
+from pybel_tools.utils import enable_cool_mode, get_version as pybel_tools_get_version
+from pybel_web.core.models import Assembly, Query
 from .application import create_application
 from .constants import PYBEL_WEB_REGISTER_EXAMPLES, PYBEL_WEB_USE_PARSER_API, get_admin_email
 from .database_service import api_blueprint
 from .main_service import ui_blueprint
 from .manager import WebManager
 from .manager_utils import insert_graph
-from .models import Assembly, EdgeComment, EdgeVote, Experiment, Omic, Project, Query, Report, Role, User
+from .models import EdgeComment, EdgeVote, Experiment, Omic, Project, Report, Role, User, UserAssembly, UserQuery
 from .views import (
     build_parser_service, curation_blueprint, experiment_blueprint, help_blueprint, receiving_blueprint,
     reporting_blueprint, uploading_blueprint,
@@ -627,7 +627,7 @@ if omics_dir is not None or bms_dir is not None:
         @examples.command()
         @click.option('--skip-cbn', is_flag=True)
         @click.pass_obj
-        def load_networks(manager, skip_cbn):
+        def load_networks(manager: WebManager, skip_cbn):
             """Load networks."""
             from .resources.load_networks import load_bms, load_cbn
             set_debug(logging.INFO)
@@ -644,7 +644,7 @@ if omics_dir is not None or bms_dir is not None:
         @click.option('--skip-bio2bel', is_flag=True)
         @click.option('--skip-cbn', is_flag=True)
         @click.pass_obj
-        def load(manager, reload_omics, permutations, skip_bio2bel, skip_cbn):
+        def load(manager: WebManager, reload_omics, permutations, skip_bio2bel, skip_cbn):
             """Load omics, networks, and experiments."""
             from .resources.load_omics import main as load_omics_main
             from .resources.load_networks import load_bms, load_bio2bel, load_cbn
@@ -667,7 +667,7 @@ if omics_dir is not None or bms_dir is not None:
         @click.option('-p', '--permutations', type=int, help='Number of permutations to run. Defaults to 25.',
                       default=25)
         @click.pass_obj
-        def load_experiments(manager, permutations):
+        def load_experiments(manager: WebManager, permutations):
             """Load experiments."""
             from .resources.load_experiments import main
             set_debug(logging.INFO)
@@ -676,16 +676,13 @@ if omics_dir is not None or bms_dir is not None:
 
 @manage.command()
 @click.pass_obj
-def wasteland(manager):
-    """Drop a lot"""
-    manager.session.query(Experiment).delete()
-    manager.session.commit()
-    manager.session.query(Query).delete()
-    manager.session.commit()
-    manager.session.query(Assembly).delete()
-    manager.session.commit()
-    manager.session.query(Network).delete()
-    manager.session.commit()
+def wasteland(manager: WebManager):
+    """Drop the PyBEL-Web specific stuff."""
+    for table in [Experiment, UserQuery, Query, UserAssembly, Assembly, Report]:
+        click.echo('Dropping {}'.format(table))
+        manager.session.query(table).delete()
+        manager.session.commit()
+        table.__table__.drop()
 
 
 if __name__ == '__main__':

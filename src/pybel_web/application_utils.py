@@ -23,7 +23,8 @@ from .admin_model_views import (
 from .constants import PYBEL_WEB_USER_MANIFEST, SENTRY_DSN
 from .manager import register_users_from_manifest
 from .manager_utils import insert_graph
-from .models import Assembly, EdgeComment, EdgeVote, Experiment, NetworkOverlap, Query, Report, Role, User
+from .models import EdgeComment, EdgeVote, Experiment, NetworkOverlap, Report, Role, User
+from pybel_web.core.models import Assembly, Query
 from .resources.users import default_users_path
 
 log = logging.getLogger(__name__)

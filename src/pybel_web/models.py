@@ -7,7 +7,7 @@ import datetime
 import itertools as itt
 from operator import attrgetter
 from pickle import dumps, loads
-from typing import List, Mapping, Optional, Tuple
+from typing import Iterable, List, Mapping, Tuple
 
 from flask_security import RoleMixin, UserMixin
 from pandas import DataFrame
@@ -19,19 +19,16 @@ from sqlalchemy.orm import backref, relationship
 import pybel.struct.query
 from pybel import BELGraph, Manager
 from pybel.dsl import BaseEntity
-from pybel.manager.models import Base, EDGE_TABLE_NAME, Edge, LONGBLOB, NETWORK_TABLE_NAME, Network
+from pybel.manager.models import Base, Edge, LONGBLOB, Network
 from pybel.struct import union
-from pybel.struct.pipeline import Pipeline
-from pybel.struct.query import Seeding
+from pybel_web.core.models import Assembly, Query
 
 EXPERIMENT_TABLE_NAME = 'pybel_experiment'
 REPORT_TABLE_NAME = 'pybel_report'
 ROLE_TABLE_NAME = 'pybel_role'
 PROJECT_TABLE_NAME = 'pybel_project'
 USER_TABLE_NAME = 'pybel_user'
-ASSEMBLY_TABLE_NAME = 'pybel_assembly'
-ASSEMBLY_NETWORK_TABLE_NAME = 'pybel_assembly_network'
-QUERY_TABLE_NAME = 'pybel_query'
+
 ROLE_USER_TABLE_NAME = 'pybel_roles_users'
 PROJECT_USER_TABLE_NAME = 'pybel_project_user'
 PROJECT_NETWORK_TABLE_NAME = 'pybel_project_network'
@@ -40,6 +37,307 @@ COMMENT_TABLE_NAME = 'pybel_comment'
 VOTE_TABLE_NAME = 'pybel_vote'
 OVERLAP_TABLE_NAME = 'pybel_overlap'
 OMICS_TABLE_NAME = 'pybel_omic'
+
+USER_ASSEMBLY_TABLE_NAME = 'pybel_user_assembly'
+USER_QUERY_TABLE_NAME = 'pybel_user_query'
+
+roles_users = Table(
+    ROLE_USER_TABLE_NAME,
+    Base.metadata,
+    Column('user_id', Integer, ForeignKey('{}.id'.format(USER_TABLE_NAME)), primary_key=True),
+    Column('role_id', Integer, ForeignKey('{}.id'.format(ROLE_TABLE_NAME)), primary_key=True)
+)
+
+users_networks = Table(
+    USER_NETWORK_TABLE_NAME,
+    Base.metadata,
+    Column('user_id', Integer, ForeignKey('{}.id'.format(USER_TABLE_NAME)), primary_key=True),
+    Column('network_id', Integer, ForeignKey('{}.id'.format(Network.__tablename__)), primary_key=True)
+)
+
+projects_users = Table(
+    PROJECT_USER_TABLE_NAME,
+    Base.metadata,
+    Column('project_id', Integer, ForeignKey('{}.id'.format(PROJECT_TABLE_NAME)), primary_key=True),
+    Column('user_id', Integer, ForeignKey('{}.id'.format(USER_TABLE_NAME)), primary_key=True)
+)
+
+projects_networks = Table(
+    PROJECT_NETWORK_TABLE_NAME,
+    Base.metadata,
+    Column('project_id', Integer, ForeignKey('{}.id'.format(PROJECT_TABLE_NAME)), primary_key=True),
+    Column('network_id', Integer, ForeignKey('{}.id'.format(Network.__tablename__)), primary_key=True)
+)
+
+
+class Role(Base, RoleMixin):
+    """Represents the role of a user in PyBEL Web."""
+
+    __tablename__ = ROLE_TABLE_NAME
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String(80), unique=True, nullable=False)
+    description = Column(Text)
+
+    def __str__(self):
+        return self.name
+
+    def to_json(self) -> Mapping:
+        """Output this role as a JSON dictionary."""
+        return {
+            'id': self.id,
+            'name': self.name,
+            'description': self.description,
+        }
+
+
+class User(Base, UserMixin):
+    """Represents a user of PyBEL Web."""
+
+    __tablename__ = USER_TABLE_NAME
+
+    id = Column(Integer, primary_key=True)
+
+    email = Column(String(255), unique=True, doc="The user's email")
+    password = Column(String(255))
+    name = Column(String(255), doc="The user's name")
+    active = Column(Boolean)
+    confirmed_at = Column(DateTime)
+
+    roles = relationship(Role, secondary=roles_users, backref=backref('users', lazy='dynamic'))
+    networks = relationship(Network, secondary=users_networks, backref=backref('users', lazy='dynamic'))
+
+    @property
+    def is_admin(self) -> bool:
+        """Is this user an administrator?"""
+        return self.has_role('admin')
+
+    @property
+    def is_scai(self) -> bool:
+        """Is this user from SCAI?"""
+        return (
+                self.has_role('scai') or
+                self.email.endswith('@scai.fraunhofer.de') or
+                self.email.endswith('@scai-extern.fraunhofer.de')
+        )
+
+    @property
+    def is_beta_tester(self) -> bool:
+        """Is this user cut out for the truth?"""
+        return self.is_admin or self.has_role('beta')
+
+    def iter_owned_networks(self) -> Iterable[Network]:
+        """Iterate over all networks this user owns."""
+        return (
+            report.network
+            for report in self.reports
+            if report.network
+        )
+
+    def iter_shared_networks(self) -> Iterable[Network]:
+        """Iterate over all networks shared with this user."""
+        return self.networks
+
+    def iter_project_networks(self) -> Iterable[Network]:
+        """Iterate over all networks for which projects have granted this user access."""
+        return (
+            network
+            for project in self.projects
+            for network in project.networks
+        )
+
+    def iter_available_networks(self) -> Iterable[Network]:
+        """Iterate over all owned, shared, and project networks."""
+        return itt.chain(
+            self.iter_owned_networks(),
+            self.iter_shared_networks(),
+            self.iter_project_networks(),
+        )
+
+    def get_sorted_queries(self):
+        """Gets a list of sorted queries for this user
+
+        :rtype: list[pybel_web.core.models.Query]
+        """
+        return sorted(self.queries, key=attrgetter('created'), reverse=True)
+
+    def pending_reports(self) -> List['Report']:
+        """Get a list of pending reports for this user."""
+        return [
+            report
+            for report in self.reports
+            if report.incomplete
+        ]
+
+    def get_vote(self, edge: Edge) -> 'EdgeVote':
+        """Get the vote that goes with this edge."""
+        return self.votes.filter(EdgeVote.edge == edge).one_or_none()
+
+    def has_project_rights(self, project: 'Project') -> bool:
+        """Return if the given user has rights to the given project."""
+        return self.is_authenticated and (self.is_admin or project.has_user(self))
+
+    def has_experiment_rights(self, experiment: 'Experiment') -> bool:
+        """Check if the user has rights to this experiment."""
+        return (
+                experiment.public or
+                self.is_admin or
+                self == experiment.user
+        )
+
+    def __hash__(self):
+        return hash(self.email)
+
+    def __eq__(self, other):
+        return self.email == other.email
+
+    def __repr__(self):
+        return '<User email={}>'.format(self.email)
+
+    def __str__(self):
+        return self.email
+
+    def to_json(self, include_id: bool = True) -> Mapping:
+        """Output this User as a JSON dictionary."""
+        result = {
+            'email': self.email,
+            'roles': [
+                role.name
+                for role in self.roles
+            ],
+        }
+
+        if include_id:
+            result['id'] = self.id
+
+        if self.name:
+            result['name'] = self.name
+
+        return result
+
+    def owns_network(self, network: Network) -> bool:
+        """Check if the user uploaded the network."""
+        return network.report and network.report.user == self
+
+
+class UserAssembly(Base):
+    """Represents the ownership of a user to an assembly."""
+
+    __tablename__ = USER_ASSEMBLY_TABLE_NAME
+
+    user_id = Column(Integer, ForeignKey('{}.id'.format(User.__tablename__)), primary_key=True,
+                     doc='The creator of this assembly')
+    user = relationship(User, backref='assemblies')
+
+    assembly_id = Column(Integer, ForeignKey('{}.id'.format(Assembly.__tablename__)), primary_key=True,
+                         doc='The contained assembly')
+    assembly = relationship(Assembly)
+
+
+class UserQuery(Base):
+    """Represents the ownership of a user to a query."""
+
+    __tablename__ = USER_QUERY_TABLE_NAME
+
+    user_id = Column(Integer, ForeignKey('{}.id'.format(User.__tablename__)), primary_key=True,
+                     doc='The user who created the query')
+    user = relationship(User, backref=backref('queries', lazy='dynamic'))
+
+    query_id = Column(Integer, ForeignKey('{}.id'.format(Query.__tablename__)), primary_key=True,
+                      doc='The user who created the query')
+    query = relationship(Query, backref=backref('user_query', uselist=False))
+
+    public = Column(Boolean, nullable=False, default=False, doc='Should the query be public? Note: users still need'
+                                                                'appropriate rights to all networks in assembly')
+
+    @staticmethod
+    def from_networks(networks: List[Network], user: User) -> 'UserQuery':
+        """Build a query from a list of networks."""
+        return UserQuery(
+            query=Query.from_networks(networks),
+            user=user
+        )
+
+    @staticmethod
+    def from_network(network: Network, user: User) -> 'UserQuery':
+        """Build a query from a network."""
+        return UserQuery(
+            query=Query.from_network(network),
+            user=user
+        )
+
+    @staticmethod
+    def from_project(project: 'Project', user: User) -> 'UserQuery':
+        """Build a query from a project."""
+        return UserQuery.from_networks(networks=project.networks, user=user)
+
+    @staticmethod
+    def from_query(manager: Manager, query: pybel.struct.query.Query, user: User) -> 'UserQuery':
+        """Build an ORM query from a PyBEL query."""
+        networks = manager.get_networks_by_ids(query.network_ids)
+        q = Query.from_networks(networks)
+        q.set_seeding_from_query(query)
+        q.set_pipeline_from_query(query)
+
+        return UserQuery(
+            query=q,
+            user=user,
+        )
+
+
+class Project(Base):
+    """Stores projects"""
+    __tablename__ = PROJECT_TABLE_NAME
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String(80), unique=True, index=True, nullable=False)
+    description = Column(Text)
+
+    users = relationship(User, secondary=projects_users, backref=backref('projects', lazy='dynamic'))
+
+    # TODO why not just use the Assembly table for the many to many relationship?
+    networks = relationship(Network, secondary=projects_networks, backref=backref('projects', lazy='dynamic'))
+
+    def has_user(self, user: User) -> bool:
+        """Indicate if the given user belongs to the project."""
+        return any(
+            user.id == u.id
+            for u in self.users
+        )
+
+    def as_bel(self) -> BELGraph:
+        """Return a merged instance of all of the contained networks."""
+        return union(network.as_bel() for network in self.networks)
+
+    def __str__(self):
+        return self.name
+
+    def to_json(self, include_id: bool = True) -> Mapping:
+        """Output this project as a JSON dictionary."""
+        result = {
+            'name': self.name,
+            'description': self.description,
+            'users': [
+                {
+                    'id': user.id,
+                    'email': user.email,
+                }
+                for user in self.users
+            ],
+            'networks': [
+                {
+                    'id': network.id,
+                    'name': network.name,
+                    'version': network.version,
+                }
+                for network in self.networks
+            ]
+        }
+
+        if include_id:
+            result['id'] = self.id
+
+        return result
 
 
 class Omic(Base):
@@ -60,7 +358,7 @@ class Omic(Base):
     data_column = Column(Text, nullable=False)
 
     user_id = Column(Integer, ForeignKey('{}.id'.format(USER_TABLE_NAME)))
-    user = relationship('User', backref=backref('omics', lazy='dynamic'))
+    user = relationship(User, backref=backref('omics', lazy='dynamic'))
 
     def __repr__(self):
         return '<Omic id={}, source_name={}>'.format(self.id, self.source_name)
@@ -140,14 +438,14 @@ class Experiment(Base):
     created = Column(DateTime, default=datetime.datetime.utcnow, doc='The date on which this analysis was run')
     public = Column(Boolean, nullable=False, default=False, doc='Should the experimental results be public?')
 
-    query_id = Column(Integer, ForeignKey('{}.id'.format(QUERY_TABLE_NAME)), nullable=False, index=True)
-    query = relationship('Query', backref=backref("experiments", lazy='dynamic'))
+    query_id = Column(Integer, ForeignKey('{}.id'.format(Query.__tablename__)), nullable=False, index=True)
+    query = relationship(Query, backref=backref("experiments", lazy='dynamic'))
 
-    user_id = Column(Integer, ForeignKey('{}.id'.format(USER_TABLE_NAME)))
-    user = relationship('User', backref=backref('experiments', lazy='dynamic'))
+    user_id = Column(Integer, ForeignKey('{}.id'.format(User.__tablename__)))
+    user = relationship(User, backref=backref('experiments', lazy='dynamic'))
 
-    omic_id = Column(Integer, ForeignKey('{}.id'.format(OMICS_TABLE_NAME)), nullable=False, index=True)
-    omic = relationship('Omic', backref=backref('experiments', lazy='dynamic'))
+    omic_id = Column(Integer, ForeignKey('{}.id'.format(Omic.__tablename__)), nullable=False, index=True)
+    omic = relationship(Omic, backref=backref('experiments', lazy='dynamic'))
 
     type = Column(String(8), nullable=False, default='CMPA', index=True,
                   doc='Analysis type. CMPA (Heat Diffusion), RCR, etc.')
@@ -199,7 +497,7 @@ class Report(Base):
     task_uuid = Column(String(36), nullable=True, doc='The celery queue UUID')
 
     user_id = Column(Integer, ForeignKey('{}.id'.format(USER_TABLE_NAME)), doc='The user who uploaded the network')
-    user = relationship('User', backref=backref('reports', lazy='dynamic'))
+    user = relationship(User, backref=backref('reports', lazy='dynamic'))
 
     created = Column(DateTime, default=datetime.datetime.utcnow, doc='The date and time of upload')
     public = Column(Boolean, nullable=False, default=False, doc='Should the network be viewable to the public?')
@@ -229,7 +527,7 @@ class Report(Base):
 
     network_id = Column(
         Integer,
-        ForeignKey('{}.id'.format(NETWORK_TABLE_NAME)),
+        ForeignKey('{}.id'.format(Network.__tablename__)),
         nullable=True,
         doc='The network that was uploaded'
     )
@@ -305,591 +603,6 @@ class Report(Base):
         return '<Report {}: cancelled>'.format(self.id)
 
 
-roles_users = Table(
-    ROLE_USER_TABLE_NAME,
-    Base.metadata,
-    Column('user_id', Integer, ForeignKey('{}.id'.format(USER_TABLE_NAME)), primary_key=True),
-    Column('role_id', Integer, ForeignKey('{}.id'.format(ROLE_TABLE_NAME)), primary_key=True)
-)
-
-users_networks = Table(
-    USER_NETWORK_TABLE_NAME,
-    Base.metadata,
-    Column('user_id', Integer, ForeignKey('{}.id'.format(USER_TABLE_NAME)), primary_key=True),
-    Column('network_id', Integer, ForeignKey('{}.id'.format(NETWORK_TABLE_NAME)), primary_key=True)
-)
-
-projects_users = Table(
-    PROJECT_USER_TABLE_NAME,
-    Base.metadata,
-    Column('project_id', Integer, ForeignKey('{}.id'.format(PROJECT_TABLE_NAME)), primary_key=True),
-    Column('user_id', Integer, ForeignKey('{}.id'.format(USER_TABLE_NAME)), primary_key=True)
-)
-
-projects_networks = Table(
-    PROJECT_NETWORK_TABLE_NAME,
-    Base.metadata,
-    Column('project_id', Integer, ForeignKey('{}.id'.format(PROJECT_TABLE_NAME)), primary_key=True),
-    Column('network_id', Integer, ForeignKey('{}.id'.format(NETWORK_TABLE_NAME)), primary_key=True)
-)
-
-
-class Role(Base, RoleMixin):
-    """Stores user roles"""
-    __tablename__ = ROLE_TABLE_NAME
-
-    id = Column(Integer, primary_key=True)
-    name = Column(String(80), unique=True, nullable=False)
-    description = Column(Text)
-
-    def __str__(self):
-        return self.name
-
-    def to_json(self):
-        """Outputs this role as a JSON dictionary
-
-        :rtype: dict
-        """
-        return {
-            'id': self.id,
-            'name': self.name,
-            'description': self.description,
-        }
-
-
-class Project(Base):
-    """Stores projects"""
-    __tablename__ = PROJECT_TABLE_NAME
-
-    id = Column(Integer, primary_key=True)
-    name = Column(String(80), unique=True, index=True, nullable=False)
-    description = Column(Text)
-
-    users = relationship('User', secondary=projects_users, backref=backref('projects', lazy='dynamic'))
-
-    # TODO why not just use the Assembly table for the many to many relationship?
-    networks = relationship('Network', secondary=projects_networks, backref=backref('projects', lazy='dynamic'))
-
-    def has_user(self, user):
-        """Indicates if the given user belongs to the project
-
-        :param User user:
-        :rtype: bool
-        """
-        return any(
-            user.id == u.id
-            for u in self.users
-        )
-
-    def as_bel(self):
-        """Returns a merged instance of all of the contained networks
-
-        :return: A merged BEL graph
-        :rtype: pybel.BELGraph
-        """
-        return union(network.as_bel() for network in self.networks)
-
-    def __str__(self):
-        return self.name
-
-    def to_json(self, include_id=True):
-        """Outputs this project as a JSON dictionary
-
-        :rtype: dict
-        """
-        result = {
-            'name': self.name,
-            'description': self.description,
-            'users': [
-                {
-                    'id': user.id,
-                    'email': user.email,
-                }
-                for user in self.users
-            ],
-            'networks': [
-                {
-                    'id': network.id,
-                    'name': network.name,
-                    'version': network.version,
-                }
-                for network in self.networks
-            ]
-        }
-
-        if include_id:
-            result['id'] = self.id
-
-        return result
-
-
-class User(Base, UserMixin):
-    """Stores users"""
-    __tablename__ = USER_TABLE_NAME
-
-    id = Column(Integer, primary_key=True)
-
-    email = Column(String(255), unique=True, doc="The user's email")
-    password = Column(String(255))
-    name = Column(String(255), doc="The user's name")
-    active = Column(Boolean)
-    confirmed_at = Column(DateTime)
-
-    roles = relationship(Role, secondary=roles_users, backref=backref('users', lazy='dynamic'))
-    networks = relationship(Network, secondary=users_networks, backref=backref('users', lazy='dynamic'))
-
-    @property
-    def is_admin(self):
-        """Is this user an administrator?"""
-        return self.has_role('admin')
-
-    @property
-    def is_scai(self):
-        """Is this user from SCAI?"""
-        return (
-                self.has_role('scai') or
-                self.email.endswith('@scai.fraunhofer.de') or
-                self.email.endswith('@scai-extern.fraunhofer.de')
-        )
-
-    @property
-    def is_beta_tester(self):
-        """Is this user cut out for the truth?"""
-        return self.is_admin or self.has_role('beta')
-
-    def iter_owned_networks(self):
-        """Get all networks this user owns.
-
-        :rtype: iter[Network]
-        """
-        return (
-            report.network
-            for report in self.reports
-            if report.network
-        )
-
-    def iter_shared_networks(self):
-        """Gets all networks shared with this user
-
-        :rtype: iter[Network]
-        """
-        return self.networks
-
-    def iter_project_networks(self):
-        """Gets all networks for which projects have granted this user access
-
-        :rtype: iter[Network]
-        """
-        return (
-            network
-            for project in self.projects
-            for network in project.networks
-        )
-
-    def iter_available_networks(self):
-        """Iterate over all owned, shared, and project networks.
-
-        :rtype: iter[Network]
-        """
-        return itt.chain(
-            self.iter_owned_networks(),
-            self.iter_shared_networks(),
-            self.iter_project_networks(),
-        )
-
-    def get_sorted_queries(self):
-        """Gets a list of sorted queries for this user
-
-        :rtype: list[Query]
-        """
-        return sorted(self.queries, key=attrgetter('created'), reverse=True)
-
-    def pending_reports(self):
-        """Gets a list of pending reports for this user
-
-        :rtype: list[Report]
-        """
-        return [
-            report
-            for report in self.reports
-            if report.incomplete
-        ]
-
-    def get_vote(self, edge: Edge):
-        """Get the vote that goes with this edge.
-
-        :rtype: EdgeVote
-        """
-        return self.votes.filter(EdgeVote.edge == edge).one_or_none()
-
-    def has_project_rights(self, project):
-        """Returns if the given user has rights to the given project
-
-        :type project: Project
-        :rtype: bool
-        """
-        return self.is_authenticated and (self.is_admin or project.has_user(self))
-
-    def has_experiment_rights(self, experiment: Experiment) -> bool:
-        """Check if the user has rights to this experiment."""
-        return (
-                experiment.public or
-                self.is_admin or
-                self == experiment.user
-        )
-
-    def __hash__(self):
-        return hash(self.email)
-
-    def __eq__(self, other):
-        return self.email == other.email
-
-    def __repr__(self):
-        return '<User email={}>'.format(self.email)
-
-    def __str__(self):
-        return self.email
-
-    def to_json(self, include_id=True):
-        """Outputs this User as a JSON dictionary
-
-        :rtype: dict
-        """
-        result = {
-            'email': self.email,
-            'roles': [
-                role.name
-                for role in self.roles
-            ],
-        }
-
-        if include_id:
-            result['id'] = self.id
-
-        if self.name:
-            result['name'] = self.name
-
-        return result
-
-    def owns_network(self, network: Network) -> bool:
-        """Check if the user uploaded the network."""
-        return network.report and network.report.user == self
-
-
-assembly_network = Table(
-    ASSEMBLY_NETWORK_TABLE_NAME,
-    Base.metadata,
-    Column('network_id', Integer, ForeignKey('{}.id'.format(NETWORK_TABLE_NAME))),
-    Column('assembly_id', Integer, ForeignKey('{}.id'.format(ASSEMBLY_TABLE_NAME)))
-)
-
-
-class Assembly(Base):
-    """Describes an assembly of networks."""
-
-    __tablename__ = ASSEMBLY_TABLE_NAME
-
-    id = Column(Integer, primary_key=True)
-    name = Column(String(255), unique=True, nullable=True)
-
-    user_id = Column(Integer, ForeignKey('{}.id'.format(USER_TABLE_NAME)), doc='The creator of this assembly')
-    user = relationship('User', backref='assemblies')
-
-    created = Column(DateTime, default=datetime.datetime.utcnow, doc='The date and time of upload')
-
-    networks = relationship(Network, secondary=assembly_network, backref=backref('assemblies', lazy='dynamic'))
-
-    def as_bel(self):
-        """Returns a merged instance of all of the contained networks
-
-        :return: A merged BEL graph
-        :rtype: pybel.BELGraph
-        """
-        return union(network.as_bel() for network in self.networks)
-
-    @staticmethod
-    def from_networks(networks, user=None):
-        """Builds an assembly from a list of networks
-
-        :param iter[Network] networks: The network in this assembly
-        :param Optional[User] user: The user who created this assembly
-        :rtype: Assembly
-        """
-        assembly = Assembly(networks=networks)
-
-        if user is not None and user.is_authenticated:
-            assembly.user = user
-
-        return assembly
-
-    @staticmethod
-    def from_network(network, user=None):
-        """Builds an assembly from a singular network
-
-        :param Network network: The network in this assembly
-        :param Optional[User] user: The user who created this assembly
-        :rtype: Assembly
-        """
-        return Assembly.from_networks(networks=[network], user=user)
-
-    def to_json(self):
-        """
-        :rtype: dict
-        """
-        result = {
-            'user': {
-                'id': self.user.id,
-                'email': self.user.email,
-            },
-
-            'networks': [
-                network.to_json()
-                for network in self.networks
-            ]
-        }
-
-        if self.name:
-            result['name'] = self.name
-
-        return result
-
-    def __repr__(self):
-        return '<Assembly {} with [{}]>'.format(
-            self.id,
-            ', '.join(str(network.id) for network in self.networks)
-        )
-
-    def __str__(self):
-        return ', '.join(map(str, self.networks))
-
-
-class Query(Base):
-    """Describes a :class:`pybel_tools.query.Query`."""
-
-    __tablename__ = QUERY_TABLE_NAME
-
-    id = Column(Integer, primary_key=True)
-    created = Column(DateTime, default=datetime.datetime.utcnow, doc='The date and time of upload')
-    public = Column(Boolean, nullable=False, default=False, doc='Should the query be public? Note: users still need'
-                                                                'appropriate rights to all networks in assembly')
-
-    user_id = Column(Integer, ForeignKey('{}.id'.format(USER_TABLE_NAME)), doc='The user who created the query')
-    user = relationship(User, backref=backref('queries', lazy='dynamic'))
-
-    assembly_id = Column(Integer, ForeignKey('{}.id'.format(ASSEMBLY_TABLE_NAME)),
-                         doc='The network assembly used in this query')
-    assembly = relationship(Assembly, backref=backref('queries'))
-
-    seeding = Column(Text, doc="The stringified JSON of the list representation of the seeding")
-    pipeline = Column(Text, doc="Protocol list")
-
-    parent_id = Column(Integer, ForeignKey('{}.id'.format(QUERY_TABLE_NAME)), nullable=True)
-    parent = relationship('Query', remote_side=[id],
-                          backref=backref('children', lazy='dynamic', cascade="all, delete-orphan"))
-
-    def __repr__(self):
-        return '<Query id={}>'.format(self.id)
-
-    def get_assembly_query(self):
-        """Returns a new query, just with the same assembly as this one
-
-        :rtype: Query
-        """
-        return Query(
-            assembly=self.assembly,
-            parent=self,
-            user=self.user,
-        )
-
-    def set_seeding(self, query: pybel.struct.query.Query):
-        """Set the seeding container from a PyBEL Query."""
-        self.seeding = query.seeding.dumps()
-
-    def get_seeding(self):
-        """Get the seeding container.
-
-        :rtype: Optional[Seeding]
-        """
-        if self.seeding:
-            return Seeding.loads(self.seeding)
-
-    def set_pipeline(self, query: pybel.struct.query.Query):
-        """Set the pipeline value from a PyBEL Tools query."""
-        self.pipeline = query.pipeline.dumps()
-
-    def get_pipeline(self):
-        """Get the pipeline.
-
-        :rtype: Optional[Pipeline]
-        """
-        if self.pipeline:
-            return Pipeline.loads(self.pipeline)
-
-    def _get_query(self) -> pybel.struct.query.Query:
-        """Convert this object to a query object."""
-        if not hasattr(self, '_query'):
-            self._query = pybel.struct.query.Query(
-                network_ids=self.network_ids,
-                seeding=self.get_seeding(),
-                pipeline=self.get_pipeline(),
-            )
-
-        return self._query
-
-    @property
-    def networks(self) -> List[Network]:
-        """Get the networks from the contained assembly."""
-        return self.assembly.networks
-
-    @property
-    def network_ids(self) -> List[int]:
-        """Get the network identifiers from the contained assembly."""
-        return [network.id for network in self.networks]
-
-    def to_json(self, include_id=True):
-        """Serializes this object to JSON
-
-        :param bool include_id: Should the identifier be included?
-        :rtype: dict
-        """
-        result = self._get_query().to_json()
-
-        if include_id:
-            result['id'] = self.id
-
-        return result
-
-    def seeding_to_json(self):
-        """Return seeding json.
-
-        :rtype: Optional[list[dict]]
-        """
-        seeding = self.get_seeding()
-        if seeding:
-            return seeding.to_json()
-
-    def pipeline_to_json(self):
-        """Return the pipeline as json.
-
-        :rtype: Optional[list[dict]]
-        """
-        pipeline = self.get_pipeline()
-        if pipeline:
-            return pipeline.to_json()
-
-    def run(self, manager: Manager) -> Optional[BELGraph]:
-        """A wrapper around the run function function of the enclosed query."""
-        return self._get_query().run(manager)
-
-    @staticmethod
-    def from_assembly(assembly: Assembly, user: Optional[User] = None):
-        """Build a query from an assembly.
-
-        :rtype: Query
-        """
-        query = Query(assembly=assembly)
-
-        if user is not None and user.is_authenticated:
-            query.user = user
-
-        return query
-
-    @staticmethod
-    def from_networks(networks, user=None):
-        """Build a query from a network.
-
-        :param list[Network] networks: A network
-        :param Optional[User] user: The user who owns this query
-        :rtype: Query
-        """
-        assembly = Assembly.from_networks(networks, user=user)
-        query = Query.from_assembly(assembly, user=user)
-        return query
-
-    @staticmethod
-    def from_project(project, user=None):
-        """Build a query from a project.
-
-        :param Project project:
-        :param Optional[User] user: The user who owns this query
-        :rtype: Query
-        """
-        return Query.from_networks(project.networks, user=user)
-
-    @staticmethod
-    def from_network(network, user=None):
-        """Builds a query from a network
-
-        :param Network network: A network
-        :param Optional[User] user: The user who owns this query
-        :rtype: Query
-        """
-        return Query.from_networks(networks=[network], user=user)
-
-    @staticmethod
-    def from_query(manager: Manager, query: pybel.struct.query.Query, user: Optional[User] = None):
-        """Build an ORM query from a PyBEL-Tools query.
-
-        :rtype: Query
-        """
-        networks = manager.get_networks_by_ids(query.network_ids)
-        result = Query.from_networks(networks, user=user)
-        result.set_seeding(query)
-        result.set_pipeline(query)
-        return result
-
-    @staticmethod
-    def from_query_args(manager, network_ids, user=None, seeding=None, pipeline=None):
-        """Build an ORM model from the arguments for a PyBEL-Tools query.
-
-        :param list[int] network_ids: A list of network identifiers
-        :param Optional[User] user:
-        :param Optional[Seeding] seeding:
-        :param Optional[Pipeline] pipeline: Instance of a pipeline
-        :rtype: Query
-        """
-        q = pybel.struct.query.Query(network_ids, seeding=seeding, pipeline=pipeline)
-        return Query.from_query(manager, q, user=user)
-
-    def build_appended(self, name, *args, **kwargs):
-        """Build a new query with the given function appended to the current query's pipeline.
-
-        :param str name: Append function name
-        :param args: Append function positional arguments
-        :param kwargs: Append function keyword arguments
-        :rtype: Query
-        """
-        _query = self._get_query()
-        _query.pipeline.append(name, *args, **kwargs)
-
-        query = Query(
-            parent_id=self.id,
-            assembly=self.assembly,
-            seeding=self.seeding,
-            pipeline=_query.pipeline.dumps(),
-            user=self.user,
-        )
-
-        return query
-
-    def add_seed_neighbors(self, nodes):
-        """Add a seed by neighbors and return a new query.
-
-        :param list[pybel.manager.models.Node] nodes: A list of nodes
-        :rtype: Query
-        """
-        _query = self._get_query()
-        _query.append_seeding_neighbors([node.as_bel() for node in nodes])
-
-        return Query(
-            parent_id=self.id,
-            assembly=self.assembly,
-            seeding=_query.seeding.dumps(),
-            pipeline=self.pipeline,
-            user=self.user,
-        )
-
-
 class EdgeVote(Base):
     """Describes the vote on an edge."""
 
@@ -897,10 +610,10 @@ class EdgeVote(Base):
 
     id = Column(Integer, primary_key=True)
 
-    edge_id = Column(Integer, ForeignKey('{}.id'.format(EDGE_TABLE_NAME)), nullable=False)
+    edge_id = Column(Integer, ForeignKey('{}.id'.format(Edge.__tablename__)), nullable=False)
     edge = relationship(Edge, backref=backref('votes', lazy='dynamic', cascade="all, delete-orphan"))
 
-    user_id = Column(Integer, ForeignKey('{}.id'.format(USER_TABLE_NAME)), nullable=False,
+    user_id = Column(Integer, ForeignKey('{}.id'.format(User.__tablename__)), nullable=False,
                      doc='The user who made this vote')
     user = relationship(User, backref=backref('votes', lazy='dynamic'))
 
@@ -939,7 +652,7 @@ class EdgeComment(Base):
 
     id = Column(Integer, primary_key=True)
 
-    edge_id = Column(Integer, ForeignKey('{}.id'.format(EDGE_TABLE_NAME)))
+    edge_id = Column(Integer, ForeignKey('{}.id'.format(Edge.__tablename__)))
     edge = relationship(Edge, backref=backref('comments', lazy='dynamic', cascade="all, delete-orphan"))
 
     user_id = Column(Integer, ForeignKey('{}.id'.format(USER_TABLE_NAME)), nullable=False,
@@ -972,11 +685,11 @@ class NetworkOverlap(Base):
 
     __tablename__ = OVERLAP_TABLE_NAME
 
-    left_id = Column(Integer, ForeignKey('{}.id'.format(NETWORK_TABLE_NAME)), primary_key=True)
+    left_id = Column(Integer, ForeignKey('{}.id'.format(Network.__tablename__)), primary_key=True)
     left = relationship('Network', foreign_keys=[left_id],
                         backref=backref('overlaps', lazy='dynamic', cascade="all, delete-orphan"))
 
-    right_id = Column(Integer, ForeignKey('{}.id'.format(NETWORK_TABLE_NAME)), primary_key=True)
+    right_id = Column(Integer, ForeignKey('{}.id'.format(Network.__tablename__)), primary_key=True)
     right = relationship('Network', foreign_keys=[right_id],
                          backref=backref('incoming_overlaps', lazy='dynamic', cascade="all, delete-orphan"))
 

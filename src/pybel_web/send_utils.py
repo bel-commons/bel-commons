@@ -57,7 +57,7 @@ def to_json_custom(graph, _id='id', source='source', target='target'):
     rr = {}
 
     for u, v, key, data in graph.edges(keys=True, data=True):
-        if data[RELATION] in TWO_WAY_RELATIONS and (u, v) != tuple(sorted((u, v))):
+        if data[RELATION] in TWO_WAY_RELATIONS and (u, v) != tuple(sorted((u, v), key=methodcaller('as_bel'))):
             continue  # don't keep two way edges twice
 
         entry_code = u, v
