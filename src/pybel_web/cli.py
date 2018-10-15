@@ -5,17 +5,18 @@
 Run with ``python -m pybel_web`` or simply as ``pybel-web``.
 """
 
-import sys
-import time
-
-import click
 import datetime
 import json
 import logging
 import multiprocessing
 import os
+import sys
+
+import click
+import time
 from flask_security import SQLAlchemyUserDatastore
 
+from pybel import from_path, from_pickle
 from pybel.constants import get_cache_connection
 from pybel.manager.models import Network
 from pybel.utils import get_version as pybel_version
@@ -299,7 +300,7 @@ def parse(manager, path, public):
     """Parses a BEL script and uploads"""
     enable_cool_mode()
     t = time.time()
-    graph = pybel.from_path(path, manager=manager)
+    graph = from_path(path, manager=manager)
     log.info('parsing done in %.2f seconds', time.time() - t)
     insert_graph(manager, graph, public=public)
 
@@ -317,7 +318,7 @@ def upload(manager, path):
             insert_graph(manager, graph)
 
     else:
-        graph = pybel.from_pickle(path)
+        graph = from_pickle(path)
         insert_graph(manager, graph)
 
 
@@ -365,6 +366,16 @@ def rm(manager, email):
     ds = SQLAlchemyUserDatastore(manager, User, Role)
     user_ = ds.find_user(email=email)
     ds.delete_user(user_)
+    ds.commit()
+
+
+@users.command()
+@click.argument('email')
+@click.pass_obj
+def confirm(manager, email):
+    ds = SQLAlchemyUserDatastore(manager, User, Role)
+    user_ = ds.find_user(email=email)
+    user_.confirmed_at = datetime.datetime.now()
     ds.commit()
 
 
