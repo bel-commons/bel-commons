@@ -25,7 +25,7 @@ corresponding connectors:
 
 .. code-block:: sh
 
-    $ python3 -m pip install mysqlclient
+    $ python3 -m pip install psycopg2-binary
 
 
 Create the Database

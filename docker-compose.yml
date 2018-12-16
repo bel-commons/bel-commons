@@ -8,9 +8,9 @@ services:
     volumes:
      - .:/app
     environment:
-      PYBEL_CONNECTION: mysql+mysqldb://root:root@database/pybel?charset=utf8
-      CELERY_BROKER_URL: amqp://queue
-      CELERY_BACKEND_URL: db+mysql+mysqldb://root:root@database/pybel?charset=utf8
+      PYBEL_CONNECTION: postgresql://pybeluser:pybelpassword@database:5432/pybeldb
+      CELERY_BROKER_URL: amqp://broker
+      CELERY_BACKEND_URL: redis://result_backend
       SECRET_KEY: ${SECRET_KEY}
       SECURITY_PASSWORD_SALT: ${SECURITY_PASSWORD_SALT}
     restart: always
@@ -20,7 +20,8 @@ services:
       - 80:5000
     depends_on:
      - database
-     - queue
+     - broker
+     - result_backend
      - worker
 
   worker:
@@ -28,32 +29,29 @@ services:
     volumes:
      - .:/app
     environment:
-      PYBEL_CONNECTION: mysql+mysqldb://root:root@database/pybel?charset=utf8
-      CELERY_BROKER_URL: amqp://queue
-      CELERY_BACKEND_URL: db+mysql+mysqldb://root:root@database/pybel?charset=utf8
+      PYBEL_CONNECTION: postgresql://pybeluser:pybelpassword@database:5432/pybeldb
+      CELERY_BROKER_URL: amqp://broker
+      CELERY_BACKEND_URL: redis://result_backend
       SECRET_KEY: ${SECRET_KEY}
       SECURITY_PASSWORD_SALT: ${SECURITY_PASSWORD_SALT}
     restart: always
     command: celery worker -A pybel_web.celery_worker.celery -l INFO
     depends_on:
      - database
-     - queue
+     - broker
+     - result_backend
 
   database:
-    image: mysql:5.7
-    volumes:
-       - db_data:/var/lib/mysql
+    image: postgres:11.1
     environment:
-      MYSQL_USER: pybel_butler
-      MYSQL_PASSWORD: pybel_butler
-      MYSQL_DATABASE: pybel
-      MYSQL_ROOT_PASSWORD: root
+      POSTGRES_USER: pybeluser
+      POSTGRES_PASSWORD: pybelpassword
+      POSTGRES_DB: pybeldb
     ports:
-        - 3306:3306
-    command: mysqld --character-set-server=utf8 --collation-server=utf8_unicode_ci --init-connect='SET NAMES UTF8;' --innodb-flush-log-at-trx-commit=0 --max-allowed-packet=256M
+      - 5432:5432
 
-  queue:
+  broker:
     image: rabbitmq:3.7.7-alpine
 
-volumes:
-    db_data:
+  result_backend:
+    image: redis:4.0.11-alpine

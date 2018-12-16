@@ -1,15 +1,13 @@
 FROM python:3.7
 MAINTAINER Charles Tapley Hoyt "cthoyt@gmail.com"
 
-RUN pip3 install --upgrade pip
-RUN pip3 install mysqlclient gunicorn
-RUN pip3 install git+https://github.com/pybel/pybel.git
-RUN pip3 install git+https://github.com/pybel/pybel-tools.git
+RUN pip install --upgrade pip
+RUN pip install psycopg2-binary gunicorn
+RUN pip install git+https://github.com/pybel/pybel.git
+RUN pip install git+https://github.com/pybel/pybel-tools.git
 
 ADD requirements.txt /
-RUN pip3 install -r requirements.txt
+RUN pip install -r requirements.txt
 
 COPY . /app
-WORKDIR /app
-
-RUN pip3 install .
+WORKDIR /app/src
