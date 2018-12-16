@@ -31,12 +31,12 @@ INSTALL_REQUIRES = [
     'requests',
     'sqlalchemy',
     'flask',
-    'flask-bootstrap',
+    'flask-bootstrap==3.3.7.1',
     'flask-wtf',
-    'flask-security',
+    'flask-security==3.0.0',
     'flask-admin',
     'flask-cors',
-    'flask-sqlalchemy',
+    'flask-sqlalchemy==2.2',
     'werkzeug',
     'flasgger',
     'click',
@@ -59,6 +59,9 @@ EXTRAS_REQUIRE = {
     ],
     'cx': [
         'pybel_cx>=0.1.1',
+    ],
+    'postgres': [
+        'psycopg2-binary',
     ]
 }
 TESTS_REQUIRE = []

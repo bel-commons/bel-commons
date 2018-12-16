@@ -6,7 +6,7 @@ from typing import Optional
 
 from celery import Celery
 from celery.result import AsyncResult
-from flask import Flask, jsonify
+from flask import Flask, jsonify, Blueprint
 
 __all__ = [
     'PyBELCelery',
@@ -23,28 +23,46 @@ class PyBELCelery:
 
     def __init__(self, app: Optional[Flask] = None):
         self.app = app
+        self.blueprint = Blueprint('task', __name__, url_prefix='/api/task')
+
         if app is not None:
             self.init_app(app)
 
-    @staticmethod
-    def init_app(app: Flask):
+    def init_app(self, app: Flask):
         """Initialize the app with a Celery instance."""
-        celery = _create_celery(app)
-        app.extensions['celery'] = celery
+        celery = app.extensions['celery'] = _create_celery(app)
 
-        @app.route('/task/<task>', methods=['GET'])
-        def check(task: str):
+        @self.blueprint.route('/task/<uuid>', methods=['GET'])
+        def check(uuid: str):
             """Check the given task.
 
-            :param task: The UUID of a task.
+            :param uuid: The task's UUID as a string
+            ---
+            parameters:
+              - name: uuid
+                in: path
+                description: The task's UUID as a string
+                required: true
+                type: string
+            responses:
+              200:
+                description: JSON describing the state of the task
             """
-            task = AsyncResult(task, app=celery)
+            task = AsyncResult(uuid, app=celery)
 
             return jsonify(
                 task_id=task.task_id,
                 status=task.status,
                 result=task.result,
             )
+
+        app.register_blueprint(self.blueprint)
+
+
+    @property
+    def _celery(self):
+        return self.app.extensions['celery']
+
 
     @staticmethod
     def get_celery(app: Flask) -> Celery:
@@ -55,10 +73,9 @@ class PyBELCelery:
 
 def _create_celery(app: Flask) -> Celery:
     """Configure celery instance from application, using its config."""
-    if CELERY_RESULT_BACKEND in app.config:
-        backend = app.config.get(CELERY_RESULT_BACKEND)
-    else:
-        backend = 'db+{}'.format(app.config[SQLALCHEMY_DATABASE_URI])
+    backend = app.config.get(CELERY_RESULT_BACKEND)
+    if backend is None:
+        backend = f'db+{app.config[SQLALCHEMY_DATABASE_URI]}'
 
     celery = Celery(
         app.import_name,

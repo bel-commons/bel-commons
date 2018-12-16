@@ -27,7 +27,7 @@ For production, ``uwsgi`` seems to work pretty well.
 
 """
 
-__version__ = '0.2.4'
+__version__ = '0.3.0-dev'
 
 __title__ = 'pybel_web'
 __description__ = 'A web application exposing core PyBEL functionalities'

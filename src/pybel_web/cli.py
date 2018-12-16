@@ -15,7 +15,8 @@ import time
 
 import click
 
-from pybel import from_path, from_pickle
+from pybel import from_path
+from pybel.cli import graph_pickle_argument
 from pybel.constants import get_cache_connection
 from pybel.utils import get_version as pybel_version
 from pybel_tools.utils import enable_cool_mode, get_version as pybel_tools_get_version
@@ -42,12 +43,8 @@ def _iterate_user_strings(manager_: WebManager):
     :rtype: iter[str]
     """
     for user in manager_.session.query(User).all():
-        yield '{email}\t{password}\t{roles}\t{name}'.format(
-            email=user.email,
-            password=user.password,
-            roles=','.join(sorted(r.name for r in user.roles)),
-            name=(user.name if user.name else '')
-        )
+        roles = ','.join(sorted(r.name for r in user.roles))
+        yield f'{user.email}\t{user.password}\t{roles}\t{user.name if user.name else ""}'
 
 
 def set_debug(level):
@@ -111,10 +108,9 @@ def make_gunicorn_app(app, host, port, workers):
     })
 
 
-_main_help = "BEL Commons Command Line Interface on {}\n with " \
-             "PyBEL v{} and PyBEL Tools v{}".format(sys.executable,
-                                                    pybel_version(),
-                                                    pybel_tools_get_version())
+_main_help = f"""BEL Commons Command Line Interface on {sys.executable}
+with PyBEL v{pybel_version()} and PyBEL Tools v{pybel_tools_get_version()}
+"""
 
 
 @click.group(help=_main_help)
@@ -137,9 +133,6 @@ def run(host, port, debug, config, enable_parser, ensure_examples, with_gunicorn
     set_debug_param(debug)
     if debug < 3:
         enable_cool_mode()
-
-    log.info('Running PyBEL v%s', pybel_version())
-    log.info('Running PyBEL Tools v%s', pybel_tools_get_version())
 
     if host is not None:
         log.info('Running on host: %s', host)
@@ -244,7 +237,7 @@ def load(manager: WebManager, file):
 @click.pass_obj
 def drop(manager, yes, user_dump):
     """Drop the database."""
-    if yes or click.confirm('Drop database at {}?'.format(manager.connection)):
+    if yes or click.confirm(f'Remove database at {manager.connection}?'):
         click.echo('Dumping users to {}'.format(user_dump))
         for s in _iterate_user_strings(manager):
             click.echo(s, file=user_dump)
@@ -296,20 +289,11 @@ def parse(manager, path, public):
 
 
 @networks.command()
-@click.option('-p', '--path', help='A path or directory of gpickles to upload. Defaults to cwd {}'.format(os.getcwd()),
-              default=os.getcwd())
+@graph_pickle_argument
 @click.pass_obj
-def upload(manager, path):
-    """Upload a gpickle"""
-    if os.path.isdir(path):
-        from pybel_tools.io import iter_from_pickles_from_directory
-        for graph in iter_from_pickles_from_directory(path):
-            click.echo('inserting {}'.format(graph))
-            insert_graph(manager, graph)
-
-    else:
-        graph = from_pickle(path)
-        insert_graph(manager, graph)
+def upload(manager, graph):
+    """Upload a graph."""
+    insert_graph(manager, graph)
 
 
 @manage.group()
@@ -469,7 +453,7 @@ def drop(manager, query_id, yes):
         manager.session.query(query_id).get(query_id).delete()
         manager.session.commit()
 
-    elif yes or click.confirm('Drop all Query models at {}?'.format(manager.connection)):
+    elif yes or click.confirm(f'Drop all Query models in {manager.connection}?'):
         manager.session.query(Query).delete()
         manager.session.commit()
 
@@ -509,7 +493,7 @@ def drop(manager, assembly_id, yes):
         manager.session.query(assembly_id).get(assembly_id).delete()
         manager.session.commit()
 
-    elif yes or click.confirm('Drop all Assembly models at {}?'.format(manager.connection)):
+    elif yes or click.confirm(f'Drop all Assembly models in {manager.connection}?'):
         manager.session.query(Assembly).delete()
         manager.session.commit()
 
@@ -543,7 +527,7 @@ def drop(manager, experiment_id, yes):
         manager.session.query(Experiment).get(experiment_id).delete()
         manager.session.commit()
 
-    elif yes or click.confirm('Drop all Experiment models at {}?'.format(manager.connection)):
+    elif yes or click.confirm(f'Drop all Experiment models in {manager.connection}?'):
         manager.session.query(Experiment).delete()
         manager.session.commit()
 
@@ -572,7 +556,7 @@ def drop(manager, omic_id, yes):
         manager.session.query(Omic).get(omic_id).delete()
         manager.session.commit()
 
-    elif yes or click.confirm('Drop all Omic models at {}?'.format(manager.connection)):
+    elif yes or click.confirm(f'Drop all Omic models in {manager.connection}?'):
         manager.session.query(Omic).delete()
         manager.session.commit()
 
@@ -610,7 +594,7 @@ bms_dir = (
 if omics_dir is not None or bms_dir is not None:
     @manage.group()
     def examples():
-        """Load examples"""
+        """Load examples."""
 
 
     if omics_dir is not None:
@@ -679,7 +663,7 @@ if omics_dir is not None or bms_dir is not None:
 def wasteland(manager: WebManager):
     """Drop the PyBEL-Web specific stuff."""
     for table in [Experiment, UserQuery, Query, UserAssembly, Assembly, Report]:
-        click.echo('Dropping {}'.format(table))
+        click.echo(f'Dropping {table}')
         manager.session.query(table).delete()
         manager.session.commit()
         table.__table__.drop()

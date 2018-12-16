@@ -61,6 +61,7 @@
                         {% if not report.failed and not report.stalled %}
                             <li class="list-group-item">
                                 <code>#{{ report.id }}</code> {{ report.source_name }}
+                                <a href="{{ url_for('task.check', uuid=report.task_uuid) }}">{{ report.task_uuid }}</a>
                             </li>
                         {% endif %}
                     {% endfor %}

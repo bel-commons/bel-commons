@@ -467,8 +467,9 @@ def iterate_report_lines_in_task(report: Report, task: Task):
         if not task.request.called_directly:
             task.update_state(state='PROGRESS', meta={
                 'task': 'parsing',
-                'current': i,
-                'total': len_lines
+                'current_line_number': i,
+                'current_line': line,
+                'total_lines': len_lines,
             })
         yield line
 

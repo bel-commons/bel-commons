@@ -2,12 +2,14 @@
 
 """SQLAlchemy models for PyBEL Web."""
 
+from __future__ import annotations
+
 import codecs
 import datetime
 import itertools as itt
 from operator import attrgetter
 from pickle import dumps, loads
-from typing import Iterable, List, Mapping, Tuple
+from typing import Dict, Iterable, List, Mapping, Tuple
 
 from flask_security import RoleMixin, UserMixin
 from pandas import DataFrame
@@ -95,7 +97,6 @@ class User(Base, UserMixin):
     """Represents a user of PyBEL Web."""
 
     __tablename__ = USER_TABLE_NAME
-
     id = Column(Integer, primary_key=True)
 
     email = Column(String(255), unique=True, doc="The user's email")
@@ -159,7 +160,7 @@ class User(Base, UserMixin):
 
         :rtype: list[pybel_web.core.models.Query]
         """
-        return sorted(self.queries, key=attrgetter('created'), reverse=True)
+        return sorted(self.queries, key=attrgetter('query', 'created'), reverse=True)
 
     def pending_reports(self) -> List['Report']:
         """Get a list of pending reports for this user."""
@@ -224,34 +225,42 @@ class UserAssembly(Base):
     """Represents the ownership of a user to an assembly."""
 
     __tablename__ = USER_ASSEMBLY_TABLE_NAME
+    id = Column(Integer, primary_key=True)
 
-    user_id = Column(Integer, ForeignKey('{}.id'.format(User.__tablename__)), primary_key=True,
-                     doc='The creator of this assembly')
+    user_id = Column(Integer, ForeignKey('{}.id'.format(User.__tablename__)), doc='The creator of this assembly')
     user = relationship(User, backref='assemblies')
 
-    assembly_id = Column(Integer, ForeignKey('{}.id'.format(Assembly.__tablename__)), primary_key=True,
-                         doc='The contained assembly')
+    assembly_id = Column(Integer, ForeignKey('{}.id'.format(Assembly.__tablename__)), doc='The contained assembly')
     assembly = relationship(Assembly)
+
+    __table_args__ = (
+        UniqueConstraint(user_id, assembly_id),
+    )
 
 
 class UserQuery(Base):
     """Represents the ownership of a user to a query."""
 
     __tablename__ = USER_QUERY_TABLE_NAME
+    id = Column(Integer, primary_key=True)
 
-    user_id = Column(Integer, ForeignKey('{}.id'.format(User.__tablename__)), primary_key=True,
-                     doc='The user who created the query')
+    created = Column(DateTime, default=datetime.datetime.utcnow, doc='The date and time of upload')
+
+    user_id = Column(Integer, ForeignKey('{}.id'.format(User.__tablename__)), doc='The user who created the query')
     user = relationship(User, backref=backref('queries', lazy='dynamic'))
 
-    query_id = Column(Integer, ForeignKey('{}.id'.format(Query.__tablename__)), primary_key=True,
-                      doc='The user who created the query')
+    query_id = Column(Integer, ForeignKey('{}.id'.format(Query.__tablename__)), doc='The user who created the query')
     query = relationship(Query, backref=backref('user_query', uselist=False))
 
     public = Column(Boolean, nullable=False, default=False, doc='Should the query be public? Note: users still need'
                                                                 'appropriate rights to all networks in assembly')
 
+    __table_args__ = (
+        UniqueConstraint(user_id, query_id),
+    )
+
     @staticmethod
-    def from_networks(networks: List[Network], user: User) -> 'UserQuery':
+    def from_networks(networks: List[Network], user: User) -> UserQuery:
         """Build a query from a list of networks."""
         return UserQuery(
             query=Query.from_networks(networks),
@@ -259,20 +268,20 @@ class UserQuery(Base):
         )
 
     @staticmethod
-    def from_network(network: Network, user: User) -> 'UserQuery':
+    def from_network(network: Network, user: User) -> UserQuery:
         """Build a query from a network."""
         return UserQuery(
             query=Query.from_network(network),
             user=user
         )
 
-    @staticmethod
-    def from_project(project: 'Project', user: User) -> 'UserQuery':
+    @classmethod
+    def from_project(cls, project: Project, user: User) -> UserQuery:
         """Build a query from a project."""
-        return UserQuery.from_networks(networks=project.networks, user=user)
+        return cls.from_networks(networks=project.networks, user=user)
 
     @staticmethod
-    def from_query(manager: Manager, query: pybel.struct.query.Query, user: User) -> 'UserQuery':
+    def from_query(manager: Manager, query: pybel.struct.query.Query, user: User) -> UserQuery:
         """Build an ORM query from a PyBEL query."""
         networks = manager.get_networks_by_ids(query.network_ids)
         q = Query.from_networks(networks)
@@ -286,10 +295,11 @@ class UserQuery(Base):
 
 
 class Project(Base):
-    """Stores projects"""
-    __tablename__ = PROJECT_TABLE_NAME
+    """Stores projects."""
 
+    __tablename__ = PROJECT_TABLE_NAME
     id = Column(Integer, primary_key=True)
+
     name = Column(String(80), unique=True, index=True, nullable=False)
     description = Column(Text)
 
@@ -344,7 +354,6 @@ class Omic(Base):
     """Represents a file filled with omic data."""
 
     __tablename__ = OMICS_TABLE_NAME
-
     id = Column(Integer, primary_key=True)
 
     created = Column(DateTime, default=datetime.datetime.utcnow, doc='The date on which this file was uploaded')
@@ -367,30 +376,24 @@ class Omic(Base):
         return str(self.source_name)
 
     @property
-    def pretty_source_name(self):
-        """Gets a pretty version of the source data's name
-
-        :rtype: str
-        """
+    def pretty_source_name(self) -> str:
+        """Get a pretty version of the source data's name."""
         for ext in ('.tsv', '.csv'):
             if self.source_name.endswith(ext):
                 return self.source_name[:-len(ext)]
 
         return self.source_name
 
-    def set_source_df(self, df: DataFrame):
-        """Sets the source with a DataFrame by pickling it."""
+    def set_source_df(self, df: DataFrame) -> None:
+        """Set the source with a DataFrame by pickling it."""
         self.source = dumps(df)
 
     def get_source_df(self) -> DataFrame:
         """Load the pickled pandas DataFrame from the source file."""
         return loads(self.source)
 
-    def get_source_dict(self):
-        """Get a dictionary from gene to value.
-
-        :rtype: dict[str,float]
-        """
+    def get_source_dict(self) -> Mapping[str, float]:
+        """Get a dictionary from gene to value."""
         df = self.get_source_df()
         gene_column = self.gene_column
         data_column = self.data_column
@@ -404,12 +407,8 @@ class Omic(Base):
 
         return result
 
-    def to_json(self, include_id=True):
-        """Serialize as a dictionary.
-
-        :param bool include_id:
-        :rtype: dict
-        """
+    def to_json(self, include_id: bool = True) -> Dict:
+        """Serialize as a dictionary."""
         result = {
             'created': str(self.created),
             'public': self.public,
@@ -432,7 +431,6 @@ class Experiment(Base):
     """Represents an experiment."""
 
     __tablename__ = EXPERIMENT_TABLE_NAME
-
     id = Column(Integer, primary_key=True)
 
     created = Column(DateTime, default=datetime.datetime.utcnow, doc='The date on which this analysis was run')
@@ -537,18 +535,12 @@ class Report(Base):
         """Decode the lines stored in this."""
         return codecs.decode(self.source, self.encoding or 'utf-8').split('\n')
 
-    def dump_calculations(self, calculations_dict):
-        """Store a calculations dict.
+    def dump_calculations(self, calculations: Dict) -> None:
+        """Store a summary calculations dictionary."""
+        self.calculations = dumps(calculations)
 
-        :param dict calculations_dict:
-        """
-        self.calculations = dumps(calculations_dict)
-
-    def get_calculations(self):
-        """Get the summary calculations dictionary from this network.
-
-        :rtype: dict
-        """
+    def get_calculations(self) -> Dict:
+        """Get the summary calculations dictionary from this network."""
         return loads(self.calculations)
 
     @property
@@ -558,27 +550,21 @@ class Report(Base):
 
     @property
     def incomplete(self) -> bool:
-        """Is this still running?"""
+        """Check if this task is still running."""
         return self.completed is None and not self.message
 
     @property
     def failed(self) -> bool:
-        """Did this fail?"""
+        """Check if this task failed."""
         return self.completed is not None and not self.completed
 
     @property
-    def stalled(self):
-        """Returns true if a job is older than 3 hours
-
-        :rtype: bool
-        """
+    def stalled(self) -> bool:
+        """Return true if a job is older than 3 hours."""
         return datetime.datetime.utcnow() - self.created > datetime.timedelta(hours=3)
 
-    def as_info_json(self):
-        """Returns this object as a JSON summary
-
-        :rtype: dict
-        """
+    def as_info_json(self) -> Dict:
+        """Return this object as a JSON summary."""
         return dict([
             ('Nodes', self.number_nodes),
             ('Edges', self.number_edges),
@@ -607,7 +593,6 @@ class EdgeVote(Base):
     """Describes the vote on an edge."""
 
     __tablename__ = VOTE_TABLE_NAME
-
     id = Column(Integer, primary_key=True)
 
     edge_id = Column(Integer, ForeignKey('{}.id'.format(Edge.__tablename__)), nullable=False)
@@ -624,11 +609,8 @@ class EdgeVote(Base):
         UniqueConstraint(edge_id, user_id),
     )
 
-    def to_json(self):
-        """Convert this vote to JSON.
-
-        :rtype: dict
-        """
+    def to_json(self) -> Dict:
+        """Convert this vote to JSON."""
         return {
             'id': self.id,
             'edge': {
@@ -662,11 +644,8 @@ class EdgeComment(Base):
     comment = Column(Text, nullable=False)
     created = Column(DateTime, default=datetime.datetime.utcnow)
 
-    def to_json(self):
-        """Converts this comment to JSON
-
-        :rtype: dict
-        """
+    def to_json(self) -> Dict:
+        """Convert this comment to JSON."""
         return {
             'id': self.id,
             'edge': {
@@ -686,24 +665,18 @@ class NetworkOverlap(Base):
     __tablename__ = OVERLAP_TABLE_NAME
 
     left_id = Column(Integer, ForeignKey('{}.id'.format(Network.__tablename__)), primary_key=True)
-    left = relationship('Network', foreign_keys=[left_id],
+    left = relationship(Network, foreign_keys=[left_id],
                         backref=backref('overlaps', lazy='dynamic', cascade="all, delete-orphan"))
 
     right_id = Column(Integer, ForeignKey('{}.id'.format(Network.__tablename__)), primary_key=True)
-    right = relationship('Network', foreign_keys=[right_id],
+    right = relationship(Network, foreign_keys=[right_id],
                          backref=backref('incoming_overlaps', lazy='dynamic', cascade="all, delete-orphan"))
 
     overlap = Column(Float, nullable=False, doc='The node overlap between the two networks')
 
     @staticmethod
-    def build(left, right, overlap):
-        """Build an overlap and ensure the order is correct.
-
-        :param Network left:
-        :param Network right:
-        :param float overlap:
-        :return: NetworkOverlap
-        """
+    def build(left: Network, right: Network, overlap: float) -> NetworkOverlap:
+        """Build an overlap and ensure the order is correct."""
         if left.id < right.id:
             left, right = right, left
 
