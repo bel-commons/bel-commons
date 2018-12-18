@@ -6,7 +6,7 @@ from typing import Optional
 
 from celery import Celery
 from celery.result import AsyncResult
-from flask import Flask, jsonify, Blueprint
+from flask import Blueprint, Flask, jsonify
 
 __all__ = [
     'PyBELCelery',
@@ -57,12 +57,6 @@ class PyBELCelery:
             )
 
         app.register_blueprint(self.blueprint)
-
-
-    @property
-    def _celery(self):
-        return self.app.extensions['celery']
-
 
     @staticmethod
     def get_celery(app: Flask) -> Celery:

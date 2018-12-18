@@ -23,7 +23,7 @@ from pybel import BELGraph, Manager
 from pybel.dsl import BaseEntity
 from pybel.manager.models import Base, Edge, LONGBLOB, Network
 from pybel.struct import union
-from pybel_web.core.models import Assembly, Query
+from .core.models import Query
 
 EXPERIMENT_TABLE_NAME = 'pybel_experiment'
 REPORT_TABLE_NAME = 'pybel_report'
@@ -40,35 +40,34 @@ VOTE_TABLE_NAME = 'pybel_vote'
 OVERLAP_TABLE_NAME = 'pybel_overlap'
 OMICS_TABLE_NAME = 'pybel_omic'
 
-USER_ASSEMBLY_TABLE_NAME = 'pybel_user_assembly'
 USER_QUERY_TABLE_NAME = 'pybel_user_query'
 
 roles_users = Table(
     ROLE_USER_TABLE_NAME,
     Base.metadata,
-    Column('user_id', Integer, ForeignKey('{}.id'.format(USER_TABLE_NAME)), primary_key=True),
-    Column('role_id', Integer, ForeignKey('{}.id'.format(ROLE_TABLE_NAME)), primary_key=True)
+    Column('user_id', Integer, ForeignKey(f'{USER_TABLE_NAME}.id'), primary_key=True),
+    Column('role_id', Integer, ForeignKey(f'{ROLE_TABLE_NAME}.id'), primary_key=True),
 )
 
 users_networks = Table(
     USER_NETWORK_TABLE_NAME,
     Base.metadata,
-    Column('user_id', Integer, ForeignKey('{}.id'.format(USER_TABLE_NAME)), primary_key=True),
-    Column('network_id', Integer, ForeignKey('{}.id'.format(Network.__tablename__)), primary_key=True)
+    Column('user_id', Integer, ForeignKey(f'{USER_TABLE_NAME}.id'), primary_key=True),
+    Column('network_id', Integer, ForeignKey(f'{Network.__tablename__}.id'), primary_key=True),
 )
 
 projects_users = Table(
     PROJECT_USER_TABLE_NAME,
     Base.metadata,
-    Column('project_id', Integer, ForeignKey('{}.id'.format(PROJECT_TABLE_NAME)), primary_key=True),
-    Column('user_id', Integer, ForeignKey('{}.id'.format(USER_TABLE_NAME)), primary_key=True)
+    Column('project_id', Integer, ForeignKey(f'{PROJECT_TABLE_NAME}.id'), primary_key=True),
+    Column('user_id', Integer, ForeignKey(f'{USER_TABLE_NAME}.id'), primary_key=True),
 )
 
 projects_networks = Table(
     PROJECT_NETWORK_TABLE_NAME,
     Base.metadata,
-    Column('project_id', Integer, ForeignKey('{}.id'.format(PROJECT_TABLE_NAME)), primary_key=True),
-    Column('network_id', Integer, ForeignKey('{}.id'.format(Network.__tablename__)), primary_key=True)
+    Column('project_id', Integer, ForeignKey(f'{PROJECT_TABLE_NAME}.id'), primary_key=True),
+    Column('network_id', Integer, ForeignKey(f'{Network.__tablename__}.id'), primary_key=True),
 )
 
 
@@ -76,8 +75,8 @@ class Role(Base, RoleMixin):
     """Represents the role of a user in PyBEL Web."""
 
     __tablename__ = ROLE_TABLE_NAME
-
     id = Column(Integer, primary_key=True)
+
     name = Column(String(80), unique=True, nullable=False)
     description = Column(Text)
 
@@ -155,14 +154,12 @@ class User(Base, UserMixin):
             self.iter_project_networks(),
         )
 
-    def get_sorted_queries(self):
-        """Gets a list of sorted queries for this user
+    def get_sorted_queries(self) -> List[Query]:
+        """Get a list of sorted queries for this user."""
+        queries = (user_query.query for user_query in self.queries)
+        return sorted(queries, key=attrgetter('created'), reverse=True)
 
-        :rtype: list[pybel_web.core.models.Query]
-        """
-        return sorted(self.queries, key=attrgetter('query', 'created'), reverse=True)
-
-    def pending_reports(self) -> List['Report']:
+    def pending_reports(self) -> List[Report]:
         """Get a list of pending reports for this user."""
         return [
             report
@@ -170,15 +167,15 @@ class User(Base, UserMixin):
             if report.incomplete
         ]
 
-    def get_vote(self, edge: Edge) -> 'EdgeVote':
+    def get_vote(self, edge: Edge) -> EdgeVote:
         """Get the vote that goes with this edge."""
         return self.votes.filter(EdgeVote.edge == edge).one_or_none()
 
-    def has_project_rights(self, project: 'Project') -> bool:
+    def has_project_rights(self, project: Project) -> bool:
         """Return if the given user has rights to the given project."""
         return self.is_authenticated and (self.is_admin or project.has_user(self))
 
-    def has_experiment_rights(self, experiment: 'Experiment') -> bool:
+    def has_experiment_rights(self, experiment: Experiment) -> bool:
         """Check if the user has rights to this experiment."""
         return (
                 experiment.public or
@@ -221,23 +218,6 @@ class User(Base, UserMixin):
         return network.report and network.report.user == self
 
 
-class UserAssembly(Base):
-    """Represents the ownership of a user to an assembly."""
-
-    __tablename__ = USER_ASSEMBLY_TABLE_NAME
-    id = Column(Integer, primary_key=True)
-
-    user_id = Column(Integer, ForeignKey('{}.id'.format(User.__tablename__)), doc='The creator of this assembly')
-    user = relationship(User, backref='assemblies')
-
-    assembly_id = Column(Integer, ForeignKey('{}.id'.format(Assembly.__tablename__)), doc='The contained assembly')
-    assembly = relationship(Assembly)
-
-    __table_args__ = (
-        UniqueConstraint(user_id, assembly_id),
-    )
-
-
 class UserQuery(Base):
     """Represents the ownership of a user to a query."""
 
@@ -246,10 +226,12 @@ class UserQuery(Base):
 
     created = Column(DateTime, default=datetime.datetime.utcnow, doc='The date and time of upload')
 
-    user_id = Column(Integer, ForeignKey('{}.id'.format(User.__tablename__)), doc='The user who created the query')
+    user_id = Column(Integer, ForeignKey(f'{User.__tablename__}.id'), nullable=False,
+                     doc='The user who created the query')
     user = relationship(User, backref=backref('queries', lazy='dynamic'))
 
-    query_id = Column(Integer, ForeignKey('{}.id'.format(Query.__tablename__)), doc='The user who created the query')
+    query_id = Column(Integer, ForeignKey(f'{Query.__tablename__}.id'), nullable=False,
+                      doc='The user who created the query')
     query = relationship(Query, backref=backref('user_query', uselist=False))
 
     public = Column(Boolean, nullable=False, default=False, doc='Should the query be public? Note: users still need'
@@ -264,7 +246,7 @@ class UserQuery(Base):
         """Build a query from a list of networks."""
         return UserQuery(
             query=Query.from_networks(networks),
-            user=user
+            user=user,
         )
 
     @staticmethod
@@ -272,7 +254,7 @@ class UserQuery(Base):
         """Build a query from a network."""
         return UserQuery(
             query=Query.from_network(network),
-            user=user
+            user=user,
         )
 
     @classmethod
@@ -457,7 +439,7 @@ class Experiment(Base):
         """Load the pickled pandas DataFrame from the source file."""
         return self.omic.get_source_df()
 
-    def dump_results(self, scores: Mapping[BaseEntity, Tuple]):
+    def dump_results(self, scores: Mapping[BaseEntity, Tuple]) -> None:
         """Dump the results and marks this experiment as complete.
 
         :param scores: The scores to store in this experiment
@@ -490,8 +472,8 @@ class Report(Base):
     """Stores information about compilation and uploading events."""
 
     __tablename__ = REPORT_TABLE_NAME
-
     id = Column(Integer, primary_key=True)
+
     task_uuid = Column(String(36), nullable=True, doc='The celery queue UUID')
 
     user_id = Column(Integer, ForeignKey('{}.id'.format(USER_TABLE_NAME)), doc='The user who uploaded the network')
@@ -631,7 +613,6 @@ class EdgeComment(Base):
     """Describes the comments on an edge."""
 
     __tablename__ = COMMENT_TABLE_NAME
-
     id = Column(Integer, primary_key=True)
 
     edge_id = Column(Integer, ForeignKey('{}.id'.format(Edge.__tablename__)))
@@ -643,6 +624,10 @@ class EdgeComment(Base):
 
     comment = Column(Text, nullable=False)
     created = Column(DateTime, default=datetime.datetime.utcnow)
+
+    __table_args__ = (
+        UniqueConstraint(edge_id, user_id),
+    )
 
     def to_json(self) -> Dict:
         """Convert this comment to JSON."""

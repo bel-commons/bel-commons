@@ -49,6 +49,7 @@ INSTALL_REQUIRES = [
     'scikit-learn',
     'numpy',
     'bio2bel',
+    'tqdm',
 ]
 EXTRAS_REQUIRE = {
     'bio2bel': [

@@ -6,15 +6,16 @@ corresponding to objects"""
 import itertools as itt
 import logging
 import time
+from typing import Mapping, Tuple
 
 import networkx as nx
 import pandas as pd
-from flask import abort, flash, jsonify, redirect, request
-from typing import Mapping, Tuple, List, Optional
+from flask import Response, abort, flash, jsonify, redirect, request
+
 import pybel
 from pybel import BELGraph
-from pybel.dsl import BaseEntity
 from pybel.constants import GENE, RELATION
+from pybel.dsl import BaseEntity
 from pybel.manager.models import Network
 from pybel.struct.filters import filter_edges
 from pybel.struct.mutation import collapse_to_genes
@@ -76,7 +77,7 @@ def make_graph_summary(graph):
     return rv
 
 
-def get_network_summary_dict(graph):
+def get_network_summary_dict(graph: BELGraph):
     """Create a summary dictionary.
 
     :param pybel.BELGraph graph:
@@ -94,17 +95,14 @@ def get_network_summary_dict(graph):
             get_pair_tuple(u, v)
             for u, v in get_regulatory_pairs(graph)
         ],
-
         unstable_pairs=list(itt.chain(
             (get_pair_tuple(u, v) + ('Chaotic',) for u, v, in get_chaotic_pairs(graph)),
             (get_pair_tuple(u, v) + ('Dampened',) for u, v, in get_dampened_pairs(graph)),
         )),
-
         contradictory_pairs=[
             get_pair_tuple(u, v) + (relation,)
             for u, v, relation in get_contradiction_summary(graph)
         ],
-
         contradictory_triplets=list(itt.chain(
             (get_triplet_tuple(a, b, c) + ('Separate',) for a, b, c in
              get_separate_unstable_correlation_triples(graph)),
@@ -113,12 +111,10 @@ def get_network_summary_dict(graph):
             (get_triplet_tuple(a, b, c) + ('Increase Mismatch',) for a, b, c in get_increase_mismatch_triplets(graph)),
             (get_triplet_tuple(a, b, c) + ('Decrease Mismatch',) for a, b, c in get_decrease_mismatch_triplets(graph)),
         )),
-
         unstable_triplets=list(itt.chain(
             (get_triplet_tuple(a, b, c) + ('Chaotic',) for a, b, c in get_chaotic_triplets(graph)),
             (get_triplet_tuple(a, b, c) + ('Dampened',) for a, b, c in get_dampened_triplets(graph)),
         )),
-
         causal_pathologies=sorted({
             get_pair_tuple(u, v) + (graph[u][v][k][RELATION],)
             for u, v, k in filter_edges(graph, has_pathology_causal)
@@ -166,7 +162,7 @@ def fill_out_report(network: Network, report: Report, graph_summary):
     report.completed = True
 
 
-def insert_graph(manager, graph, user=1, public=False, use_tqdm=False):
+def insert_graph(manager, graph, user=1, public=False, use_tqdm:bool=False):
     """Insert a graph and also make a report.
 
     :param pybel.manager.Manager manager: A PyBEL manager
@@ -240,7 +236,7 @@ def create_omic(data, gene_column, data_column, description, source_name, sep, p
     return result
 
 
-def calculate_scores(graph: BELGraph, data, runs: int, use_tqdm:bool=False) -> Mapping[BaseEntity, Tuple]:
+def calculate_scores(graph: BELGraph, data, runs: int, use_tqdm: bool = False) -> Mapping[BaseEntity, Tuple]:
     """Calculate heat diffusion scores.
 
     :param graph: A BEL graph
@@ -284,7 +280,7 @@ def run_heat_diffusion_helper(manager, experiment, use_tqdm=False):
     experiment.time = time.time() - t
 
 
-def next_or_jsonify(message, *args, status=200, category='message', **kwargs):
+def next_or_jsonify(message, *args, status=200, category='message', **kwargs) -> Response:
     """Neatly wraps a redirect if the ``next`` argument is set in the request otherwise sends JSON
     feedback.
 

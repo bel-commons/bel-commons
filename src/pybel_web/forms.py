@@ -16,7 +16,8 @@ from pybel.struct.query.constants import (
 
 
 class SeedSubgraphForm(FlaskForm):
-    """Builds the form for seeding by subgraph"""
+    """Builds the form for seeding by sub-graph."""
+
     node_list = HiddenField('Nodes')
     seed_method = RadioField(
         'Expansion Method',
@@ -34,7 +35,8 @@ class SeedSubgraphForm(FlaskForm):
 
 
 class SeedProvenanceForm(FlaskForm):
-    """Builds the form for seeding by author/citation"""
+    """Builds the form for seeding by author/citation."""
+
     author_list = HiddenField('Nodes')
     pubmed_list = HiddenField('Nodes')
     filter_pathologies = BooleanField('Filter pathology nodes', default=True)
@@ -42,7 +44,8 @@ class SeedProvenanceForm(FlaskForm):
 
 
 class ParserForm(FlaskForm):
-    """Builds an upload form with wtf-forms"""
+    """Builds an upload form with wtf-forms."""
+
     file = FileField('My BEL script', validators=[
         DataRequired(),
         FileAllowed(['bel'], 'Only files with the *.bel extension are allowed')
@@ -66,7 +69,8 @@ class ParserForm(FlaskForm):
 
 
 class DifferentialGeneExpressionForm(FlaskForm):
-    """Builds the form for uploading differential gene expression data"""
+    """Builds the form for uploading differential gene expression data."""
+
     file = FileField('Differential Gene Expression File', validators=[DataRequired()])
     gene_symbol_column = StringField('Gene Symbol Column Name', default='Gene.symbol')
     log_fold_change_column = StringField('Log Fold Change Column Name', default='logFC')
@@ -85,6 +89,7 @@ class DifferentialGeneExpressionForm(FlaskForm):
 
 
 class ExtendedRegisterForm(RegisterForm):
-    """Extends the Flask-Security registration form"""
+    """Extends the Flask-Security registration form."""
+
     name = StringField('Name', [DataRequired()])
     submit = SubmitField(get_form_field_label('register'))

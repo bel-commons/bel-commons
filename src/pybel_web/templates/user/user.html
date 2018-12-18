@@ -51,6 +51,7 @@
             </h1>
         </div>
 
+        <!-- Reports panel -->
         {% if pending_reports|length > 0 %}
             <div class="panel panel-default">
                 <div class="panel-heading">
@@ -72,6 +73,8 @@
             </div>
         {% endif %}
 
+
+        <!-- Projects panel -->
         <div class="panel panel-default">
             <div class="panel-heading">
                 <h3 class="panel-title">{% if user == current_user %}My {% endif %}Projects</h3>
@@ -171,6 +174,7 @@
             </div>
         </div>
 
+        <!-- Networks panel -->
         <div class="panel panel-default">
             <div class="panel-heading">
                 <h3 class="panel-title">{% if user == current_user %}My {% endif %}Uploaded Networks</h3>
@@ -219,6 +223,7 @@
             </div>
         </div>
 
+        <!-- Omics panel -->
         <div class="panel panel-default">
             <div class="panel-heading">
                 <h3 class="panel-title">{% if user == current_user %}My {% endif %}Omics</h3>
@@ -254,6 +259,7 @@
             </div>
         </div>
 
+        <!-- Experiments panel -->
         <div class="panel panel-default">
             <div class="panel-heading">
                 <h3 class="panel-title">{% if user == current_user %}My {% endif %}Experiments</h3>
@@ -276,7 +282,7 @@
                 <h3 class="panel-title">{% if user == current_user %}My {% endif %}Queries</h3>
             </div>
             <div class="panel-body">
-                {{ pbw.render_query_table(user.get_sorted_queries()) }}
+                {{ pbw.render_query_table(queries) }}
             </div>
         </div>
     </div>

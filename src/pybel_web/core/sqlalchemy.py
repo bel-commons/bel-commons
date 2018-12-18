@@ -24,7 +24,7 @@ class PyBELSQLAlchemy(SQLAlchemy):
     manager_cls: Type[Manager] = Manager
 
     #: The actual manager (automatically built)
-    manager: manager_cls = None
+    manager: manager_cls
 
     def init_app(self, app: Flask) -> None:
         """Initialize a Flask app."""

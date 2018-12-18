@@ -13,6 +13,7 @@ from pybel import BELGraph, Manager, Pipeline, union
 from pybel.dsl import BaseEntity
 from pybel.manager import Base, Network
 from pybel.struct.query import Seeding
+from pybel.utils import _hash_tuple
 
 __all__ = [
     'Assembly',
@@ -36,11 +37,12 @@ class Assembly(Base):
     """Describes an assembly of networks."""
 
     __tablename__ = ASSEMBLY_TABLE_NAME
-
     id = Column(Integer, primary_key=True)
+
     created = Column(DateTime, default=datetime.datetime.utcnow, doc='The date and time of upload')
 
     name = Column(String(255), unique=True, nullable=True)
+    sha512 = Column(String(255), nullable=True, index=True)
 
     networks = relationship(Network, secondary=assembly_network, backref=backref('assemblies', lazy='dynamic'))
 
@@ -48,10 +50,18 @@ class Assembly(Base):
         """Return a merged instance of all of the contained networks."""
         return union(network.as_bel() for network in self.networks)
 
-    @staticmethod
-    def from_networks(networks: List[Network]) -> 'Assembly':
+    @classmethod
+    def from_networks(cls, networks: List[Network]) -> 'Assembly':
         """Build an assembly from a list of networks."""
-        return Assembly(networks=networks)
+        return Assembly(
+            networks=networks,
+            sha512=cls.get_network_list_sha512(networks),
+        )
+
+    @staticmethod
+    def get_network_list_sha512(networks: List[Network]) -> str:
+        """Build a sorted tuple of the unique network identifiers and hash it with SHA-512."""
+        return _hash_tuple(tuple(sorted({network.id for network in networks})))
 
     @staticmethod
     def from_network(network: Network) -> 'Assembly':
@@ -86,8 +96,8 @@ class Query(Base):
     """Describes a :class:`pybel_tools.query.Query`."""
 
     __tablename__ = QUERY_TABLE_NAME
-
     id = Column(Integer, primary_key=True)
+
     created = Column(DateTime, default=datetime.datetime.utcnow, doc='The date and time of upload')
 
     assembly_id = Column(Integer, ForeignKey('{}.id'.format(Assembly.__tablename__)),
@@ -109,7 +119,7 @@ class Query(Base):
     @property
     def network_ids(self) -> List[int]:
         """Get the network identifiers from the contained assembly."""
-        return [network.id for network in self.networks]
+        return [network.id for network in self.assembly.networks]
 
     def __repr__(self):
         return '<Query id={}>'.format(self.id)

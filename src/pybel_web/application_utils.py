@@ -16,6 +16,7 @@ from pybel.examples import *
 from pybel.manager.models import Author, Citation, Edge, Evidence, Namespace, NamespaceEntry, Network, Node
 from pybel.struct.mutation import expand_node_neighborhood, expand_nodes_neighborhoods, infer_child_relations
 from pybel.struct.pipeline import in_place_transformation, uni_in_place_transformation
+from pybel_web.core.models import Assembly, Query
 from .admin_model_views import (
     CitationView, EdgeView, EvidenceView, ExperimentView, ModelView, NamespaceView, NetworkView, NodeView, QueryView,
     ReportView, UserView, build_project_view,
@@ -23,8 +24,7 @@ from .admin_model_views import (
 from .constants import PYBEL_WEB_USER_MANIFEST, SENTRY_DSN
 from .manager import register_users_from_manifest
 from .manager_utils import insert_graph
-from .models import EdgeComment, EdgeVote, Experiment, NetworkOverlap, Report, Role, User
-from pybel_web.core.models import Assembly, Query
+from .models import EdgeComment, EdgeVote, Experiment, NetworkOverlap, Report, Role, User, UserQuery
 from .resources.users import default_users_path
 
 log = logging.getLogger(__name__)
@@ -126,21 +126,22 @@ def register_admin_service(app: Flask, manager: Manager, user_datastore: SQLAlch
 
     admin.add_view(UserView(User, manager.session))
     admin.add_view(ModelView(Role, manager.session))
-    admin.add_view(NamespaceView(Namespace, manager.session))
-    admin.add_view(ModelView(NamespaceEntry, manager.session))
-    admin.add_view(NetworkView(Network, manager.session))
+    admin.add_view(NamespaceView(Namespace, manager.session, category='Terminology'))
+    admin.add_view(ModelView(NamespaceEntry, manager.session, category='Terminology'))
+    admin.add_view(NetworkView(Network, manager.session, category='Network'))
     admin.add_view(NodeView(Node, manager.session))
-    admin.add_view(EdgeView(Edge, manager.session))
-    admin.add_view(CitationView(Citation, manager.session))
-    admin.add_view(EvidenceView(Evidence, manager.session))
-    admin.add_view(ModelView(Author, manager.session))
-    admin.add_view(ReportView(Report, manager.session))
+    admin.add_view(EdgeView(Edge, manager.session, category='Edge'))
+    admin.add_view(CitationView(Citation, manager.session, category='Provenance'))
+    admin.add_view(EvidenceView(Evidence, manager.session, category='Provenance'))
+    admin.add_view(ModelView(Author, manager.session, category='Provenance'))
+    admin.add_view(ReportView(Report, manager.session, category='Network'))
     admin.add_view(ExperimentView(Experiment, manager.session))
-    admin.add_view(QueryView(Query, manager.session))
+    admin.add_view(QueryView(Query, manager.session, category='Query'))
+    admin.add_view(ModelView(UserQuery, manager.session, category='Query'))
     admin.add_view(ModelView(Assembly, manager.session))
-    admin.add_view(ModelView(EdgeVote, manager.session))
-    admin.add_view(ModelView(EdgeComment, manager.session))
-    admin.add_view(ModelView(NetworkOverlap, manager.session))
+    admin.add_view(ModelView(EdgeVote, manager.session, category='Edge'))
+    admin.add_view(ModelView(EdgeComment, manager.session, category='Edge'))
+    admin.add_view(ModelView(NetworkOverlap, manager.session, category='Network'))
     admin.add_view(build_project_view(manager=manager, user_datastore=user_datastore))
 
     return admin

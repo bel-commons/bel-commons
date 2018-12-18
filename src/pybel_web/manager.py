@@ -105,7 +105,7 @@ class WebManager(Manager):
         return self.session.query(Experiment).get(experiment_id)
 
     def get_omic_by_id(self, omic_id) -> Optional[Omic]:
-        """Get an -omics data set by its database identifier, if it exists."""
+        """Get an -*omics* data set by its database identifier, if it exists."""
         return self.session.query(Omic).get(omic_id)
 
     def get_query_by_id(self, query_id) -> Optional[Query]:
@@ -139,22 +139,18 @@ class WebManager(Manager):
     def get_experiment_or_404(self, experiment_id: int) -> Experiment:
         """Get an experiment by its database identifier or 404 if it doesn't exist.
 
-        :param int experiment_id:
-        :rtype: Experiment
         :raises: werkzeug.exceptions.HTTPException
         """
         experiment = self.get_experiment_by_id(experiment_id)
 
         if experiment is None:
-            abort(404, 'Experiment {} does not exist'.format(experiment_id))
+            abort(404, f'Experiment {experiment_id} does not exist')
 
         return experiment
 
     def safe_get_experiment(self, user: User, experiment_id: int) -> Experiment:
         """Get an experiment by its database identifier, 404 if it doesn't exist, 403 if user doesn't have rights.
 
-        :param user:
-        :param experiment_id:
         :raises: werkzeug.exceptions.HTTPException
         """
         experiment = self.get_experiment_or_404(experiment_id)
@@ -187,7 +183,6 @@ class WebManager(Manager):
     def get_namespace_by_id_or_404(self, namespace_id: int) -> Namespace:
         """Get a namespace by its database identifier or abort 404 if it doesn't exist.
 
-        :param namespace_id: The namespace's database identifier
         :raises: werkzeug.exceptions.HTTPException
         """
         namespace = self.get_namespace_by_id(namespace_id)
@@ -200,7 +195,6 @@ class WebManager(Manager):
     def get_annotation_or_404(self, annotation_id: int) -> Namespace:
         """Get an annotation by its database identifier or abort 404 if it doesn't exist.
 
-        :param annotation_id: The annotation's database identifier
         :raises: werkzeug.exceptions.HTTPException
         """
         return self.get_namespace_by_id_or_404(annotation_id)
@@ -208,7 +202,6 @@ class WebManager(Manager):
     def get_citation_by_id_or_404(self, citation_id: int) -> Citation:
         """Get a citation by its database identifier or abort 404 if it doesn't exist.
 
-        :param citation_id: The citation's database identifier
         :raises: werkzeug.exceptions.HTTPException
         """
         citation = self.session.query(Citation).get(citation_id)
@@ -219,7 +212,6 @@ class WebManager(Manager):
     def get_citation_by_pmid_or_404(self, pubmed_identifier: str) -> Citation:
         """Get a citation by its PubMed identifier or abort 404 if it doesn't exist.
 
-        :param pubmed_identifier:
         :raises: werkzeug.exceptions.HTTPException
         """
         citation = self.get_citation_by_pmid(pubmed_identifier=pubmed_identifier)
@@ -232,7 +224,6 @@ class WebManager(Manager):
     def get_author_by_name_or_404(self, name: str) -> Author:
         """Get an author by their name or abort 404 if they don't exist.
 
-        :param name: The author's name
         :raises: werkzeug.exceptions.HTTPException
         """
         author = self.get_author_by_name(name)
@@ -245,7 +236,6 @@ class WebManager(Manager):
     def get_evidence_by_id_or_404(self, evidence_id: int) -> Evidence:
         """Get an evidence by its database identifier or abort 404 if it doesn't exist.
 
-        :param evidence_id: The evidence's database identifier
         :raises: werkzeug.exceptions.HTTPException
         """
         evidence = self.session.query(Evidence).get(evidence_id)
@@ -256,75 +246,68 @@ class WebManager(Manager):
         return evidence
 
     def get_network_or_404(self, network_id: int) -> Network:
-        """Gets a network by its database identifier or aborts 404 if it doesn't exist.
+        """Get a network by its database identifier or aborts 404 if it doesn't exist.
 
-        :param network_id: The identifier of the network
         :raises: werkzeug.exceptions.HTTPException
         """
         network = self.get_network_by_id(network_id)
 
         if network is None:
-            abort(404, 'Network {} does not exist'.format(network_id))
+            abort(404, f'Network {network_id} does not exist')
 
         return network
 
     def get_query_or_404(self, query_id: int) -> Query:
         """Get a query by its database identifier or abort 404 message if it doesn't exist.
 
-        :param int query_id: The database identifier for a query
-        :rtype: Query
         :raises: werkzeug.exceptions.HTTPException
         """
         query = self.get_query_by_id(query_id)
 
         if query is None:
-            abort(404, 'Missing query: {}'.format(query_id))
+            abort(404, f'Missing query: {query_id}')
 
         return query
 
     def get_node_by_hash_or_404(self, node_hash: str) -> Node:
         """Get a node if it exists or send a 404.
 
-        :param node_hash: A PyBEL node hash
         :raises: werkzeug.exceptions.HTTPException
         """
         node = self.get_node_by_hash(node_hash)
 
         if node is None:
-            abort(404, 'Node not found: {}'.format(node_hash))
+            abort(404, f'Node not found: {node_hash}')
 
         return node
 
     def get_edge_by_hash_or_404(self, edge_hash: str) -> Edge:
         """Get an edge if it exists or send a 404.
 
-        :param edge_hash: A PyBEL edge hash
         :raises: werkzeug.exceptions.HTTPException
         """
         edge = self.get_edge_by_hash(edge_hash)
 
         if edge is None:
-            abort(404, 'Edge not found: {}'.format(edge_hash))
+            abort(404, f'Edge not found: {edge_hash}')
 
         return edge
 
     def get_project_or_404(self, project_id: int) -> Project:
         """Get a project by its database identifier or send a 404.
 
-        :param project_id: The identifier of the project
         :raises: werkzeug.exceptions.HTTPException
         """
         project = self.get_project_by_id(project_id)
 
         if project is None:
-            abort(404, 'Project {} does not exist'.format(project_id))
+            abort(404, f'Project {project_id} does not exist')
 
         return project
 
     def get_user_or_404(self, user_id: int) -> User:
         """Get a user by identifier if it exists or send a 404.
 
-        :param user_id:
         :raises: werkzeug.exceptions.HTTPException
         """
         user = self.get_user_by_id(user_id)
@@ -345,8 +328,6 @@ class WebManager(Manager):
     def safe_get_network(self, user: User, network_id: int) -> Network:
         """Get a network and abort if the user does not have permissions to view.
 
-        :param user:
-        :param network_id: The identifier of the network
         :raises: werkzeug.exceptions.HTTPException
         """
         network = self.get_network_or_404(network_id)
@@ -371,8 +352,6 @@ class WebManager(Manager):
     def strict_get_network(self, user: User, network_id: int) -> Network:
         """Get a network and abort if the user does not have super rights.
 
-        :param user:
-        :param network_id: The identifier of the network
         :raises: werkzeug.exceptions.HTTPException
         """
         network = self.get_network_or_404(network_id)
@@ -380,19 +359,17 @@ class WebManager(Manager):
         if user.is_authenticated and (user.is_admin or user.owns_network(network)):
             return network
 
-        abort(403, 'User {} does not have super user rights to network {}'.format(user, network))
+        abort(403, f'User {user} does not have super user rights to network {network}')
 
     def safe_get_project(self, user: User, project_id: int) -> Project:
         """Get a project by identifier, aborts 404 if doesn't exist and aborts 403 if current user does not have rights.
 
-        :param user:
-        :param project_id: The identifier of the project
         :raises: werkzeug.exceptions.HTTPException
         """
         project = self.get_project_or_404(project_id)
 
         if not user.has_project_rights(project):
-            abort(403, 'User {} does not have permission to access Project {}'.format(user, project))
+            abort(403, f'User {user} does not have permission to access project {project}')
 
         return project
 
@@ -444,38 +421,35 @@ class WebManager(Manager):
 
         return vote
 
-    def help_get_edge_entry(self, edge: Edge, user: User):
-        """Get edge information by edge identifier.
-
-        :param Edge edge: The  given edge
-        :param User user:
-        :return: A dictionary representing the information about the given edge
-        :rtype: dict
-        """
+    def help_get_edge_entry(self, edge: Edge, user: User) -> Mapping:
+        """Get edge information by edge identifier."""
         data = edge.to_json()
 
         data['comments'] = [
             {
                 'user': {
-                    'id': ec.user_id,
-                    'email': ec.user.email
+                    'id': edge_comment.user_id,
+                    'email': edge_comment.user.email
                 },
-                'comment': ec.comment,
-                'created': ec.created,
+                'comment': edge_comment.comment,
+                'created': edge_comment.created,
             }
-            for ec in self.session.query(EdgeComment).filter(EdgeComment.edge == edge)
+            for edge_comment in self.session.query(EdgeComment).filter(EdgeComment.edge == edge)
         ]
 
         if user.is_authenticated:
-            vote = self.get_or_create_vote(edge, user)
-            data['vote'] = 0 if (vote is None or vote.agreed is None) else 1 if vote.agreed else -1
+            edge_vote = self.get_or_create_vote(edge, user)
+            data['vote'] = (
+                0 if (edge_vote is None or edge_vote.agreed is None) else
+                1 if edge_vote.agreed else
+                -1
+            )
 
         return data
 
     def get_node_overlaps(self, network: Network) -> Mapping[int, Tuple[Network, float]]:
         """Calculate overlaps to all other networks in the database.
 
-        :param network:
         :return: A dictionary from {int network_id: (network, float similarity)} for this network to all other networks
         """
         t = time.time()
@@ -620,12 +594,12 @@ class WebManager(Manager):
             yield a.network.name
 
             if a.network.version == b.network.version:
-                yield '\tUploaded only {}'.format(a.network.version)
-                yield '\tNodes: {}'.format(a.number_nodes)
-                yield '\tEdges: {}'.format(a.number_edges)
-                yield '\tWarnings: {}'.format(a.number_warnings)
+                yield f'\tUploaded only {a.network.version}'
+                yield f'\tNodes: {a.number_nodes}'
+                yield f'\tEdges: {a.number_edges}'
+                yield f'\tWarnings: {a.number_warnings}'
             else:
-                yield '\tUploads: {}'.format(count)
+                yield f'\tUploads: {count}'
                 yield '\tVersion: {} -> {}'.format(a.network.version, b.network.version)
                 yield '\tNodes: {} {:+d} {}'.format(a.number_nodes, b.number_nodes - a.number_nodes, b.number_nodes)
                 yield '\tEdges: {} {:+d} {}'.format(a.number_edges, b.number_edges - a.number_edges, b.number_edges)
@@ -659,12 +633,12 @@ class WebManager(Manager):
 
         return user_query.query
 
-    def convert_seed_value(self, key, form, value):
+    def convert_seed_value(self, key: str, form, value: str):
         """Normalize the form to type:data format.
 
-        :param str key: seed method
+        :param key: seed method
         :param ImmutableMultiDict form: Form dictionary
-        :param str value: data (nodes, authors...)
+        :param value: data (nodes, authors...)
         :return: Normalized data depending on the seeding method
         """
         if key == 'annotation':
@@ -723,11 +697,7 @@ class WebManager(Manager):
         return query_dict
 
     def _safe_get_query_helper(self, user: User, query_id: int) -> Optional[Query]:
-        """Check if the user has the rights to run the given query.
-
-        :param user: A user object
-        :param query_id: A query identifier
-        """
+        """Check if the user has the rights to run the given query."""
         query = self.get_query_or_404(query_id)
 
         log.debug('checking if user [%s] has rights to query [id=%s]', user, query_id)
@@ -748,14 +718,12 @@ class WebManager(Manager):
         - Raises an HTTPException with 403 if the user does not have the appropriate permissions for all networks in
           the query's assembly.
 
-        :param user:
-        :param query_id: The database identifier for a query
         :raises: werkzeug.exceptions.HTTPException
         """
-        query = self._safe_get_query_helper(user, query_id)
+        query = self._safe_get_query_helper(user=user, query_id=query_id)
 
         if query is None:
-            abort(403, 'Insufficient rights to run query {}'.format(query_id))
+            abort(403, f'Insufficient rights to run query {query_id}')
 
         return query
 
@@ -763,8 +731,6 @@ class WebManager(Manager):
     def safe_get_graph_from_query_id(self, user: User, query_id: int) -> Optional[BELGraph]:
         """Process the GET request returning the filtered network.
 
-        :param user:
-        :param query_id: The database query identifier
         :raises: werkzeug.exceptions.HTTPException
         """
         log.debug('getting query [id=%d] from database', query_id)
@@ -825,8 +791,10 @@ def register_users_from_manifest(user_datastore: SQLAlchemyUserDatastore, manife
     user_datastore.commit()
 
 
-def iterate_networks_for_user(manager: Manager, user_datastore: SQLAlchemyUserDatastore, user: User) -> Iterable[
-    Network]:
+def iterate_networks_for_user(manager: Manager,
+                              user_datastore: SQLAlchemyUserDatastore,
+                              user: User,
+                              ) -> Iterable[Network]:
     """Iterate over a user's networks."""
     yield from iter_recent_public_networks(manager)
     yield from user.iter_available_networks()

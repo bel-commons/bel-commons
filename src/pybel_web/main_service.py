@@ -24,11 +24,11 @@ from pybel.struct.query import QueryMissingNetworksError
 from pybel_tools.biogrammar.double_edges import summarize_competeness
 from pybel_tools.summary.error_summary import calculate_error_by_annotation
 from pybel_web.constants import merged_document_folder
-from pybel_web.core.models import Query
+from pybel_web.core.models import Assembly, Query
 from pybel_web.explorer_toolbox import get_explorer_toolbox
 from pybel_web.external_managers import manager_dict
 from pybel_web.manager_utils import next_or_jsonify
-from pybel_web.models import EdgeComment, EdgeVote, Experiment, Omic, User, UserAssembly, UserQuery
+from pybel_web.models import EdgeComment, EdgeVote, Experiment, Omic, User, UserQuery
 from pybel_web.proxies import celery, manager
 from pybel_web.utils import calculate_overlap_info, get_version as get_bel_commons_version
 
@@ -92,7 +92,7 @@ def home():
             ('Experiment', manager.session.query(Experiment).count(), url_for('analysis.view_experiments')),
             ('Citation', manager.session.query(Citation).count(), url_for('.view_citations')),
             ('Evidence', manager.session.query(Evidence).count(), url_for('.view_evidences')),
-            ('Assembly', manager.session.query(UserAssembly).count(), None),
+            ('Assembly', manager.session.query(Assembly).count(), None),
             ('Vote', manager.session.query(EdgeVote).count(), None),
             ('Comment', manager.session.query(EdgeComment).count(), None),
         ]
@@ -337,30 +337,21 @@ def view_pubmed(pmid: str):
 
 @ui_blueprint.route('/network/<int:network_id>/explore')
 def view_explore_network(network_id: int):
-    """Render a page for the user to explore a network.
-
-    :param network_id: The identifier of the network to explore
-    """
+    """Render a page for the user to explore a network."""
     query = manager.query_from_network_with_current_user(user=current_user, network_id=network_id)
     return redirect_to_view_explorer_query(query)
 
 
 @ui_blueprint.route('/explore/<int:query_id>')
 def view_explorer_query(query_id: int):
-    """Render a page for the user to explore a network.
-
-    :param query_id: The identifier of the query
-    """
+    """Render a page for the user to explore a network."""
     query = manager.safe_get_query(user=current_user, query_id=query_id)
     return render_template('network/explorer.html', query_id=query.id, explorer_toolbox=get_explorer_toolbox())
 
 
 @ui_blueprint.route('/node/<node_hash>/explore/')
 def view_explorer_node(node_hash: str):
-    """Build and send an induction query around the given node.
-
-    :param node_hash: The hash of the node
-    """
+    """Build and send an induction query around the given node."""
     node = manager.get_node_by_hash_or_404(node_hash)
 
     query_original = UserQuery.from_networks(networks=node.networks, user=current_user)
@@ -383,7 +374,7 @@ def view_explore_project(project_id: int):
     project = manager.get_project_by_id(project_id)
 
     query = UserQuery.from_project(project=project, user=current_user)
-    query.assembly.name = '{} query of {}'.format(time.asctime(), project.name)
+    query.assembly.name = f'{time.asctime()} query of {project.name}'
 
     manager.session.add(query)
     manager.session.commit()
@@ -413,11 +404,11 @@ def get_pipeline():
         q = pybel.struct.query.Query.from_json(d)
 
     except QueryMissingNetworksError as e:
-        flask.flash('Error building query: {}'.format(e))
+        flash(f'Error building query: {e}')
         return redirect(url_for('.view_query_builder'))
 
     except MissingPipelineFunctionError as e:
-        flask.flash('Error building query: {}'.format(e))
+        flash(f'Error building query: {e}')
         return redirect(url_for('.view_query_builder'))
 
     else:
@@ -430,7 +421,7 @@ def get_pipeline():
 
 @ui_blueprint.route('/namespace')
 def view_namespaces():
-    """Displays a page listing the namespaces."""
+    """Display a page listing the namespaces."""
     return render_template(
         'namespace/namespaces.html',
         namespaces=manager.session.query(Namespace).order_by(Namespace.keyword).all(),
@@ -440,10 +431,7 @@ def view_namespaces():
 
 @ui_blueprint.route('/namespace/<int:namespace_id>')
 def view_namespace(namespace_id: int):
-    """View a namespace.
-
-    :param namespace_id: The namespace's database identifier
-    """
+    """View a namespace."""
     namespace = manager.get_namespace_by_id_or_404(namespace_id)
 
     return render_template(
@@ -470,12 +458,9 @@ def view_namespace_entries():
     )
 
 
-@ui_blueprint.route('/name/<name_id>')
-def view_name(name_id):
-    """View a namespace entry.
-
-    :param int name_id: The namespace entry id
-    """
+@ui_blueprint.route('/name/<int:name_id>')
+def view_name(name_id: int):
+    """View a namespace entry."""
     namespace_entry = manager.session.query(NamespaceEntry).get(name_id)
 
     return render_template(
@@ -515,50 +500,46 @@ def view_about():
 
 
 @ui_blueprint.route('/network/<int:network_id>')
-def view_network(network_id):
-    """Renders a page with the statistics of the contents of a BEL script
-
-    :param int network_id: The identifier of the network to summarize
-    """
+def view_network(network_id: int):
+    """Render a page with the statistics of the contents of a BEL script."""
     return manager.render_network_summary_safe(network_id, user=current_user, template='network/network.html')
+
+
+@ui_blueprint.route('/network/<int:network_id>/delete')
+def delete_network(network_id: int):
+    """Drop the network and go to the network catalog."""
+    network = manager.strict_get_network(user=current_user, network_id=network_id)
+    if network.report:
+        manager.session.delete(network.report)
+    manager.drop_network(network)
+    flash(f'Dropped {network} (id:{network.id})')
+    return redirect(url_for('view_networks'))
 
 
 @ui_blueprint.route('/network/<int:network_id>/compilation')
 def view_summarize_compilation(network_id):
-    """Renders a page with the compilation summary of the contents of a BEL script
-
-    :param int network_id: The identifier of the network to summarize
-    """
+    """Render a page with the compilation summary of the contents of a BEL script."""
     return manager.render_network_summary_safe(network_id, user=current_user,
                                                template='network/summarize_compilation.html')
 
 
 @ui_blueprint.route('/network/<int:network_id>/warnings')
 def view_summarize_warnings(network_id: int):
-    """Render a page with the parsing errors from a BEL script.
-
-    :param network_id: The identifier of the network to summarize
-    """
+    """Render a page with the parsing errors from a BEL script."""
     return manager.render_network_summary_safe(network_id, user=current_user,
                                                template='network/summarize_warnings.html')
 
 
 @ui_blueprint.route('/network/<int:network_id>/biogrammar')
 def view_summarize_biogrammar(network_id: int):
-    """Render a page with the summary of the biogrammar analysis of a BEL script.
-
-    :param network_id: The identifier of the network to summarize
-    """
+    """Render a page with the summary of the biogrammar analysis of a BEL script."""
     return manager.render_network_summary_safe(network_id, user=current_user,
                                                template='network/summarize_biogrammar.html')
 
 
 @ui_blueprint.route('/network/<int:network_id>/completeness')
 def view_summarize_completeness(network_id: int):
-    """Render a page with the summary of the completeness analysis of a BEL script.
-
-    :param network_id: The identifier of the network to summarize
-    """
+    """Render a page with the summary of the completeness analysis of a BEL script."""
     network = manager.get_network_by_id(network_id)
     graph = network.as_bel()
 
@@ -643,13 +624,12 @@ def view_query_comparison(query_1_id: int, query_2_id: int):
 
 
 @ui_blueprint.route('/download/bel/<fid>')
-def download_saved_file(fid):
+def download_saved_file(fid: str):
     """Download a BEL file.
 
-    :param str fid: The file's identifier
+    :param fid: The file's identifier
     """
-    name = '{}.bel'.format(fid)
-    path = os.path.join(merged_document_folder, name)
+    path = os.path.join(merged_document_folder, f'{fid}.bel')
 
     if not os.path.exists(path):
         abort(404, 'BEL file does not exist')
@@ -689,17 +669,21 @@ def view_current_user_activity():
 @ui_blueprint.route('/user/<int:user_id>')
 @roles_required('admin')
 def view_user(user_id: int):
-    """Return the given user's history.
-
-    :param user_id: The identifier of the user to summarize
-    """
+    """Return the given user's history."""
     user = manager.get_user_by_id(user_id)
     return render_user(user)
 
 
 def render_user(user: User) -> flask.Response:
     """Render a user and their pending reports."""
-    return render_template('user/user.html', user=user, pending_reports=user.pending_reports(), manager=manager)
+    queries = user.get_sorted_queries()
+    return render_template(
+        'user/user.html',
+        user=user,
+        pending_reports=user.pending_reports(),
+        manager=manager,
+        queries=queries,
+    )
 
 
 @ui_blueprint.route('/overview')
@@ -756,10 +740,7 @@ def send_async_project_merge(user_id: int, project_id: int):
 
 @ui_blueprint.route('/network/<int:network_id>/induction-query/')
 def build_summary_link_query(network_id: int):
-    """Build a query with the given network by inducing a sub-graph over the nodes included in the request.
-
-    :param network_id: The identifier of the network
-    """
+    """Build a query with the given network by inducing a sub-graph over the nodes included in the request."""
     nodes = [
         manager.get_dsl_by_hash(node_hash)
         for node_hash in request.args.getlist('nodes')
@@ -782,7 +763,8 @@ def build_subsample_query(network_id: int):
     """
     q = pybel.struct.query.Query(network_id)
     q.append_seeding_sample()
-    user_query = UserQuery.from_query(manager=manager, query=q, user=current_user)
+    u = (current_user if current_user.is_authenticated else None)
+    user_query = UserQuery.from_query(manager=manager, query=q, user=u)
     manager.session.add(user_query)
     manager.session.commit()
 

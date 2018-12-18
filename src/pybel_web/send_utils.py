@@ -3,10 +3,11 @@
 import logging
 from io import BytesIO, StringIO
 from operator import methodcaller
+from typing import Optional
 
 from flask import Response, jsonify, send_file
 
-from pybel import to_bel_lines, to_bytes, to_csv, to_graphml, to_gsea, to_jgif, to_json, to_sif
+from pybel import BELGraph, to_bel_lines, to_bytes, to_csv, to_graphml, to_gsea, to_jgif, to_json, to_sif
 from pybel.canonicalize import edge_to_bel
 from pybel.constants import (
     CAUSAL_DECREASE_RELATIONS, CAUSAL_INCREASE_RELATIONS, DECREASES, FUSION, INCREASES, MEMBERS, RELATION,
@@ -28,23 +29,21 @@ __all__ = [
 log = logging.getLogger(__name__)
 
 
-def to_json_custom(graph, _id='id', source='source', target='target'):
+def to_json_custom(graph: BELGraph, id_key: str = 'id', source_key: str = 'source', target_key: str = 'target'):
     """Prepares JSON for the biological network explorer.
 
-    :type graph: pybel.BELGraph
-    :param str _id: The key to use for the identifier of a node, which is calculated with an enumeration
-    :param str source: The key to use for the source node
-    :param str target: The key to use for the target node
+    :param id_key: The key to use for the identifier of a node, which is calculated with an enumeration
+    :param source_key: The key to use for the source node
+    :param target_key: The key to use for the target node
     :rtype: dict
     """
     result = {}
-
     mapping = {}
 
     result['nodes'] = []
     for i, node in enumerate(sorted(graph, key=methodcaller('as_bel'))):
         data = node.copy()
-        data[_id] = node.sha512
+        data[id_key] = node.sha512
         data['bel'] = node.as_bel()
         if any(attr in data for attr in (VARIANTS, FUSION, MEMBERS)):
             data['cname'] = data['bel']
@@ -64,8 +63,8 @@ def to_json_custom(graph, _id='id', source='source', target='target'):
 
         if entry_code not in edge_set:  # Avoids duplicate sending multiple edges between nodes with same relation
             rr[entry_code] = {
-                source: mapping[u],
-                target: mapping[v],
+                source_key: mapping[u],
+                target_key: mapping[v],
                 'contexts': []
             }
 
@@ -90,13 +89,8 @@ def to_json_custom(graph, _id='id', source='source', target='target'):
     return result
 
 
-def serve_network(graph, serve_format=None):
-    """A helper function to serialize a graph and download as a file
-
-    :param pybel.BELGraph graph: A BEL graph
-    :param Optional[str] serve_format: The format to serve the network
-    :rtype: flask.Response
-    """
+def serve_network(graph: BELGraph, serve_format: Optional[str] = None) -> Response:
+    """Help serialize a graph and download as a file."""
     if serve_format is None:
         return jsonify(to_json_custom(graph))
 

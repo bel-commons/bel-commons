@@ -26,8 +26,7 @@ from werkzeug.routing import BaseConverter
 
 from pybel.constants import PYBEL_CONNECTION, config as pybel_config, get_cache_connection
 from pybel_web.application_utils import (
-    register_admin_service, register_error_handlers, register_examples, register_transformations,
-    register_users,
+    register_admin_service, register_error_handlers, register_examples, register_transformations, register_users,
 )
 from pybel_web.constants import (
     CELERY_BROKER_URL, MAIL_DEFAULT_SENDER, MAIL_SERVER, PYBEL_WEB_CONFIG_JSON, PYBEL_WEB_CONFIG_OBJECT,
@@ -143,6 +142,7 @@ def create_application(**kwargs) -> Flask:
     app.config.setdefault(PYBEL_WEB_REGISTER_ADMIN, True)
     app.config.setdefault(PYBEL_WEB_REGISTER_EXAMPLES, False)
     app.config.setdefault(MAIL_DEFAULT_SENDER, ("BEL Commons", 'bel-commons@scai.fraunhofer.de'))
+    app.config['JSONIFY_PRETTYPRINT_REGULAR'] = True
 
     log.info('database: %s', app.config.get(PYBEL_CONNECTION))
 
@@ -177,7 +177,7 @@ def create_application(**kwargs) -> Flask:
     register_error_handlers(app, sentry)
 
     if app.config[PYBEL_WEB_REGISTER_TRANSFORMATIONS]:
-        register_transformations(db.manager)
+        register_transformations(manager=db.manager)
 
     if app.config[PYBEL_WEB_REGISTER_USERS]:
         register_users(app, user_datastore=user_datastore)
@@ -193,4 +193,5 @@ def create_application(**kwargs) -> Flask:
 
 class PyBELSQLAlchemy(PyBELSQLAlchemyBase):
     """An updated PyBELSQLAlchemy using the WebManager."""
+
     manager_cls = WebManager

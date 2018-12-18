@@ -14,20 +14,20 @@ import sys
 import time
 
 import click
+from tqdm import tqdm
 
 from pybel import from_path
-from pybel.cli import graph_pickle_argument
-from pybel.constants import get_cache_connection
+from pybel.cli import connection_option, graph_pickle_argument
 from pybel.utils import get_version as pybel_version
 from pybel_tools.utils import enable_cool_mode, get_version as pybel_tools_get_version
-from pybel_web.core.models import Assembly, Query
 from .application import create_application
-from .constants import PYBEL_WEB_REGISTER_EXAMPLES, PYBEL_WEB_USE_PARSER_API, get_admin_email
+from .constants import PYBEL_WEB_REGISTER_EXAMPLES, PYBEL_WEB_USE_PARSER_API
+from .core.models import Assembly, Query, assembly_network
 from .database_service import api_blueprint
 from .main_service import ui_blueprint
 from .manager import WebManager
 from .manager_utils import insert_graph
-from .models import EdgeComment, EdgeVote, Experiment, Omic, Project, Report, Role, User, UserAssembly, UserQuery
+from .models import EdgeComment, EdgeVote, Experiment, Omic, Project, Report, Role, User, UserQuery
 from .views import (
     build_parser_service, curation_blueprint, experiment_blueprint, help_blueprint, receiving_blueprint,
     reporting_blueprint, uploading_blueprint,
@@ -44,7 +44,7 @@ def _iterate_user_strings(manager_: WebManager):
     """
     for user in manager_.session.query(User).all():
         roles = ','.join(sorted(r.name for r in user.roles))
-        yield f'{user.email}\t{user.password}\t{roles}\t{user.name if user.name else ""}'
+        yield f'{user.id}\t{user.email}\t{user.password}\t{roles}\t{user.name if user.name else ""}'
 
 
 def set_debug(level):
@@ -187,7 +187,7 @@ def worker(concurrency, broker, debug):
 
 
 @main.group()
-@click.option('-c', '--connection', help='Cache connection. Defaults to {}'.format(get_cache_connection()))
+@connection_option
 @click.pass_context
 def manage(ctx, connection):
     """Manage the database."""
@@ -223,9 +223,8 @@ def load(manager: WebManager, file):
             ds.commit()
 
             if 3 <= len(line):
-                roles = line[2].strip().split(',')
-                for role_name in roles:
-                    r = ds.find_or_create_role(name=role_name)
+                for role_name in line[2].strip().split(','):
+                    r = ds.find_or_create_role(name=role_name.strip())
                     ds.add_role_to_user(u, r)
 
     ds.commit()
@@ -248,25 +247,41 @@ def drop(manager, yes, user_dump):
 
 
 @manage.command()
+@click.option('--email')
+@click.option('--public', is_flag=True)
 @click.pass_obj
-def sanitize_reports(manager: WebManager):
-    """Add admin as the owner of all non-reported graphs"""
-    u = manager.user_datastore.find_user(email=get_admin_email())
-    click.echo('Adding {} as owner of unreported uploads'.format(u))
+def sanitize(manager: WebManager, email: str, public):
+    """Generate reports for all graphs missing them."""
+    if email:
+        user = manager.user_datastore.find_user(email=email)
+    else:
+        user = manager.user_datastore.get_user(1)
 
-    for n in manager.list_networks():
-        if n.report is not None:
+    click.echo(f'Adding {user} as owner of unreported uploads')
+
+    for network in tqdm(manager.list_networks()):
+        if network.report is not None:
             continue
 
+        click.echo(f'Sanitizing {network}')
         report = Report(
-            network=n,
-            user=u
+            network=network,
+            user=user,
+            public=public,
+            completed=True,
         )
-
         manager.session.add(report)
 
-        click.echo('Sanitizing {}'.format(n))
+    manager.session.commit()
 
+
+@manage.command()
+@click.pass_obj
+def freedom(manager: WebManager):
+    """Make all networks public."""
+    # TODO: use update(Report).filter_by(public=False).values(public=True)
+    for report in manager.session.query(Report).filter_by(public=False):
+        report.public = True
     manager.session.commit()
 
 
@@ -285,15 +300,30 @@ def parse(manager, path, public):
     t = time.time()
     graph = from_path(path, manager=manager)
     log.info('parsing done in %.2f seconds', time.time() - t)
-    insert_graph(manager, graph, public=public)
+    insert_graph(manager, graph, public=public, use_tqdm=True)
 
 
 @networks.command()
 @graph_pickle_argument
+@click.option('--public', is_flag=True)
 @click.pass_obj
-def upload(manager, graph):
+def upload(manager, graph, public):
     """Upload a graph."""
-    insert_graph(manager, graph)
+    insert_graph(manager, graph, public=public, use_tqdm=True)
+
+
+@manage.group()
+def reports():
+    """Manage reports."""
+
+
+@reports.command()
+@click.pass_obj
+def ls(manager: WebManager):
+    """List reports."""
+    click.echo('id\tnetwork\tuser\tpublic')
+    for report in manager.session.query(Report).all():
+        click.echo(f'{report.id}\t{report.network}\t{report.user}\t{report.public}')
 
 
 @manage.group()
@@ -659,14 +689,34 @@ if omics_dir is not None or bms_dir is not None:
 
 
 @manage.command()
+@click.confirmation_option()
 @click.pass_obj
 def wasteland(manager: WebManager):
     """Drop the PyBEL-Web specific stuff."""
-    for table in [Experiment, UserQuery, Query, UserAssembly, Assembly, Report]:
-        click.echo(f'Dropping {table}')
-        manager.session.query(table).delete()
-        manager.session.commit()
-        table.__table__.drop()
+    for table in [Experiment, UserQuery, Query]:
+        _drop_table(manager, table)
+
+    click.secho(f'{assembly_network}', fg='green')
+    click.secho('  truncating', fg='blue')
+    assembly_network.delete()
+    manager.session.commit()
+
+    click.secho('  dropping', fg='blue')
+    assembly_network.drop()
+    manager.session.commit()
+
+    for table in [Assembly, Report, EdgeVote, EdgeComment]:
+        _drop_table(manager, table)
+
+
+def _drop_table(manager, table_cls):
+    click.secho(f'{table_cls.__tablename__}', fg='green')
+    click.secho('  truncating', fg='blue')
+    manager.session.query(table_cls).delete()
+    manager.session.commit()
+    click.secho('  dropping', fg='blue')
+    table_cls.__table__.drop()
+    manager.session.commit()
 
 
 if __name__ == '__main__':

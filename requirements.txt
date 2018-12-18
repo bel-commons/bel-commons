@@ -21,6 +21,7 @@ wtforms
 scikit-learn
 numpy
 bio2bel
+tqdm
 
 # Extras
 pybel-cx>=0.1.1

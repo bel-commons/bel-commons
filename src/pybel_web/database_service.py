@@ -112,9 +112,9 @@ def download_undefined_namespace(network_id, namespace):
     return _build_namespace_helper(graph, namespace, names)
 
 
-@api_blueprint.route('/api/network/<int:network_id>/builder/namespace/incorrect/<namespace_keyword>')
-def download_missing_namespace(network_id: int, namespace_keyword: str):
-    """Outputs a namespace built from the missing names in the given namespace
+@api_blueprint.route('/api/network/<int:network_id>/builder/namespace/incorrect/<namespace>')
+def download_missing_namespace(network_id: int, namespace: str):
+    """Output a namespace built from the missing names in the given namespace.
 
     ---
     tags:
@@ -132,8 +132,8 @@ def download_missing_namespace(network_id: int, namespace_keyword: str):
         type: string
     """
     graph = manager.safe_get_graph(user=current_user, network_id=network_id)
-    names = get_incorrect_names_by_namespace(graph, namespace_keyword)  # TODO put into report data
-    return _build_namespace_helper(graph, namespace_keyword, names)
+    names = get_incorrect_names_by_namespace(graph, namespace)  # TODO put into report data
+    return _build_namespace_helper(graph, namespace, names)
 
 
 @api_blueprint.route('/api/network/<int:network_id>/builder/namespace/naked')
@@ -345,7 +345,7 @@ def suggest_network():
 
 
 @api_blueprint.route('/api/network/<int:network_id>/namespaces')
-def namespaces_by_network(network_id):
+def namespaces_by_network(network_id: int):
     """Get all of the namespaces in a network.
 
     ---
@@ -366,7 +366,7 @@ def namespaces_by_network(network_id):
 
 
 @api_blueprint.route('/api/network/<int:network_id>/annotations')
-def annotations_by_network(network_id):
+def annotations_by_network(network_id: int):
     """Get all of the annotations in a network.
 
     ---
@@ -387,7 +387,7 @@ def annotations_by_network(network_id):
 
 
 @api_blueprint.route('/api/network/<int:network_id>/citations')
-def citations_by_network(network_id):
+def citations_by_network(network_id: int):
     """Gets all of the citations in a given network
 
     ---
@@ -408,7 +408,7 @@ def citations_by_network(network_id):
 
 
 @api_blueprint.route('/api/network/<int:network_id>/edges')
-def edges_by_network(network_id):
+def edges_by_network(network_id: int):
     """Gets all of the edges in a network
 
     ---
@@ -456,7 +456,7 @@ def edges_by_network(network_id):
 
 
 @api_blueprint.route('/api/network/<int:network_id>/nodes/')
-def nodes_by_network(network_id):
+def nodes_by_network(network_id: int):
     """Gets all of the nodes in a network
 
     ---
@@ -479,7 +479,7 @@ def nodes_by_network(network_id):
 def drop_network_helper(network_id: int) -> Response:
     """Drop a network."""
     network = manager.strict_get_network(user=current_user, network_id=network_id)
-
+    redirect_arg = request.args.get('next')
     log.info('dropping network %s', network_id)
 
     try:
@@ -488,9 +488,9 @@ def drop_network_helper(network_id: int) -> Response:
     except Exception as e:
         manager.session.rollback()
 
-        if 'next' in request.args:
-            flash('Dropped network #{} failed: {}'.format(network_id, e), category='error')
-            return redirect(request.args['next'])
+        if redirect_arg is not None:
+            flash(f'Dropped network #{network_id} failed: {e}', category='error')
+            return redirect(redirect_arg)
 
         return jsonify({
             'status': 400,
@@ -500,15 +500,13 @@ def drop_network_helper(network_id: int) -> Response:
         })
 
     else:
-        return next_or_jsonify('Dropped network #{}'.format(network_id), network_id=network_id, action='drop network')
+        return next_or_jsonify(f'Dropped network #{network_id}', network_id=network_id, action='drop network')
 
 
-@api_blueprint.route('/api/network/<int:network_id>', methods=['DELETE'])
+@api_blueprint.route('/api/network/<int:network_id>', methods=['DELETE', 'GET', 'POST'])
 @login_required
 def drop_network(network_id: int):
     """Delete a network.
-
-    :param int network_id: The identifier of the network to drop
 
     ---
     tags:
@@ -525,7 +523,10 @@ def drop_network(network_id: int):
       200:
         description: The network was dropped
     """
-    return drop_network_helper(network_id)
+    if request.method == 'DELETE':
+        return drop_network_helper(network_id)
+    else:
+        return drop_network_helper(network_id)
 
 
 def _help_claim_network(network: Network, user: User) -> Optional[Report]:
@@ -559,8 +560,6 @@ def _help_claim_network(network: Network, user: User) -> Optional[Report]:
 @roles_required('admin')
 def claim_network(network_id: int):
     """Add a report for the given network.
-
-    :param network_id: A network's database identifier
 
     ---
     tags:
@@ -612,7 +611,7 @@ def pillage():
 
 
 @api_blueprint.route('/api/network/<int:network_id>/export/<serve_format>')
-def export_network(network_id, serve_format):
+def export_network(network_id: int, serve_format: str):
     """Builds a graph from the given network id and sends it in the given format
 
     ---
@@ -685,7 +684,7 @@ def get_network_name_by_id(network_id):
     return jsonify(network.name)
 
 
-def update_network_status(network_id, public):
+def update_network_status(network_id: int, public: bool):
     """Update whether a network is public or private
     
     :param int network_id: 
@@ -817,7 +816,7 @@ def check_query_rights(query_id):
         required: true
         type: integer
     """
-    query = manager._safe_get_query_helper(current_user, query_id)
+    query = manager._safe_get_query_helper(user=current_user, query_id=query_id)
 
     return jsonify({
         'status': 200,
@@ -1298,23 +1297,23 @@ def get_edges():
     limit = request.args.get('limit', type=int)
     offset = request.args.get('offset', type=int)
 
-    bq = manager.session.query(Edge)
+    edge_query = manager.session.query(Edge)
 
-    if limit:
-        bq = bq.limit(limit)
+    if limit is not None:
+        edge_query = edge_query.limit(limit)
 
-    if offset:
-        bq = bq.offset(offset)
+    if offset is not None:
+        edge_query = edge_query.offset(offset)
 
     return jsonify([
-        manager.help_get_edge_entry(edge, current_user)
-        for edge in bq.all()
+        manager.help_get_edge_entry(edge=edge, user=current_user)
+        for edge in edge_query.all()
     ])
 
 
 @api_blueprint.route('/api/edge/by_bel/statement/<bel>')
-def get_edges_by_bel(bel):
-    """Get edges that match the given BEL
+def get_edges_by_bel(bel: str):
+    """Get edges that match the given BEL.
 
     ---
     tags:
@@ -1331,8 +1330,8 @@ def get_edges_by_bel(bel):
 
 
 @api_blueprint.route('/api/edge/by_bel/source/<source_bel>')
-def get_edges_by_source_bel(source_bel):
-    """Get edges whose sources match the given BEL
+def get_edges_by_source_bel(source_bel: str):
+    """Get edges whose sources match the given BEL.
 
     ---
     tags:
@@ -1349,8 +1348,8 @@ def get_edges_by_source_bel(source_bel):
 
 
 @api_blueprint.route('/api/edge/by_bel/target/<target_bel>')
-def get_edges_by_target_bel(target_bel):
-    """Gets edges whose targets match the given BEL
+def get_edges_by_target_bel(target_bel: str):
+    """Get edges whose targets match the given BEL.
 
     ---
     tags:
@@ -1367,8 +1366,8 @@ def get_edges_by_target_bel(target_bel):
 
 
 @api_blueprint.route('/api/edge/<edge_hash>')
-def get_edge_by_hash(edge_hash):
-    """Gets an edge data dictionary by hash
+def get_edge_by_hash(edge_hash: str):
+    """Get an edge data dictionary by hash.
 
     ---
     tags:
@@ -1381,13 +1380,13 @@ def get_edge_by_hash(edge_hash):
         type: string
     """
     edge = manager.get_edge_by_hash_or_404(edge_hash)
-    return jsonify(manager.help_get_edge_entry(edge, current_user))
+    return jsonify(manager.help_get_edge_entry(edge=edge, user=current_user))
 
 
 @api_blueprint.route('/api/edge/hash_starts/<edge_hash>')
 @roles_required('admin')
-def search_edge_by_hash(edge_hash):
-    """Gets an edge data dictionary by the beginning of its hash
+def search_edge_by_hash(edge_hash: str):
+    """Get an edge data dictionary by the beginning of its hash.
 
     ---
     tags:
@@ -1409,8 +1408,8 @@ def search_edge_by_hash(edge_hash):
 
 @api_blueprint.route('/api/edge/<edge_hash>/vote/up')
 @login_required
-def store_up_vote(edge_hash):
-    """Up votes an edge
+def store_up_vote(edge_hash: str):
+    """Vote an edge up.
 
     ---
     tags:
@@ -1429,8 +1428,8 @@ def store_up_vote(edge_hash):
 
 @api_blueprint.route('/api/edge/<edge_hash>/vote/down')
 @login_required
-def store_down_vote(edge_hash):
-    """Down votes an edge
+def store_down_vote(edge_hash: str):
+    """Vote an edge down.
 
     ---
     tags:
@@ -1449,8 +1448,8 @@ def store_down_vote(edge_hash):
 
 @api_blueprint.route('/api/edge/<edge_hash>/comment', methods=('GET', 'POST'))
 @login_required
-def store_comment(edge_hash):
-    """Adds a comment to the edge
+def store_comment(edge_hash: str):
+    """Add a comment to the edge.
 
     ---
     tags:
@@ -1474,7 +1473,6 @@ def store_comment(edge_hash):
         edge=edge,
         comment=comment
     )
-
     manager.session.add(comment)
     manager.session.commit()
 
@@ -1528,10 +1526,8 @@ def get_nodes():
 
 
 @api_blueprint.route('/api/node/<node_hash>')
-def get_node_by_hash(node_hash):
-    """Gets a node
-
-    :param node_hash: A PyBEL node hash
+def get_node_by_hash(node_hash: str):
+    """Get a node by its hash.
 
     ---
     tags:
@@ -1549,7 +1545,7 @@ def get_node_by_hash(node_hash):
 
 
 @api_blueprint.route('/api/node/by_bel/<bel>')
-def nodes_by_bel(bel):
+def nodes_by_bel(bel: str):
     """Get all nodes that match the given BEL.
 
     ---
@@ -1561,8 +1557,8 @@ def nodes_by_bel(bel):
 
 
 @api_blueprint.route('/api/node/by_name/<name>')
-def nodes_by_name(name):
-    """Gets all nodes with the given name
+def nodes_by_name(name: str):
+    """Get all nodes with the given name.
 
     ---
     tags:
@@ -1573,7 +1569,7 @@ def nodes_by_name(name):
 
 
 @api_blueprint.route('/api/namespace/<namespace>/nodes')
-def nodes_by_namespace(namespace):
+def nodes_by_namespace(namespace: str):
     """Get all nodes with identifiers from the given namespace.
 
     ---
@@ -1585,7 +1581,7 @@ def nodes_by_namespace(namespace):
 
 
 @api_blueprint.route('/api/namespace/<namespace>/name/<name>/nodes')
-def nodes_by_namespace_name(namespace, name):
+def nodes_by_namespace_name(namespace: str, name: str):
     """Get all nodes with the given namespace and name.
 
     ---
@@ -1646,7 +1642,7 @@ def get_enriched_node_json(node: Node) -> Optional[Mapping]:
 
 @api_blueprint.route('/api/node/suggestion/')
 def get_node_suggestion():
-    """Suggests a node
+    """Suggest a node.
 
     ---
     tags:
@@ -1680,7 +1676,7 @@ def get_node_suggestion():
 
 @api_blueprint.route('/api/pipeline/suggestion/')
 def get_pipeline_function_names():
-    """Sends a list of functions to use in the pipeline"""
+    """Send a list of functions to use in the pipeline."""
     q = request.args.get('q')
 
     if not q:
@@ -1790,7 +1786,7 @@ def query_to_network(query_id: int):
 
     network_ids = rv['network_ids']
     rv['networks'] = [
-        '{} v{}'.format(name, version)
+        f'{name} v{version}'
         for name, version in manager.session.query(Network.name, Network.version).filter(Network.id_in(network_ids))
     ]
 

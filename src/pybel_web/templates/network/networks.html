@@ -356,7 +356,7 @@
                                             <ul class="dropdown-menu">
                                                 {% if network.report and network.report.user == current_user %}
                                                     <li>
-                                                        <a href="{{ url_for('dbs.drop_network', network_id=network.id, next=url_for('ui.view_networks')) }}">
+                                                        <a href="{{ url_for('ui.delete_network', network_id=network.id) }}">
                                                             <span class="glyphicon glyphicon-remove"
                                                                   aria-hidden="true"></span>
                                                             Drop
