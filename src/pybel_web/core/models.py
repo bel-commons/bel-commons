@@ -3,8 +3,9 @@
 """SQLAlchemy models for PyBEL Web."""
 
 import datetime
-from typing import Dict, Iterable, List, Mapping, Optional, Union
 import json
+from typing import Dict, Iterable, List, Mapping, Optional, Union
+
 from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Table, Text
 from sqlalchemy.orm import backref, relationship
 
@@ -12,10 +13,11 @@ import pybel.struct
 from pybel import BELGraph, Manager, Pipeline, union
 from pybel.dsl import BaseEntity
 from pybel.manager import Base, Network
-from pybel.struct.query import Seeding, SEED_DATA, SEED_METHOD
+from pybel.struct.query import SEED_DATA, SEED_METHOD, Seeding
 from pybel.struct.query.constants import SEED_TYPE_INDUCTION, SEED_TYPE_NEIGHBORS
-from pybel.utils import _hash_tuple
 from pybel.tokens import parse_result_to_dsl
+from pybel.utils import _hash_tuple
+
 __all__ = [
     'Assembly',
     'assembly_network',
@@ -138,7 +140,7 @@ class Query(Base):
                 (
                     {
                         SEED_METHOD: entry[SEED_METHOD],
-                        SEED_DATA:[
+                        SEED_DATA: [
                             parse_result_to_dsl(node_dict)
                             for node_dict in entry[SEED_DATA]
                         ]
