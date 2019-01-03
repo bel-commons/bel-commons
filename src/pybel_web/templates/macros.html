@@ -319,7 +319,7 @@
     <h4>HGNC</h4>
     <dl class="dl-horizontal">
         <dt>Identifier</dt>
-        <dd>{{ gene.identifier }}</dd>
+        <dd><a href="{{ hgnc_manager.identifiers_url }}{{ gene.identifier }}">hgnc:{{ gene.identifier }}</a></dd>
         <dt>Symbol</dt>
         <dd>{{ gene.symbol }}</dd>
         <dt>Name</dt>
@@ -328,8 +328,10 @@
         <dd>{{ gene.locus_group }}</dd>
         <dt>Locus Type</dt>
         <dd>{{ gene.locus_type }}</dd>
-        <dt>Synonyms</dt>
-        <dd>{{ gene.alias_names|join(' | ') }}</dd>
+        {% if gene.alias_names %}
+            <dt>Synonyms</dt>
+            <dd>{{ gene.alias_names|join(' <br /> ')|safe }}</dd>
+        {% endif %}
     </dl>
 {%- endmacro %}
 
@@ -379,32 +381,26 @@
 
 {% macro render_node_go_enrichment(go_manager, node) -%}
     {% if node.namespace_entry.namespace.keyword in ['GO', 'GOBP'] %}
-        {% set go = go_manager.get_go_by_name(node.namespace_entry.name) %}
+        {% set term = go_manager.get_term_by_name(node.namespace_entry.name) %}
     {% else %}
-        {% set go = go_manager.get_go_by_id(node.namespace_entry.name) %}
+        {% set term = go_manager.get_term_by_id(node.namespace_entry.name) %}
     {% endif %}
 
     <h4>Gene Ontology</h4>
     <dl class="dl-horizontal">
         <dt>Identifier</dt>
-        <dd>{{ go['id'] }}</dd>
+        <dd><a href="{{ go_manager.identifiers_url + term.go_id }}">{{ term.go_id }}</a></dd>
+        <dt>Namespace</dt>
+        <dd>{{ term.namespace }}</dd>
         <dt>Name</dt>
-        <dd>{{ go['name'] }}</dd>
-        <dt>Definition</dt>
-        <dd>{{ go['def'] }}</dd>
-        {% if go['xref'] %}
-            <dt>Cross References</dt>
-            <dd>
-                <ul>
-                    {% for go_xref in go['xref'] %}
-                        <li>{{ go_xref }}</li>
-                    {% endfor %}
-                </ul>
-            </dd>
+        <dd>{{ term.name }}</dd>
+        {% if term.definition %}
+            <dt>Definition</dt>
+            <dd>{{ term.definition }}</dd>
         {% endif %}
-        {% if go['synonym'] %}
+        {% if term.synonyms %}
             <dt>Synonyms</dt>
-            <dd>{{ go['synonym']|join(' | ') }}</dd>
+            <dd>{{ term.synonyms|join(' <br/> ')|safe }}</dd>
         {% endif %}
     </dl>
 {%- endmacro %}

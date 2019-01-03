@@ -118,7 +118,7 @@ class TestManager(TemporaryCacheMethodMixin):
         self.add_all_and_commit([u1, u2])
 
         with self.assertRaises(HTTPException):
-            self.manager.safe_get_network(user=u1, network_id=0)
+            self.manager.safe_get_network_by_id(user=u1, network_id=0)
 
         # TODO test conditions for admin, for report, and for actual permission
 
@@ -133,10 +133,10 @@ class TestManager(TemporaryCacheMethodMixin):
         self.assertEqual(2, self.manager.count_networks())
         self.assertEqual(2, self.manager.count_reports())
 
-        self.manager.strict_get_network(user=u1, network_id=n1.id)
+        self.manager.strict_get_network_by_id(user=u1, network_id=n1.id)
 
         with self.assertRaises(HTTPException):
-            self.manager.strict_get_network(user=u2, network_id=n1.id)
+            self.manager.strict_get_network_by_id(user=u2, network_id=n1.id)
 
     def test_drop_votes(self):
         edge = make_edge()

@@ -18,14 +18,6 @@
 
         <div class="panel panel-default">
             <div class="panel-heading">
-                <div class="btn-group pull-right">
-                    <a class="btn btn-danger btn-xs" href="{{ url_for('dbs.drop_nodes', next=url_for('ui.home')) }}"
-                       role="button" data-toggle="confirmation" data-btn-ok-icon="glyphicon glyphicon-share-alt"
-                       data-btn-ok-class="btn-success" data-btn-cancel-icon="glyphicon glyphicon-ban-circle"
-                       data-btn-cancel-class="btn-danger">
-                        Drop All
-                    </a>
-                </div>
                 <h3 class="panel-title">Nodes</h3>
             </div>
             <div class="panel-body">
@@ -47,7 +39,7 @@
                         <h4 class="list-group-item-heading">
                             <a href="{{ url_for('ui.view_node', node_hash=node.sha512) }}">{{ node.bel }}</a>
 
-                            <div class="pull-right">
+                            <span class="pull-right">
                                 <small class="text-muted">
                                     In-Edges: {{ node.in_edges.count() }} |
                                     Out-Edges: {{ node.out_edges.count() }} |
@@ -65,11 +57,9 @@
                                     {% if current_user.is_admin %}
                                         |
                                         <a href="{{ url_for('dbs.get_node_by_hash', node_hash=node.sha512) }}">JSON</a>
-                                        |
-                                        <a href="{{ url_for('dbs.drop_node', node_hash=node.sha512, next=url_for('ui.view_nodes')) }}">Drop</a>
                                     {% endif %}
                                 </small>
-                            </div>
+                            </span>
                         </h4>
                         <div class="list-group-item-text">
                             {% set node_members = node.out_edges.filter_by(relation='hasComponent').all() %}
@@ -121,27 +111,6 @@
                             </ul>
 
                             {% if node.namespace_entry %}
-                                <h4>Entity</h4>
-                                <dl class="dl-horizontal">
-                                    <dt>Name</dt>
-                                    <dd>{{ node.namespace_entry.name }}</dd>
-                                    <dt>Namespace</dt>
-                                    <dd>{{ node.namespace_entry.namespace.keyword }}</dd>
-                                    <dt>Namespace Version</dt>
-                                    <dd>{{ node.namespace_entry.namespace.version }}</dd>
-                                    {% if node.namespace_entry.namespace.url %}
-                                        <dt>Namespace URL</dt>
-                                        <dd>
-                                            <a href="{{ node.namespace_entry.namespace.url }}">
-                                                {{ node.namespace_entry.namespace.url }}
-                                            </a>
-                                        </dd>
-                                    {% else %}
-                                        <dt>Pattern</dt>
-                                        <dd>{{ node.namespace_entry.namespace.pattern }}</dd>
-                                    {% endif %}
-                                </dl>
-
                                 {% if hgnc_manager and node.namespace_entry.namespace.keyword == 'HGNC' %}
                                     {{ pbw.render_node_hgnc_enrichment(hgnc_manager, node) }}
                                 {% elif entrez_manager and node.namespace_entry.namespace.keyword in ['EGID', 'EG', 'ENTREZ'] %}
@@ -150,6 +119,27 @@
                                     {{ pbw.render_node_chebi_enrichment(chebi_manager, node) }}
                                 {% elif go_manager and node.namespace_entry.namespace.keyword in ['GO', 'GOBP', 'GOBPID'] %}
                                     {{ pbw.render_node_go_enrichment(go_manager, node) }}
+                                {% else %}
+                                    <h4>Entity</h4>
+                                    <dl class="dl-horizontal">
+                                        <dt>Name</dt>
+                                        <dd>{{ node.namespace_entry.name }}</dd>
+                                        <dt>Namespace</dt>
+                                        <dd>{{ node.namespace_entry.namespace.keyword }}</dd>
+                                        <dt>Namespace Version</dt>
+                                        <dd>{{ node.namespace_entry.namespace.version }}</dd>
+                                        {% if node.namespace_entry.namespace.url %}
+                                            <dt>Namespace URL</dt>
+                                            <dd>
+                                                <a href="{{ node.namespace_entry.namespace.url }}">
+                                                    {{ node.namespace_entry.namespace.url }}
+                                                </a>
+                                            </dd>
+                                        {% else %}
+                                            <dt>Pattern</dt>
+                                            <dd>{{ node.namespace_entry.namespace.pattern }}</dd>
+                                        {% endif %}
+                                    </dl>
                                 {% endif %}
                             {% endif %}
                         </div>
@@ -158,7 +148,15 @@
             </div>
             {% if count %}
                 <div class="panel-footer">
-                    <p>Showing {{ nodes.count() }} of {{ count }} nodes</p>
+                    <p>Showing
+                        {% if offset != 0 %}{{ offset }} - {% endif %}{{ offset + nodes.count() }} of {{ count }} nodes.
+
+                        {% if offset + limit * 2 < count %}
+                            <a href="{{ url_for('ui.view_nodes', limit=limit, offset=limit+offset) }}">Next {{ limit }}</a>
+                        {% else %}
+                            <a href="{{ url_for('ui.view_nodes', limit=count - limit - offset, offset=limit + offset) }}">Next {{ count - limit - offset }}</a>
+                        {% endif %}
+                    </p>
                 </div>
             {% endif %}
         </div>

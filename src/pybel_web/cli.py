@@ -12,11 +12,13 @@ import multiprocessing
 import os
 import sys
 import time
+from typing import Iterable, Optional, TextIO
 
 import click
+from flask import Flask
 from tqdm import tqdm
 
-from pybel import from_path
+from pybel import BELGraph, from_path
 from pybel.cli import connection_option, graph_pickle_argument
 from pybel.utils import get_version as pybel_version
 from pybel_tools.utils import enable_cool_mode, get_version as pybel_tools_get_version
@@ -36,15 +38,11 @@ from .views import (
 log = logging.getLogger('pybel_web')
 
 
-def _iterate_user_strings(manager_: WebManager):
-    """Iterate over strings to print describing users.
-
-    :param manager_:
-    :rtype: iter[str]
-    """
+def _iterate_user_strings(manager_: WebManager) -> Iterable[str]:
+    """Iterate over strings to print describing users."""
     for user in manager_.session.query(User).all():
-        roles = ','.join(sorted(r.name for r in user.roles))
-        yield f'{user.id}\t{user.email}\t{user.password}\t{roles}\t{user.name if user.name else ""}'
+        roles_ = ','.join(sorted(r.name for r in user.roles))
+        yield f'{user.id}\t{user.email}\t{user.password}\t{roles_}\t{user.name if user.name else ""}'
 
 
 def set_debug(level):
@@ -77,13 +75,9 @@ def number_of_workers():
     return (multiprocessing.cpu_count() * 2) + 1
 
 
-def make_gunicorn_app(app, host, port, workers):
+def make_gunicorn_app(app: Flask, host: str, port: str, workers: int):
     """Make a GUnicorn App.
 
-    :param flask.Flask app:
-    :param str host:
-    :param int port:
-    :param int workers:
     :rtype: gunicorn.app.base.BaseApplication
     """
     import gunicorn.app.base
@@ -92,7 +86,7 @@ def make_gunicorn_app(app, host, port, workers):
         def __init__(self, options=None):
             self.options = options or {}
             self.application = app
-            super(StandaloneApplication, self).__init__()
+            super().__init__()
 
         def load_config(self):
             for key, value in self.options.items():
@@ -103,7 +97,7 @@ def make_gunicorn_app(app, host, port, workers):
             return self.application
 
     return StandaloneApplication({
-        'bind': '%s:%s' % (host, port),
+        'bind': f'{host}:{port}',
         'workers': workers,
     })
 
@@ -120,8 +114,8 @@ def main():
 
 
 @main.command()
-@click.option('--host', default='0.0.0.0', help='Flask host. Defaults to 0.0.0.0')
-@click.option('--port', type=int, default=5000, help='Flask port. Defaults to 5000')
+@click.option('--host', type=str, default='0.0.0.0', help='Flask host.', show_default=True)
+@click.option('--port', type=int, default=5000, help='Flask port.', show_default=True)
 @click.option('-v', '--debug', count=True, help="Turn on debugging. More v's, more debugging")
 @click.option('--config', type=click.File('r'), help='Additional configuration in a JSON file')
 @click.option('--enable-parser', is_flag=True)
@@ -131,17 +125,6 @@ def main():
 def run(host, port, debug, config, enable_parser, ensure_examples, with_gunicorn, workers):
     """Run the web application."""
     set_debug_param(debug)
-    if debug < 3:
-        enable_cool_mode()
-
-    if host is not None:
-        log.info('Running on host: %s', host)
-
-    if port is not None:
-        log.info('Running on port: %d', port)
-
-    t = time.time()
-
     config = json.load(config) if config is not None else {}
     config.setdefault(PYBEL_WEB_REGISTER_EXAMPLES, ensure_examples)
 
@@ -157,9 +140,8 @@ def run(host, port, debug, config, enable_parser, ensure_examples, with_gunicorn
     app.register_blueprint(receiving_blueprint)
 
     if enable_parser or app.config.get(PYBEL_WEB_USE_PARSER_API):
+        click.echo('building parser service')
         build_parser_service(app)
-
-    log.info('Done building %s in %.2f seconds', app, time.time() - t)
 
     if with_gunicorn:
         gunicorn_app = make_gunicorn_app(app, host, port, workers)
@@ -189,7 +171,7 @@ def worker(concurrency, broker, debug):
 @main.group()
 @connection_option
 @click.pass_context
-def manage(ctx, connection):
+def manage(ctx, connection: str):
     """Manage the database."""
     ctx.obj = WebManager(connection=connection)
     ctx.obj.bind()
@@ -199,7 +181,7 @@ def manage(ctx, connection):
 @manage.command()
 @click.option('-f', '--file', type=click.File('r'), default=sys.stdout, help='Input user/role file')
 @click.pass_obj
-def load(manager: WebManager, file):
+def load(manager: WebManager, file: TextIO):
     """Load dumped stuff for loading later (in lieu of having proper migrations)."""
     ds = manager.user_datastore
 
@@ -231,26 +213,25 @@ def load(manager: WebManager, file):
 
 
 @manage.command()
-@click.option('-y', '--yes', is_flag=True)
 @click.option('-u', '--user-dump', type=click.File('w'), default=sys.stdout, help='Place to dump user data')
+@click.confirmation_option()
 @click.pass_obj
-def drop(manager, yes, user_dump):
+def drop(manager: WebManager, user_dump: bool):
     """Drop the database."""
-    if yes or click.confirm(f'Remove database at {manager.connection}?'):
-        click.echo('Dumping users to {}'.format(user_dump))
-        for s in _iterate_user_strings(manager):
-            click.echo(s, file=user_dump)
-        click.echo('Done dumping users')
-        click.echo('Dropping database')
-        manager.drop_all()
-        click.echo('Done dropping database')
+    click.echo('Dumping users to {}'.format(user_dump))
+    for s in _iterate_user_strings(manager):
+        click.echo(s, file=user_dump)
+    click.echo('Done dumping users')
+    click.echo('Dropping database')
+    manager.drop_all()
+    click.echo('Done dropping database')
 
 
 @manage.command()
 @click.option('--email')
 @click.option('--public', is_flag=True)
 @click.pass_obj
-def sanitize(manager: WebManager, email: str, public):
+def sanitize(manager: WebManager, email: str, public: bool):
     """Generate reports for all graphs missing them."""
     if email:
         user = manager.user_datastore.find_user(email=email)
@@ -291,10 +272,10 @@ def networks():
 
 
 @networks.command()
-@click.option('-p', '--path')
+@click.option('-p', '--path', type=click.Path(file_okay=True, dir_okay=False, exists=True))
 @click.option('--public', is_flag=True)
 @click.pass_obj
-def parse(manager, path, public):
+def parse(manager: WebManager, path: str, public: bool):
     """Parses a BEL script and uploads."""
     enable_cool_mode()
     t = time.time()
@@ -307,7 +288,7 @@ def parse(manager, path, public):
 @graph_pickle_argument
 @click.option('--public', is_flag=True)
 @click.pass_obj
-def upload(manager, graph, public):
+def upload(manager: WebManager, graph: BELGraph, public: bool):
     """Upload a graph."""
     insert_graph(manager, graph, public=public, use_tqdm=True)
 
@@ -333,7 +314,7 @@ def users():
 
 @users.command()
 @click.pass_obj
-def ls(manager):
+def ls(manager: WebManager):
     """Lists all users"""
     for s in _iterate_user_strings(manager):
         click.echo(s)
@@ -345,7 +326,7 @@ def ls(manager):
 @click.option('-a', '--admin', is_flag=True, help="Add admin role")
 @click.option('-s', '--scai', is_flag=True, help="Add SCAI role")
 @click.pass_obj
-def add(manager: WebManager, email, password, admin, scai):
+def add(manager: WebManager, email: str, password: str, admin: bool, scai: bool):
     """Create a new user."""
     ds = manager.user_datastore
     try:
@@ -365,7 +346,7 @@ def add(manager: WebManager, email, password, admin, scai):
 @users.command()
 @click.argument('email')
 @click.pass_obj
-def rm(manager: WebManager, email):
+def rm(manager: WebManager, email: str):
     """Delete a user."""
     ds = manager.user_datastore
     user_ = ds.find_user(email=email)
@@ -376,7 +357,7 @@ def rm(manager: WebManager, email):
 @users.command()
 @click.argument('email')
 @click.pass_obj
-def make_admin(manager: WebManager, email):
+def make_admin(manager: WebManager, email: str):
     """Make a given user an admin."""
     ds = manager.user_datastore
     try:
@@ -390,7 +371,7 @@ def make_admin(manager: WebManager, email):
 @click.argument('email')
 @click.argument('role')
 @click.pass_obj
-def add_role(manager: WebManager, email, role):
+def add_role(manager: WebManager, email: str, role: str):
     """Add a role to a user."""
     ds = manager.user_datastore
     try:
@@ -409,7 +390,7 @@ def roles():
 @click.argument('name')
 @click.option('-d', '--description')
 @click.pass_obj
-def add(manager: WebManager, name, description):
+def add(manager: WebManager, name: str, description: Optional[str]):
     """Create a new role."""
     ds = manager.user_datastore
     try:
@@ -422,7 +403,7 @@ def add(manager: WebManager, name, description):
 @roles.command()
 @click.argument('name')
 @click.pass_obj
-def rm(manager: WebManager, name):
+def rm(manager: WebManager, name: str):
     """Delete a user."""
     ds = manager.user_datastore
     user = ds.find_role(name)
@@ -433,7 +414,7 @@ def rm(manager: WebManager, name):
 
 @roles.command()
 @click.pass_obj
-def ls(manager):
+def ls(manager: WebManager):
     """List roles."""
     click.echo('\t'.join(('id', 'name', 'description')))
     for role in manager.session.query(Role).all():
@@ -447,7 +428,7 @@ def projects():
 
 @projects.command()
 @click.pass_obj
-def ls(manager):
+def ls(manager: WebManager):
     """List projects."""
     click.echo('\t'.join(('id', 'name', 'users')))
     for project in manager.session.query(Project).all():
@@ -457,7 +438,7 @@ def ls(manager):
 @projects.command()
 @click.option('-o', '--output', type=click.File('w'), default=sys.stdout)
 @click.pass_obj
-def export(manager, output):
+def export(manager: WebManager, output: TextIO):
     """Export projects as a JSON file."""
     json.dump(
         [
@@ -477,9 +458,9 @@ def queries():
 @click.option('--query-id', type=int)
 @click.option('-y', '--yes', is_flag=True)
 @click.pass_obj
-def drop(manager, query_id, yes):
+def drop(manager: WebManager, query_id: Optional[int], yes: bool):
     """Drops either a single or all Experiment models"""
-    if query_id:
+    if query_id is not None:
         manager.session.query(query_id).get(query_id).delete()
         manager.session.commit()
 
@@ -492,7 +473,7 @@ def drop(manager, query_id, yes):
 @click.option('-l', '--limit', type=int, default=10, help='Limit, defaults to 10.')
 @click.option('-o', '--offset', type=int)
 @click.pass_obj
-def ls(manager, limit, offset):
+def ls(manager: WebManager, limit: int, offset: Optional[int]):
     """List queries."""
     click.echo('\t'.join(('id', 'created', 'assembly')))
 
@@ -517,9 +498,9 @@ def assemblies():
 @click.option('--assembly-id', type=int)
 @click.option('-y', '--yes', is_flag=True)
 @click.pass_obj
-def drop(manager, assembly_id, yes):
+def drop(manager: WebManager, assembly_id: Optional[int], yes: bool):
     """Drops either a single or all Experiment models"""
-    if assembly_id:
+    if assembly_id is not None:
         manager.session.query(assembly_id).get(assembly_id).delete()
         manager.session.commit()
 
@@ -535,7 +516,7 @@ def experiments():
 
 @experiments.command()
 @click.pass_obj
-def ls(manager):
+def ls(manager: WebManager):
     """List experiments."""
     click.echo('\t'.join(('id', 'type', 'omics description', 'completed')))
     for experiment in manager.session.query(Experiment).order_by(Experiment.created.desc()).all():
@@ -551,9 +532,9 @@ def ls(manager):
 @click.option('--experiment-id', type=int)
 @click.option('-y', '--yes', is_flag=True)
 @click.pass_obj
-def drop(manager, experiment_id, yes):
+def drop(manager: WebManager, experiment_id: Optional[int], yes: bool):
     """Drop either a single or all Experiment models."""
-    if experiment_id:
+    if experiment_id is not None:
         manager.session.query(Experiment).get(experiment_id).delete()
         manager.session.commit()
 
@@ -569,7 +550,7 @@ def omics():
 
 @omics.command()
 @click.pass_obj
-def ls(manager):
+def ls(manager: WebManager):
     """List -omics data sets."""
     click.echo('\t'.join(('id', 'name', 'description')))
     for omic in manager.session.query(Omic).all():
@@ -580,9 +561,9 @@ def ls(manager):
 @click.option('--omic-id', type=int)
 @click.option('-y', '--yes', is_flag=True)
 @click.pass_obj
-def drop(manager, omic_id, yes):
+def drop(manager: WebManager, omic_id: Optional[int], yes: bool):
     """Drop either a single or all -omics models."""
-    if omic_id:
+    if omic_id is not None:
         manager.session.query(Omic).get(omic_id).delete()
         manager.session.commit()
 
@@ -593,7 +574,7 @@ def drop(manager, omic_id, yes):
 
 @manage.command()
 @click.pass_obj
-def summarize(manager):
+def summarize(manager: WebManager):
     """Summarize the contents of the database/"""
     click.echo('Users: {}'.format(manager.session.query(User).count()))
     click.echo('Roles: {}'.format(manager.session.query(Role).count()))
@@ -631,7 +612,7 @@ if omics_dir is not None or bms_dir is not None:
         @examples.command(help='Load omics from {}'.format(omics_dir))
         @click.option('-r', '--reload', is_flag=True, help='Reload')
         @click.pass_obj
-        def load_omics(manager, reload):
+        def load_omics(manager: WebManager, reload: bool):
             """Load omics."""
             from .resources.load_omics import main
             set_debug(logging.INFO)
@@ -641,7 +622,7 @@ if omics_dir is not None or bms_dir is not None:
         @examples.command()
         @click.option('--skip-cbn', is_flag=True)
         @click.pass_obj
-        def load_networks(manager: WebManager, skip_cbn):
+        def load_networks(manager: WebManager, skip_cbn: bool):
             """Load networks."""
             from .resources.load_networks import load_bms, load_cbn
             set_debug(logging.INFO)
@@ -709,7 +690,7 @@ def wasteland(manager: WebManager):
         _drop_table(manager, table)
 
 
-def _drop_table(manager, table_cls):
+def _drop_table(manager: WebManager, table_cls):
     click.secho(f'{table_cls.__tablename__}', fg='green')
     click.secho('  truncating', fg='blue')
     manager.session.query(table_cls).delete()

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import logging
+from typing import List, Dict
 
 from pybel import BELGraph
 from pybel.struct.summary import get_annotation_values_by_annotation, get_annotations, get_pubmed_identifiers
@@ -37,11 +38,10 @@ def calculate_overlap_info(g1: BELGraph, g2: BELGraph):
     }
 
 
-def get_tree_annotations(graph: BELGraph):
+def get_tree_annotations(graph: BELGraph) -> List[Dict]:
     """Build a tree structure with annotation for a given graph.
 
     :return: The JSON structure necessary for building the tree box
-    :rtype: list[dict]
     """
     return [
         {

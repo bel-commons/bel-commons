@@ -4,7 +4,7 @@
 
 import datetime
 from typing import Dict, Iterable, List, Mapping, Optional, Union
-
+import json
 from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Table, Text
 from sqlalchemy.orm import backref, relationship
 
@@ -12,9 +12,10 @@ import pybel.struct
 from pybel import BELGraph, Manager, Pipeline, union
 from pybel.dsl import BaseEntity
 from pybel.manager import Base, Network
-from pybel.struct.query import Seeding
+from pybel.struct.query import Seeding, SEED_DATA, SEED_METHOD
+from pybel.struct.query.constants import SEED_TYPE_INDUCTION, SEED_TYPE_NEIGHBORS
 from pybel.utils import _hash_tuple
-
+from pybel.tokens import parse_result_to_dsl
 __all__ = [
     'Assembly',
     'assembly_network',
@@ -133,7 +134,21 @@ class Query(Base):
     def get_seeding(self) -> Optional[Seeding]:
         """Get the seeding container, if it has any entries."""
         if self.seeding:
-            return Seeding.loads(self.seeding)
+            seeding_json = [
+                (
+                    {
+                        SEED_METHOD: entry[SEED_METHOD],
+                        SEED_DATA:[
+                            parse_result_to_dsl(node_dict)
+                            for node_dict in entry[SEED_DATA]
+                        ]
+                    }
+                    if entry[SEED_METHOD] in (SEED_TYPE_INDUCTION, SEED_TYPE_NEIGHBORS) else
+                    entry
+                )
+                for entry in json.loads(self.seeding)
+            ]
+            return Seeding.from_json(seeding_json)
 
     def seeding_to_json(self) -> Optional[List[Mapping]]:
         """Return seeding json, if it has any entries."""

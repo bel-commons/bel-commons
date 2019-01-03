@@ -4,7 +4,6 @@
 
 import json
 import logging
-import time
 from collections import defaultdict
 from io import StringIO
 from operator import itemgetter
@@ -14,15 +13,16 @@ import flask
 import numpy as np
 import pandas as pd
 import pandas.errors
+import time
 from flask import Blueprint, current_app, make_response, redirect, render_template, request, url_for
 from flask_security import current_user, login_required, roles_required
 from sklearn.cluster import KMeans
 
 from pybel_tools.analysis.heat import RESULT_LABELS
-from pybel_web.proxies import celery, manager
 from ..forms import DifferentialGeneExpressionForm
 from ..manager_utils import create_omic, next_or_jsonify
 from ..models import Experiment, Omic, UserQuery
+from ..proxies import celery, manager
 
 __all__ = [
     'experiment_blueprint',
@@ -129,7 +129,7 @@ def view_experiment(experiment_id: int):
 
     :param experiment_id: The identifier of the experiment whose results to view
     """
-    experiment = manager.safe_get_experiment(user=current_user, experiment_id=experiment_id)
+    experiment = manager.safe_get_experiment_by_id(user=current_user, experiment_id=experiment_id)
 
     data = experiment.get_data_list()
 
@@ -175,7 +175,7 @@ def view_query_uploader(query_id: int):
 
     :param query_id: The identifier of the query to upload against
     """
-    query = manager.safe_get_query(user=current_user, query_id=query_id)
+    query = manager.cu_get_query_by_id(query_id=query_id)
 
     form = DifferentialGeneExpressionForm()
 
@@ -234,11 +234,8 @@ def view_query_uploader(query_id: int):
 @experiment_blueprint.route('/from_network/<int:network_id>/upload/', methods=('GET', 'POST'))
 @login_required
 def view_network_uploader(network_id: int):
-    """View the uploader for a network.
-
-    :param network_id: The identifier ot the network to query against
-    """
-    network = manager.safe_get_network(user=current_user, network_id=network_id)
+    """View the -*omics* data uploader for the given network."""
+    network = manager.cu_get_network_by_id(network_id)
     user_query = UserQuery.from_network(network=network, user=current_user)
     manager.session.add(user_query)
     manager.session.commit()
@@ -258,7 +255,7 @@ def download_experiment_comparison(experiment_ids: List[int]):
     normalize = request.args.get('normalize', type=int, default=0)
     seed = request.args.get('seed', type=int)
 
-    experiments = manager.safe_get_experiments(user=current_user, experiment_ids=experiment_ids)
+    experiments = manager.safe_get_experiments_by_ids(user=current_user, experiment_ids=experiment_ids)
     df = get_dataframe_from_experiments(experiments, normalize=normalize, clusters=clusters, seed=seed)
 
     si = StringIO()
@@ -289,7 +286,7 @@ def view_experiment_comparison(experiment_ids: List[int]):
 
     :param experiment_ids: The identifiers of experiments to compare
     """
-    experiments = manager.safe_get_experiments(user=current_user, experiment_ids=experiment_ids)
+    experiments = manager.safe_get_experiments_by_ids(user=current_user, experiment_ids=experiment_ids)
     return render_experiment_comparison(experiments)
 
 
@@ -299,7 +296,7 @@ def view_query_experiment_comparison(query_id: int):
 
     :param query_id: The query identifier whose related experiments to compare
     """
-    query = manager.safe_get_query(user=current_user, query_id=query_id)
+    query = manager.cu_get_query_by_id(query_id=query_id)
     return render_experiment_comparison(query.experiments)
 
 

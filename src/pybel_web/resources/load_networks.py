@@ -10,20 +10,19 @@ Prerequisites
 
 import json
 import logging
-import time
-from typing import Iterable, List, Optional
+from typing import Iterable, List, Optional, Set
 
+import time
 from sqlalchemy.exc import OperationalError
 
 import pybel
+from bel_repository import BELRepository
 from bio2bel import AbstractManager
 from pybel import from_path, from_pickle, to_pickle
 from pybel.manager import Manager
 from pybel.manager.models import Network
 from pybel.struct.grouping import get_subgraphs_by_annotation
 from pybel.struct.mutation import strip_annotations
-from pybel_tools.io import get_corresponding_gpickle_path, iter_from_pickles_from_directory, iter_paths_from_directory
-from pybel_tools.utils import enable_cool_mode
 from pybel_web.external_managers import (
     chebi_manager, entrez_manager, expasy_manager, go_manager, hgnc_manager, interpro_manager, mirtarbase_manager,
 )
@@ -37,7 +36,6 @@ __all__ = [
 ]
 
 log = logging.getLogger(__name__)
-enable_cool_mode()
 
 neurommsig_sample_networks = [
     'Low density lipoprotein subgraph',
@@ -49,58 +47,17 @@ neurommsig_sample_networks = [
 _jgf_extension = '.jgf'
 
 
-def _ensure_pickle(path, manager, **kwargs):
-    """
-
-    :param str path:
-    :type manager: pybel.manager.Manager
-    :return: Network
-    """
-    gpickle_path = get_corresponding_gpickle_path(path)
-
-    if not os.path.exists(gpickle_path):
-        graph = from_path(path, manager=manager, use_tqdm=True, **kwargs)
-        to_pickle(graph, gpickle_path)
-    else:
-        graph = from_pickle(gpickle_path)
-
-    return insert_graph(manager, graph, public=True, use_tqdm=True)
-
-
-def ensure_pickles(directory: str, manager: Manager, blacklist=None, **kwargs):
-    """
-    :param str directory:
-    :type manager: pybel.manager.Manager
-    :param Optional[list[str]] blacklist: An optional list of file names not to use
-    """
-    log.info('ensuring pickles in %s', directory)
-
-    for filename in iter_paths_from_directory(directory):
-        path = os.path.join(directory, filename)
-
-        if blacklist and filename in blacklist:
-            log.info('skipping %s', path)
-            continue
-
-        _ensure_pickle(path, manager, **kwargs)
-
-
-def upload_pickles(directory: str, manager: Manager, blacklist: Optional[List[str]] = None) -> List[Network]:
-    """Uploads all of the pickles in a given directory
-
-    :param str directory:
-    :type manager: pybel.manager.Manager
-    :param blacklist: An optional list of file names not to use
-    :rtype: list[Network]
-    """
-    log.info('loading pickles in %s', directory)
-
+def upload_pickles(directory: str, manager: Manager, blacklist: Optional[Set[str]] = None) -> List[Network]:
+    """Uploads all of the BEL documents in a given directory."""
     results = []
-
-    for graph in iter_from_pickles_from_directory(directory, blacklist=blacklist):
+    repo = BELRepository(directory)
+    graphs = repo.get_graphs(manager=manager)
+    for name, graph in graphs.items():
+        if blacklist and name in blacklist:
+            log.info(f'skipping {name}: {graph}')
+            continue
         network = insert_graph(manager, graph, public=True, use_tqdm=True)
         results.append(network)
-
     return results
 
 
@@ -119,10 +76,9 @@ def write_manifest(directory: str, networks: List[Network]) -> None:
         json.dump(manifest_data, file, indent=2)
 
 
-def upload_bel_directory(directory: str, manager: Manager, blacklist: Optional[List[str]] = None):
+def upload_bel_directory(directory: str, manager: Manager, blacklist: Optional[List[str]] = None) -> None:
     """Handle parsing, pickling, then uploading all BEL files in a given directory.
 
-    :param str directory:
     :param blacklist: An optional list of file names not to use. NO FILE EXTENSIONS
     """
     if not (os.path.exists(directory) and os.path.isdir(directory)):
@@ -130,20 +86,10 @@ def upload_bel_directory(directory: str, manager: Manager, blacklist: Optional[L
         return
 
     if blacklist is not None and not isinstance(blacklist, (set, tuple, list)):
-        raise TypeError('blacklist is wrong type: {}'.format(blacklist.__class__.__name__))
+        raise TypeError(f'blacklist is wrong type: {blacklist.__class__.__name__}')
 
-    ensure_pickles(
-        directory,
-        manager,
-        blacklist=[e + '.bel' for e in blacklist] if blacklist is not None else None
-    )
-    networks = upload_pickles(
-        directory,
-        manager,
-        blacklist=[e + '.gpickle' for e in blacklist] if blacklist is not None else None
-    )
-
-    write_manifest(directory, networks)
+    networks = upload_pickles(directory=directory, manager=manager)
+    write_manifest(directory=directory, networks=networks)
 
 
 def upload_neurommsig_graphs(manager: Manager):

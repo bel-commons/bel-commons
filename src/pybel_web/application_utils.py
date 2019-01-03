@@ -2,9 +2,11 @@
 
 """An extension to Flask-SQLAlchemy."""
 
+import datetime
 import json
 import logging
 import os
+from typing import Dict, Iterable
 
 from flask import Flask, g, render_template
 from flask_admin import Admin
@@ -22,7 +24,6 @@ from .admin_model_views import (
     ReportView, UserView, build_project_view,
 )
 from .constants import PYBEL_WEB_USER_MANIFEST, SENTRY_DSN
-from .manager import register_users_from_manifest
 from .manager_utils import insert_graph
 from .models import EdgeComment, EdgeVote, Experiment, NetworkOverlap, Report, Role, User, UserQuery
 from .resources.users import default_users_path
@@ -35,7 +36,7 @@ def register_transformations(manager: Manager):
     """Register several manager-based PyBEL transformation functions."""
 
     @uni_in_place_transformation
-    def expand_nodes_neighborhoods_by_ids(universe: BELGraph, graph: BELGraph, node_hashes):
+    def expand_nodes_neighborhoods_by_ids(universe: BELGraph, graph: BELGraph, node_hashes: Iterable[str]) -> None:
         """Expand around the neighborhoods of a list of nodes by identifier."""
         nodes = [
             manager.get_dsl_by_hash(node_hash)
@@ -71,18 +72,50 @@ def register_transformations(manager: Manager):
         infer_child_relations(graph, node)
 
 
-def register_users(app: Flask, user_datastore: SQLAlchemyUserDatastore):
+def register_users(app: Flask, user_datastore: SQLAlchemyUserDatastore) -> None:
     if os.path.exists(default_users_path):
         with open(default_users_path) as f:
             default_users_manifest = json.load(f)
-        register_users_from_manifest(user_datastore=user_datastore, manifest=default_users_manifest)
+        _register_users_from_manifest(user_datastore=user_datastore, manifest=default_users_manifest)
 
     pybel_config_user_manifest = app.config.get(PYBEL_WEB_USER_MANIFEST)
     if pybel_config_user_manifest is not None:
-        register_users_from_manifest(user_datastore=user_datastore, manifest=pybel_config_user_manifest)
+        _register_users_from_manifest(user_datastore=user_datastore, manifest=pybel_config_user_manifest)
 
 
-def register_error_handlers(app: Flask, sentry: Sentry):
+def _register_users_from_manifest(user_datastore: SQLAlchemyUserDatastore, manifest: Dict) -> None:
+    """Register the users and roles in a manifest.
+
+    :param user_datastore: A user data store
+    :param dict manifest: A manifest dictionary, which contains two keys: ``roles`` and ``users``. The ``roles``
+     key corresponds to a list of dictionaries containing ``name`` and ``description`` entries. The ``users`` key
+     corresponds to a list of dictionaries containing ``email``, ``password``, and ``name`` entries
+     as well as a optional ``roles`` entry with a corresponding list relational to the names in the ``roles``
+     entry in the manifest.
+    """
+    for role in manifest['roles']:
+        user_datastore.find_or_create_role(**role)
+
+    for user_manifest in manifest['users']:
+        email = user_manifest['email']
+        user = user_datastore.find_user(email=email)
+        if user is None:
+            log.info('creating user: %s', email)
+            user = user_datastore.create_user(
+                confirmed_at=datetime.datetime.now(),
+                email=email,
+                password=user_manifest['password'],
+                name=user_manifest['name']
+            )
+
+        for role_name in user_manifest.get('roles', []):
+            if user_datastore.add_role_to_user(user, role_name):
+                log.info('registered %s as %s', user, role_name)
+
+    user_datastore.commit()
+
+
+def register_error_handlers(app: Flask, sentry: Sentry) -> None:
     """Register the 500 and 403 error handlers."""
 
     @app.errorhandler(500)
@@ -106,7 +139,7 @@ def register_error_handlers(app: Flask, sentry: Sentry):
         return render_template('errors/403.html')
 
 
-def register_examples(manager: Manager, user_datastore: SQLAlchemyUserDatastore):
+def register_examples(manager: Manager, user_datastore: SQLAlchemyUserDatastore) -> None:
     for graph in (sialic_acid_graph, egf_graph, statin_graph, homology_graph):
         if not manager.has_name_version(graph.name, graph.version):
             log.info('uploading public example graph: %s', graph)

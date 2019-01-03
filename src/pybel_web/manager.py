@@ -2,27 +2,24 @@
 
 """Extensions to the PyBEL manager to support PyBEL-Web."""
 
-import datetime
-import itertools as itt
 import logging
-import time
-from collections import defaultdict
 from functools import lru_cache
-from typing import Dict, Iterable, List, Mapping, Optional, Set, Tuple
+from typing import Iterable, List, Optional
 
 import networkx
+import time
 from flask import Response, abort, render_template
-from flask_security import SQLAlchemyUserDatastore
-from sqlalchemy import and_, func
+from flask_security import current_user
 
-from pybel import BELGraph, Manager
+import pybel.struct.query
+from pybel import BELGraph
 from pybel.manager.models import Author, Citation, Edge, Evidence, Namespace, Network, Node
 from pybel.struct.summary import count_namespaces, count_variants
-from pybel_tools.utils import min_tanimoto_set_similarity, prepare_c3, prepare_c3_time_series
-from pybel_web.core.models import Assembly, Query
-from .constants import AND
+from pybel_tools.utils import prepare_c3, prepare_c3_time_series
+from .core.models import Query
+from .manager_base import WebManagerBase
 from .manager_utils import get_network_summary_dict
-from .models import EdgeComment, EdgeVote, Experiment, NetworkOverlap, Omic, Project, Report, Role, User, UserQuery
+from .models import Experiment, Project, User, UserQuery
 
 __all__ = [
     'WebManager',
@@ -31,129 +28,25 @@ __all__ = [
 log = logging.getLogger(__name__)
 
 
-def sanitize_annotation(annotation_list: List[str]) -> Mapping[str, List[str]]:
-    """Convert an annotation (annotation:value) to tuple."""
-    annotation_dict = defaultdict(list)
+class WebManager(WebManagerBase):
+    """Extensions to the Web manager that entangle it with Flask."""
 
-    for annotation_string in annotation_list:
-        annotation, annotation_value = annotation_string.split(":")[0:2]
-        annotation_dict[annotation].append(annotation_value)
-
-    return dict(annotation_dict)
-
-
-def iter_unique_networks(networks: Iterable[Network]) -> Iterable[Network]:
-    """Yield only unique networks from an iterator."""
-    seen_ids = set()
-
-    for network in networks:
-        if not network:
-            continue
-
-        if network.id not in seen_ids:
-            seen_ids.add(network.id)
-            yield network
-
-
-def to_snake_case(function_name: str) -> str:
-    """Convert method.__name__ from capital and spaced to lower and underscore separated.
-
-    :param function_name:
-    :return: function name sanitized
-    """
-    return function_name.replace(" ", "_").lower()
-
-
-class WebManager(Manager):
-    """Extensions to the PyBEL manager and :class:`SQLAlchemyUserDataStore` to support PyBEL-Web."""
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.user_datastore = SQLAlchemyUserDatastore(self, User, Role)
-
-    def iter_networks_with_permission(self, user: User) -> Iterable[Network]:
-        """Get an iterator over all the networks from all the sources."""
-        if not user.is_authenticated:
-            log.debug('getting only public networks for anonymous user')
-            yield from iter_recent_public_networks(self)
-
-        elif user.is_admin:
-            log.debug('getting all recent networks for admin')
-            yield from self.list_recent_networks()
-
-        else:
-            log.debug('getting all networks for user [%s]', self)
-            yield from iterate_networks_for_user(manager=self, user_datastore=self.user_datastore, user=user)
-
-    def get_network_ids_with_permission(self, user: User) -> Set[int]:
-        """Get the set of networks ids tagged as public or uploaded by the user.
-
-        :param user: A user
-        :return: A list of all networks tagged as public or uploaded by the user
-        """
-        return {
-            network.id
-            for network in self.iter_networks_with_permission(user)
-        }
-
-    def get_project_by_id(self, project_id) -> Optional[Project]:
-        """Get a project by its database identifier, if it exists."""
-        return self.session.query(Project).get(project_id)
-
-    def get_experiment_by_id(self, experiment_id) -> Optional[Experiment]:
-        """Get an experiment by its database identifier, if it exists."""
-        return self.session.query(Experiment).get(experiment_id)
-
-    def get_omic_by_id(self, omic_id) -> Optional[Omic]:
-        """Get an -*omics* data set by its database identifier, if it exists."""
-        return self.session.query(Omic).get(omic_id)
-
-    def get_query_by_id(self, query_id) -> Optional[Query]:
-        """Get a query by its database identifier, if it exists."""
-        return self.session.query(Query).get(query_id)
-
-    def get_user_by_id(self, user_id) -> Optional[User]:
-        """Get a user by its database identifier, if it exists."""
-        return self.session.query(User).get(user_id)
-
-    def get_report_by_id(self, report_id) -> Optional[Report]:
-        """Get a report by its database identifier, if it exists."""
-        return self.session.query(Report).get(report_id)
-
-    def count_reports(self) -> int:
-        """Count the reports in the database."""
-        return self.session.query(Report).count()
-
-    def count_users(self) -> int:
-        """Count the users in the database."""
-        return self.session.query(User).count()
-
-    def count_queries(self) -> int:
-        """Count the queries in the database."""
-        return self.session.query(Query).count()
-
-    def count_assemblies(self) -> int:
-        """Count the assemblies in the database."""
-        return self.session.query(Assembly).count()
-
-    def get_experiment_or_404(self, experiment_id: int) -> Experiment:
+    def get_experiment_by_id_or_404(self, experiment_id: int) -> Experiment:
         """Get an experiment by its database identifier or 404 if it doesn't exist.
 
         :raises: werkzeug.exceptions.HTTPException
         """
-        experiment = self.get_experiment_by_id(experiment_id)
+        return _return_or_404(
+            self.get_experiment_by_id(experiment_id),
+            f'Experiment {experiment_id} does not exist',
+        )
 
-        if experiment is None:
-            abort(404, f'Experiment {experiment_id} does not exist')
-
-        return experiment
-
-    def safe_get_experiment(self, user: User, experiment_id: int) -> Experiment:
+    def safe_get_experiment_by_id(self, user: User, experiment_id: int) -> Experiment:
         """Get an experiment by its database identifier, 404 if it doesn't exist, 403 if user doesn't have rights.
 
         :raises: werkzeug.exceptions.HTTPException
         """
-        experiment = self.get_experiment_or_404(experiment_id)
+        experiment = self.get_experiment_by_id_or_404(experiment_id)
 
         if experiment.public:
             return experiment
@@ -166,33 +59,27 @@ class WebManager(Manager):
 
         return experiment
 
-    def safe_get_experiments(self, user: User, experiment_ids: Iterable[int]) -> List[Experiment]:
+    def safe_get_experiments_by_ids(self, user: User, experiment_ids: Iterable[int]) -> List[Experiment]:
         """Get a list of experiments by their database identifiers or abort 404 if any don't exist.
 
         :raises: werkzeug.exceptions.HTTPException
         """
         return [
-            self.safe_get_experiment(user=user, experiment_id=experiment_id)
+            self.safe_get_experiment_by_id(user=user, experiment_id=experiment_id)
             for experiment_id in experiment_ids
         ]
-
-    def get_namespace_by_id(self, namespace_id) -> Optional[Namespace]:
-        """Get a namespace by its identifier, if it exists."""
-        return self.session.query(Namespace).get(namespace_id)
 
     def get_namespace_by_id_or_404(self, namespace_id: int) -> Namespace:
         """Get a namespace by its database identifier or abort 404 if it doesn't exist.
 
         :raises: werkzeug.exceptions.HTTPException
         """
-        namespace = self.get_namespace_by_id(namespace_id)
+        return _return_or_404(
+            self.get_namespace_by_id(namespace_id),
+            f'namespace {namespace_id} does not exist',
+        )
 
-        if namespace is None:
-            abort(404)
-
-        return namespace
-
-    def get_annotation_or_404(self, annotation_id: int) -> Namespace:
+    def get_annotation_by_id_or_404(self, annotation_id: int) -> Namespace:
         """Get an annotation by its database identifier or abort 404 if it doesn't exist.
 
         :raises: werkzeug.exceptions.HTTPException
@@ -204,133 +91,60 @@ class WebManager(Manager):
 
         :raises: werkzeug.exceptions.HTTPException
         """
-        citation = self.session.query(Citation).get(citation_id)
-        if citation is None:
-            abort(404)
-        return citation
+        return _return_or_404(
+            self.session.query(Citation).get(citation_id),
+            f'citation {citation_id} does not exist',
+        )
 
     def get_citation_by_pmid_or_404(self, pubmed_identifier: str) -> Citation:
         """Get a citation by its PubMed identifier or abort 404 if it doesn't exist.
 
         :raises: werkzeug.exceptions.HTTPException
         """
-        citation = self.get_citation_by_pmid(pubmed_identifier=pubmed_identifier)
-
-        if citation is None:
-            abort(404)
-
-        return citation
+        return _return_or_404(
+            self.get_citation_by_pmid(pubmed_identifier=pubmed_identifier),
+            f'citation with pmid:{pubmed_identifier} does not exist',
+        )
 
     def get_author_by_name_or_404(self, name: str) -> Author:
         """Get an author by their name or abort 404 if they don't exist.
 
         :raises: werkzeug.exceptions.HTTPException
         """
-        author = self.get_author_by_name(name)
-
-        if author is None:
-            return abort(404)
-
-        return author
+        return _return_or_404(
+            self.get_author_by_name(name),
+            f'author named {name} does not exist',
+        )
 
     def get_evidence_by_id_or_404(self, evidence_id: int) -> Evidence:
         """Get an evidence by its database identifier or abort 404 if it doesn't exist.
 
         :raises: werkzeug.exceptions.HTTPException
         """
-        evidence = self.session.query(Evidence).get(evidence_id)
+        return _return_or_404(
+            self.session.query(Evidence).get(evidence_id),
+            f'evidence {evidence_id} does not exist',
+        )
 
-        if evidence is None:
-            abort(404)
-
-        return evidence
-
-    def get_network_or_404(self, network_id: int) -> Network:
+    def get_network_by_id_or_404(self, network_id: int) -> Network:
         """Get a network by its database identifier or aborts 404 if it doesn't exist.
 
         :raises: werkzeug.exceptions.HTTPException
         """
-        network = self.get_network_by_id(network_id)
+        return _return_or_404(
+            self.get_network_by_id(network_id),
+            f'network {network_id} does not exist',
+        )
 
-        if network is None:
-            abort(404, f'Network {network_id} does not exist')
+    def cu_get_networks(self) -> List[Network]:
+        return self.get_networks_with_permission(current_user)
 
-        return network
-
-    def get_query_or_404(self, query_id: int) -> Query:
-        """Get a query by its database identifier or abort 404 message if it doesn't exist.
-
-        :raises: werkzeug.exceptions.HTTPException
-        """
-        query = self.get_query_by_id(query_id)
-
-        if query is None:
-            abort(404, f'Missing query: {query_id}')
-
-        return query
-
-    def get_node_by_hash_or_404(self, node_hash: str) -> Node:
-        """Get a node if it exists or send a 404.
-
-        :raises: werkzeug.exceptions.HTTPException
-        """
-        node = self.get_node_by_hash(node_hash)
-
-        if node is None:
-            abort(404, f'Node not found: {node_hash}')
-
-        return node
-
-    def get_edge_by_hash_or_404(self, edge_hash: str) -> Edge:
-        """Get an edge if it exists or send a 404.
-
-        :raises: werkzeug.exceptions.HTTPException
-        """
-        edge = self.get_edge_by_hash(edge_hash)
-
-        if edge is None:
-            abort(404, f'Edge not found: {edge_hash}')
-
-        return edge
-
-    def get_project_or_404(self, project_id: int) -> Project:
-        """Get a project by its database identifier or send a 404.
-
-        :raises: werkzeug.exceptions.HTTPException
-        """
-        project = self.get_project_by_id(project_id)
-
-        if project is None:
-            abort(404, f'Project {project_id} does not exist')
-
-        return project
-
-    def get_user_or_404(self, user_id: int) -> User:
-        """Get a user by identifier if it exists or send a 404.
-
-        :raises: werkzeug.exceptions.HTTPException
-        """
-        user = self.get_user_by_id(user_id)
-
-        if user is None:
-            abort(404)
-
-        return user
-
-    def drop_queries_by_user_id(self, user_id: int) -> None:
-        """Drop queries associated with the given user."""
-        self.session.query(Query).filter(Query.user_id == user_id).delete()
-        self.session.commit()
-
-    def _network_has_permission(self, user: User, network_id: int) -> bool:
-        return network_id in self.get_network_ids_with_permission(user)
-
-    def safe_get_network(self, user: User, network_id: int) -> Network:
+    def safe_get_network_by_id(self, user: User, network_id: int) -> Network:
         """Get a network and abort if the user does not have permissions to view.
 
         :raises: werkzeug.exceptions.HTTPException
         """
-        network = self.get_network_or_404(network_id)
+        network = self.get_network_by_id_or_404(network_id)
 
         if user.is_authenticated and user.is_admin:
             return network
@@ -343,172 +157,43 @@ class WebManager(Manager):
 
         abort(403)
 
+    def cu_get_network_by_id(self, network_id: int) -> Network:
+        return self.safe_get_network_by_id(user=current_user, network_id=network_id)
+
+    @lru_cache(maxsize=256)
+    def cu_query_from_network_by_id(self, network_id: int) -> Query:
+        """Make a query from the given network."""
+        network = self.safe_get_network_by_id(user=current_user, network_id=network_id)
+        user_query = UserQuery.from_network(network, user=current_user)
+
+        self.session.add(user_query)
+        self.session.commit()
+
+        return user_query.query
+
+    def cu_safe_get_graph(self, network_id: int) -> Optional[BELGraph]:
+        return self.safe_get_graph(user=current_user, network_id=network_id)
+
     def safe_get_graph(self, user: User, network_id: int) -> Optional[BELGraph]:
         """Get the network as a BEL graph or aborts if the user does not have permission to view."""
-        network = self.safe_get_network(user=user, network_id=network_id)
+        network = self.safe_get_network_by_id(user=user, network_id=network_id)
         if network is not None:
             return network.as_bel()
 
-    def strict_get_network(self, user: User, network_id: int) -> Network:
+    def cu_strict_get_network_by_id(self, network_id: int) -> Network:
+        return self.strict_get_network_by_id(user=current_user, network_id=network_id)
+
+    def strict_get_network_by_id(self, user: User, network_id: int) -> Network:
         """Get a network and abort if the user does not have super rights.
 
         :raises: werkzeug.exceptions.HTTPException
         """
-        network = self.get_network_or_404(network_id)
+        network = self.get_network_by_id_or_404(network_id)
 
         if user.is_authenticated and (user.is_admin or user.owns_network(network)):
             return network
 
         abort(403, f'User {user} does not have super user rights to network {network}')
-
-    def safe_get_project(self, user: User, project_id: int) -> Project:
-        """Get a project by identifier, aborts 404 if doesn't exist and aborts 403 if current user does not have rights.
-
-        :raises: werkzeug.exceptions.HTTPException
-        """
-        project = self.get_project_or_404(project_id)
-
-        if not user.has_project_rights(project):
-            abort(403, f'User {user} does not have permission to access project {project}')
-
-        return project
-
-    def get_networks_with_permission(self, user: User) -> List[Network]:
-        """Get all networks tagged as public or uploaded by the current user.
-
-        :return: A list of all networks tagged as public or uploaded by the current user
-        """
-        if not user.is_authenticated:
-            return list(iter_recent_public_networks(self))
-
-        if user.is_admin:
-            return self.list_recent_networks()
-
-        return list(iter_unique_networks(self.iter_networks_with_permission(user)))
-
-    def get_edge_vote_by_user(self, edge: Edge, user: User) -> Optional[EdgeVote]:
-        """Look up a vote by the edge and user.
-
-        :param edge: The edge that is being evaluated
-        :param user: The user making the vote
-        """
-        vote_filter = and_(EdgeVote.edge == edge, EdgeVote.user == user)
-        return self.session.query(EdgeVote).filter(vote_filter).one_or_none()
-
-    def get_or_create_vote(self, edge: Edge, user: User, agreed: Optional[bool] = None) -> EdgeVote:
-        """Get a vote for the given edge and user.
-
-        :param edge: The edge that is being evaluated
-        :param user: The user making the vote
-        :param agreed: Optional value of agreement to put into vote
-        """
-        vote = self.get_edge_vote_by_user(edge, user)
-
-        if vote is None:
-            vote = EdgeVote(
-                edge=edge,
-                user=user,
-                agreed=agreed
-            )
-            self.session.add(vote)
-            self.session.commit()
-
-        # If there was already a vote, and it's being changed
-        elif agreed is not None:
-            vote.agreed = agreed
-            vote.changed = datetime.datetime.utcnow()
-            self.session.commit()
-
-        return vote
-
-    def help_get_edge_entry(self, edge: Edge, user: User) -> Mapping:
-        """Get edge information by edge identifier."""
-        data = edge.to_json()
-
-        data['comments'] = [
-            {
-                'user': {
-                    'id': edge_comment.user_id,
-                    'email': edge_comment.user.email
-                },
-                'comment': edge_comment.comment,
-                'created': edge_comment.created,
-            }
-            for edge_comment in self.session.query(EdgeComment).filter(EdgeComment.edge == edge)
-        ]
-
-        if user.is_authenticated:
-            edge_vote = self.get_or_create_vote(edge, user)
-            data['vote'] = (
-                0 if (edge_vote is None or edge_vote.agreed is None) else
-                1 if edge_vote.agreed else
-                -1
-            )
-
-        return data
-
-    def get_node_overlaps(self, network: Network) -> Mapping[int, Tuple[Network, float]]:
-        """Calculate overlaps to all other networks in the database.
-
-        :return: A dictionary from {int network_id: (network, float similarity)} for this network to all other networks
-        """
-        t = time.time()
-
-        nodes = set(node.id for node in network.nodes)
-
-        incoming_overlaps = (
-            (ol.left_id, ol.left, ol.overlap)
-            for ol in network.incoming_overlaps
-        )
-        outgoing_overlaps = (
-            (ol.right_id, ol.right, ol.overlap)
-            for ol in network.overlaps
-        )
-
-        rv = {
-            other_network_id: (other_network, overlap)
-            for other_network_id, other_network, overlap in itt.chain(incoming_overlaps, outgoing_overlaps)
-        }
-
-        uncached_networks = list(
-            other_network
-            for other_network in self.list_recent_networks()
-            if other_network.id != network.id and other_network.id not in rv
-        )
-
-        if uncached_networks:
-            log.debug('caching overlaps for network [id=%s]', network)
-
-            for other_network in uncached_networks:
-                other_network_nodes = set(node.id for node in other_network.nodes)
-                overlap = min_tanimoto_set_similarity(nodes, other_network_nodes)
-                rv[other_network.id] = other_network, overlap
-                no = NetworkOverlap.build(left=network, right=other_network, overlap=overlap)
-                self.session.add(no)
-
-            self.session.commit()
-
-            log.debug('cached overlaps for network [id=%s] in %.2f seconds', network, time.time() - t)
-
-        return rv
-
-    def get_top_overlaps(self, network: Network, user: User, number: int = 10):
-        """
-
-        :param Network network:
-        :param User user:
-        :param number:
-        :return:
-        """
-        overlap_counter = self.get_node_overlaps(network)
-        allowed_network_ids = self.get_network_ids_with_permission(user)
-
-        overlaps = [
-            (network, v)
-            for network_id, (network, v) in sorted(overlap_counter.items(), key=lambda t: t[1][1], reverse=True)
-            if network_id in allowed_network_ids and v > 0.0
-        ]
-        return overlaps[:number]
 
     def safe_render_network_summary(self, user: User, network: Network, template: str) -> Response:
         """Render the graph summary page.
@@ -563,6 +248,9 @@ class WebManager(Manager):
             **er
         )
 
+    def cu_render_network_summary_safe(self, network_id: int, template: str) -> Response:
+        return self.render_network_summary_safe(user=current_user, network_id=network_id, template=template)
+
     def render_network_summary_safe(self, network_id: int, user: User, template: str) -> Response:
         """Render a network if the current user has the necessary rights
 
@@ -570,148 +258,50 @@ class WebManager(Manager):
         :param user:
         :param template: The name of the template to render
         """
-        network = self.safe_get_network(user=user, network_id=network_id)
+        network = self.safe_get_network_by_id(user=user, network_id=network_id)
         return self.safe_render_network_summary(user=user, network=network, template=template)
 
-    def get_recent_reports(self, weeks: int = 2) -> Iterable[str]:
-        """Get reports from the last two weeks.
-
-        :param weeks: The number of weeks to look backwards (builds :class:`datetime.timedelta`)
-        :return: An iterable of the string that should be reported
-        """
-        now = datetime.datetime.utcnow()
-        delta = datetime.timedelta(weeks=weeks)
-        q = self.session.query(Report).filter(Report.created - now < delta).join(Network).group_by(Network.name)
-        q1 = q.having(func.min(Report.created)).order_by(Network.name.asc()).all()
-        q2 = q.having(func.max(Report.created)).order_by(Network.name.asc()).all()
-
-        q3 = self.session.query(Report, func.count(Report.network)). \
-            filter(Report.created - now < delta). \
-            join(Network).group_by(Network.name). \
-            order_by(Network.name.asc()).all()
-
-        for a, b, (_, count) in zip(q1, q2, q3):
-            yield a.network.name
-
-            if a.network.version == b.network.version:
-                yield f'\tUploaded only {a.network.version}'
-                yield f'\tNodes: {a.number_nodes}'
-                yield f'\tEdges: {a.number_edges}'
-                yield f'\tWarnings: {a.number_warnings}'
-            else:
-                yield f'\tUploads: {count}'
-                yield '\tVersion: {} -> {}'.format(a.network.version, b.network.version)
-                yield '\tNodes: {} {:+d} {}'.format(a.number_nodes, b.number_nodes - a.number_nodes, b.number_nodes)
-                yield '\tEdges: {} {:+d} {}'.format(a.number_edges, b.number_edges - a.number_edges, b.number_edges)
-                yield '\tWarnings: {} {:+d} {}'.format(a.number_warnings, b.number_warnings - a.number_warnings,
-                                                       b.number_warnings)
-            yield ''
-
-    def get_query_ancestor_id(self, query_id: int) -> Query:  # TODO refactor this to be part of Query class
-        """Get the oldest ancestor of the given query."""
-        query = self.get_query_by_id(query_id)
-
-        if not query.parent_id:
-            return query_id
-
-        return self.get_query_ancestor_id(query.parent_id)
-
-    @lru_cache(maxsize=256)
-    def query_from_network_with_current_user(self, user: User, network_id: int, autocommit: bool = True) -> Query:
-        """Make a query from the given network.
-
-        :param user: The user making the query
-        :param network_id: The network's database identifier
-        :param autocommit: Should the query be committed immediately
-        """
-        network = self.safe_get_network(user=user, network_id=network_id)
-        user_query = UserQuery.from_network(network, user=user)
-
-        if autocommit:
-            self.session.add(user_query)
-            self.session.commit()
-
+    def cu_build_query(self, q: pybel.struct.query.Query) -> Query:
+        user_query = UserQuery.from_query(manager=self, query=q, user=current_user)
+        self.session.add(user_query)
+        self.session.commit()
         return user_query.query
 
-    def convert_seed_value(self, key: str, form, value: str):
-        """Normalize the form to type:data format.
+    def cu_build_query_from_project(self, project: Project) -> Query:
+        user_query = UserQuery.from_project(project=project, user=current_user)
+        user_query.query.assembly.name = f'{time.asctime()} query of {project.name}'
+        self.session.add(user_query)
+        self.session.commit()
+        return user_query.query
 
-        :param key: seed method
-        :param ImmutableMultiDict form: Form dictionary
-        :param value: data (nodes, authors...)
-        :return: Normalized data depending on the seeding method
+    def cu_build_query_from_node(self, node: Node) -> Query:
+        q = pybel.struct.query.Query([network.id for network in node.networks])
+        q.append_seeding_neighbors(node.as_bel())
+        return self.cu_build_query(q)
+
+    def cu_get_queries(self) -> List[Query]:
+        q = self.session.query(UserQuery)
+
+        if not current_user.is_admin:
+            q = q.filter(UserQuery.public)
+
+        q = q.order_by(UserQuery.created.desc())
+        return q.all()
+
+    def get_query_by_id_or_404(self, query_id: int) -> Query:
+        """Get a query by its database identifier or abort 404 message if it doesn't exist.
+
+        :raises: werkzeug.exceptions.HTTPException
         """
-        if key == 'annotation':
-            return {
-                'annotations': sanitize_annotation(form.getlist(value)),
-                'or': not form.get(AND)
-            }
+        return _return_or_404(
+            self.get_query_by_id(query_id),
+            f'query {query_id} does not exist',
+        )
 
-        if key in {'pubmed', 'authors'}:
-            return form.getlist(value)
+    def cu_get_query_by_id(self, query_id: int) -> Query:
+        return self.safe_get_query_by_id(user=current_user, query_id=query_id)
 
-        node_hashes = form.getlist(value)
-
-        return [
-            self.get_dsl_by_hash(node_hash)
-            for node_hash in node_hashes
-        ]
-
-    def query_form_to_dict(self, form):
-        """Convert a request.form multidict to the query JSON format.
-
-        :param werkzeug.datastructures.ImmutableMultiDict form:
-        :return: json representation of the query
-        :rtype: dict
-        """
-        query_dict = {}
-
-        pairs = [
-            ('pubmed', "pubmed_selection[]"),
-            ('authors', 'author_selection[]'),
-            ('annotation', 'annotation_selection[]'),
-            (form["seed_method"], "node_selection[]")
-        ]
-
-        query_dict['seeding'] = [
-            {
-                "type": seed_method,
-                'data': self.convert_seed_value(seed_method, form, seed_data_argument)
-            }
-            for seed_method, seed_data_argument in pairs
-            if form.getlist(seed_data_argument)
-        ]
-
-        query_dict["pipeline"] = [
-            {
-                'function': to_snake_case(function_name)
-            }
-            for function_name in form.getlist("pipeline[]")
-            if function_name
-        ]
-
-        network_ids = form.getlist("network_ids[]", type=int)
-        if network_ids:
-            query_dict["network_ids"] = network_ids
-
-        return query_dict
-
-    def _safe_get_query_helper(self, user: User, query_id: int) -> Optional[Query]:
-        """Check if the user has the rights to run the given query."""
-        query = self.get_query_or_404(query_id)
-
-        log.debug('checking if user [%s] has rights to query [id=%s]', user, query_id)
-
-        if user.is_authenticated and user.is_admin:
-            log.debug('[%s] is admin and can access query [id=%d]', user, query_id)
-            return query  # admins are never missing the rights to a query
-
-        permissive_network_ids = self.get_network_ids_with_permission(user=user)
-
-        if not any(network.id not in permissive_network_ids for network in query.assembly.networks):
-            return query
-
-    def safe_get_query(self, user: User, query_id: int) -> Query:
+    def safe_get_query_by_id(self, user: User, query_id: int) -> Query:
         """Get a query by its database identifier.
 
         - Raises an HTTPException with 404 if the query does not exist.
@@ -727,80 +317,114 @@ class WebManager(Manager):
 
         return query
 
+    def _safe_get_query_helper(self, user: User, query_id: int) -> Optional[Query]:
+        """Check if the user has the rights to run the given query."""
+        query = self.get_query_by_id_or_404(query_id)
+
+        log.debug('checking if user [%s] has rights to query [id=%s]', user, query_id)
+
+        if user.is_authenticated and user.is_admin:
+            log.debug('[%s] is admin and can access query [id=%d]', user, query_id)
+            return query  # admins are never missing the rights to a query
+
+        permissive_network_ids = self.get_network_ids_with_permission(user=user)
+
+        if not any(network.id not in permissive_network_ids for network in query.assembly.networks):
+            return query
+
+    def cu_get_graph_from_query_id(self, query_id: int) -> Optional[BELGraph]:
+        return self._safe_get_graph_from_query_id(user=current_user, query_id=query_id)
+
     @lru_cache(maxsize=256)
-    def safe_get_graph_from_query_id(self, user: User, query_id: int) -> Optional[BELGraph]:
+    def _safe_get_graph_from_query_id(self, user: User, query_id: int) -> Optional[BELGraph]:
         """Process the GET request returning the filtered network.
 
         :raises: werkzeug.exceptions.HTTPException
         """
-        log.debug('getting query [id=%d] from database', query_id)
+        log.debug(f'getting query [id={query_id}] from database')
         t = time.time()
-        query = self.safe_get_query(user=user, query_id=query_id)
-        log.debug('got query [id=%d] in %.2f seconds', query_id, time.time() - t)
+        query = self.safe_get_query_by_id(user=user, query_id=query_id)
+        log.debug(f'got query [id={query_id}] in {time.time() - t:.2f} seconds')
 
-        log.debug('running query [id=%d]', query_id)
+        log.debug(f'running query [id={query_id}]')
         t = time.time()
         try:
             result = query.run(self)
-            log.debug('ran query [id=%d] in %.2f seconds', query_id, time.time() - t)
+            log.debug(f'ran query [id={query_id}] in {time.time() - t:.2f} seconds')
         except networkx.exception.NetworkXError as e:
-            log.warning('query [id=%d] failed after %.2f seconds', query_id, time.time() - t)
+            log.warning(f'query [id={query_id}] failed after {time.time() - t:.2f} seconds')
             raise e
 
         return result
 
+    def get_node_by_hash_or_404(self, node_hash: str) -> Node:
+        """Get a node if it exists or send a 404.
 
-def iter_recent_public_networks(manager: Manager) -> Iterable[Network]:
-    """Iterate over the recent networks from that have been made public."""
-    return (
-        network
-        for network in manager.list_recent_networks()
-        if network.report and network.report.public
-    )
+        :raises: werkzeug.exceptions.HTTPException
+        """
+        return _return_or_404(
+            self.get_node_by_hash(node_hash),
+            f'node {node_hash[:8]} does not exist',
+        )
+
+    def cu_query_nodes(self, func=None, namespace=None, search=None):
+        nodes = self.session.query(Node)
+
+        if func:
+            nodes = nodes.filter(Node.type == func)
+
+        if namespace:
+            nodes = nodes.filter(Node.namespace_entry.namespace.name.contains(namespace))
+
+        if search:
+            nodes = nodes.filter(Node.bel.contains(search))
+
+        return nodes
+
+    def get_edge_by_hash_or_404(self, edge_hash: str) -> Edge:
+        """Get an edge if it exists or send a 404.
+
+        :raises: werkzeug.exceptions.HTTPException
+        """
+        return _return_or_404(
+            self.get_edge_by_hash(edge_hash),
+            f'edge {edge_hash[:8]} does not exist',
+        )
+
+    def get_project_by_id_or_404(self, project_id: int) -> Project:
+        """Get a project by its database identifier or send a 404.
+
+        :raises: werkzeug.exceptions.HTTPException
+        """
+        return _return_or_404(
+            self.get_project_by_id(project_id),
+            f'project {project_id} does not exist',
+        )
+
+    def safe_get_project_by_id(self, user: User, project_id: int) -> Project:
+        """Get a project by identifier, aborts 404 if doesn't exist and aborts 403 if current user does not have rights.
+
+        :raises: werkzeug.exceptions.HTTPException
+        """
+        project = self.get_project_by_id_or_404(project_id)
+
+        if not user.has_project_rights(project):
+            abort(403, f'User {user} does not have permission to access project {project}')
+
+        return project
+
+    def get_user_by_id_or_404(self, user_id: int) -> User:
+        """Get a user by identifier if it exists or send a 404.
+
+        :raises: werkzeug.exceptions.HTTPException
+        """
+        return _return_or_404(
+            self.get_user_by_id(user_id),
+            f'user {user_id} does not exist',
+        )
 
 
-def register_users_from_manifest(user_datastore: SQLAlchemyUserDatastore, manifest: Dict) -> None:
-    """Register the users and roles in a manifest.
-
-    :param user_datastore: A user data store
-    :param dict manifest: A manifest dictionary, which contains two keys: ``roles`` and ``users``. The ``roles``
-     key corresponds to a list of dictionaries containing ``name`` and ``description`` entries. The ``users`` key
-     corresponds to a list of dictionaries containing ``email``, ``password``, and ``name`` entries
-     as well as a optional ``roles`` entry with a corresponding list relational to the names in the ``roles``
-     entry in the manifest.
-    """
-    for role in manifest['roles']:
-        user_datastore.find_or_create_role(**role)
-
-    for user_manifest in manifest['users']:
-        email = user_manifest['email']
-        user = user_datastore.find_user(email=email)
-        if user is None:
-            log.info('creating user: %s', email)
-            user = user_datastore.create_user(
-                confirmed_at=datetime.datetime.now(),
-                email=email,
-                password=user_manifest['password'],
-                name=user_manifest['name']
-            )
-
-        for role_name in user_manifest.get('roles', []):
-            if user_datastore.add_role_to_user(user, role_name):
-                log.info('registered %s as %s', user, role_name)
-
-    user_datastore.commit()
-
-
-def iterate_networks_for_user(manager: Manager,
-                              user_datastore: SQLAlchemyUserDatastore,
-                              user: User,
-                              ) -> Iterable[Network]:
-    """Iterate over a user's networks."""
-    yield from iter_recent_public_networks(manager)
-    yield from user.iter_available_networks()
-
-    # TODO reinvestigate how "organizations" are handled
-    if user.is_scai:
-        role = user_datastore.find_or_create_role(name='scai')
-        for user in role.users:
-            yield from user.iter_owned_networks()
+def _return_or_404(x, msg):
+    if x is None:
+        abort(404, msg)
+    return x

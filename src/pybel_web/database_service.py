@@ -5,18 +5,19 @@
 import csv
 import logging
 import pickle
-import time
 from functools import lru_cache
 from io import StringIO
 from operator import itemgetter
-from typing import Iterable, Mapping, Optional
+from typing import Dict, Iterable, List, Mapping, Optional
 
 import networkx as nx
+import time
 from flask import Blueprint, Response, abort, current_app, flash, jsonify, make_response, redirect, request
 from flask_security import current_user, login_required, roles_required
 from sqlalchemy import func, or_
 
 import pybel_web.core.models
+from pybel import BELGraph
 from pybel.constants import NAMESPACE, NAMESPACE_DOMAIN_OTHER
 from pybel.manager.citation_utils import enrich_citation_model, get_pubmed_citation_response
 from pybel.manager.models import Author, Citation, Edge, NamespaceEntry, Network, Node, network_edge
@@ -31,7 +32,7 @@ from pybel_tools.analysis.heat import RESULT_LABELS
 from pybel_tools.filters.node_filters import exclude_pathology_filter
 from pybel_tools.selection import get_subgraph_by_node_filter
 from pybel_tools.summary import (
-    get_authors, get_incorrect_names_by_namespace, get_naked_names, get_undefined_namespace_names, info_list,
+    get_authors, get_incorrect_names_by_namespace, get_naked_names, get_undefined_namespace_names,
 )
 from .constants import AND, BLACK_LIST, PATHOLOGY_FILTER, PATHS_METHOD, RANDOM_PATH, UNDIRECTED
 from .external_managers import *
@@ -76,14 +77,14 @@ def _build_namespace_helper(graph, namespace, names):
         author_name=graph.authors,
         author_contact=graph.contact,
         citation_name=graph.name,
-        citation_description='This namespace was serialized by PyBEL v{} from {}'.format(get_pybel_version(), graph),
+        citation_description=f'This namespace was serialized by PyBEL v{get_pybel_version()} from {graph}',
         cacheable=False,
         values=names,
         file=si
     )
 
     output = make_response(si.getvalue())
-    output.headers["Content-Disposition"] = "attachment; filename={}.belns".format(namespace)
+    output.headers["Content-Disposition"] = f'attachment; filename={namespace}.belns'
     output.headers["Content-type"] = "text/plain"
     return output
 
@@ -107,7 +108,7 @@ def download_undefined_namespace(network_id, namespace):
         required: true
         type: string
     """
-    graph = manager.safe_get_graph(user=current_user, network_id=network_id)
+    graph = manager.cu_safe_get_graph(network_id)
     names = get_undefined_namespace_names(graph, namespace)  # TODO put into report data
     return _build_namespace_helper(graph, namespace, names)
 
@@ -131,7 +132,7 @@ def download_missing_namespace(network_id: int, namespace: str):
         required: true
         type: string
     """
-    graph = manager.safe_get_graph(user=current_user, network_id=network_id)
+    graph = manager.cu_safe_get_graph(network_id)
     names = get_incorrect_names_by_namespace(graph, namespace)  # TODO put into report data
     return _build_namespace_helper(graph, namespace, names)
 
@@ -150,19 +151,13 @@ def download_naked_names(network_id):
         required: true
         type: integer
     """
-    graph = manager.safe_get_graph(user=current_user, network_id=network_id)
+    graph = manager.cu_safe_get_graph(network_id)
     names = get_naked_names(graph)  # TODO put into report data
     return _build_namespace_helper(graph, 'NAKED', names)
 
 
-def _build_annotation_helper(graph, annotation, values):
-    """Build an annotation document helper.
-
-    :param pybel.BELGraph graph:
-    :param str annotation:
-    :param dict[str,str] values:
-    :rtype: flask.Response
-    """
+def _build_annotation_helper(graph: BELGraph, annotation: str, values: Mapping[str, str]) -> Response:
+    """Build an annotation document helper."""
     si = StringIO()
 
     write_annotation(
@@ -171,12 +166,12 @@ def _build_annotation_helper(graph, annotation, values):
         author_name=graph.authors,
         author_contact=graph.contact,
         citation_name=graph.name,
-        description='This annotation was serialized by PyBEL v{} from {}'.format(get_pybel_version(), graph),
+        description=f'This annotation was serialized by PyBEL v{get_pybel_version()} from {graph}',
         file=si,
     )
 
     output = make_response(si.getvalue())
-    output.headers["Content-Disposition"] = "attachment; filename={}.belanno".format(annotation)
+    output.headers["Content-Disposition"] = f"attachment; filename={annotation}.belanno"
     output.headers["Content-type"] = "text/plain"
     return output
 
@@ -200,7 +195,7 @@ def download_list_annotation(network_id, annotation):
         required: true
         type: string
     """
-    graph = manager.safe_get_graph(user=current_user, network_id=network_id)
+    graph = manager.cu_safe_get_graph(network_id)
 
     if annotation not in graph.annotation_list:
         abort(400, 'Graph does not contain this list annotation')
@@ -274,7 +269,7 @@ def get_network_metadata(network_id):
       200:
         description: The metadata describing the network
     """
-    network = manager.get_network_or_404(network_id)
+    network = manager.get_network_by_id_or_404(network_id)
 
     return jsonify(**network.to_json(include_id=True))
 
@@ -478,7 +473,7 @@ def nodes_by_network(network_id: int):
 
 def drop_network_helper(network_id: int) -> Response:
     """Drop a network."""
-    network = manager.strict_get_network(user=current_user, network_id=network_id)
+    network = manager.cu_strict_get_network_by_id(network_id=network_id)
     redirect_arg = request.args.get('next')
     log.info('dropping network %s', network_id)
 
@@ -571,7 +566,7 @@ def claim_network(network_id: int):
         required: true
         type: integer
     """
-    network = manager.get_network_or_404(network_id)
+    network = manager.get_network_by_id_or_404(network_id)
 
     t = time.time()
 
@@ -579,13 +574,13 @@ def claim_network(network_id: int):
 
     if not res:
         return next_or_jsonify(
-            '{} has already been claimed by {}'.format(network, network.report.user),
+            f'{network} has already been claimed by {network.report.user}',
             network={'id': network.id},
             owner={'id': network.report.user.id},
         )
 
     return next_or_jsonify(
-        'Claimed {} in {:.2f} seconds'.format(network, time.time() - t),
+        f'Claimed {network} in {time.time() - t:.2f} seconds',
         network={'id': network.id},
         owner={'id': current_user.id}
     )
@@ -593,7 +588,7 @@ def claim_network(network_id: int):
 
 @api_blueprint.route('/api/network/pillage')
 @roles_required('admin')
-def pillage():
+def pillage() -> Response:
     """Claim all unclaimed networks."""
     counter = 0
     t = time.time()
@@ -607,11 +602,11 @@ def pillage():
         if res:
             counter += 1
 
-    return next_or_jsonify('Claimed {} networks in {:.2f} seconds'.format(counter, time.time() - t))
+    return next_or_jsonify(f'Claimed {counter} networks in {time.time() - t:.2f} seconds')
 
 
 @api_blueprint.route('/api/network/<int:network_id>/export/<serve_format>')
-def export_network(network_id: int, serve_format: str):
+def export_network(network_id: int, serve_format: str) -> Response:
     """Builds a graph from the given network id and sends it in the given format
 
     ---
@@ -641,12 +636,12 @@ def export_network(network_id: int, serve_format: str):
               - csv
               - gsea
     """
-    graph = manager.safe_get_graph(user=current_user, network_id=network_id)
+    graph = manager.cu_safe_get_graph(network_id)
     return serve_network(graph, serve_format=serve_format)
 
 
 @api_blueprint.route('/api/network/<int:network_id>/summarize')
-def get_graph_info_json(network_id):
+def get_graph_info_json(network_id: int) -> Response:
     """Gets a summary of the given network
 
     ---
@@ -667,7 +662,7 @@ def get_graph_info_json(network_id):
 
 
 @api_blueprint.route('/api/network/<int:network_id>/name')
-def get_network_name_by_id(network_id):
+def get_network_name_by_id(network_id: int) -> Response:
     """Returns network name given its id
 
     ---
@@ -684,13 +679,9 @@ def get_network_name_by_id(network_id):
     return jsonify(network.name)
 
 
-def update_network_status(network_id: int, public: bool):
-    """Update whether a network is public or private
-    
-    :param int network_id: 
-    :param bool public:
-    """
-    network = manager.get_network_or_404(network_id)
+def update_network_status(network_id: int, public: bool) -> Response:
+    """Update whether a network is public or private"""
+    network = manager.get_network_by_id_or_404(network_id)
 
     if network.report is None:
         abort(400, 'Network does not have an associated report.')
@@ -702,7 +693,7 @@ def update_network_status(network_id: int, public: bool):
     manager.session.commit()
 
     return next_or_jsonify(
-        'Set public to {} for {}'.format(public, network),
+        f'Set public to {public} for {network}',
         network_id=network_id,
         public=public,
     )
@@ -710,7 +701,7 @@ def update_network_status(network_id: int, public: bool):
 
 @api_blueprint.route('/api/network/<int:network_id>/make_public')
 @login_required
-def make_network_public(network_id):
+def make_network_public(network_id: int):
     """Makes a given network public using admin powers
 
     ---
@@ -728,7 +719,7 @@ def make_network_public(network_id):
 
 @api_blueprint.route('/api/network/<int:network_id>/make_private')
 @login_required
-def make_network_private(network_id):
+def make_network_private(network_id: int):
     """Makes a given network private using admin powers
 
     ---
@@ -749,22 +740,20 @@ def make_network_private(network_id):
 ####################################
 
 @api_blueprint.route('/api/query/<int:query_id>.json')
-def download_query_json(query_id):
+def download_query_json(query_id: int):
     """Downloads the query"""
-    query = manager.safe_get_query(user=current_user, query_id=query_id)
+    query = manager.cu_get_query_by_id(query_id=query_id)
     query_json = query.to_json()
     return jsonify(query_json)
 
 
 @lru_cache(maxsize=256)
-def get_tree_from_query(query_id):
+def get_tree_from_query(query_id: int) -> Optional[List[Dict]]:
     """Gets the tree json for a given network
 
-    :param int query_id: The database query identifier
-    :rtype: Optional[dict]
     :raises: werkzeug.exceptions.HTTPException
     """
-    graph = manager.safe_get_graph_from_query_id(user=current_user, query_id=query_id)
+    graph = manager.cu_get_graph_from_query_id(query_id)
 
     if graph is None:
         return
@@ -773,8 +762,8 @@ def get_tree_from_query(query_id):
 
 
 @api_blueprint.route('/api/query/<int:query_id>/tree/')
-def get_tree_api(query_id):
-    """Builds the annotation tree data structure for a given graph
+def get_tree_api(query_id: int):
+    """Build the annotation tree data structure for a given graph.
 
     ---
     tags:
@@ -804,7 +793,7 @@ def get_tree_api(query_id):
 
 @api_blueprint.route('/api/query/<int:query_id>/rights/')
 def check_query_rights(query_id):
-    """Returns if the current user has rights to the given query
+    """Return if the current user has rights to the given query.
 
     ---
     tags:
@@ -827,7 +816,7 @@ def check_query_rights(query_id):
 
 @api_blueprint.route('/api/query/<int:query_id>/export/<serve_format>')
 def download_network(query_id, serve_format):
-    """Downloads a network in the given format
+    """Download a network in the given format.
 
     ---
     tags:
@@ -857,8 +846,8 @@ def download_network(query_id, serve_format):
               - gsea
               - citations
     """
-    graph = manager.safe_get_graph_from_query_id(user=current_user, query_id=query_id)
-    graph.name = 'query-{query_id}'.format(query_id=query_id)
+    graph = manager.cu_get_graph_from_query_id(query_id)
+    graph.name = f'query-{query_id}'
     graph.version = str(time.asctime())
     return serve_network(graph, serve_format=serve_format)
 
@@ -877,14 +866,14 @@ def get_network(query_id):
         required: true
         type: integer
     """
-    graph = manager.safe_get_graph_from_query_id(user=current_user, query_id=query_id)
+    graph = manager.cu_get_graph_from_query_id(query_id)
     payload = to_json_custom(graph)
     return jsonify(payload)
 
 
 @api_blueprint.route('/api/query/<int:query_id>/paths/<source_id>/<target_id>/')
 def get_paths(query_id, source_id, target_id):
-    """Returns array of shortest/all paths given a source node and target node both belonging in the graph
+    """Return an array of shortest/all paths given a source node and target node both belonging in the graph.
 
     ---
     tags:
@@ -937,7 +926,7 @@ def get_paths(query_id, source_id, target_id):
         raise IndexError('target is missing from cache: %s', target_id)
     target = target.to_tuple()
 
-    network = manager.safe_get_graph_from_query_id(user=current_user, query_id=query_id)
+    network = manager.cu_get_graph_from_query_id(query_id)
     method = request.args.get(PATHS_METHOD)
     undirected = UNDIRECTED in request.args
     remove_pathologies = PATHOLOGY_FILTER in request.args
@@ -967,7 +956,7 @@ def get_paths(query_id, source_id, target_id):
     try:
         shortest_path = nx.shortest_path(network, source=source, target=target)
     except nx.NetworkXNoPath:
-        log.debug('No paths between: {} and {}'.format(source, target))
+        log.debug(f'No paths between {source} and {target}')
 
         # Returns normal message if it is not a random call from graph_controller.js
         if RANDOM_PATH not in request.args:
@@ -987,7 +976,7 @@ def get_paths(query_id, source_id, target_id):
 
 @api_blueprint.route('/api/query/<int:query_id>/paths/random')
 def get_random_paths(query_id):
-    """Gets random paths given the query identifier
+    """Get random paths given the query identifier.
 
     ---
     tags:
@@ -999,7 +988,7 @@ def get_random_paths(query_id):
         required: true
         type: integer
     """
-    graph = manager.safe_get_graph_from_query_id(user=current_user, query_id=query_id)
+    graph = manager.cu_get_graph_from_query_id(query_id)
 
     path = get_random_path(graph)
 
@@ -1011,7 +1000,7 @@ def get_random_paths(query_id):
 
 @api_blueprint.route('/api/query/<int:query_id>/centrality/<int:node_number>')
 def get_nodes_by_betweenness_centrality(query_id, node_number):
-    """Gets a list of nodes with the top betweenness-centrality
+    """Get a list of nodes with the top betweenness-centrality.
 
     ---
     tags:
@@ -1029,7 +1018,7 @@ def get_nodes_by_betweenness_centrality(query_id, node_number):
         required: true
         type: integer
     """
-    graph = manager.safe_get_graph_from_query_id(user=current_user, query_id=query_id)
+    graph = manager.cu_get_graph_from_query_id(query_id)
 
     if node_number > graph.number_of_nodes():
         node_number = graph.number_of_nodes()
@@ -1044,7 +1033,7 @@ def get_nodes_by_betweenness_centrality(query_id, node_number):
 
 @api_blueprint.route('/api/query/<int:query_id>/pmids/')
 def get_all_pmids(query_id):
-    """Gets a list of all PubMed identifiers in the network produced by the given URL parameters
+    """Get a list of all PubMed identifiers in the network produced by the given URL parameters.
 
     ---
     tags:
@@ -1056,7 +1045,7 @@ def get_all_pmids(query_id):
         required: true
         type: integer
     """
-    graph = manager.safe_get_graph_from_query_id(user=current_user, query_id=query_id)
+    graph = manager.cu_get_graph_from_query_id(query_id)
     return jsonify(sorted(get_pubmed_identifiers(graph)))
 
 
@@ -1079,7 +1068,7 @@ def get_query_summary(query_id):
     }
 
     t = time.time()
-    graph = manager.safe_get_graph_from_query_id(user=current_user, query_id=query_id)
+    graph = manager.cu_get_graph_from_query_id(query_id)
     rv['time'] = time.time() - t
 
     if graph is not None and graph.node:
@@ -1097,7 +1086,7 @@ def get_query_summary(query_id):
 
 @api_blueprint.route('/api/citation')
 def list_citations():
-    """Gets all citations
+    """Get all citations.
 
     ---
     tags:
@@ -1129,7 +1118,7 @@ def get_citation_by_id(citation_id):
 
 @api_blueprint.route('/api/citation/pubmed/<pubmed_identifier>/enrich')
 def enrich_citation_by_id(pubmed_identifier):
-    """Enrich a citation in the database"""
+    """Enrich a citation in the database."""
     citation = manager.get_citation_by_pmid_or_404(pubmed_identifier)
 
     if citation.name and citation.title:
@@ -1151,9 +1140,8 @@ def enrich_citation_by_id(pubmed_identifier):
         manager.session.commit()
 
     t = time.time() - t
-
     return next_or_jsonify(
-        'Got PubMed:{} metadata in {:.2f} seconds'.format(pubmed_identifier, t),
+        f'Got metadata for pmid:{pubmed_identifier} in {t:.2f} seconds',
         time=t,
         payload=citation.to_json(include_id=True)
     )
@@ -1213,7 +1201,7 @@ def get_pubmed_suggestion():
 
 @api_blueprint.route('/api/evidence/<int:evidence_id>')
 def get_evidence_by_id(evidence_id):
-    """Gets an evidence by its identifier as JSON"""
+    """Get an evidence by its identifier as JSON."""
     evidence = manager.get_evidence_by_id_or_404(evidence_id)
     return jsonify(evidence.to_json(include_id=True))
 
@@ -1236,7 +1224,7 @@ def get_all_authors(query_id):
         required: true
         type: integer
     """
-    graph = manager.safe_get_graph_from_query_id(user=current_user, query_id=query_id)
+    graph = manager.cu_get_graph_from_query_id(query_id)
     return jsonify(sorted(get_authors(graph)))
 
 
@@ -1708,7 +1696,7 @@ def drop_query_by_id(query_id: int):
         required: true
         type: integer
     """
-    query = manager.get_query_or_404(query_id)
+    query = manager.get_query_by_id_or_404(query_id)
 
     if not current_user.is_admin or query.user != current_user:
         abort(403)
@@ -1716,7 +1704,7 @@ def drop_query_by_id(query_id: int):
     manager.session.delete(query)
     manager.session.commit()
 
-    return next_or_jsonify('Dropped query #{}'.format(query_id))
+    return next_or_jsonify(f'Dropped query {query_id}')
 
 
 @api_blueprint.route('/api/query', methods=['DELETE'])
@@ -1760,7 +1748,7 @@ def drop_user_queries(user_id):
 
     manager.drop_queries_by_user_id(user_id)
 
-    return next_or_jsonify('Dropped all queries associated with {}'.format(current_user))
+    return next_or_jsonify(f'Dropped all queries associated with {current_user}')
 
 
 @api_blueprint.route('/api/query/<int:query_id>/info')
@@ -1777,7 +1765,7 @@ def query_to_network(query_id: int):
         required: true
         type: integer
     """
-    query = manager.safe_get_query(user=current_user, query_id=query_id)
+    query = manager.cu_get_query_by_id(query_id=query_id)
 
     rv = query.to_json(include_id=True)
 
@@ -1807,7 +1795,7 @@ def get_query_parent(query_id):
         required: true
         type: integer
     """
-    query = manager.safe_get_query(user=current_user, query_id=query_id)
+    query = manager.cu_get_query_by_id(query_id=query_id)
 
     if not query.parent:
         return jsonify({
@@ -1835,7 +1823,7 @@ def get_query_oldest_ancestry(query_id):
         required: true
         type: integer
     """
-    query = manager.safe_get_query(user=current_user, query_id=query_id)
+    query = manager.cu_get_query_by_id(query_id=query_id)
 
     ancestor_id = manager.get_query_ancestor_id(query.id)
 
@@ -1851,13 +1839,13 @@ def add_pipeline_entry(query_id: int, name: str, *args, **kwargs) -> Response:
     :param query_id: The identifier of the query
     :param name: The name of the function to append
     """
-    query = manager.safe_get_query(user=current_user, query_id=query_id)
+    query = manager.cu_get_query_by_id(query_id=query_id)
 
     try:
         qo = query.build_appended(name, *args, **kwargs)
     except MissingPipelineFunctionError:
         log.error('missing pipeline function: %s', name)
-        return abort(403, 'Invalid function name: {}'.format(name))
+        return abort(403, f'Invalid function name: {name}')
 
     if current_user.is_authenticated:
         qo.user = current_user
@@ -1872,8 +1860,8 @@ def add_pipeline_entry(query_id: int, name: str, *args, **kwargs) -> Response:
 
 
 @api_blueprint.route('/api/query/<int:query_id>/isolated_node/<node_hash>')
-def get_query_from_isolated_node(query_id, node_hash):
-    """Creates a query with a single node hash
+def get_query_from_isolated_node(query_id: int, node_hash: str):
+    """Create a query with a single node hash.
 
     ---
     tags:
@@ -1890,7 +1878,7 @@ def get_query_from_isolated_node(query_id, node_hash):
         required: true
         type: string
     """
-    parent_query = manager.safe_get_query(user=current_user, query_id=query_id)
+    parent_query = manager.cu_get_query_by_id(query_id=query_id)
     node = manager.get_dsl_by_hash(node_hash)
 
     child_query = Query(network_ids=[
@@ -1913,8 +1901,8 @@ def get_query_from_isolated_node(query_id, node_hash):
 
 
 @api_blueprint.route('/api/query/<int:query_id>/add_applier/<name>')
-def add_applier_to_query(query_id, name):
-    """Builds a new query with the applier in the url and adds it to the end of the pipeline
+def add_applier_to_query(query_id: int, name: str):
+    """Build a new query with the applier in the url and adds it to the end of the pipeline.
 
     ---
     tags:
@@ -1935,8 +1923,8 @@ def add_applier_to_query(query_id, name):
 
 
 @api_blueprint.route('/api/query/<int:query_id>/add_node_list_applier/<name>/<node_hashes>')
-def add_node_list_applier_to_query(query_id, name, node_hashes):
-    """Builds a new query with a node list applier added to the end of the pipeline
+def add_node_list_applier_to_query(query_id: int, name: str, node_hashes):
+    """Build a new query with a node list applier added to the end of the pipeline.
 
     :param int query_id: A query's database identifier
     :param str name: The name of the function to apply at the end of the query
@@ -1966,8 +1954,8 @@ def add_node_list_applier_to_query(query_id, name, node_hashes):
 
 
 @api_blueprint.route('/api/query/<int:query_id>/add_node_applier/<name>/<node_hash>')
-def add_node_applier_to_query(query_id, name, node_hash):
-    """Builds a new query with a node applier added to the end of the pipeline
+def add_node_applier_to_query(query_id: int, name: str, node_hash: str):
+    """Build a new query with a node applier added to the end of the pipeline.
 
     :param int query_id: A query's database identifier
     :param str name: The name of the function to apply at the end of the query
@@ -1997,11 +1985,10 @@ def add_node_applier_to_query(query_id, name, node_hash):
 
 
 @api_blueprint.route('/api/query/<int:query_id>/add_annotation_filter/')
-def add_annotation_filter_to_query(query_id):
-    """Builds a new query with the annotation in the arguments. If 'and' is passed as an argument, it performs a AND
-    query. By default it uses the OR condition.
+def add_annotation_filter_to_query(query_id: int):
+    """Build a new query with the annotation in the arguments.
 
-    :param int query_id: A query's database identifier
+    If 'and' is passed as an argument, it performs a AND query. By default it uses the OR condition.
 
     ---
     tags:
@@ -2035,7 +2022,7 @@ def add_annotation_filter_to_query(query_id):
 
 @api_blueprint.route('/api/user/count')
 def get_number_users():
-    """Return the number of users"""
+    """Return the number of users."""
     count = manager.session.query(func.count(User.id)).scalar()
     return jsonify({
         'time': str(time.asctime()),
@@ -2046,7 +2033,7 @@ def get_number_users():
 @api_blueprint.route('/api/user')
 @roles_required('admin')
 def get_all_users():
-    """Returns all users
+    """Return all users.
 
     ---
     tags:
@@ -2061,7 +2048,7 @@ def get_all_users():
 @api_blueprint.route('/api/user/current')
 @login_required
 def get_current_user():
-    """Returns the current user
+    """Return the current user.
 
     ---
     tags:
@@ -2073,7 +2060,7 @@ def get_current_user():
 @api_blueprint.route('/api/user/<user>/add_role/<role>')
 @roles_required('admin')
 def add_user_role(user, role):
-    """Adds a role to a use
+    """Add a role to a use.
 
     ---
     tags:
@@ -2100,7 +2087,7 @@ def drop_user_role(user, role):
 
 @api_blueprint.route('/api/user/<int:user_id>', methods=['DELETE'])
 @roles_required('admin')
-def drop_user(user_id):
+def drop_user(user_id: int) -> Response:
     """Drop a user.
 
     ---
@@ -2113,13 +2100,13 @@ def drop_user(user_id):
         required: true
         type: integer
     """
-    user = manager.get_user_or_404(user_id)
+    user = manager.get_user_by_id_or_404(user_id)
 
     manager.user_datastore.delete_user(user)
     manager.user_datastore.commit()
 
     return next_or_jsonify(
-        'Dropped user: {}'.format(user),
+        f'Dropped user: {user}',
         user={
             'id': user.id,
             'email': user.email
@@ -2133,8 +2120,8 @@ def drop_user(user_id):
 
 
 @api_blueprint.route('/api/query/<int:query_id>/analysis/<int:experiment_id>/')
-def get_analysis(query_id, experiment_id):
-    """Returns data from analysis
+def get_analysis(query_id: int, experiment_id: int):
+    """Return data from analysis.
 
     ---
     tags:
@@ -2152,8 +2139,8 @@ def get_analysis(query_id, experiment_id):
         required: true
         type: integer
     """
-    graph = manager.safe_get_graph_from_query_id(user=current_user, query_id=query_id)
-    experiment = manager.get_experiment_or_404(experiment_id)
+    graph = manager.cu_get_graph_from_query_id(query_id)
+    experiment = manager.get_experiment_by_id_or_404(experiment_id)
 
     data = pickle.loads(experiment.result)
     results = [
@@ -2169,8 +2156,8 @@ def get_analysis(query_id, experiment_id):
 
 
 @api_blueprint.route('/api/query/<int:query_id>/analysis/<int:experiment_id>/median')
-def get_analysis_median(query_id, experiment_id):
-    """Returns data from analysis
+def get_analysis_median(query_id: int, experiment_id: int):
+    """Return data from analysis.
 
     ---
     tags:
@@ -2188,8 +2175,8 @@ def get_analysis_median(query_id, experiment_id):
         required: true
         type: integer
     """
-    graph = manager.safe_get_graph_from_query_id(user=current_user, query_id=query_id)
-    experiment = manager.get_experiment_or_404(experiment_id)
+    graph = manager.cu_get_graph_from_query_id(query_id)
+    experiment = manager.get_experiment_by_id_or_404(experiment_id)
 
     data = pickle.loads(experiment.result)
     # position 3 is the 'median' score
@@ -2204,7 +2191,7 @@ def get_analysis_median(query_id, experiment_id):
 
 @api_blueprint.route('/api/experiment/<int:experiment_id>', methods=['DELETE'])
 @login_required
-def drop_experiment_by_id(experiment_id):
+def drop_experiment_by_id(experiment_id: int):
     """Delete an experiment.
 
     ---
@@ -2218,7 +2205,7 @@ def drop_experiment_by_id(experiment_id):
         type: integer
         format: int32
     """
-    experiment = manager.get_experiment_or_404(experiment_id)
+    experiment = manager.get_experiment_by_id_or_404(experiment_id)
 
     if not current_user.has_experiment_rights(experiment):
         abort(403)
@@ -2227,7 +2214,7 @@ def drop_experiment_by_id(experiment_id):
     manager.session.commit()
 
     return next_or_jsonify(
-        'Dropped Experiment #{}'.format(experiment.id),
+        f'Dropped experiment {experiment.id}',
         experiment={
             'id': experiment.id,
             'description': experiment.description
@@ -2237,7 +2224,7 @@ def drop_experiment_by_id(experiment_id):
 
 @api_blueprint.route('/api/experiment/<int:experiment_id>/download')
 @login_required
-def download_analysis(experiment_id):
+def download_analysis(experiment_id: int):
     """Download data from a given experiment as CSV.
 
     ---
@@ -2254,7 +2241,7 @@ def download_analysis(experiment_id):
       200:
         description: A CSV document with the results in it
     """
-    experiment = manager.get_experiment_or_404(experiment_id)
+    experiment = manager.get_experiment_by_id_or_404(experiment_id)
 
     if not current_user.has_experiment_rights(experiment):
         abort(403)
@@ -2270,7 +2257,7 @@ def download_analysis(experiment_id):
     cw.writerows(csv_list)
 
     output = make_response(si.getvalue())
-    output.headers["Content-Disposition"] = "attachment; filename=experiment_{}.csv".format(experiment_id)
+    output.headers["Content-Disposition"] = f'attachment; filename=experiment_{experiment_id}.csv'
     output.headers["Content-type"] = "text/csv"
     return output
 
@@ -2282,8 +2269,8 @@ def download_analysis(experiment_id):
 
 @api_blueprint.route('/api/network/<int:network_id>/grant_project/<int:project_id>')
 @login_required
-def grant_network_to_project(network_id, project_id):
-    """Adds rights to a network to a project
+def grant_network_to_project(network_id: int, project_id: int):
+    """Add the rights to a network to a project.
 
     ---
     tags:
@@ -2302,14 +2289,14 @@ def grant_network_to_project(network_id, project_id):
         type: integer
         format: int32
     """
-    network = manager.strict_get_network(user=current_user, network_id=network_id)
-    project = manager.safe_get_project(user=current_user, project_id=project_id)
+    network = manager.cu_strict_get_network_by_id(network_id=network_id)
+    project = manager.safe_get_project_by_id(user=current_user, project_id=project_id)
     project.networks.append(network)
 
     manager.session.commit()
 
     return next_or_jsonify(
-        'Added rights for {} to {}'.format(network, project),
+        f'Added rights for {network} to {project}',
         network={
             'id': network.id,
         }
@@ -2318,8 +2305,8 @@ def grant_network_to_project(network_id, project_id):
 
 @api_blueprint.route('/api/network/<int:network_id>/grant_user/<int:user_id>')
 @login_required
-def grant_network_to_user(network_id, user_id):
-    """Adds rights to a network to a user
+def grant_network_to_user(network_id: int, user_id: int):
+    """Add the rights to a network to a user.
 
     ---
     tags:
@@ -2339,19 +2326,19 @@ def grant_network_to_user(network_id, user_id):
         type: integer
         format: int32
     """
-    network = manager.strict_get_network(user=current_user, network_id=network_id)
+    network = manager.cu_strict_get_network_by_id(network_id=network_id)
     user = manager.get_user_by_id(user_id)
     user.networks.append(network)
 
     manager.session.commit()
 
-    return next_or_jsonify('Added rights for {} to {}'.format(network, user))
+    return next_or_jsonify(f'Added rights for {network} to {user}')
 
 
 @api_blueprint.route('/api/project')
 @roles_required('admin')
 def get_all_projects():
-    """Returns all project as a JSON file
+    """Return all project as a JSON file.
 
     ---
     tags:
@@ -2365,8 +2352,8 @@ def get_all_projects():
 
 @api_blueprint.route('/api/project/<int:project_id>')
 @login_required
-def get_project_metadata(project_id):
-    """Returns the project as a JSON file
+def get_project_metadata(project_id: int):
+    """Return the project as a JSON file.
 
     ---
     tags:
@@ -2379,16 +2366,14 @@ def get_project_metadata(project_id):
         type: integer
         format: int32
     """
-    project = manager.safe_get_project(user=current_user, project_id=project_id)
+    project = manager.safe_get_project_by_id(user=current_user, project_id=project_id)
     return jsonify(**project.to_json())
 
 
 @api_blueprint.route('/api/project/<int:project_id>', methods=['DELETE'])
 @login_required
-def drop_project_by_id(project_id):
+def drop_project_by_id(project_id: int):
     """Drop a project.
-
-    :param int project_id: THe project's database identifier
 
     ---
     tags:
@@ -2401,22 +2386,20 @@ def drop_project_by_id(project_id):
         type: integer
         format: int32
     """
-    project = manager.safe_get_project(user=current_user, project_id=project_id)
+    project = manager.safe_get_project_by_id(user=current_user, project_id=project_id)
 
     # FIXME cascade on project/users
 
     manager.session.delete(project)
     manager.session.commit()
 
-    return next_or_jsonify('Dropped project: {}'.format(project.name))
+    return next_or_jsonify(f'Dropped project {project.id}: {project.name}')
 
 
 @api_blueprint.route('/api/project/<int:project_id>/summarize')
 @login_required
-def summarize_project(project_id):
-    """Provides a summary of all networks in a project as a CSV file
-
-    :param int project_id: The identifier of the project
+def summarize_project(project_id: int):
+    """Provide a summary of all networks in a project as a CSV file.
 
     ---
     tags:
@@ -2429,7 +2412,7 @@ def summarize_project(project_id):
         type: integer
         format: int32
     """
-    project = manager.safe_get_project(user=current_user, project_id=project_id)
+    project = manager.safe_get_project_by_id(user=current_user, project_id=project_id)
 
     si = StringIO()
     cw = csv.writer(si)
@@ -2441,12 +2424,12 @@ def summarize_project(project_id):
         csv_list_entry = network.name, network.version
         csv_list_entry += tuple(
             v
-            for _, v in info_list(network.as_bel())
+            for _, v in network.as_bel()._describe_list()
         )
 
         csv_list.append(csv_list_entry)
 
-    csv_list.append(('Total', '') + tuple(v for _, v in info_list(project.as_bel())))
+    csv_list.append(('Total', '') + tuple(v for _, v in project.as_bel()._describe_list()))
 
     cw.writerows(csv_list)
     output = make_response(si.getvalue())
@@ -2457,8 +2440,8 @@ def summarize_project(project_id):
 
 @api_blueprint.route('/api/project/<project_id>/export/<serve_format>')
 @login_required
-def export_project_network(project_id, serve_format):
-    """Builds a graph the networks belonging to the given project and sends it in the given format
+def export_project_network(project_id: int, serve_format: str):
+    """Build a graph the networks belonging to the given project and sends it in the given format.
 
     ---
     tags:
@@ -2488,7 +2471,7 @@ def export_project_network(project_id, serve_format):
               - csv
               - gsea
     """
-    project = manager.safe_get_project(user=current_user, project_id=project_id)
+    project = manager.safe_get_project_by_id(user=current_user, project_id=project_id)
     graph = project.as_bel()
     return serve_network(graph, serve_format=serve_format)
 
