@@ -6,7 +6,7 @@ corresponding to objects"""
 import itertools as itt
 import logging
 import time
-from typing import Mapping, Tuple
+from typing import Dict, Mapping, Tuple
 
 import networkx as nx
 import pandas as pd
@@ -44,12 +44,8 @@ from .models import Omic, Report, User
 log = logging.getLogger(__name__)
 
 
-def make_graph_summary(graph):
-    """Make a graph summary for sticking in the report including the summary from :func:`get_network_summary_dict`.
-
-    :param pybel.BELGraph graph:
-    :rtype: dict
-    """
+def make_graph_summary(graph: BELGraph) -> Dict:
+    """Make a graph summary for sticking in the report including the summary from :func:`get_network_summary_dict`."""
     log.debug('summarizing %s', graph)
     t = time.time()
 
@@ -77,12 +73,8 @@ def make_graph_summary(graph):
     return rv
 
 
-def get_network_summary_dict(graph: BELGraph):
-    """Create a summary dictionary.
-
-    :param pybel.BELGraph graph:
-    :rtype: dict
-    """
+def get_network_summary_dict(graph: BELGraph) -> Mapping:
+    """Create a summary dictionary."""
 
     def get_pair_tuple(a, b):
         return a.as_bel(), a.sha512, b.as_bel(), b.sha512

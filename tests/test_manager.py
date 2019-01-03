@@ -2,63 +2,31 @@
 
 """Tests for the manager."""
 
+import json
 import logging
-import time
 import unittest
 
-from pybel_web.manager import iter_recent_public_networks
-from pybel_web.models import EdgeComment, EdgeVote, Report, User
-from pybel_web.core.models import Assembly, Query
+import time
 from werkzeug.exceptions import HTTPException
 
-from pybel.constants import INCREASES, PROTEIN
-from pybel.manager.models import Edge, Network, Node
+from pybel.constants import INCREASES, PROTEIN, RELATION
+from pybel.manager.models import Edge, Node
 from pybel.testing.utils import n
+from pybel_web.core.models import Assembly, Query
+from pybel_web.manager import iter_recent_public_networks
+from pybel_web.models import EdgeComment, EdgeVote, User
 from tests.cases import TemporaryCacheMethodMixin
+from tests.utils import make_edge, make_network, make_report, upgrade_network
 
 log = logging.getLogger(__name__)
 
 
-def make_network(name: str = None):
-    return Network(
-        name=(str(name) if name is not None else n()),
-        version=n(),
-    )
-
-
-def upgrade_network(network: Network):
-    return Network(
-        name=network.name,
-        version=n(),
-    )
-
-
-def make_report(network: Network) -> Report:
-    return Report(network=network)
-
-
-def make_node() -> Node:
-    u = n()
-    return Node(type=PROTEIN, bel='p(HGNC:{})'.format(u))
-
-
-def make_edge(n1=None, n2=None) -> Edge:
-    if n1 is None:
-        n1 = make_node()
-    if n2 is None:
-        n2 = make_node()
-    return Edge(source=n1, target=n2, relation=INCREASES, bel='{} increases {}'.format(n1.bel, n2.bel))
-
-
-class MockAdminUser(User):
-
-    @property
-    def is_authenticated(self):
-        return False
-
-    @property
-    def is_admin(self):
-        return True
+def make_simple_edge(n1, n2, relation):
+    e1_data = {
+        RELATION: relation
+    }
+    bel = '{} {} {}'.format(n1.as_bel(), relation, n2.as_bel())
+    return Edge(source=n1, target=n2, relation=relation, bel=bel, data=json.dumps(e1_data))
 
 
 class TestManager(TemporaryCacheMethodMixin):
@@ -156,8 +124,8 @@ class TestManager(TemporaryCacheMethodMixin):
         n1 = Node(type=PROTEIN, bel='p(HGNC:A)')
         n2 = Node(type=PROTEIN, bel='p(HGNC:B)')
         n3 = Node(type=PROTEIN, bel='p(HGNC:C)')
-        e1 = Edge(source=n1, target=n2, relation=INCREASES, bel='p(HGNC:A) increases p(HGNC:B)')
-        e2 = Edge(source=n2, target=n3, relation=INCREASES, bel='p(HGNC:B) increases p(HGNC:C)')
+        e1 = make_simple_edge(n1, n2, INCREASES)
+        e2 = make_simple_edge(n2, n3, INCREASES)
         u1 = User()
         u2 = User()
         v1 = EdgeVote(user=u1, edge=e1)
@@ -183,8 +151,8 @@ class TestManager(TemporaryCacheMethodMixin):
         n1 = Node(type=PROTEIN, bel='p(HGNC:A)')
         n2 = Node(type=PROTEIN, bel='p(HGNC:B)')
         n3 = Node(type=PROTEIN, bel='p(HGNC:C)')
-        e1 = Edge(source=n1, target=n2, relation=INCREASES, bel='p(HGNC:A) increases p(HGNC:B)')
-        e2 = Edge(source=n2, target=n3, relation=INCREASES, bel='p(HGNC:B) increases p(HGNC:C)')
+        e1 = make_simple_edge(n1, n2, INCREASES)
+        e2 = make_simple_edge(n2, n3, INCREASES)
         u1 = User()
         u2 = User()
         v1 = EdgeComment(user=u1, edge=e1, comment=n())
