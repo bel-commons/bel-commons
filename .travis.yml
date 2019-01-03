@@ -1,13 +1,11 @@
-sudo: false
-cache: pip
+language: python
+sudo: required
+dist: xenial
+python: "3.7"
 
+cache: pip
 services:
   - mysql
-
-language: python
-
-python:
-  - 3.6
 
 stages:
   - lint
@@ -36,7 +34,6 @@ jobs:
 matrix:
   allow_failures:
     - env: TOXENV=flake8
-    - env: TOXENV=pyroma
     - env: TOXENV=xenon
     - env: TOXENV=mypy
 
@@ -45,14 +42,13 @@ before_script:
   - mysql -e "GRANT ALL PRIVILEGES ON test.* to 'travis'@'%' WITH GRANT OPTION;"
 
 install:
-    - sh -c 'if [ "$TOXENV" = "py" ]; then pip install tox codecov; else pip install tox; fi'
+  - sh -c 'if [ "$TOXENV" = "py" ]; then pip install tox codecov; else pip install tox; fi'
 
 script:
   - tox
 
 after_success:
-    - sh -c 'if [ "$TOXENV" = "py" ]; then tox -e coverage-report; codecov; fi'
-
+  - sh -c 'if [ "$TOXENV" = "py" ]; then tox -e coverage-report; codecov; fi'
 
 notifications:
   slack: pybel:n2KbWKBum3musnBg3L76gGwq

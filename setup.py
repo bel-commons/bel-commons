@@ -1,14 +1,12 @@
 # -*- coding: utf-8 -*-
 
-"""Setup for PyBEL Web."""
+"""Setup module."""
 
 import codecs
 import os
 import re
 
 import setuptools
-
-#################################################################
 
 PACKAGES = setuptools.find_packages(where='src')
 META_PATH = os.path.join('src', 'pybel_web', '__init__.py')
