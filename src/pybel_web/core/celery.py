@@ -6,7 +6,8 @@ from typing import Optional
 
 from celery import Celery
 from celery.result import AsyncResult
-from flask import Blueprint, Flask, jsonify
+from flask import Blueprint, Flask, current_app, jsonify
+from werkzeug.local import LocalProxy
 
 __all__ = [
     'PyBELCelery',
@@ -57,6 +58,15 @@ class PyBELCelery:
             )
 
         app.register_blueprint(self.blueprint)
+
+    @classmethod
+    def get_celery_proxy(cls):
+        """Get a proxy for the Celery instance from this app."""
+        return LocalProxy(cls._get_celery_ca)
+
+    @classmethod
+    def _get_celery_ca(cls) -> Celery:
+        return cls.get_celery(current_app)
 
     @staticmethod
     def get_celery(app: Flask) -> Celery:
