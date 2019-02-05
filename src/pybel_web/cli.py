@@ -20,6 +20,10 @@ from tqdm import tqdm
 
 from pybel import BELGraph, from_path
 from pybel.cli import connection_option, graph_pickle_argument
+from pybel.manager.models import (
+    Edge, Modification, Network, Node, Property, edge_annotation, edge_property, network_edge, network_node,
+    node_modification,
+)
 from pybel.utils import get_version as pybel_version
 from pybel_tools.utils import enable_cool_mode, get_version as pybel_tools_get_version
 from .application import create_application
@@ -29,7 +33,10 @@ from .database_service import api_blueprint
 from .main_service import ui_blueprint
 from .manager import WebManager
 from .manager_utils import insert_graph
-from .models import EdgeComment, EdgeVote, Experiment, Omic, Project, Report, Role, User, UserQuery
+from .models import (
+    EdgeComment, EdgeVote, Experiment, NetworkOverlap, Omic, Project, Report, Role, User, UserQuery,
+    projects_networks, projects_users, users_networks,
+)
 from .views import (
     build_parser_service, curation_blueprint, experiment_blueprint, help_blueprint, receiving_blueprint,
     reporting_blueprint, uploading_blueprint,
@@ -671,32 +678,57 @@ if omics_dir is not None or bms_dir is not None:
 
 @manage.command()
 @click.confirmation_option()
+@click.option('-m', '--drop-most', is_flag=True)
 @click.pass_obj
-def wasteland(manager: WebManager):
+def wasteland(manager: WebManager, drop_most: bool):
     """Drop the PyBEL-Web specific stuff."""
     for table in [Experiment, UserQuery, Query]:
         _drop_table(manager, table)
 
-    click.secho(f'{assembly_network}', fg='green')
-    click.secho('  truncating', fg='blue')
-    assembly_network.delete()
-    manager.session.commit()
+    _drop_mn_table(manager, assembly_network)
+    _drop_mn_table(manager, users_networks)
+    _drop_mn_table(manager, projects_networks)
+    _drop_mn_table(manager, projects_users)
 
-    click.secho('  dropping', fg='blue')
-    assembly_network.drop()
-    manager.session.commit()
-
-    for table in [Assembly, Report, EdgeVote, EdgeComment]:
+    for table in [Assembly, Report, EdgeVote, EdgeComment, NetworkOverlap, Project]:
         _drop_table(manager, table)
+
+    if drop_most:
+        _drop_mn_table(manager, edge_annotation)
+        _drop_mn_table(manager, edge_property)
+        _drop_table(manager, Property)
+        _drop_mn_table(manager, network_edge)
+        _drop_table(manager, Edge)
+
+        _drop_mn_table(manager, network_node)
+        _drop_mn_table(manager, node_modification)
+        _drop_table(manager, Modification)
+        _drop_table(manager, Node)
+
+        _drop_table(manager, Network)
 
 
 def _drop_table(manager: WebManager, table_cls):
     click.secho(f'{table_cls.__tablename__}', fg='green')
-    click.secho('  truncating', fg='blue')
+
+    # click.secho(f'  truncating {manager.session.query(table_cls).count()} records', fg='blue')
     manager.session.query(table_cls).delete()
     manager.session.commit()
+
     click.secho('  dropping', fg='blue')
     table_cls.__table__.drop()
+    manager.session.commit()
+
+
+def _drop_mn_table(manager: WebManager, table_cls):
+    click.secho(f'{table_cls}', fg='green')
+
+    # click.secho(f'  truncating {manager.session.query(table_cls).count()} records', fg='blue')
+    table_cls.delete()
+    manager.session.commit()
+
+    click.secho('  dropping', fg='blue')
+    table_cls.drop()
     manager.session.commit()
 
 
