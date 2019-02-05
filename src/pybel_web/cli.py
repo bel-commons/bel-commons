@@ -11,18 +11,18 @@ import logging
 import multiprocessing
 import os
 import sys
-import time
 from typing import Iterable, Optional, TextIO
 
 import click
+import time
 from flask import Flask
 from tqdm import tqdm
 
 from pybel import BELGraph, from_path
 from pybel.cli import connection_option, graph_pickle_argument
 from pybel.manager.models import (
-    Edge, Modification, Network, Node, Property, edge_annotation, edge_property, network_edge, network_node,
-    node_modification,
+    Author, Citation, Edge, Evidence, Modification, Namespace, NamespaceEntry, Network, Node, Property, author_citation,
+    edge_annotation, edge_property, network_edge, network_node, node_modification,
 )
 from pybel.utils import get_version as pybel_version
 from pybel_tools.utils import enable_cool_mode, get_version as pybel_tools_get_version
@@ -679,8 +679,9 @@ if omics_dir is not None or bms_dir is not None:
 @manage.command()
 @click.confirmation_option()
 @click.option('-m', '--drop-most', is_flag=True)
+@click.option('-a', '--drop-all', is_flag=True)
 @click.pass_obj
-def wasteland(manager: WebManager, drop_most: bool):
+def wasteland(manager: WebManager, drop_most: bool, drop_all: bool):
     """Drop the PyBEL-Web specific stuff."""
     for table in [Experiment, UserQuery, Query]:
         _drop_table(manager, table)
@@ -693,7 +694,7 @@ def wasteland(manager: WebManager, drop_most: bool):
     for table in [Assembly, Report, EdgeVote, EdgeComment, NetworkOverlap, Project]:
         _drop_table(manager, table)
 
-    if drop_most:
+    if drop_most or drop_all:
         _drop_mn_table(manager, edge_annotation)
         _drop_mn_table(manager, edge_property)
         _drop_table(manager, Property)
@@ -706,6 +707,14 @@ def wasteland(manager: WebManager, drop_most: bool):
         _drop_table(manager, Node)
 
         _drop_table(manager, Network)
+
+    if drop_all:
+        _drop_table(manager, Evidence)
+        _drop_mn_table(manager, author_citation)
+        _drop_table(manager, Citation)
+        _drop_table(manager, Author)
+        _drop_table(manager, NamespaceEntry)
+        _drop_table(manager, Namespace)
 
 
 def _drop_table(manager: WebManager, table_cls):

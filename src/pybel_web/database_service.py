@@ -12,6 +12,7 @@ from typing import Dict, Iterable, List, Mapping, Optional
 
 import networkx as nx
 import time
+from bel_resources import write_annotation, write_namespace
 from flask import Blueprint, Response, abort, current_app, flash, jsonify, make_response, redirect, request
 from flask_security import current_user, login_required, roles_required
 from sqlalchemy import func, or_
@@ -21,7 +22,6 @@ from pybel import BELGraph
 from pybel.constants import NAMESPACE, NAMESPACE_DOMAIN_OTHER
 from pybel.manager.citation_utils import enrich_citation_model, get_pubmed_citation_response
 from pybel.manager.models import Author, Citation, Edge, NamespaceEntry, Network, Node, network_edge
-from pybel.resources.definitions import write_annotation, write_namespace
 from pybel.struct import get_random_path, get_subgraph_by_annotations
 from pybel.struct.pipeline.decorators import deprecated, no_arguments_map
 from pybel.struct.pipeline.exc import MissingPipelineFunctionError
