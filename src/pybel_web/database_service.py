@@ -5,19 +5,19 @@
 import csv
 import logging
 import pickle
+import time
 from functools import lru_cache
 from io import StringIO
 from operator import itemgetter
 from typing import Dict, Iterable, List, Mapping, Optional
 
 import networkx as nx
-import time
-from bel_resources import write_annotation, write_namespace
 from flask import Blueprint, Response, abort, current_app, flash, jsonify, make_response, redirect, request
 from flask_security import current_user, login_required, roles_required
 from sqlalchemy import func, or_
 
 import pybel_web.core.models
+from bel_resources import write_annotation, write_namespace
 from pybel import BELGraph
 from pybel.constants import NAMESPACE, NAMESPACE_DOMAIN_OTHER
 from pybel.manager.citation_utils import enrich_citation_model, get_pubmed_citation_response
@@ -36,7 +36,7 @@ from pybel_tools.summary import (
 )
 from .constants import AND, BLACK_LIST, PATHOLOGY_FILTER, PATHS_METHOD, RANDOM_PATH, UNDIRECTED
 from .external_managers import *
-from .manager_utils import fill_out_report, make_graph_summary, next_or_jsonify
+from .manager_utils import fill_out_report, next_or_jsonify
 from .models import EdgeComment, Project, Report, User, UserQuery
 from .proxies import manager
 from .send_utils import serve_network, to_json_custom
@@ -535,15 +535,13 @@ def _help_claim_network(network: Network, user: User) -> Optional[Report]:
     manager.session.add(network)
     manager.session.commit()
 
-    graph_summary = make_graph_summary(graph)
-
     report = Report(
         user=user,
         public=False,
         time=0.0,
     )
 
-    fill_out_report(network, report, graph_summary)
+    fill_out_report(graph=graph, network=network, report=report)
 
     manager.session.add(report)
     manager.session.commit()

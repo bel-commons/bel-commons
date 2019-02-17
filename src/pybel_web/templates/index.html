@@ -180,11 +180,9 @@
                             View the underlying namespaces and annotations along with their respective uniform resource
                             locators and version numbers.
                         </p>
-                        <div class="btn-group">
-                            <a href="{{ url_for('ui.view_namespaces') }}" class="btn btn-primary">
-                                Resources <span class="badge">{{ manager.count_namespaces() }}</span>
-                            </a>
-                        </div>
+                        <a href="{{ url_for('ui.view_namespaces') }}" class="btn btn-primary btn-block">
+                            Resources <span class="badge">{{ manager.count_namespaces() }}</span>
+                        </a>
                     </div>
 
                     <div class="col-lg-4 col-md-4 col-sm-4">

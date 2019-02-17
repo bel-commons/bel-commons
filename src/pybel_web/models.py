@@ -517,7 +517,7 @@ class Report(Base):
         """Decode the lines stored in this."""
         return codecs.decode(self.source, self.encoding or 'utf-8').split('\n')
 
-    def dump_calculations(self, calculations: Dict) -> None:
+    def dump_calculations(self, calculations: Mapping) -> None:
         """Store a summary calculations dictionary."""
         self.calculations = dumps(calculations)
 

@@ -3,22 +3,21 @@
 """Extensions to the PyBEL manager to support PyBEL-Web."""
 
 import logging
+import time
 from functools import lru_cache
 from typing import Iterable, List, Optional
 
 import networkx
-import time
 from flask import Response, abort, render_template
 from flask_security import current_user
 
 import pybel.struct.query
 from pybel import BELGraph
 from pybel.manager.models import Author, Citation, Edge, Evidence, Namespace, Network, Node
-from pybel.struct.summary import count_namespaces, count_variants
+from pybel_tools.assembler.html.assembler import get_network_summary_dict
 from pybel_tools.utils import prepare_c3, prepare_c3_time_series
 from .core.models import Query
 from .manager_base import WebManagerBase
-from .manager_utils import get_network_summary_dict
 from .models import Experiment, Project, User, UserQuery
 
 __all__ = [
@@ -205,26 +204,27 @@ class WebManager(WebManagerBase):
         graph = network.as_bel()
 
         try:
-            er = network.report.get_calculations()
+            context = network.report.get_calculations()
         except Exception:  # TODO remove this later
             log.warning('Falling back to on-the-fly calculation of summary of %s', network)
-            er = get_network_summary_dict(graph)
+            context = get_network_summary_dict(graph)
 
             if network.report:
-                network.report.dump_calculations(er)
+                network.report.dump_calculations(context)
                 self.session.commit()
 
-        citation_years = er['citation_years']
-        function_count = er['function_count']
-        relation_count = er['relation_count']
-        error_count = er['error_count']
-        transformations_count = er['modifications_count']
-        hub_data = er['hub_data']
-        disease_data = er['disease_data']
+        citation_years = context['citation_years']
+        function_count = context['function_count']
+        relation_count = context['relation_count']
+        error_count = context['error_count']
+        transformations_count = context['modifications_count']
+        hub_data = context['hub_data']
+        disease_data = context['disease_data']
+        variants_count = context['variants_count']
+        namespaces_count = context['namespaces_count']
+
         overlaps = self.get_top_overlaps(user=user, network=network)
         network_versions = self.get_networks_by_name(graph.name)
-        variants_count = count_variants(graph)
-        namespaces_count = count_namespaces(graph)
 
         return render_template(
             template,
@@ -245,7 +245,7 @@ class WebManager(WebManagerBase):
             chart_7_data=prepare_c3(hub_data, 'Top Hubs'),
             chart_9_data=prepare_c3(disease_data, 'Pathologies') if disease_data else None,
             chart_10_data=prepare_c3_time_series(citation_years, 'Number of articles') if citation_years else None,
-            **er
+            **context
         )
 
     def cu_render_network_summary_safe(self, network_id: int, template: str) -> Response:

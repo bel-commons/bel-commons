@@ -10,28 +10,27 @@ import hashlib
 import logging
 import os
 import random
-from typing import Dict
-from flask import request
-import requests.exceptions
 import time
-from bel_resources.exc import ResourceError
+from typing import Dict
+
+import requests.exceptions
 from celery.app.task import Task
 from celery.utils.log import get_task_logger
-from flask import render_template
+from flask import render_template, request
 from sqlalchemy.exc import IntegrityError, OperationalError
 
+from bel_resources.exc import ResourceError
 from pybel import BELGraph, Manager, from_json, from_lines, to_bel_path, to_bytes
 from pybel.constants import METADATA_CONTACT, METADATA_DESCRIPTION, METADATA_LICENSES
 from pybel.manager.citation_utils import enrich_pubmed_citations
 from pybel.parser.exc import InconsistentDefinitionError
 from pybel.struct.mutation import enrich_protein_and_rna_origins
+from pybel_tools.assembler.html.assembler import get_network_summary_dict
 from .application import create_application
 from .constants import get_admin_email, integrity_message, merged_document_folder
 from .core.celery import PyBELCelery
 from .manager import WebManager
-from .manager_utils import (
-    fill_out_report, get_network_summary_dict, insert_graph, make_graph_summary, run_heat_diffusion_helper,
-)
+from .manager_utils import fill_out_report, insert_graph, run_heat_diffusion_helper
 from .models import Report
 
 celery_logger = get_task_logger(__name__)
@@ -283,10 +282,8 @@ def upload_bel(task: Task, connection: str, report_id: int, enrich_citations: bo
 
     celery_logger.info('done storing [%d]. starting to make report.', network.id)
 
-    graph_summary = make_graph_summary(graph)
-
     try:
-        fill_out_report(network, report, graph_summary)
+        fill_out_report(graph=graph, network=network, report=report)
         report.time = time.time() - t
 
         manager.session.add(report)

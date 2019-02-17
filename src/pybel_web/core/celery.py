@@ -26,13 +26,6 @@ class PyBELCelery:
         self.app = app
         self.blueprint = Blueprint('task', __name__, url_prefix='/api/task')
 
-        if app is not None:
-            self.init_app(app)
-
-    def init_app(self, app: Flask):
-        """Initialize the app with a Celery instance."""
-        celery = app.extensions['celery'] = _create_celery(app)
-
         @self.blueprint.route('/task/<uuid>', methods=['GET'])
         def check(uuid: str):
             """Check the given task.
@@ -49,7 +42,7 @@ class PyBELCelery:
               200:
                 description: JSON describing the state of the task
             """
-            task = AsyncResult(uuid, app=celery)
+            task = AsyncResult(uuid, app=self._get_celery_ca())
 
             return jsonify(
                 task_id=task.task_id,
@@ -57,6 +50,12 @@ class PyBELCelery:
                 result=task.result,
             )
 
+        if app is not None:
+            self.init_app(app)
+
+    def init_app(self, app: Flask):
+        """Initialize the app with a Celery instance."""
+        app.extensions['celery'] = _create_celery(app)
         app.register_blueprint(self.blueprint)
 
     @classmethod
