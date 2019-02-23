@@ -27,10 +27,12 @@ def upload():
     if not isinstance(user, User):
         return user
 
+    public = request.headers.get('bel-commons-public') in {'true', 't', 'True', 'yes', 'Y', 'y'}
+
     # TODO assume https authentication and use this to assign user to receive network function
     payload = request.get_json()
     connection = current_app.config['SQLALCHEMY_DATABASE_URI']
-    task = celery.send_task('upload-json', args=[connection, user.id, payload])
+    task = celery.send_task('upload-json', args=[connection, user.id, payload, public])
     return next_or_jsonify('Sent async receive task', task_id=task.id)
 
 

@@ -16,7 +16,7 @@ from typing import Dict
 import requests.exceptions
 from celery.app.task import Task
 from celery.utils.log import get_task_logger
-from flask import render_template, request
+from flask import render_template
 from sqlalchemy.exc import IntegrityError, OperationalError
 
 from bel_resources.exc import ResourceError
@@ -396,12 +396,13 @@ def run_heat_diffusion(connection: str, experiment_id: int):
 
 
 @celery.task(name='upload-json')
-def upload_json(connection: str, user_id: int, payload: Dict):
+def upload_json(connection: str, user_id: int, payload: Dict, public: bool = False):
     """Receives a JSON serialized BEL graph
 
     :param connection: A connection to build the manager
     :param user_id: the ID of the user to associate with the graph
     :param payload: JSON dictionary for :func:`pybel.from_json`
+    :param public: Should the network be made public?
     """
     manager = WebManager(connection=connection)
     user = manager.get_user_by_id(user_id)
@@ -411,8 +412,6 @@ def upload_json(connection: str, user_id: int, payload: Dict):
     except Exception:
         celery_logger.exception('unable to parse JSON')
         return -1
-
-    public = request.headers.get('bel-commons-public', False)
 
     try:
         insert_graph(manager, graph, user, public=public)

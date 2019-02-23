@@ -5,19 +5,18 @@
 import logging
 import time
 from functools import lru_cache
-from typing import Iterable, List, Optional
+from typing import Iterable, List, Optional, TypeVar
 
 import networkx
-from flask import Response, abort, render_template
+from flask import Response, abort, current_app, render_template
 from flask_security import current_user
 
 import pybel.struct.query
 from pybel import BELGraph
 from pybel.manager.models import Author, Citation, Edge, Evidence, Namespace, Network, Node
-from pybel_tools.assembler.html.assembler import get_network_summary_dict
 from pybel_tools.utils import prepare_c3, prepare_c3_time_series
 from .core.models import Query
-from .manager_base import WebManagerBase
+from .manager_base import WebManagerBase, iter_recent_public_networks, iter_unique_networks
 from .models import Experiment, Project, User, UserQuery
 
 __all__ = [
@@ -27,7 +26,7 @@ __all__ = [
 log = logging.getLogger(__name__)
 
 
-class WebManager(WebManagerBase):
+class _WebManager(WebManagerBase):
     """Extensions to the Web manager that entangle it with Flask."""
 
     def get_experiment_by_id_or_404(self, experiment_id: int) -> Experiment:
@@ -40,7 +39,7 @@ class WebManager(WebManagerBase):
             f'Experiment {experiment_id} does not exist',
         )
 
-    def safe_get_experiment_by_id(self, user: User, experiment_id: int) -> Experiment:
+    def authenticated_get_experiment_by_id(self, user: User, experiment_id: int) -> Experiment:
         """Get an experiment by its database identifier, 404 if it doesn't exist, 403 if user doesn't have rights.
 
         :raises: werkzeug.exceptions.HTTPException
@@ -64,7 +63,7 @@ class WebManager(WebManagerBase):
         :raises: werkzeug.exceptions.HTTPException
         """
         return [
-            self.safe_get_experiment_by_id(user=user, experiment_id=experiment_id)
+            self.authenticated_get_experiment_by_id(user=user, experiment_id=experiment_id)
             for experiment_id in experiment_ids
         ]
 
@@ -135,10 +134,7 @@ class WebManager(WebManagerBase):
             f'network {network_id} does not exist',
         )
 
-    def cu_get_networks(self) -> List[Network]:
-        return self.get_networks_with_permission(current_user)
-
-    def safe_get_network_by_id(self, user: User, network_id: int) -> Network:
+    def authenticated_get_network_by_id_or_404(self, user: User, network_id: int) -> Network:
         """Get a network and abort if the user does not have permissions to view.
 
         :raises: werkzeug.exceptions.HTTPException
@@ -154,35 +150,25 @@ class WebManager(WebManagerBase):
         if self._network_has_permission(user=user, network_id=network.id):
             return network
 
-        abort(403)
-
-    def cu_get_network_by_id(self, network_id: int) -> Network:
-        return self.safe_get_network_by_id(user=current_user, network_id=network_id)
+        abort(403, f'{user} does not have access to network {network_id} ')
 
     @lru_cache(maxsize=256)
-    def cu_query_from_network_by_id(self, network_id: int) -> Query:
+    def authenticated_query_from_network_by_id_or_404(self, user: User, network_id: int) -> Query:
         """Make a query from the given network."""
-        network = self.safe_get_network_by_id(user=current_user, network_id=network_id)
-        user_query = UserQuery.from_network(network, user=current_user)
+        network = self.authenticated_get_network_by_id_or_404(user=user, network_id=network_id)
+        user_query = UserQuery.from_network(network, user=user)
 
         self.session.add(user_query)
         self.session.commit()
 
         return user_query.query
 
-    def cu_safe_get_graph(self, network_id: int) -> Optional[BELGraph]:
-        return self.safe_get_graph(user=current_user, network_id=network_id)
-
-    def safe_get_graph(self, user: User, network_id: int) -> Optional[BELGraph]:
+    def authenticated_get_graph_by_id_or_404(self, user: User, network_id: int) -> BELGraph:
         """Get the network as a BEL graph or aborts if the user does not have permission to view."""
-        network = self.safe_get_network_by_id(user=user, network_id=network_id)
-        if network is not None:
-            return network.as_bel()
+        network = self.authenticated_get_network_by_id_or_404(user=user, network_id=network_id)
+        return network.as_bel()
 
-    def cu_strict_get_network_by_id(self, network_id: int) -> Network:
-        return self.strict_get_network_by_id(user=current_user, network_id=network_id)
-
-    def strict_get_network_by_id(self, user: User, network_id: int) -> Network:
+    def owner_get_network_by_id_or_404(self, user: User, network_id: int) -> Network:
         """Get a network and abort if the user does not have super rights.
 
         :raises: werkzeug.exceptions.HTTPException
@@ -192,27 +178,12 @@ class WebManager(WebManagerBase):
         if user.is_authenticated and (user.is_admin or user.owns_network(network)):
             return network
 
-        abort(403, f'User {user} does not have super user rights to network {network}')
+        abort(403, f'User {user} does own to network {network_id}')
 
-    def safe_render_network_summary(self, user: User, network: Network, template: str) -> Response:
-        """Render the graph summary page.
-
-        :param user:
-        :param network:
-        :param template:
-        """
+    def authenticated_render_network_summary(self, user: User, network: Network, template: str) -> Response:
+        """Render the graph summary page."""
         graph = network.as_bel()
-
-        try:
-            context = network.report.get_calculations()
-        except Exception:  # TODO remove this later
-            log.warning('Falling back to on-the-fly calculation of summary of %s', network)
-            context = get_network_summary_dict(graph)
-
-            if network.report:
-                network.report.dump_calculations(context)
-                self.session.commit()
-
+        context = network.report.get_calculations()
         citation_years = context['citation_years']
         function_count = context['function_count']
         relation_count = context['relation_count']
@@ -224,10 +195,11 @@ class WebManager(WebManagerBase):
         namespaces_count = context['namespaces_count']
 
         overlaps = self.get_top_overlaps(user=user, network=network)
-        network_versions = self.get_networks_by_name(graph.name)
+        network_versions = self.get_networks_by_name(network.name)
 
         return render_template(
             template,
+            blueprints=set(current_app.blueprints),
             current_user=user,
             network=network,
             graph=graph,
@@ -248,45 +220,15 @@ class WebManager(WebManagerBase):
             **context
         )
 
-    def cu_render_network_summary_safe(self, network_id: int, template: str) -> Response:
-        return self.render_network_summary_safe(user=current_user, network_id=network_id, template=template)
-
-    def render_network_summary_safe(self, network_id: int, user: User, template: str) -> Response:
+    def authenticated_render_network_summary_or_404(self, network_id: int, user: User, template: str) -> Response:
         """Render a network if the current user has the necessary rights
 
         :param network_id: The network to render
         :param user:
         :param template: The name of the template to render
         """
-        network = self.safe_get_network_by_id(user=user, network_id=network_id)
-        return self.safe_render_network_summary(user=user, network=network, template=template)
-
-    def cu_build_query(self, q: pybel.struct.query.Query) -> Query:
-        user_query = UserQuery.from_query(manager=self, query=q, user=current_user)
-        self.session.add(user_query)
-        self.session.commit()
-        return user_query.query
-
-    def cu_build_query_from_project(self, project: Project) -> Query:
-        user_query = UserQuery.from_project(project=project, user=current_user)
-        user_query.query.assembly.name = f'{time.asctime()} query of {project.name}'
-        self.session.add(user_query)
-        self.session.commit()
-        return user_query.query
-
-    def cu_build_query_from_node(self, node: Node) -> Query:
-        q = pybel.struct.query.Query([network.id for network in node.networks])
-        q.append_seeding_neighbors(node.as_bel())
-        return self.cu_build_query(q)
-
-    def cu_get_queries(self) -> List[Query]:
-        q = self.session.query(UserQuery)
-
-        if not current_user.is_admin:
-            q = q.filter(UserQuery.public)
-
-        q = q.order_by(UserQuery.created.desc())
-        return q.all()
+        network = self.authenticated_get_network_by_id_or_404(user=user, network_id=network_id)
+        return self.authenticated_render_network_summary(user=user, network=network, template=template)
 
     def get_query_by_id_or_404(self, query_id: int) -> Query:
         """Get a query by its database identifier or abort 404 message if it doesn't exist.
@@ -298,10 +240,7 @@ class WebManager(WebManagerBase):
             f'query {query_id} does not exist',
         )
 
-    def cu_get_query_by_id(self, query_id: int) -> Query:
-        return self.safe_get_query_by_id(user=current_user, query_id=query_id)
-
-    def safe_get_query_by_id(self, user: User, query_id: int) -> Query:
+    def authenticated_get_query_by_id_or_404(self, user: User, query_id: int) -> Query:
         """Get a query by its database identifier.
 
         - Raises an HTTPException with 404 if the query does not exist.
@@ -310,14 +249,14 @@ class WebManager(WebManagerBase):
 
         :raises: werkzeug.exceptions.HTTPException
         """
-        query = self._safe_get_query_helper(user=user, query_id=query_id)
+        query = self._authenticated_get_query_by_id_or_404_helper(user=user, query_id=query_id)
 
         if query is None:
             abort(403, f'Insufficient rights to run query {query_id}')
 
         return query
 
-    def _safe_get_query_helper(self, user: User, query_id: int) -> Optional[Query]:
+    def _authenticated_get_query_by_id_or_404_helper(self, user: User, query_id: int) -> Optional[Query]:
         """Check if the user has the rights to run the given query."""
         query = self.get_query_by_id_or_404(query_id)
 
@@ -332,18 +271,15 @@ class WebManager(WebManagerBase):
         if not any(network.id not in permissive_network_ids for network in query.assembly.networks):
             return query
 
-    def cu_get_graph_from_query_id(self, query_id: int) -> Optional[BELGraph]:
-        return self._safe_get_graph_from_query_id(user=current_user, query_id=query_id)
-
     @lru_cache(maxsize=256)
-    def _safe_get_graph_from_query_id(self, user: User, query_id: int) -> Optional[BELGraph]:
+    def authenticated_get_graph_from_query_id_or_404(self, user: User, query_id: int) -> BELGraph:
         """Process the GET request returning the filtered network.
 
         :raises: werkzeug.exceptions.HTTPException
         """
         log.debug(f'getting query [id={query_id}] from database')
         t = time.time()
-        query = self.safe_get_query_by_id(user=user, query_id=query_id)
+        query = self.authenticated_get_query_by_id_or_404(user=user, query_id=query_id)
         log.debug(f'got query [id={query_id}] in {time.time() - t:.2f} seconds')
 
         log.debug(f'running query [id={query_id}]')
@@ -367,20 +303,6 @@ class WebManager(WebManagerBase):
             f'node {node_hash[:8]} does not exist',
         )
 
-    def cu_query_nodes(self, func=None, namespace=None, search=None):
-        nodes = self.session.query(Node)
-
-        if func:
-            nodes = nodes.filter(Node.type == func)
-
-        if namespace:
-            nodes = nodes.filter(Node.namespace_entry.namespace.name.contains(namespace))
-
-        if search:
-            nodes = nodes.filter(Node.bel.contains(search))
-
-        return nodes
-
     def get_edge_by_hash_or_404(self, edge_hash: str) -> Edge:
         """Get an edge if it exists or send a 404.
 
@@ -401,7 +323,7 @@ class WebManager(WebManagerBase):
             f'project {project_id} does not exist',
         )
 
-    def safe_get_project_by_id(self, user: User, project_id: int) -> Project:
+    def authenticated_get_project_by_id_or_404(self, user: User, project_id: int) -> Project:
         """Get a project by identifier, aborts 404 if doesn't exist and aborts 403 if current user does not have rights.
 
         :raises: werkzeug.exceptions.HTTPException
@@ -424,7 +346,82 @@ class WebManager(WebManagerBase):
         )
 
 
-def _return_or_404(x, msg):
+class WebManager(_WebManager):
+    """A manager for PyBEL Web that uses the current user for authentication."""
+
+    def cu_query_from_network_by_id_or_404(self, network_id: int) -> Query:
+        return self.authenticated_query_from_network_by_id_or_404(user=current_user, network_id=network_id)
+
+    def cu_authenticated_get_graph_by_id_or_404(self, network_id: int) -> BELGraph:
+        return self.authenticated_get_graph_by_id_or_404(user=current_user, network_id=network_id)
+
+    def cu_owner_get_network_by_id_or_404(self, network_id: int) -> Network:
+        return self.owner_get_network_by_id_or_404(user=current_user, network_id=network_id)
+
+    def cu_get_network_by_id_or_404(self, network_id: int) -> Network:
+        return self.authenticated_get_network_by_id_or_404(user=current_user, network_id=network_id)
+
+    def cu_render_network_summary_or_404(self, network_id: int, template: str) -> Response:
+        return self.authenticated_render_network_summary_or_404(user=current_user, network_id=network_id,
+                                                                template=template)
+
+    def cu_get_query_by_id_or_404(self, query_id: int) -> Query:
+        return self.authenticated_get_query_by_id_or_404(user=current_user, query_id=query_id)
+
+    def cu_get_graph_from_query_id_or_404(self, query_id: int) -> Optional[BELGraph]:
+        return self.authenticated_get_graph_from_query_id_or_404(user=current_user, query_id=query_id)
+
+    def cu_authenticated_get_project_by_id_or_404(self, project_id: int) -> Project:
+        return self.authenticated_get_project_by_id_or_404(user=current_user, project_id=project_id)
+
+    def cu_list_networks(self) -> List[Network]:
+        return self.authenticated_list_networks(current_user)
+
+    def authenticated_list_networks(self, user: User) -> List[Network]:
+        """Get all networks tagged as public or uploaded by the current user.
+
+        :return: A list of all networks tagged as public or uploaded by the current user
+        """
+        if not user.is_authenticated:
+            return list(iter_recent_public_networks(self))
+
+        if user.is_admin:
+            return self.list_recent_networks()
+
+        return list(iter_unique_networks(self.iter_networks_with_permission(user)))
+
+    def list_queries(self) -> List[Query]:
+        q = self.session.query(UserQuery)
+
+        if not current_user.is_admin:
+            q = q.filter(UserQuery.public)
+
+        q = q.order_by(UserQuery.created.desc())
+        return q.all()
+
+    def build_query(self, q: pybel.struct.query.Query) -> Query:
+        user_query = UserQuery.from_query(manager=self, query=q, user=current_user)
+        self.session.add(user_query)
+        self.session.commit()
+        return user_query.query
+
+    def build_query_from_project(self, project: Project) -> Query:
+        user_query = UserQuery.from_project(project=project, user=current_user)
+        user_query.query.assembly.name = f'{time.asctime()} query of {project.name}'
+        self.session.add(user_query)
+        self.session.commit()
+        return user_query.query
+
+    def build_query_from_node(self, node: Node) -> Query:
+        q = pybel.struct.query.Query([network.id for network in node.networks])
+        q.append_seeding_neighbors(node.as_bel())
+        return self.build_query(q)
+
+
+X = TypeVar('X')
+
+
+def _return_or_404(x: X, msg: str) -> X:
     if x is None:
         abort(404, msg)
     return x

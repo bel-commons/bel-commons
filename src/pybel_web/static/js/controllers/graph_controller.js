@@ -382,8 +382,7 @@ function displayQueryInfo(query) {
                     }
                 }
                 return object.type + ": [" + arr.join(',') + "] " + queryType;
-            }
-            else if (object.type === 'sample') {
+            } else if (object.type === 'sample') {
                 return object.type + ': [seed=' + object.data.seed + ']';
             }
 
@@ -417,8 +416,7 @@ function displayQueryInfo(query) {
                 if (window.noResults === undefined) {
                     window.noResults = true;
                     alert('Query has no results. Build a new query');
-                }
-                else {
+                } else {
                     window.noResults = undefined;
                 }
             }
@@ -592,8 +590,7 @@ function reloadTree(tree) {
             if (window.noResults === undefined) {
                 window.noResults = true;
                 alert('Query has no results. Build a new query');
-            }
-            else {
+            } else {
                 window.noResults = undefined;
             }
         } else {
@@ -647,8 +644,7 @@ $(document).ready(function () {
             if (window.noResults === undefined) {
                 window.noResults = true;
                 alert('Query has no results. Build a new query');
-            }
-            else {
+            } else {
                 window.noResults = undefined;
             }
         } else {
@@ -1422,8 +1418,7 @@ function initD3Force(graph, tree) {
             if (edgeArray.indexOf(edgeObject.source[property] + "-" + edgeObject.target[property]) >= 0) {
                 nodesInEdges.push(edgeObject.source[property]);
                 nodesInEdges.push(edgeObject.target[property]);
-            }
-            else return edgeObject;
+            } else return edgeObject;
         });
 
         var nodesNotInEdges = node.filter(function (nodeObject) {

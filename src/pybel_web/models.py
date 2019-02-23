@@ -275,6 +275,16 @@ class UserQuery(Base):
             user=user,
         )
 
+    def seeding_to_json(self):
+        return self.query.seeding_to_json()
+
+    def pipeline_to_json(self):
+        return self.query.pipeline_to_json()
+
+    @property
+    def networks(self) -> List[Network]:
+        return self.query.networks
+
 
 class Project(Base):
     """Stores projects."""

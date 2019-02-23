@@ -13,9 +13,10 @@ The following resources were really helpful in learning about this:
 import logging
 import os
 import socket
-from getpass import getuser
-
 import time
+from getpass import getuser
+from typing import Optional
+
 from flasgger import Swagger
 from flask import Flask
 from flask_bootstrap import Bootstrap, WebCDN
@@ -28,17 +29,23 @@ from pybel.constants import PYBEL_CONNECTION, config as pybel_config, get_cache_
 from pybel_web.application_utils import (
     register_admin_service, register_error_handlers, register_examples, register_transformations, register_users,
 )
+from pybel_web.config import PyBELWebConfig
 from pybel_web.constants import (
     CELERY_BROKER_URL, MAIL_DEFAULT_SENDER, MAIL_SERVER, PYBEL_WEB_CONFIG_JSON, PYBEL_WEB_CONFIG_OBJECT,
-    PYBEL_WEB_REGISTER_ADMIN, PYBEL_WEB_REGISTER_EXAMPLES, PYBEL_WEB_REGISTER_TRANSFORMATIONS, PYBEL_WEB_REGISTER_USERS,
     PYBEL_WEB_STARTUP_NOTIFY, SENTRY_DSN, SERVER_NAME, SQLALCHEMY_DATABASE_URI, SQLALCHEMY_TRACK_MODIFICATIONS, SWAGGER,
     SWAGGER_CONFIG,
 )
 from pybel_web.core import PyBELSQLAlchemy as PyBELSQLAlchemyBase
 from pybel_web.core.celery import PyBELCelery
+from pybel_web.database_service import api_blueprint
 from pybel_web.forms import ExtendedRegisterForm
+from pybel_web.main_service import ui_blueprint
 from pybel_web.manager import WebManager
 from pybel_web.utils import get_version
+from pybel_web.views import (
+    curation_blueprint, experiment_blueprint, help_blueprint, receiving_blueprint,
+    reporting_blueprint,
+)
 
 log = logging.getLogger(__name__)
 
@@ -100,15 +107,12 @@ def _send_startup_mail(app):
         log.info('notified %s', notify)
 
 
-def create_application(**kwargs) -> Flask:
-    """Build a Flask app.
-    
-    1. Loads default config
-    2. Updates with kwargs
-    
-    :param dict kwargs: keyword arguments to add to config
-    """
+def create_application(config: Optional[PyBELWebConfig] = None) -> Flask:
+    """Build a Flask app."""
     app = Flask(__name__)
+
+    if config is None:
+        config = PyBELWebConfig.load()
 
     # Load default config from object
     config_object_name = os.environ.get(PYBEL_WEB_CONFIG_OBJECT)
@@ -130,21 +134,19 @@ def create_application(**kwargs) -> Flask:
         else:
             log.warning('configuration from environment at %s does not exist', config_json_path)
 
-    # Load config from function's kwargs
-    app.config.update(kwargs)
-
-    # Set defaults
+    # Set Swagger defaults
     app.config.setdefault(SWAGGER, SWAGGER_CONFIG)
-    app.config[SQLALCHEMY_DATABASE_URI] = app.config[PYBEL_CONNECTION]
-    app.config.setdefault(SQLALCHEMY_TRACK_MODIFICATIONS, False)
-    app.config.setdefault(PYBEL_WEB_REGISTER_TRANSFORMATIONS, True)
-    app.config.setdefault(PYBEL_WEB_REGISTER_USERS, True)
-    app.config.setdefault(PYBEL_WEB_REGISTER_ADMIN, True)
-    app.config.setdefault(PYBEL_WEB_REGISTER_EXAMPLES, False)
-    app.config.setdefault(MAIL_DEFAULT_SENDER, ("BEL Commons", 'bel-commons@scai.fraunhofer.de'))
-    app.config['JSONIFY_PRETTYPRINT_REGULAR'] = True
 
+    # Set SQLAlchemy defaults
+    app.config.setdefault(SQLALCHEMY_TRACK_MODIFICATIONS, False)
+    app.config[SQLALCHEMY_DATABASE_URI] = app.config[PYBEL_CONNECTION]
     log.info('database: %s', app.config.get(PYBEL_CONNECTION))
+
+    # Set Mail defaults
+    app.config.setdefault(MAIL_DEFAULT_SENDER, ("BEL Commons", 'bel-commons@scai.fraunhofer.de'))
+
+    # Set Flask defaults
+    app.config['JSONIFY_PRETTYPRINT_REGULAR'] = True
 
     # Add converters
     app.url_map.converters['intlist'] = IntListConverter
@@ -154,7 +156,8 @@ def create_application(**kwargs) -> Flask:
     bootstrap.init_app(app)
     swagger.init_app(app)
 
-    if CELERY_BROKER_URL in app.config:
+    has_celery = CELERY_BROKER_URL in app.config
+    if has_celery:
         celery.init_app(app)
 
     mail_server = app.config.get(MAIL_SERVER)
@@ -176,17 +179,40 @@ def create_application(**kwargs) -> Flask:
 
     register_error_handlers(app, sentry)
 
-    if app.config[PYBEL_WEB_REGISTER_TRANSFORMATIONS]:
+    if config.register_transformations:
         register_transformations(manager=db.manager)
 
-    if app.config[PYBEL_WEB_REGISTER_USERS]:
+    if config.register_users:
         register_users(app, user_datastore=user_datastore)
 
-    if app.config[PYBEL_WEB_REGISTER_EXAMPLES]:
+    if config.register_examples:
         register_examples(manager=db.manager, user_datastore=user_datastore)
 
-    if app.config[PYBEL_WEB_REGISTER_ADMIN]:
+    if config.register_admin:
         register_admin_service(app=app, manager=db.manager, user_datastore=user_datastore)
+
+    app.register_blueprint(ui_blueprint)
+    if config.enable_curation:
+        app.register_blueprint(curation_blueprint)
+    app.register_blueprint(help_blueprint)
+    app.register_blueprint(api_blueprint)
+    app.register_blueprint(reporting_blueprint)
+
+    if has_celery:  # Requires celery!
+        if config.enable_uploader:
+            log.info('registering uploading app')
+            from pybel_web.views import uploading_blueprint
+            app.register_blueprint(uploading_blueprint)
+
+        if config.enable_analysis:
+            app.register_blueprint(experiment_blueprint)
+
+        app.register_blueprint(receiving_blueprint)
+
+    if config.enable_parser:
+        log.info('registering parser app')
+        from pybel_web.views import build_parser_service
+        build_parser_service(app)
 
     return app
 

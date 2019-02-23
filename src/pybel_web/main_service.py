@@ -81,20 +81,25 @@ def home():
             ('Edge', manager.count_edges(), url_for('.view_edges')),
             ('Node', manager.count_nodes(), url_for('.view_nodes')),
             ('Query', manager.count_queries(), url_for('.view_queries')),
-            ('Omic', manager.session.query(Omic).count(), url_for('analysis.view_omics')),
-            ('Experiment', manager.session.query(Experiment).count(), url_for('analysis.view_experiments')),
             ('Citation', manager.count_citations(), url_for('.view_citations')),
             ('Evidence', manager.session.query(Evidence).count(), url_for('.view_evidences')),
             ('Assembly', manager.count_assemblies(), None),
             ('Vote', manager.session.query(EdgeVote).count(), None),
             ('Comment', manager.session.query(EdgeComment).count(), None),
         ]
+        if 'analysis' in current_app.blueprints:
+            hist.extend([
+                ('Omic', manager.session.query(Omic).count(), url_for('analysis.view_omics')),
+                ('Experiment', manager.session.query(Experiment).count(), url_for('analysis.view_experiments')),
+            ])
+
         hist = sorted(hist, key=itemgetter(1), reverse=True)
 
     return render_template(
         'index.html',
         database_histogram=hist,
         manager=manager,
+        blueprints=set(current_app.blueprints),
     )
 
 
@@ -114,10 +119,11 @@ def view_networks():
        - Drop
        - Make public/private
     """
-    networks = manager.cu_get_networks()
+    networks = manager.cu_list_networks()
     return render_template(
         'network/networks.html',
         networks=networks,
+        blueprints=set(current_app.blueprints),
     )
 
 
@@ -126,10 +132,10 @@ def view_networks():
 def view_nodes():
     """Render a page viewing all edges."""
     search = request.args.get('search')
-    nodes = manager.cu_query_nodes(
-        func=request.args.get('function'),
+    nodes = manager.query_nodes(
+        type=request.args.get('function'),
         namespace=request.args.get('namespace'),
-        search=search,
+        bel=search,
     )
     if search:
         flask.flash(f'Searched for "{search}"')
@@ -260,12 +266,13 @@ def vote_edge(edge_hash: str, vote: int):
 @ui_blueprint.route('/query/<int:query_id>')
 def view_query(query_id: int):
     """Render a single query page."""
-    query = manager.cu_get_query_by_id(query_id)
+    query = manager.cu_get_query_by_id_or_404(query_id)
     log.debug(f'got query {query_id}: {query}')
     return render_template(
         'query/query.html',
         query=query,
         manager=manager,
+        blueprints=set(current_app.blueprints),
     )
 
 
@@ -273,7 +280,7 @@ def view_query(query_id: int):
 @roles_required('admin')
 def view_queries():
     """Render the query catalog."""
-    queries = manager.cu_get_queries()
+    queries = manager.list_queries()
     return render_template(
         'query/queries.html',
         queries=queries,
@@ -321,22 +328,27 @@ def view_pubmed(pmid: str):
 @ui_blueprint.route('/network/<int:network_id>/explore')
 def view_explore_network(network_id: int):
     """Render a page for the user to explore a network."""
-    query = manager.cu_query_from_network_by_id(network_id)
+    query = manager.cu_query_from_network_by_id_or_404(network_id)
     return redirect_to_view_explorer_query(query)
 
 
 @ui_blueprint.route('/explore/<int:query_id>')
 def view_explorer_query(query_id: int):
     """Render a page for the user to explore a network."""
-    query = manager.cu_get_query_by_id(query_id=query_id)
-    return render_template('network/explorer.html', query_id=query.id, explorer_toolbox=get_explorer_toolbox())
+    query = manager.cu_get_query_by_id_or_404(query_id=query_id)
+    return render_template(
+        'network/explorer.html',
+        query_id=query.id,
+        explorer_toolbox=get_explorer_toolbox(),
+        blueprints=set(current_app.blueprints),
+    )
 
 
 @ui_blueprint.route('/node/<node_hash>/explore/')
 def view_explorer_node(node_hash: str):
     """Build and send an induction query around the given node."""
     node = manager.get_node_by_hash_or_404(node_hash)
-    query = manager.cu_build_query_from_node(node)
+    query = manager.build_query_from_node(node)
     return redirect_to_view_explorer_query(query)
 
 
@@ -345,19 +357,29 @@ def view_explorer_node(node_hash: str):
 def view_explore_project(project_id: int):
     """Render a page for the user to explore the full network from a project."""
     project = manager.get_project_by_id(project_id)
-    query = manager.cu_build_query_from_project(project)
+    query = manager.build_query_from_project(project)
     return redirect_to_view_explorer_query(query)
 
 
 @ui_blueprint.route('/query/build', methods=['GET', 'POST'])
 def view_query_builder():
     """Render the query builder page."""
-    networks = manager.cu_get_networks()
+    networks = manager.cu_list_networks()
     return render_template(
         'query/query_builder.html',
         networks=networks,
         current_user=current_user,
         preselected=request.args.get('start', type=int)
+    )
+
+
+@ui_blueprint.route('/network/<int:network_id>/query', methods=['GET', 'POST'])
+def view_build_query_from_network(network_id: int):
+    network = manager.cu_get_network_by_id_or_404(network_id)
+    return render_template(
+        'query/query_builder.html',
+        current_user=current_user,
+        network=network,
     )
 
 
@@ -449,19 +471,24 @@ def view_about():
         ('Deployed', time_instantiated)
     ]
 
-    return render_template('meta/about.html', metadata=metadata, managers=manager_dict)
+    return render_template(
+        'meta/about.html',
+        metadata=metadata,
+        managers=manager_dict,
+        blueprints=set(current_app.blueprints),
+    )
 
 
 @ui_blueprint.route('/network/<int:network_id>')
 def view_network(network_id: int):
     """Render a page with the statistics of the contents of a BEL script."""
-    return manager.cu_render_network_summary_safe(network_id, template='network/network.html')
+    return manager.cu_render_network_summary_or_404(network_id, template='network/network.html')
 
 
 @ui_blueprint.route('/network/<int:network_id>/delete')
 def delete_network(network_id: int):
     """Drop the network and go to the network catalog."""
-    network = manager.cu_strict_get_network_by_id(network_id=network_id)
+    network = manager.cu_owner_get_network_by_id_or_404(network_id=network_id)
     if network.report:
         manager.session.delete(network.report)
     manager.drop_network(network)
@@ -472,19 +499,19 @@ def delete_network(network_id: int):
 @ui_blueprint.route('/network/<int:network_id>/compilation')
 def view_summarize_compilation(network_id):
     """Render a page with the compilation summary of the contents of a BEL script."""
-    return manager.cu_render_network_summary_safe(network_id, template='network/summarize_compilation.html')
+    return manager.cu_render_network_summary_or_404(network_id, template='network/summarize_compilation.html')
 
 
 @ui_blueprint.route('/network/<int:network_id>/warnings')
 def view_summarize_warnings(network_id: int):
     """Render a page with the parsing errors from a BEL script."""
-    return manager.cu_render_network_summary_safe(network_id, template='network/summarize_warnings.html')
+    return manager.cu_render_network_summary_or_404(network_id, template='network/summarize_warnings.html')
 
 
 @ui_blueprint.route('/network/<int:network_id>/biogrammar')
 def view_summarize_biogrammar(network_id: int):
     """Render a page with the summary of the biogrammar analysis of a BEL script."""
-    return manager.cu_render_network_summary_safe(network_id, template='network/summarize_biogrammar.html')
+    return manager.cu_render_network_summary_or_404(network_id, template='network/summarize_biogrammar.html')
 
 
 @ui_blueprint.route('/network/<int:network_id>/completeness')
@@ -503,7 +530,7 @@ def view_summarize_completeness(network_id: int):
 @ui_blueprint.route('/network/<int:network_id>/stratified/<annotation>')
 def view_summarize_stratified(network_id: int, annotation: str):
     """Show stratified summary of graph's sub-graphs by annotation."""
-    network = manager.cu_get_network_by_id(network_id)
+    network = manager.cu_get_network_by_id_or_404(network_id)
     graph = network.as_bel()
     graphs = get_subgraphs_by_annotation(graph, annotation)
 
@@ -545,8 +572,8 @@ def view_network_comparison(network_1_id: int, network_2_id: int):
     :param network_1_id: Identifier for the first network
     :param network_2_id: Identifier for the second network
     """
-    network_1 = manager.cu_get_network_by_id(network_1_id)
-    network_2 = manager.cu_get_network_by_id(network_2_id)
+    network_1 = manager.cu_get_network_by_id_or_404(network_1_id)
+    network_2 = manager.cu_get_network_by_id_or_404(network_2_id)
     data = calculate_overlap_info(network_1.as_bel(), network_2.as_bel())
     return render_template(
         'network/network_comparison.html',
@@ -563,8 +590,8 @@ def view_query_comparison(query_1_id: int, query_2_id: int):
     :param query_1_id: The identifier of the first query
     :param query_2_id: The identifier of the second query
     """
-    g1 = manager.cu_get_graph_from_query_id(query_1_id)
-    g2 = manager.cu_get_graph_from_query_id(query_2_id)
+    g1 = manager.cu_get_graph_from_query_id_or_404(query_1_id)
+    g2 = manager.cu_get_graph_from_query_id_or_404(query_2_id)
     data = calculate_overlap_info(g1, g2)
     return render_template(
         'query/query_comparison.html',
@@ -715,5 +742,5 @@ def build_subsample_query(network_id: int):
 
 
 def redirect_from_query(q: pybel.struct.query.Query):
-    query = manager.cu_build_query(q)
+    query = manager.build_query(q)
     return redirect_to_view_explorer_query(query)

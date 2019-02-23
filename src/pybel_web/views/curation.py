@@ -3,10 +3,9 @@
 import codecs
 import logging
 import re
+import time
 from io import StringIO
 
-import time
-from bel_resources import parse_bel_resource, write_namespace
 from flask import Blueprint, make_response, render_template, request
 from flask_security import current_user, login_required, roles_required
 from flask_wtf import FlaskForm
@@ -15,6 +14,7 @@ from ols_client import OlsClient
 from wtforms import fields
 from wtforms.validators import DataRequired
 
+from bel_resources import parse_bel_resource, write_namespace
 from pybel.constants import NAMESPACE_DOMAIN_TYPES
 from pybel.utils import get_version as get_pybel_version
 from pybel_tools.document_utils import write_boilerplate

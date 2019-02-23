@@ -11,10 +11,10 @@ import logging
 import multiprocessing
 import os
 import sys
+import time
 from typing import Iterable, Optional, TextIO
 
 import click
-import time
 from flask import Flask
 from tqdm import tqdm
 
@@ -27,19 +27,13 @@ from pybel.manager.models import (
 from pybel.utils import get_version as pybel_version
 from pybel_tools.utils import enable_cool_mode, get_version as pybel_tools_get_version
 from .application import create_application
-from .constants import PYBEL_WEB_REGISTER_EXAMPLES, PYBEL_WEB_USE_PARSER_API
+from .config import PyBELWebConfig
 from .core.models import Assembly, Query, assembly_network
-from .database_service import api_blueprint
-from .main_service import ui_blueprint
 from .manager import WebManager
 from .manager_utils import insert_graph
 from .models import (
     EdgeComment, EdgeVote, Experiment, NetworkOverlap, Omic, Project, Report, Role, User, UserQuery,
     projects_networks, projects_users, users_networks,
-)
-from .views import (
-    build_parser_service, curation_blueprint, experiment_blueprint, help_blueprint, receiving_blueprint,
-    reporting_blueprint, uploading_blueprint,
 )
 
 log = logging.getLogger('pybel_web')
@@ -124,31 +118,22 @@ def main():
 @click.option('--host', type=str, default='0.0.0.0', help='Flask host.', show_default=True)
 @click.option('--port', type=int, default=5000, help='Flask port.', show_default=True)
 @click.option('-v', '--debug', count=True, help="Turn on debugging. More v's, more debugging")
-@click.option('--config', type=click.File('r'), help='Additional configuration in a JSON file')
+@click.option('--config', help='Additional configuration in a INI file')
 @click.option('--enable-parser', is_flag=True)
-@click.option('-e', '--ensure-examples', is_flag=True, help='Ensure examples')
+@click.option('-e', '--register-examples', is_flag=True, help='Ensure examples')
 @click.option('--with-gunicorn', is_flag=True)
 @click.option('-w', '--workers', type=int, default=number_of_workers(), help='Number of workers')
-def run(host, port, debug, config, enable_parser, ensure_examples, with_gunicorn, workers):
+def run(host, port, debug, config, enable_parser, register_examples, with_gunicorn, workers):
     """Run the web application."""
     set_debug_param(debug)
-    config = json.load(config) if config is not None else {}
-    config.setdefault(PYBEL_WEB_REGISTER_EXAMPLES, ensure_examples)
 
-    app = create_application(**config)
+    pybel_web_config = PyBELWebConfig.load(
+        register_examples=register_examples,
+        enable_parser=enable_parser,
+        _additional_files=[config] if config else None,
+    )
 
-    app.register_blueprint(ui_blueprint)
-    app.register_blueprint(curation_blueprint)
-    app.register_blueprint(uploading_blueprint)
-    app.register_blueprint(help_blueprint)
-    app.register_blueprint(api_blueprint)
-    app.register_blueprint(experiment_blueprint)
-    app.register_blueprint(reporting_blueprint)
-    app.register_blueprint(receiving_blueprint)
-
-    if enable_parser or app.config.get(PYBEL_WEB_USE_PARSER_API):
-        click.echo('building parser service')
-        build_parser_service(app)
+    app = create_application(pybel_web_config)
 
     if with_gunicorn:
         gunicorn_app = make_gunicorn_app(app, host, port, workers)

@@ -108,7 +108,7 @@ def download_undefined_namespace(network_id, namespace):
         required: true
         type: string
     """
-    graph = manager.cu_safe_get_graph(network_id)
+    graph = manager.cu_authenticated_get_graph_by_id_or_404(network_id)
     names = get_undefined_namespace_names(graph, namespace)  # TODO put into report data
     return _build_namespace_helper(graph, namespace, names)
 
@@ -132,7 +132,7 @@ def download_missing_namespace(network_id: int, namespace: str):
         required: true
         type: string
     """
-    graph = manager.cu_safe_get_graph(network_id)
+    graph = manager.cu_authenticated_get_graph_by_id_or_404(network_id)
     names = get_incorrect_names_by_namespace(graph, namespace)  # TODO put into report data
     return _build_namespace_helper(graph, namespace, names)
 
@@ -151,7 +151,7 @@ def download_naked_names(network_id):
         required: true
         type: integer
     """
-    graph = manager.cu_safe_get_graph(network_id)
+    graph = manager.cu_authenticated_get_graph_by_id_or_404(network_id)
     names = get_naked_names(graph)  # TODO put into report data
     return _build_namespace_helper(graph, 'NAKED', names)
 
@@ -195,7 +195,7 @@ def download_list_annotation(network_id, annotation):
         required: true
         type: string
     """
-    graph = manager.cu_safe_get_graph(network_id)
+    graph = manager.cu_authenticated_get_graph_by_id_or_404(network_id)
 
     if annotation not in graph.annotation_list:
         abort(400, 'Graph does not contain this list annotation')
@@ -284,7 +284,7 @@ def get_network_list():
     """
     return jsonify([
         network.to_json(include_id=True)
-        for network in manager.list_networks()
+        for network in manager.cu_list_networks()
     ])
 
 
@@ -473,7 +473,7 @@ def nodes_by_network(network_id: int):
 
 def drop_network_helper(network_id: int) -> Response:
     """Drop a network."""
-    network = manager.cu_strict_get_network_by_id(network_id=network_id)
+    network = manager.cu_owner_get_network_by_id_or_404(network_id=network_id)
     redirect_arg = request.args.get('next')
     log.info('dropping network %s', network_id)
 
@@ -634,7 +634,7 @@ def export_network(network_id: int, serve_format: str) -> Response:
               - csv
               - gsea
     """
-    graph = manager.cu_safe_get_graph(network_id)
+    graph = manager.cu_authenticated_get_graph_by_id_or_404(network_id)
     return serve_network(graph, serve_format=serve_format)
 
 
@@ -740,7 +740,7 @@ def make_network_private(network_id: int):
 @api_blueprint.route('/api/query/<int:query_id>.json')
 def download_query_json(query_id: int):
     """Downloads the query"""
-    query = manager.cu_get_query_by_id(query_id=query_id)
+    query = manager.cu_get_query_by_id_or_404(query_id=query_id)
     query_json = query.to_json()
     return jsonify(query_json)
 
@@ -751,7 +751,7 @@ def get_tree_from_query(query_id: int) -> Optional[List[Dict]]:
 
     :raises: werkzeug.exceptions.HTTPException
     """
-    graph = manager.cu_get_graph_from_query_id(query_id)
+    graph = manager.cu_get_graph_from_query_id_or_404(query_id)
 
     if graph is None:
         return
@@ -803,7 +803,7 @@ def check_query_rights(query_id):
         required: true
         type: integer
     """
-    query = manager._safe_get_query_helper(user=current_user, query_id=query_id)
+    query = manager._authenticated_get_query_by_id_or_404_helper(user=current_user, query_id=query_id)
 
     return jsonify({
         'status': 200,
@@ -844,7 +844,7 @@ def download_network(query_id, serve_format):
               - gsea
               - citations
     """
-    graph = manager.cu_get_graph_from_query_id(query_id)
+    graph = manager.cu_get_graph_from_query_id_or_404(query_id)
     graph.name = f'query-{query_id}'
     graph.version = str(time.asctime())
     return serve_network(graph, serve_format=serve_format)
@@ -864,7 +864,7 @@ def get_network(query_id):
         required: true
         type: integer
     """
-    graph = manager.cu_get_graph_from_query_id(query_id)
+    graph = manager.cu_get_graph_from_query_id_or_404(query_id)
     payload = to_json_custom(graph)
     return jsonify(payload)
 
@@ -924,7 +924,7 @@ def get_paths(query_id, source_id, target_id):
         raise IndexError('target is missing from cache: %s', target_id)
     target = target.to_tuple()
 
-    network = manager.cu_get_graph_from_query_id(query_id)
+    network = manager.cu_get_graph_from_query_id_or_404(query_id)
     method = request.args.get(PATHS_METHOD)
     undirected = UNDIRECTED in request.args
     remove_pathologies = PATHOLOGY_FILTER in request.args
@@ -986,7 +986,7 @@ def get_random_paths(query_id):
         required: true
         type: integer
     """
-    graph = manager.cu_get_graph_from_query_id(query_id)
+    graph = manager.cu_get_graph_from_query_id_or_404(query_id)
 
     path = get_random_path(graph)
 
@@ -1016,7 +1016,7 @@ def get_nodes_by_betweenness_centrality(query_id, node_number):
         required: true
         type: integer
     """
-    graph = manager.cu_get_graph_from_query_id(query_id)
+    graph = manager.cu_get_graph_from_query_id_or_404(query_id)
 
     if node_number > graph.number_of_nodes():
         node_number = graph.number_of_nodes()
@@ -1043,7 +1043,7 @@ def get_all_pmids(query_id):
         required: true
         type: integer
     """
-    graph = manager.cu_get_graph_from_query_id(query_id)
+    graph = manager.cu_get_graph_from_query_id_or_404(query_id)
     return jsonify(sorted(get_pubmed_identifiers(graph)))
 
 
@@ -1066,7 +1066,7 @@ def get_query_summary(query_id):
     }
 
     t = time.time()
-    graph = manager.cu_get_graph_from_query_id(query_id)
+    graph = manager.cu_get_graph_from_query_id_or_404(query_id)
     rv['time'] = time.time() - t
 
     if graph is not None and graph.node:
@@ -1222,7 +1222,7 @@ def get_all_authors(query_id):
         required: true
         type: integer
     """
-    graph = manager.cu_get_graph_from_query_id(query_id)
+    graph = manager.cu_get_graph_from_query_id_or_404(query_id)
     return jsonify(sorted(get_authors(graph)))
 
 
@@ -1292,7 +1292,7 @@ def get_edges():
         edge_query = edge_query.offset(offset)
 
     return jsonify([
-        manager.help_get_edge_entry(edge=edge, user=current_user)
+        manager._help_get_edge_entry(edge=edge, user=current_user)
         for edge in edge_query.all()
     ])
 
@@ -1366,7 +1366,7 @@ def get_edge_by_hash(edge_hash: str):
         type: string
     """
     edge = manager.get_edge_by_hash_or_404(edge_hash)
-    return jsonify(manager.help_get_edge_entry(edge=edge, user=current_user))
+    return jsonify(manager._help_get_edge_entry(edge=edge, user=current_user))
 
 
 @api_blueprint.route('/api/edge/hash_starts/<edge_hash>')
@@ -1763,7 +1763,7 @@ def query_to_network(query_id: int):
         required: true
         type: integer
     """
-    query = manager.cu_get_query_by_id(query_id=query_id)
+    query = manager.cu_get_query_by_id_or_404(query_id=query_id)
 
     rv = query.to_json(include_id=True)
 
@@ -1793,7 +1793,7 @@ def get_query_parent(query_id):
         required: true
         type: integer
     """
-    query = manager.cu_get_query_by_id(query_id=query_id)
+    query = manager.cu_get_query_by_id_or_404(query_id=query_id)
 
     if not query.parent:
         return jsonify({
@@ -1821,13 +1821,13 @@ def get_query_oldest_ancestry(query_id):
         required: true
         type: integer
     """
-    query = manager.cu_get_query_by_id(query_id=query_id)
+    query = manager.cu_get_query_by_id_or_404(query_id=query_id)
 
-    ancestor_id = manager.get_query_ancestor_id(query.id)
+    ancestor = query.get_ancestor()
 
     return jsonify({
-        'id': ancestor_id,
-        'parent': bool(query.parent)
+        'id': ancestor.id,
+        'parent': bool(query.parent),
     })
 
 
@@ -1837,7 +1837,7 @@ def add_pipeline_entry(query_id: int, name: str, *args, **kwargs) -> Response:
     :param query_id: The identifier of the query
     :param name: The name of the function to append
     """
-    query = manager.cu_get_query_by_id(query_id=query_id)
+    query = manager.cu_get_query_by_id_or_404(query_id=query_id)
 
     try:
         qo = query.build_appended(name, *args, **kwargs)
@@ -1876,7 +1876,7 @@ def get_query_from_isolated_node(query_id: int, node_hash: str):
         required: true
         type: string
     """
-    parent_query = manager.cu_get_query_by_id(query_id=query_id)
+    parent_query = manager.cu_get_query_by_id_or_404(query_id=query_id)
     node = manager.get_dsl_by_hash(node_hash)
 
     child_query = Query(network_ids=[
@@ -2137,7 +2137,7 @@ def get_analysis(query_id: int, experiment_id: int):
         required: true
         type: integer
     """
-    graph = manager.cu_get_graph_from_query_id(query_id)
+    graph = manager.cu_get_graph_from_query_id_or_404(query_id)
     experiment = manager.get_experiment_by_id_or_404(experiment_id)
 
     data = pickle.loads(experiment.result)
@@ -2173,7 +2173,7 @@ def get_analysis_median(query_id: int, experiment_id: int):
         required: true
         type: integer
     """
-    graph = manager.cu_get_graph_from_query_id(query_id)
+    graph = manager.cu_get_graph_from_query_id_or_404(query_id)
     experiment = manager.get_experiment_by_id_or_404(experiment_id)
 
     data = pickle.loads(experiment.result)
@@ -2287,8 +2287,8 @@ def grant_network_to_project(network_id: int, project_id: int):
         type: integer
         format: int32
     """
-    network = manager.cu_strict_get_network_by_id(network_id=network_id)
-    project = manager.safe_get_project_by_id(user=current_user, project_id=project_id)
+    network = manager.cu_owner_get_network_by_id_or_404(network_id=network_id)
+    project = manager.cu_authenticated_get_project_by_id_or_404(project_id=project_id)
     project.networks.append(network)
 
     manager.session.commit()
@@ -2324,7 +2324,7 @@ def grant_network_to_user(network_id: int, user_id: int):
         type: integer
         format: int32
     """
-    network = manager.cu_strict_get_network_by_id(network_id=network_id)
+    network = manager.cu_owner_get_network_by_id_or_404(network_id=network_id)
     user = manager.get_user_by_id(user_id)
     user.networks.append(network)
 
@@ -2363,8 +2363,9 @@ def get_project_metadata(project_id: int):
         required: true
         type: integer
         format: int32
+
     """
-    project = manager.safe_get_project_by_id(user=current_user, project_id=project_id)
+    project = manager.cu_authenticated_get_project_by_id_or_404(project_id=project_id)
     return jsonify(**project.to_json())
 
 
@@ -2384,7 +2385,7 @@ def drop_project_by_id(project_id: int):
         type: integer
         format: int32
     """
-    project = manager.safe_get_project_by_id(user=current_user, project_id=project_id)
+    project = manager.cu_authenticated_get_project_by_id_or_404(project_id=project_id)
 
     # FIXME cascade on project/users
 
@@ -2410,7 +2411,7 @@ def summarize_project(project_id: int):
         type: integer
         format: int32
     """
-    project = manager.safe_get_project_by_id(user=current_user, project_id=project_id)
+    project = manager.cu_authenticated_get_project_by_id_or_404(project_id=project_id)
 
     si = StringIO()
     cw = csv.writer(si)
@@ -2469,7 +2470,7 @@ def export_project_network(project_id: int, serve_format: str):
               - csv
               - gsea
     """
-    project = manager.safe_get_project_by_id(user=current_user, project_id=project_id)
+    project = manager.cu_authenticated_get_project_by_id_or_404(project_id=project_id)
     graph = project.as_bel()
     return serve_network(graph, serve_format=serve_format)
 
@@ -2513,7 +2514,7 @@ def list_all_network_overview():
 
     cutoff = request.args.get('cutoff', type=int, default=25)
 
-    for source_network in manager.list_networks():
+    for source_network in manager.cu_list_networks():
         overlap = manager.get_node_overlaps(source_network)
 
         node_elements.append({

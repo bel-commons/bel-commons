@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
 import logging
+import time
 from uuid import uuid4
 
-import time
 from flask import Flask, jsonify, request
 
 from pybel import BELGraph

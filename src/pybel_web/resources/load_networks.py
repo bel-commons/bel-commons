@@ -10,14 +10,14 @@ Prerequisites
 
 import json
 import logging
+import time
 from typing import Iterable, List, Optional, Set
 
-import time
+from bio2bel import AbstractManager
 from sqlalchemy.exc import OperationalError
 
 import pybel
 from bel_repository import BELRepository
-from bio2bel import AbstractManager
 from pybel import from_path, from_pickle, to_pickle
 from pybel.manager import Manager
 from pybel.manager.models import Network

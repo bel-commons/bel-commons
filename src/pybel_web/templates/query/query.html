@@ -150,7 +150,7 @@
                 </div>
 
                 <div class="panel-body">
-                    <ul>
+                    <ol>
                         {% for protocol_entry in pipeline %}
                             <li>
                                 {{ protocol_entry['function']|replace('_', ' ')|title }}
@@ -176,34 +176,35 @@
                                 {% endif %}
                             </li>
                         {% endfor %}
-                    </ul>
+                    </ol>
                 </div>
             </div>
         {% endif %}
 
-        {% set experiments = query.experiments %}
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                <h3 class="panel-title">Experiments <span class="badge">{{ query.experiments.count() }}</span></h3>
-            </div>
+        {% if 'analysis' in blueprints %}
+            {% set experiments = query.experiments %}
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Experiments <span class="badge">{{ query.experiments.count() }}</span></h3>
+                </div>
 
-            <div class="panel-body">
+                <div class="panel-body">
+                    {% if experiments.count() %}
+                        <a href="{{ url_for('analysis.view_query_experiment_comparison', query_id=query.id) }}">
+                            <span class="glyphicon glyphicon-eye-open"></span> Compare with Parallel Line Plot
+                        </a> |
+                    {% else %}
+                        No experiments exist yet.
+                    {% endif %}
+                    <a href="{{ url_for('analysis.view_query_uploader', query_id=query.id) }}">
+                        <span class="glyphicon glyphicon-upload"></span> Upload
+                    </a>
+                </div>
+
                 {% if experiments.count() %}
-                    <a href="{{ url_for('analysis.view_query_experiment_comparison', query_id=query.id) }}">
-                        <span class="glyphicon glyphicon-eye-open"></span> Compare with Parallel Line Plot
-                    </a> |
-                {% else %}
-                    No experiments exist yet.
+                    {{ pbw.render_experiment_table(experiments) }}
                 {% endif %}
-                <a href="{{ url_for('analysis.view_query_uploader', query_id=query.id) }}">
-                    <span class="glyphicon glyphicon-upload"></span> Upload
-                </a>
             </div>
-
-            {% if experiments.count() %}
-                {{ pbw.render_experiment_table(experiments) }}
-            {% endif %}
-        </div>
-
+        {% endif %}
     </div>
 {% endblock %}

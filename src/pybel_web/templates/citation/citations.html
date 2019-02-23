@@ -37,7 +37,8 @@
 
                             <a href="{{ url_for('ui.view_citation', citation_id=citation.id) }}">
                                 {% if citation.title %}
-                                    {{ citation.title }} <small>{{ citation }}</small>
+                                    {{ citation.title }}
+                                    <small>{{ citation }}</small>
                                 {% else %}
                                     {{ citation }}
                                 {% endif %}

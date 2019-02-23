@@ -9,18 +9,21 @@ import time
 from collections import defaultdict
 from typing import Iterable, List, Mapping, Optional, Set, Tuple
 
+import werkzeug.datastructures
 from flask_security import SQLAlchemyUserDatastore
 from sqlalchemy import and_, func
 
 from pybel import Manager
 from pybel.manager.models import Edge, Namespace, Network
 from pybel_tools.utils import min_tanimoto_set_similarity
-from pybel_web.core.models import Assembly, Query
 from .constants import AND
+from .core.models import Assembly, Query
 from .models import EdgeComment, EdgeVote, Experiment, NetworkOverlap, Omic, Project, Report, Role, User
 
 __all__ = [
     'WebManagerBase',
+    'iter_unique_networks',
+    'iter_recent_public_networks',
 ]
 
 log = logging.getLogger(__name__)
@@ -56,8 +59,10 @@ def to_snake_case(function_name: str) -> str:
 
 
 class PyBELSQLAlchemyUserDataStore(SQLAlchemyUserDatastore):
+    """A wrapper around the SQLAlchemyUserDatastore from Flask-Security with the BEL Commons User and Role models."""
+
     def __init__(self, db):
-        super().__init__(db, user_model=User, role_model=Role)
+        super().__init__(db=db, user_model=User, role_model=Role)
 
 
 class WebManagerBase(Manager):
@@ -79,7 +84,8 @@ class WebManagerBase(Manager):
 
         else:
             log.debug('getting all networks for user [%s]', self)
-            yield from iterate_networks_for_user(manager=self, user_datastore=self.user_datastore, user=user)
+            yield from user.iter_available_networks()
+            yield from iter_recent_public_networks(self)
 
     def get_network_ids_with_permission(self, user: User) -> Set[int]:
         """Get the set of networks ids tagged as public or uploaded by the user."""
@@ -88,12 +94,9 @@ class WebManagerBase(Manager):
             for network in self.iter_networks_with_permission(user)
         }
 
-    def _get_model_by_id(self, cls, cls_id):
-        return self.session.query(cls).get(cls_id)
-
     def get_project_by_id(self, project_id) -> Optional[Project]:
         """Get a project by its database identifier, if it exists."""
-        return self._get_model_by_id(Project, project_id)
+        return self.session.query(Project).get(project_id)
 
     def get_experiment_by_id(self, experiment_id) -> Optional[Experiment]:
         """Get an experiment by its database identifier, if it exists."""
@@ -143,19 +146,6 @@ class WebManagerBase(Manager):
     def _network_has_permission(self, user: User, network_id: int) -> bool:
         return network_id in self.get_network_ids_with_permission(user)
 
-    def get_networks_with_permission(self, user: User) -> List[Network]:
-        """Get all networks tagged as public or uploaded by the current user.
-
-        :return: A list of all networks tagged as public or uploaded by the current user
-        """
-        if not user.is_authenticated:
-            return list(iter_recent_public_networks(self))
-
-        if user.is_admin:
-            return self.list_recent_networks()
-
-        return list(iter_unique_networks(self.iter_networks_with_permission(user)))
-
     def get_edge_vote_by_user(self, edge: Edge, user: User) -> Optional[EdgeVote]:
         """Look up a vote by the edge and user.
 
@@ -191,7 +181,7 @@ class WebManagerBase(Manager):
 
         return vote
 
-    def help_get_edge_entry(self, edge: Edge, user: User) -> Mapping:
+    def _help_get_edge_entry(self, edge: Edge, user: User) -> Mapping:
         """Get edge information by edge identifier."""
         data = edge.to_json()
 
@@ -262,11 +252,11 @@ class WebManagerBase(Manager):
 
         return rv
 
-    def get_top_overlaps(self, network: Network, user: User, number: int = 10):
+    def get_top_overlaps(self, network: Network, user: User, number: int = 10) -> List[Tuple[Network, float]]:
         """
 
-        :param Network network:
-        :param User user:
+        :param network:
+        :param user:
         :param number:
         :return:
         """
@@ -314,20 +304,11 @@ class WebManagerBase(Manager):
                                                        b.number_warnings)
             yield ''
 
-    def get_query_ancestor_id(self, query_id: int) -> Query:  # TODO refactor this to be part of Query class
-        """Get the oldest ancestor of the given query."""
-        query = self.get_query_by_id(query_id)
-
-        if not query.parent_id:
-            return query_id
-
-        return self.get_query_ancestor_id(query.parent_id)
-
-    def convert_seed_value(self, key: str, form, value: str):
+    def convert_seed_value(self, key: str, form: werkzeug.datastructures.ImmutableMultiDict, value: str):
         """Normalize the form to type:data format.
 
         :param key: seed method
-        :param ImmutableMultiDict form: Form dictionary
+        :param form: Form dictionary
         :param value: data (nodes, authors...)
         :return: Normalized data depending on the seeding method
         """
@@ -347,10 +328,10 @@ class WebManagerBase(Manager):
             for node_hash in node_hashes
         ]
 
-    def query_form_to_dict(self, form):
+    def query_form_to_dict(self, form: werkzeug.datastructures.ImmutableMultiDict):
         """Convert a request.form multidict to the query JSON format.
 
-        :param werkzeug.datastructures.ImmutableMultiDict form:
+        :param form:
         :return: json representation of the query
         :rtype: dict
         """
@@ -394,18 +375,3 @@ def iter_recent_public_networks(manager: Manager) -> Iterable[Network]:
         for network in manager.list_recent_networks()
         if network.report and network.report.public
     )
-
-
-def iterate_networks_for_user(manager: Manager,
-                              user_datastore: SQLAlchemyUserDatastore,
-                              user: User,
-                              ) -> Iterable[Network]:
-    """Iterate over a user's networks."""
-    yield from iter_recent_public_networks(manager)
-    yield from user.iter_available_networks()
-
-    # TODO reinvestigate how "organizations" are handled
-    if user.is_scai:
-        role = user_datastore.find_or_create_role(name='scai')
-        for user in role.users:
-            yield from user.iter_owned_networks()

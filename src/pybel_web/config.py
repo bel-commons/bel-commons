@@ -10,6 +10,28 @@ Resources:
 
 import os
 
+from easy_config import EasyConfig
+
+
+class PyBELWebConfig(EasyConfig):
+    """Configuration for BEL Commons."""
+
+    NAME = 'pybel_web'
+    FILES = [os.path.join(os.path.expanduser('~'), '.config', 'pybel-web', 'config.ini')]
+
+    #: Should example graphs be automatically included?
+    register_examples: bool = False
+    #: Should users be pre-loaded?
+    register_users: bool = True
+    register_admin: bool = True
+    register_transformations: bool = True
+
+    """Which parts of BEL Commons should run?"""
+    enable_uploader: bool = False
+    enable_parser: bool = False
+    enable_analysis: bool = False
+    enable_curation: bool = False
+
 
 class Config:
     """This is the default configuration to be used in a development environment. It assumes you have:

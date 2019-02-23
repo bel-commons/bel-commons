@@ -4,7 +4,7 @@
 
 import logging
 
-from flask import Blueprint, redirect, render_template, url_for
+from flask import Blueprint, current_app, redirect, render_template, url_for
 
 from pybel.struct.pipeline.decorators import deprecated, no_arguments_map
 
@@ -26,7 +26,10 @@ def index():
 @help_blueprint.route('/tutorial')
 def tutorial():
     """View the BEL Commons tutorial."""
-    return render_template('help/tutorial.html')
+    return render_template(
+        'help/tutorial.html',
+        blueprints=set(current_app.blueprints),
+    )
 
 
 @help_blueprint.route('/parser')

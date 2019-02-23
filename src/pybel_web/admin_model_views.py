@@ -2,12 +2,13 @@
 
 """This module contains model views for the Flask-admin interface."""
 
+from itertools import chain
+
 from flask import redirect, request
 from flask_admin.contrib.sqla import ModelView as ModelViewBase
 from flask_admin.contrib.sqla.ajax import QueryAjaxModelLoader
 from flask_admin.model.ajax import DEFAULT_PAGE_SIZE
 from flask_security import SQLAlchemyUserDatastore, current_user, url_for_security
-from itertools import chain
 from sqlalchemy import or_
 
 from pybel import Manager

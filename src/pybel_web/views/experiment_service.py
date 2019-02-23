@@ -4,6 +4,7 @@
 
 import json
 import logging
+import time
 from collections import defaultdict
 from io import StringIO
 from operator import itemgetter
@@ -13,7 +14,6 @@ import flask
 import numpy as np
 import pandas as pd
 import pandas.errors
-import time
 from flask import Blueprint, current_app, make_response, redirect, render_template, request, url_for
 from flask_security import current_user, login_required, roles_required
 from sklearn.cluster import KMeans
@@ -129,7 +129,7 @@ def view_experiment(experiment_id: int):
 
     :param experiment_id: The identifier of the experiment whose results to view
     """
-    experiment = manager.safe_get_experiment_by_id(user=current_user, experiment_id=experiment_id)
+    experiment = manager.authenticated_get_experiment_by_id(user=current_user, experiment_id=experiment_id)
 
     data = experiment.get_data_list()
 
@@ -175,7 +175,7 @@ def view_query_uploader(query_id: int):
 
     :param query_id: The identifier of the query to upload against
     """
-    query = manager.cu_get_query_by_id(query_id=query_id)
+    query = manager.cu_get_query_by_id_or_404(query_id=query_id)
 
     form = DifferentialGeneExpressionForm()
 
@@ -235,7 +235,7 @@ def view_query_uploader(query_id: int):
 @login_required
 def view_network_uploader(network_id: int):
     """View the -*omics* data uploader for the given network."""
-    network = manager.cu_get_network_by_id(network_id)
+    network = manager.cu_get_network_by_id_or_404(network_id)
     user_query = UserQuery.from_network(network=network, user=current_user)
     manager.session.add(user_query)
     manager.session.commit()
@@ -296,7 +296,7 @@ def view_query_experiment_comparison(query_id: int):
 
     :param query_id: The query identifier whose related experiments to compare
     """
-    query = manager.cu_get_query_by_id(query_id=query_id)
+    query = manager.cu_get_query_by_id_or_404(query_id=query_id)
     return render_experiment_comparison(query.experiments)
 
 

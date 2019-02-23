@@ -107,24 +107,28 @@
         <div class="panel panel-default">
             <div class="panel-body">
                 <div class="row">
-                    <div class="col-lg-4 col-md-4 col-sm-4">
-                        <h3>Upload</h3>
-                        <p>
-                            Parse BEL script, validate its contents, perform automatic enrichment, and
-                            generate a network summary.
-                        </p>
-                        <p>
-                            <a href="{{ url_for('parser.view_parser') }}" class="btn btn-primary btn-block">
-                                Upload BEL
-                            </a>
-                        </p>
-                    </div>
+                    {% if 'parser' in blueprints %}
+                        <div class="col-lg-4 col-md-4 col-sm-4">
+                            <h3>Upload</h3>
+                            <p>
+                                Parse BEL script, validate its contents, perform automatic enrichment, and
+                                generate a network summary.
+                            </p>
+                            <p>
+                                <a href="{{ url_for('parser.view_parser') }}" class="btn btn-primary btn-block">
+                                    Upload BEL
+                                </a>
+                            </p>
+                        </div>
+                    {% endif %}
 
                     <div class="col-lg-4 col-md-4 col-sm-4">
                         <h3>Catalog</h3>
                         <p>
                             View summaries and statistics over curated networks and as a first step towards
-                            exploration, visualization, and <a href="{{ url_for('analysis.view_experiments') }}">analysis</a>.
+                            exploration{% if 'analysis' in blueprints %}, visualization, and
+                            <a href="{{ url_for('analysis.view_experiments') }}">analysis.</a>{% else %}
+                            and visualization.{% endif %}
                         </p>
                         <p>
                             <a href="{{ url_for('ui.view_networks') }}" class="btn btn-primary btn-block">
@@ -145,34 +149,36 @@
                         </p>
                     </div>
 
-                    <div class="col-lg-4 col-md-4 col-sm-4">
-                        <h3>Curate</h3>
-                        <p>
-                            Tools for generating BEL script stubs, merging BEL namespace files, or curation feedback
-                            on BEL namespace files.
-                        </p>
-                        <div class="btn-group">
-                            <a href="{{ url_for('curation.get_boilerplate') }}" class="btn btn-primary"
-                               role="button" data-toggle="tooltip" data-placement="top"
-                               title="Generate a template BEL script given an optional list of PubMed identifiers or Entrez Gene identifiers">
-                                Generate</a>
-                            <a href="{{ url_for('curation.merge_namespaces') }}" class="btn btn-primary"
-                               role="button" data-toggle="tooltip" data-placement="top"
-                               title="Merge multiple BEL Namespace (BELNS) files">
-                                Merge</a>
-                            <a href="{{ url_for('curation.validate_resource') }}" class="btn btn-primary"
-                               role="button" data-toggle="tooltip" data-placement="top"
-                               title="Validate a manually curated BEL Namespace or Annotation with the EBI Ontology Lookup Service">
-                                Validate</a>
+                    {% if 'curation' in blueprints %}
+                        <div class="col-lg-4 col-md-4 col-sm-4">
+                            <h3>Curate</h3>
+                            <p>
+                                Tools for generating BEL script stubs, merging BEL namespace files, or curation feedback
+                                on BEL namespace files.
+                            </p>
+                            <div class="btn-group">
+                                <a href="{{ url_for('curation.get_boilerplate') }}" class="btn btn-primary"
+                                   role="button" data-toggle="tooltip" data-placement="top"
+                                   title="Generate a template BEL script given an optional list of PubMed identifiers or Entrez Gene identifiers">
+                                    Generate</a>
+                                <a href="{{ url_for('curation.merge_namespaces') }}" class="btn btn-primary"
+                                   role="button" data-toggle="tooltip" data-placement="top"
+                                   title="Merge multiple BEL Namespace (BELNS) files">
+                                    Merge</a>
+                                <a href="{{ url_for('curation.validate_resource') }}" class="btn btn-primary"
+                                   role="button" data-toggle="tooltip" data-placement="top"
+                                   title="Validate a manually curated BEL Namespace or Annotation with the EBI Ontology Lookup Service">
+                                    Validate</a>
 
-                            {% if current_user.is_admin %}
-                                <a href="{{ url_for('curation.view_curation_interface') }}"
-                                   class="btn btn-warning">
-                                    Curate
-                                </a>
-                            {% endif %}
+                                {% if current_user.is_admin %}
+                                    <a href="{{ url_for('curation.view_curation_interface') }}"
+                                       class="btn btn-warning">
+                                        Curate
+                                    </a>
+                                {% endif %}
+                            </div>
                         </div>
-                    </div>
+                    {% endif %}
 
                     <div class="col-lg-4 col-md-4 col-sm-4">
                         <h3>Terminologies</h3>
@@ -185,17 +191,19 @@
                         </a>
                     </div>
 
-                    <div class="col-lg-4 col-md-4 col-sm-4">
-                        <h3>Future Work</h3>
-                        <p>
-                            PyBEL is in constant development. Join us on the <a
-                                href="https://github.com/pybel/pybel">core</a>, <a
-                                href="https://github.com/pybel/pybel-tools">analytical tools</a>, or <a
-                                href="https://github.com/pybel/pybel-notebooks">notebooks</a> repositories for
-                            upcoming code, protocols, and pipelines and additional entries in
-                            <a href="https://github.com/bio2bel">Bio2BEL</a>.
-                        </p>
-                    </div>
+                    {% if 'curation' in blueprints or 'parser' in blueprints %}
+                        <div class="col-lg-4 col-md-4 col-sm-4">
+                            <h3>Future Work</h3>
+                            <p>
+                                PyBEL is in constant development. Join us on the <a
+                                    href="https://github.com/pybel/pybel">core</a>, <a
+                                    href="https://github.com/pybel/pybel-tools">analytical tools</a>, or <a
+                                    href="https://github.com/pybel/pybel-notebooks">notebooks</a> repositories for
+                                upcoming code, protocols, and pipelines and additional entries in
+                                <a href="https://github.com/bio2bel">Bio2BEL</a>.
+                            </p>
+                        </div>
+                    {% endif %}
                 </div>
             </div>
         </div>

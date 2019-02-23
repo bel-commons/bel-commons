@@ -5,7 +5,6 @@
 import os
 
 from pybel.constants import PYBEL_DIR, config
-from pybel.struct.pipeline import mapped
 
 VERSION = '0.2.4'
 
@@ -16,12 +15,6 @@ PYBEL_WEB_CONFIG_JSON = 'PYBEL_WEB_CONFIG_JSON'
 PYBEL_WEB_CONFIG_OBJECT = 'PYBEL_WEB_CONFIG_OBJECT'
 
 PYBEL_WEB_USER_MANIFEST = 'PYBEL_WEB_USER_MANIFEST'
-
-# App setup configuration
-PYBEL_WEB_REGISTER_EXAMPLES = 'PYBEL_WEB_EXAMPLES'
-PYBEL_WEB_REGISTER_ADMIN = 'PYBEL_WEB_REGISTER_ADMIN'
-PYBEL_WEB_REGISTER_USERS = 'PYBEL_WEB_REGISTER_USERS'
-PYBEL_WEB_REGISTER_TRANSFORMATIONS = 'PYBEL_WEB_REGISTER_TRANSFORMATIONS'
 
 PYBEL_WEB_USE_PARSER_API = 'PYBEL_WEB_USE_PARSER_API'
 PYBEL_WEB_STARTUP_NOTIFY = 'PYBEL_WEB_STARTUP_NOTIFY'
@@ -67,14 +60,14 @@ BLACK_LIST = {
 def get_admin_email():
     rv = config.get(PYBEL_WEB_ADMIN_EMAIL)
     if rv is None:
-        raise RuntimeError('{} is not set'.format(PYBEL_WEB_ADMIN_EMAIL))
+        raise RuntimeError(f'{PYBEL_WEB_ADMIN_EMAIL} is not set')
     return rv
 
 
 def get_admin_password():
     rv = config.get(PYBEL_WEB_ADMIN_PASSWORD)
     if rv is None:
-        raise RuntimeError('{} is not set'.format(PYBEL_WEB_ADMIN_PASSWORD))
+        raise RuntimeError(f'{PYBEL_WEB_ADMIN_PASSWORD} is not set')
     return rv
 
 
@@ -93,6 +86,3 @@ SWAGGER_CONFIG = {
 merged_document_folder = os.path.join(PYBEL_DIR, 'pbw_merged_documents')
 if not os.path.exists(merged_document_folder):
     os.mkdir(merged_document_folder)
-
-
-

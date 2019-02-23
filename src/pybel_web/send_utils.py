@@ -14,7 +14,6 @@ from pybel.constants import (
     TWO_WAY_RELATIONS, VARIANTS,
 )
 from pybel.struct.summary import get_pubmed_identifiers
-from pybel_tools.mutation.metadata import serialize_authors
 
 try:
     from pybel_cx import to_cx
@@ -113,7 +112,6 @@ def serve_network(graph: BELGraph, serve_format: Optional[str] = None) -> Respon
         )
 
     elif serve_format == 'bel':
-        serialize_authors(graph)
         data = '\n'.join(to_bel_lines(graph))
         return Response(data, mimetype='text/plain')
 

@@ -2,6 +2,8 @@
 
 """SQLAlchemy models for PyBEL Web."""
 
+from __future__ import annotations
+
 import datetime
 import json
 from typing import Dict, Iterable, List, Mapping, Optional, Union
@@ -205,23 +207,23 @@ class Query(Base):
     """Constructors"""
 
     @staticmethod
-    def from_assembly(assembly: Assembly) -> 'Query':
+    def from_assembly(assembly: Assembly) -> Query:
         """Build a query from an assembly."""
         return Query(assembly=assembly)
 
     @staticmethod
-    def from_networks(networks: List[Network]) -> 'Query':
+    def from_networks(networks: List[Network]) -> Query:
         """Build a query from a network."""
         assembly = Assembly.from_networks(networks)
         return Query.from_assembly(assembly)
 
     @staticmethod
-    def from_network(network: Network) -> 'Query':
+    def from_network(network: Network) -> Query:
         """Build a query from a network"""
         return Query.from_networks(networks=[network])
 
     @staticmethod
-    def from_query(manager: Manager, query: pybel.struct.query.Query) -> 'Query':
+    def from_query(manager: Manager, query: pybel.struct.query.Query) -> Query:
         """Build an ORM query from a PyBEL query."""
         networks = manager.get_networks_by_ids(query.network_ids)
         result = Query.from_networks(networks)
@@ -230,22 +232,25 @@ class Query(Base):
         return result
 
     @staticmethod
-    def from_query_args(manager: Manager, network_ids: List[int], seeding: Optional[Seeding] = None,
-                        pipeline: Optional[Pipeline] = None) -> 'Query':
+    def from_query_args(manager: Manager,
+                        network_ids: List[int],
+                        seeding: Optional[Seeding] = None,
+                        pipeline: Optional[Pipeline] = None,
+                        ) -> Query:
         """Build an ORM model from the arguments for a PyBEL query."""
         q = pybel.struct.query.Query(network_ids, seeding=seeding, pipeline=pipeline)
         return Query.from_query(manager, q)
 
     """Derived queries"""
 
-    def get_assembly_query(self) -> 'Query':
+    def get_assembly_query(self) -> Query:
         """Return a new query, just with the same assembly as this one."""
         return Query(
             assembly=self.assembly,
             parent=self,
         )
 
-    def build_appended(self, name, *args, **kwargs) -> 'Query':
+    def build_appended(self, name, *args, **kwargs) -> Query:
         """Build a new query with the given function appended to the current query's pipeline.
 
         :param str name: Append function name
@@ -262,7 +267,7 @@ class Query(Base):
             pipeline=pipeline.dumps(),
         )
 
-    def add_seed_neighbors(self, nodes: Union[BaseEntity, Iterable[BaseEntity]]) -> 'Query':
+    def add_seed_neighbors(self, nodes: Union[BaseEntity, Iterable[BaseEntity]]) -> Query:
         """Add a seed by neighbors and return a new query."""
         seeding = self.get_seeding() or Seeding()
         seeding.append_neighbors(nodes)
@@ -273,3 +278,9 @@ class Query(Base):
             seeding=seeding.dumps(),
             pipeline=self.pipeline,
         )
+
+    def get_ancestor(self) -> Query:
+        """Get the oldest ancestor of this query."""
+        if self.parent:
+            return self.get_ancestor(self.parent)
+        return self
