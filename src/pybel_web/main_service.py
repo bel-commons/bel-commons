@@ -22,7 +22,7 @@ from pybel.struct.pipeline.exc import MissingPipelineFunctionError
 from pybel.struct.query import QueryMissingNetworksError
 from pybel_tools.biogrammar.double_edges import summarize_completeness
 from pybel_tools.summary.error_summary import calculate_error_by_annotation
-from .constants import merged_document_folder
+from .constants import SQLALCHEMY_DATABASE_URI, merged_document_folder
 from .core.models import Query
 from .explorer_toolbox import get_explorer_toolbox
 from .external_managers import manager_dict
@@ -387,7 +387,6 @@ def view_build_query_from_network(network_id: int):
 def get_pipeline():
     """Execute a pipeline that's posted to this endpoint."""
     d = manager.query_form_to_dict(request.form)
-
     try:
         q = pybel.struct.query.Query.from_json(d)
     except (QueryMissingNetworksError, MissingPipelineFunctionError) as e:
@@ -468,8 +467,13 @@ def view_about():
         ('PyBEL Version', get_pybel_version()),
         ('PyBEL Tools Version', get_pybel_tools_version()),
         ('BEL Commons Version', get_bel_commons_version()),
-        ('Deployed', time_instantiated)
+        ('Deployed', time_instantiated),
     ]
+
+    if current_user.is_admin:
+        metadata.extend([
+            ('Database', current_app.config[SQLALCHEMY_DATABASE_URI]),
+        ])
 
     return render_template(
         'meta/about.html',
@@ -741,6 +745,6 @@ def build_subsample_query(network_id: int):
     return redirect_from_query(q)
 
 
-def redirect_from_query(q: pybel.struct.query.Query):
+def redirect_from_query(q: pybel.struct.query.Query) -> flask.Response:
     query = manager.build_query(q)
     return redirect_to_view_explorer_query(query)

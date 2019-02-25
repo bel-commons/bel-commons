@@ -37,7 +37,7 @@ def run_debug():
 def view_parser():
     """Render the form for asynchronous parsing."""
     form = ParserForm(
-        public=(not current_user.is_scai),
+        public=(not current_user.email.contains('@scai.fraunhofer.de')),
     )
 
     if not form.validate_on_submit():

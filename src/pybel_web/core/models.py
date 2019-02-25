@@ -16,7 +16,7 @@ from pybel import BELGraph, Manager, Pipeline, union
 from pybel.dsl import BaseEntity
 from pybel.manager import Base, Network
 from pybel.struct.query import SEED_DATA, SEED_METHOD, Seeding
-from pybel.struct.query.constants import SEED_TYPE_INDUCTION, SEED_TYPE_NEIGHBORS
+from pybel.struct.query.constants import NODE_SEED_TYPES
 from pybel.tokens import parse_result_to_dsl
 from pybel.utils import _hash_tuple
 
@@ -127,7 +127,7 @@ class Query(Base):
         return [network.id for network in self.assembly.networks]
 
     def __repr__(self):
-        return '<Query id={}>'.format(self.id)
+        return '<Query id={}, seeding={}, pipeline={}>'.format(self.id, self.seeding_to_json(), self.pipeline_to_json())
 
     """Seeding"""
 
@@ -147,7 +147,7 @@ class Query(Base):
                             for node_dict in entry[SEED_DATA]
                         ]
                     }
-                    if entry[SEED_METHOD] in (SEED_TYPE_INDUCTION, SEED_TYPE_NEIGHBORS) else
+                    if entry[SEED_METHOD] in NODE_SEED_TYPES else
                     entry
                 )
                 for entry in json.loads(self.seeding)

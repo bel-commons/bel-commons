@@ -113,15 +113,6 @@ class User(Base, UserMixin):
         return self.has_role('admin')
 
     @property
-    def is_scai(self) -> bool:
-        """Is this user from SCAI?"""
-        return (
-                self.has_role('scai') or
-                self.email.endswith('@scai.fraunhofer.de') or
-                self.email.endswith('@scai-extern.fraunhofer.de')
-        )
-
-    @property
     def is_beta_tester(self) -> bool:
         """Is this user cut out for the truth?"""
         return self.is_admin or self.has_role('beta')
@@ -140,6 +131,7 @@ class User(Base, UserMixin):
 
     def iter_project_networks(self) -> Iterable[Network]:
         """Iterate over all networks for which projects have granted this user access."""
+        # TODO rewrite with joins
         return (
             network
             for project in self.projects
@@ -148,6 +140,7 @@ class User(Base, UserMixin):
 
     def iter_available_networks(self) -> Iterable[Network]:
         """Iterate over all owned, shared, and project networks."""
+        # TODO write with unions
         return itt.chain(
             self.iter_owned_networks(),
             self.iter_shared_networks(),
@@ -257,19 +250,15 @@ class UserQuery(Base):
             user=user,
         )
 
-    @classmethod
-    def from_project(cls, project: Project, user: User) -> UserQuery:
+    @staticmethod
+    def from_project(project: Project, user: User) -> UserQuery:
         """Build a query from a project."""
-        return cls.from_networks(networks=project.networks, user=user)
+        return UserQuery.from_networks(networks=project.networks, user=user)
 
     @staticmethod
     def from_query(manager: Manager, query: pybel.struct.query.Query, user: User) -> UserQuery:
         """Build an ORM query from a PyBEL query."""
-        networks = manager.get_networks_by_ids(query.network_ids)
-        q = Query.from_networks(networks)
-        q.set_seeding_from_query(query)
-        q.set_pipeline_from_query(query)
-
+        q = Query.from_query(manager, query)
         return UserQuery(
             query=q,
             user=user,

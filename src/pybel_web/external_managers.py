@@ -24,6 +24,8 @@ __all__ = [
     'drugbank_manager',
     'phosphosite_manager',
     'hmdd_manager',
+    'rgd_manager',
+    'mgi_manager',
 ]
 
 log = logging.getLogger(__name__)
@@ -172,6 +174,24 @@ else:
     log.info('Using Bio2BEL MeSH')
     mesh_manager = bio2bel_mesh.Manager(connection=connection)
     mesh_manager.create_all()
+
+try:
+    import bio2bel_mgi
+except ImportError:
+    mgi_manager = None
+else:
+    log.info('Using Bio2BEL MGI')
+    mgi_manager = bio2bel_mgi.Manager(connection=connection)
+    mgi_manager.create_all()
+
+try:
+    import bio2bel_rgd
+except ImportError:
+    rgd_manager = None
+else:
+    log.info('Using Bio2BEL RGD')
+    rgd_manager = bio2bel_rgd.Manager(connection=connection)
+    rgd_manager.create_all()
 
 manager_dict = {
     name: manager

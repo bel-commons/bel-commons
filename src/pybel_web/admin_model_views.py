@@ -116,13 +116,6 @@ def build_network_ajax_manager(manager: Manager, user_datastore: SQLAlchemyUserD
                     for network in network_chain
                 }
 
-                if current_user.is_scai:
-                    scai_role = user_datastore.find_or_create_role(name='scai')
-
-                    for user in scai_role.users:
-                        for network in user.iter_owned_networks():
-                            allowed_network_ids.add(network.id)
-
                 if not allowed_network_ids:  # If the current user doesn't have any networks, then return nothing
                     return []
 

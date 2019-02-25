@@ -80,7 +80,7 @@ def _build_namespace_helper(graph, namespace, names):
         citation_description=f'This namespace was serialized by PyBEL v{get_pybel_version()} from {graph}',
         cacheable=False,
         values=names,
-        file=si
+        file=si,
     )
 
     output = make_response(si.getvalue())
@@ -241,7 +241,7 @@ def suggest_annotation():
             'id': namespace_entry.id,
             'url': namespace_entry.namespace.url,
             'annotation': namespace_entry.namespace.keyword,
-            'value': namespace_entry.name
+            'value': namespace_entry.name,
         }
         for namespace_entry in namespace_entries
     ])
@@ -775,7 +775,7 @@ def get_tree_api(query_id: int):
     """
 
     rv = {
-        'query': query_id
+        'query': query_id,
     }
 
     tree = get_tree_from_query(query_id)
@@ -808,7 +808,7 @@ def check_query_rights(query_id):
     return jsonify({
         'status': 200,
         'query_id': query_id,
-        'allowed': query is not None
+        'allowed': query is not None,
     })
 
 
@@ -917,12 +917,12 @@ def get_paths(query_id, source_id, target_id):
     source = manager.get_node_by_hash(source_id)
     if source is None:
         raise IndexError('Source missing from cache: %s', source_id)
-    source = source.to_tuple()
+    source = source.as_bel()
 
     target = manager.get_node_by_hash(target_id)
     if target is None:
         raise IndexError('target is missing from cache: %s', target_id)
-    target = target.to_tuple()
+    target = target.as_bel()
 
     network = manager.cu_get_graph_from_query_id_or_404(query_id)
     method = request.args.get(PATHS_METHOD)
@@ -1062,7 +1062,7 @@ def get_query_summary(query_id):
         type: integer
     """
     rv = {
-        'query': query_id
+        'query': query_id,
     }
 
     t = time.time()
@@ -1122,7 +1122,7 @@ def enrich_citation_by_id(pubmed_identifier):
     if citation.name and citation.title:
         return jsonify({
             'success': True,
-            'payload': citation.to_json(include_id=True)
+            'payload': citation.to_json(include_id=True),
         })
 
     t = time.time()
@@ -1191,7 +1191,7 @@ def get_pubmed_suggestion():
     return jsonify([
         {
             "text": citation.reference,
-            "id": citation.id
+            "id": citation.id,
         }
         for citation in citations
     ])
@@ -1580,48 +1580,45 @@ def nodes_by_namespace_name(namespace: str, name: str):
 
 def get_enriched_node_json(node: Node) -> Optional[Mapping]:
     """Enrich the node data with some of the Bio2BEL managers."""
-    node = node.to_json()
-    node['bel'] = node.as_bel()
+    node = node.as_bel()
 
-    if NAMESPACE not in node:
+    namespace = node.get(NAMESPACE)
+    if namespace is None:
         return
-
-    namespace = node[NAMESPACE]
-    name = node.name
 
     node['annotations'] = {}
 
     if namespace.upper() == 'HGNC' and hgnc_manager:
-        model = hgnc_manager.get_gene_by_hgnc_symbol(name)
+        model = hgnc_manager.get_node(node)
         node['annotations']['HGNC'] = {'missing': True} if model is None else model.to_dict()
 
     elif namespace.upper() == 'CHEBI' and chebi_manager:
-        model = chebi_manager.get_chemical_by_chebi_id(name)
-        if model is None:
-            model = chebi_manager.get_chemical_by_chebi_name(name)
+        model = chebi_manager.get_chemical_from_data(node)
         node['annotations']['CHEBI'] = {'missing': True} if model is None else model.to_json()
 
     elif namespace.upper() in {'EGID', 'ENTREZ', 'NCBIGENE'} and entrez_manager:
-        model = entrez_manager.get_gene_by_entrez_id(name)
+        model = entrez_manager.lookup_node(node)
         node['annotations']['ENTREZ'] = {'missing': True} if model is None else model.to_json()
 
-    elif namespace.upper() in {'EXPASY', 'EC', 'ECCODE'} and expasy_manager:
-        model = expasy_manager.get_enzyme_by_id(name)
+    elif namespace.upper() in {'EXPASY', 'EC', 'ECCODE', 'EC-CODE'} and expasy_manager:
+        model = expasy_manager.get_enzyme_by_id(node.name or node.identifier)
         node['annotations']['EXPASY'] = {'missing': True} if model is None else model.to_json()
 
     elif namespace.lower() in {'gocc', 'goccid', 'gobp', 'gobpid', 'go'} and go_manager:
         model = go_manager.lookup_term(node)
         node['annotations']['GO'] = {'missing': True} if model is None else model.to_json()
 
-    elif namespace in {'MESH', 'MESHC', 'MESHPP', 'MESHD'} and mesh_manager:
-        model = mesh_manager.get_term_by_name(name)
+    elif namespace.lower() in {'mesh', 'meshc', 'meshpp', 'meshd', 'meshcs'} and mesh_manager:
+        model = mesh_manager.look_up_node(node)
         node['annotations']['MESH'] = {'missing': True} if model is None else model.to_json()
 
-    elif namespace == 'RGD':
-        pass
+    elif namespace.lower() == 'rgd' and rgd_manager:
+        model = rgd_manager.get_rat_gene_from_bel(node)
+        node['annotations']['RGD'] = {'missing': True} if model is None else model.to_json()
 
-    elif namespace == 'MGI':
-        pass
+    elif namespace.lower() == 'mgi' and mgi_manager:
+        model = mgi_manager.get_mouse_gene_from_bel(node)
+        node['annotations']['MGI'] = {'missing': True} if model is None else model.to_json()
 
     return node
 
@@ -1650,7 +1647,7 @@ def get_node_suggestion():
     return jsonify([
         {
             "text": node.bel,
-            "id": node.sha512
+            "id": node.sha512,
         }
         for node in nodes
     ])
@@ -2006,7 +2003,7 @@ def add_annotation_filter_to_query(query_id: int):
 
     if not filters:  # If no filters send back the same query
         return jsonify({
-            'id': query_id
+            'id': query_id,
         })
 
     query_type = not request.args.get(AND)
@@ -2024,7 +2021,7 @@ def get_number_users():
     count = manager.session.query(func.count(User.id)).scalar()
     return jsonify({
         'time': str(time.asctime()),
-        'count': count
+        'count': count,
     })
 
 
@@ -2107,7 +2104,7 @@ def drop_user(user_id: int) -> Response:
         f'Dropped user: {user}',
         user={
             'id': user.id,
-            'email': user.email
+            'email': user.email,
         }
     )
 
@@ -2144,7 +2141,7 @@ def get_analysis(query_id: int, experiment_id: int):
     results = [
         {
             'node': node.sha512,
-            'data': data[node]
+            'data': data[node],
         }
         for node in graph
         if node in data
@@ -2521,7 +2518,7 @@ def list_all_network_overview():
             'data': {
                 'id': source_network.id,
                 'name': source_network.name,
-                'size': source_network.report.number_nodes
+                'size': source_network.report.number_nodes,
             }
         })
 
@@ -2536,10 +2533,10 @@ def list_all_network_overview():
 
             edge_elements.append({
                 'data': {
-                    'id': 'edge{}'.format(len(edge_elements)),
+                    'id': f'edge{len(edge_elements)}',
                     'source': source_network.id,
                     'target': target_network_id,
-                    'weight': overlap
+                    'weight': overlap,
                 }
             })
 

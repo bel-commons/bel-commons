@@ -7,7 +7,7 @@ import itertools as itt
 import logging
 import time
 from collections import defaultdict
-from typing import Iterable, List, Mapping, Optional, Set, Tuple
+from typing import Dict, Iterable, List, Mapping, Optional, Set, Tuple
 
 import werkzeug.datastructures
 from flask_security import SQLAlchemyUserDatastore
@@ -322,18 +322,15 @@ class WebManagerBase(Manager):
             return form.getlist(value)
 
         node_hashes = form.getlist(value)
-
         return [
             self.get_dsl_by_hash(node_hash)
             for node_hash in node_hashes
         ]
 
-    def query_form_to_dict(self, form: werkzeug.datastructures.ImmutableMultiDict):
+    def query_form_to_dict(self, form: werkzeug.datastructures.ImmutableMultiDict) -> Dict:
         """Convert a request.form multidict to the query JSON format.
 
-        :param form:
         :return: json representation of the query
-        :rtype: dict
         """
         query_dict = {}
 
@@ -347,7 +344,8 @@ class WebManagerBase(Manager):
         query_dict['seeding'] = [
             {
                 "type": seed_method,
-                'data': self.convert_seed_value(seed_method, form, seed_data_argument)
+                'data': self.convert_seed_value(seed_method, form, seed_data_argument),
+
             }
             for seed_method, seed_data_argument in pairs
             if form.getlist(seed_data_argument)
