@@ -91,17 +91,21 @@
         {% endif %}
 
         <div class="jumbotron">
-            <h1>BEL Commons <span style="color: red">3.0 Preview</span></h1>
-            <p>
-                An environment for <strong>curating</strong>, <strong>validating</strong>, and
-                <strong>exploring</strong> knowledge assemblies encoded in Biological Expression Language (BEL) to
-                support <strong>elucidating</strong> disease-specific, mechanistic insight.
-            </p>
+            <div class="row">
+                <img alt="BEL Commons Logo" width="150" style="float: left; margin-right:25px;"
+                     src="{{ url_for('static', filename='img/BELcommons-square-1024.png') }}">
+                <h1>BEL Commons <span style="color: red">3.0 Preview</span></h1>
+                <p>
+                    An environment for <strong>curating</strong>, <strong>validating</strong>, and
+                    <strong>exploring</strong> knowledge assemblies encoded in Biological Expression Language
+                    (BEL) to support <strong>elucidating</strong> disease-specific, mechanistic insight.
+                </p>
 
-            <small>
-                Disclaimer: this is a scientific prototype that has been developed in an academic
-                capacity, and thus comes with no warranty or guarantee of maintenance, support, or back-up of data.
-            </small>
+                <small>
+                    Disclaimer: this is a scientific prototype that has been developed in an academic capacity, and
+                    thus comes with no warranty or guarantee of maintenance, support, or back-up of data.
+                </small>
+            </div>
         </div>
 
         <div class="panel panel-default">
@@ -160,15 +164,18 @@
                                 <a href="{{ url_for('curation.get_boilerplate') }}" class="btn btn-primary"
                                    role="button" data-toggle="tooltip" data-placement="top"
                                    title="Generate a template BEL script given an optional list of PubMed identifiers or Entrez Gene identifiers">
-                                    Generate</a>
+                                    Generate
+                                </a>
                                 <a href="{{ url_for('curation.merge_namespaces') }}" class="btn btn-primary"
                                    role="button" data-toggle="tooltip" data-placement="top"
                                    title="Merge multiple BEL Namespace (BELNS) files">
-                                    Merge</a>
+                                    Merge
+                                </a>
                                 <a href="{{ url_for('curation.validate_resource') }}" class="btn btn-primary"
                                    role="button" data-toggle="tooltip" data-placement="top"
                                    title="Validate a manually curated BEL Namespace or Annotation with the EBI Ontology Lookup Service">
-                                    Validate</a>
+                                    Validate
+                                </a>
 
                                 {% if current_user.is_admin %}
                                     <a href="{{ url_for('curation.view_curation_interface') }}"
