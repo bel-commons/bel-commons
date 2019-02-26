@@ -6,10 +6,11 @@ disease-specific, mechanistic insight.
 
 System Requirements
 -------------------
-- `Python <https://www.python.org/>`_ 3.4+
+- `Python <https://www.python.org/>`_ 3.7+
 - `MySQL <https://www.mysql.com/>`_
 - `RabbitMQ <https://www.rabbitmq.com>`_ (or other message queue supported
   by `Celery <https://pypi.python.org/pypi/celery>`_)
+- `Redis <https://redis.io/>`_
 - `uWSGI <https://uwsgi-docs.readthedocs.io/en/latest/>`_
 
 At least 2GB RAM for parsing. Multiple users are expected per day, likely
@@ -32,27 +33,13 @@ or PostgreSQL and install their corresponding connectors:
     $ python3 -m pip install psycopg2-binary
 
 
-Create the Database
--------------------
-As an example with MySQL-specific SQL:
-
-.. code-block:: sql
-
-    CREATE DATABASE pybel DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_general_ci;
-
-Do it from bash with extreme prejudice:
-
-.. code-block:: sh
-
-    mysql -u root -e "drop database if exists pybel;CREATE DATABASE pybel DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_general_ci;"
-
-Phoenix the Database
-~~~~~~~~~~~~~~~~~~~~
-For the times when you just have to burn it down and start over
+Reset the Database
+~~~~~~~~~~~~~~~~~~
+For the times when you just have to burn it down and start over:
 
 1. ``pybel_web manage drop`` will nuke the database and output a user list
 2. ``pybel_web manage load`` will automatically add the most recently exported
-    user list
+   user list
 3. ``pybel_web manage examples load`` will automatically load some example
    networks and data sets
 
