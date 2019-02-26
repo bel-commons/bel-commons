@@ -59,32 +59,29 @@ def build_query(directory: str, manager: Manager) -> Query:
     return query
 
 
-def create_experiment(query: Query, directory: str, manager: Manager, permutations: Optional[int] = None) -> List[
-    Experiment]:
+def create_experiment(query: Query,
+                      directory: str,
+                      manager: Manager,
+                      permutations: Optional[int] = None) -> List[Experiment]:
     """Create experiment models.
 
     :param query:
-    :param str directory: the directory of -*omics* data resources
+    :param directory: the directory of -*omics* data resources
     :param manager:
     :param permutations: Number of permutations to run (defaults to 200)
     """
     omics_manifest = get_manifest(directory)
 
-    results = []
-
-    for omic_metadata in omics_manifest:
-        omic = manager.session.query(Omic).get(omic_metadata['id'])
-
-        experiment = Experiment(
+    return [
+        Experiment(
             public=True,
-            omic=omic,
+            omic=manager.session.query(Omic).get(omic_metadata['id']),
             query=query,
-            permutations=permutations or 200
+            permutations=permutations or 200,
         )
 
-        results.append(experiment)
-
-    return results
+        for omic_metadata in omics_manifest
+    ]
 
 
 def upload_experiments(experiments: List[Experiment], manager: Manager):
@@ -96,41 +93,48 @@ def upload_experiments(experiments: List[Experiment], manager: Manager):
     manager.session.commit()
 
 
-def run_experiments(experiments: List[Experiment], manager: Manager) -> None:
+def run_experiments(experiments: List[Experiment],
+                    manager: Manager,
+                    use_tqdm: bool = True,
+                    tqdm_kwargs: Optional[Mapping[str, Any]] = None,
+                    ) -> None:
     """Run experiments and commits after each."""
     log.info('running %d experiments', len(experiments))
 
     for experiment in experiments:
-        run_heat_diffusion_helper(manager, experiment, use_tqdm=True)
+        run_heat_diffusion_helper(manager, experiment, use_tqdm=use_tqdm, tqdm_kwargs=tqdm_kwargs)
         log.info('done in %.2f seconds', experiment.time)
         manager.session.add(experiment)
         manager.session.commit()
 
 
-def work_directory(query: Query, omic_directory: str, manager: Manager, permutations: Optional[int] = None) -> None:
-    """
-
-    :param permutations: Number of permutations to run (defaults to 200)
-    """
-    log.info('making experiments for directory: %s', omic_directory)
+def work_directory(query: Query,
+                   omic_directory: str,
+                   manager: Manager,
+                   permutations: Optional[int] = None,
+                   use_tqdm: bool = True,
+                   ) -> None:
+    log.info(f'making experiments for directory: {omic_directory}')
     experiments = create_experiment(query, directory=omic_directory, manager=manager, permutations=permutations)
 
-    log.info('uploading experiments for directory: %s', omic_directory)
+    log.info(f'uploading experiments for directory: {omic_directory}')
     upload_experiments(experiments, manager=manager)
 
-    log.info('running experiments for directory: %s', omic_directory)
-    run_experiments(experiments, manager=manager)
+    log.info(f'running experiments for directory: {omic_directory}')
+    run_experiments(experiments, manager=manager, use_tqdm=use_tqdm)
 
 
-def work_group(network_directory: str, omics_directories: List[str], manager: Manager,
-               permutations: Optional[int] = None):
+def work_group(network_directory: str,
+               omics_directories: List[str],
+               manager: Manager,
+               permutations: Optional[int] = None,
+               ) -> None:
     """
 
-    :param str network_directory:
-    :param iter[str] omics_directories:
+    :param network_directory:
+    :param omics_directories:
     :param manager: database connection string to cache, pre-built :class:`Manager`, or None to use default cache
-    :type manager: Optional[str or pybel.manager.Manager]
-    :param Optional[int] permutations: Number of permutations to run (defaults to 200)
+    :param  permutations: Number of permutations to run (defaults to 200)
     """
     query = build_query(directory=network_directory, manager=manager)
     log.info('made query %s for %s', query, network_directory)

@@ -3,9 +3,7 @@
 """An extension to Flask-SQLAlchemy."""
 
 import datetime
-import json
 import logging
-import os
 from typing import Dict, Iterable
 
 from flask import Flask, g, render_template
@@ -23,10 +21,9 @@ from .admin_model_views import (
     CitationView, EdgeView, EvidenceView, ExperimentView, ModelView, NamespaceView, NetworkView, NodeView, QueryView,
     ReportView, UserView, build_project_view,
 )
-from .constants import PYBEL_WEB_USER_MANIFEST, SENTRY_DSN
+from .constants import SENTRY_DSN
 from .manager_utils import insert_graph
 from .models import EdgeComment, EdgeVote, Experiment, NetworkOverlap, Report, Role, User, UserQuery
-from .resources.users import default_users_path
 
 log = logging.getLogger(__name__)
 logging.getLogger('urllib3.connectionpool').setLevel(logging.WARNING)
@@ -51,7 +48,7 @@ def register_transformations(manager: Manager):
         return expand_node_neighborhood(universe, graph, node)
 
     @in_place_transformation
-    def delete_nodes_by_ids(graph: BELGraph, node_hashes: list) -> None:
+    def delete_nodes_by_ids(graph: BELGraph, node_hashes: Iterable[str]) -> None:
         """Remove a list of nodes by identifier."""
         nodes = [
             manager.get_dsl_by_hash(node_hash)
@@ -72,18 +69,7 @@ def register_transformations(manager: Manager):
         infer_child_relations(graph, node)
 
 
-def register_users(app: Flask, user_datastore: SQLAlchemyUserDatastore) -> None:
-    if os.path.exists(default_users_path):
-        with open(default_users_path) as f:
-            default_users_manifest = json.load(f)
-        _register_users_from_manifest(user_datastore=user_datastore, manifest=default_users_manifest)
-
-    pybel_config_user_manifest = app.config.get(PYBEL_WEB_USER_MANIFEST)
-    if pybel_config_user_manifest is not None:
-        _register_users_from_manifest(user_datastore=user_datastore, manifest=pybel_config_user_manifest)
-
-
-def _register_users_from_manifest(user_datastore: SQLAlchemyUserDatastore, manifest: Dict) -> None:
+def register_users_from_manifest(user_datastore: SQLAlchemyUserDatastore, manifest: Dict) -> None:
     """Register the users and roles in a manifest.
 
     :param user_datastore: A user data store
@@ -100,17 +86,17 @@ def _register_users_from_manifest(user_datastore: SQLAlchemyUserDatastore, manif
         email = user_manifest['email']
         user = user_datastore.find_user(email=email)
         if user is None:
-            log.info('creating user: %s', email)
+            log.info(f'creating user: {email}')
             user = user_datastore.create_user(
                 confirmed_at=datetime.datetime.now(),
                 email=email,
                 password=user_manifest['password'],
-                name=user_manifest['name']
+                name=user_manifest['name'],
             )
 
         for role_name in user_manifest.get('roles', []):
             if user_datastore.add_role_to_user(user, role_name):
-                log.info('registered %s as %s', user, role_name)
+                log.info(f'registered {user} as {role_name}')
 
     user_datastore.commit()
 
@@ -119,7 +105,7 @@ def register_error_handlers(app: Flask, sentry: Sentry) -> None:
     """Register the 500 and 403 error handlers."""
 
     @app.errorhandler(500)
-    def internal_server_error(error):
+    def internal_server_error(_):
         """Call this filter when there's an internal server error.
 
         Run a rollback and send some information to Sentry.
@@ -128,7 +114,7 @@ def register_error_handlers(app: Flask, sentry: Sentry) -> None:
         if app.config.get(SENTRY_DSN):
             kwargs.update(dict(
                 event_id=g.sentry_event_id,
-                public_dsn=sentry.client.get_public_dsn('https')
+                public_dsn=sentry.client.get_public_dsn('https'),
             ))
 
         return render_template('errors/500.html', **kwargs)
@@ -145,12 +131,12 @@ def register_examples(manager: Manager, user_datastore: SQLAlchemyUserDatastore)
             log.info('uploading public example graph: %s', graph)
             insert_graph(manager, graph, public=True)
 
-    test_user = user_datastore.find_user(email='test@scai.fraunhofer.de')
-
-    for graph in (braf_graph,):
-        if not manager.has_name_version(graph.name, graph.version):
-            log.info('uploading internal example graph: %s', graph)
-            insert_graph(manager, graph, user=test_user, public=False)
+    test_user = user_datastore.find_user(email='test@example.com')
+    if test_user:
+        for graph in (braf_graph,):
+            if not manager.has_name_version(graph.name, graph.version):
+                log.info('uploading internal example graph: %s', graph)
+                insert_graph(manager, graph, user=test_user, public=False)
 
 
 def register_admin_service(app: Flask, manager: Manager, user_datastore: SQLAlchemyUserDatastore) -> Admin:

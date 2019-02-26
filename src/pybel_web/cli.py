@@ -316,9 +316,8 @@ def ls(manager: WebManager):
 @click.argument('email')
 @click.argument('password')
 @click.option('-a', '--admin', is_flag=True, help="Add admin role")
-@click.option('-s', '--scai', is_flag=True, help="Add SCAI role")
 @click.pass_obj
-def add(manager: WebManager, email: str, password: str, admin: bool, scai: bool):
+def add(manager: WebManager, email: str, password: str, admin: bool):
     """Create a new user."""
     ds = manager.user_datastore
     try:
@@ -326,9 +325,6 @@ def add(manager: WebManager, email: str, password: str, admin: bool, scai: bool)
 
         if admin:
             ds.add_role_to_user(user, 'admin')
-
-        if scai:
-            ds.add_role_to_user(user, 'scai')
 
         ds.commit()
     except Exception:

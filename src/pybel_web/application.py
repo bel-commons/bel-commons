@@ -10,6 +10,7 @@ The following resources were really helpful in learning about this:
 4. http://flask.pocoo.org/docs/0.12/patterns/celery/
 """
 
+import json
 import logging
 import os
 import socket
@@ -23,11 +24,11 @@ from flask_bootstrap import Bootstrap, WebCDN
 from flask_mail import Mail
 from flask_security import Security
 from raven.contrib.flask import Sentry
-from werkzeug.routing import BaseConverter
 
 from pybel.constants import PYBEL_CONNECTION, config as pybel_config, get_cache_connection
 from pybel_web.application_utils import (
-    register_admin_service, register_error_handlers, register_examples, register_transformations, register_users,
+    register_admin_service, register_error_handlers, register_examples, register_transformations,
+    register_users_from_manifest,
 )
 from pybel_web.config import PyBELWebConfig
 from pybel_web.constants import (
@@ -35,6 +36,7 @@ from pybel_web.constants import (
     PYBEL_WEB_STARTUP_NOTIFY, SENTRY_DSN, SERVER_NAME, SQLALCHEMY_DATABASE_URI, SQLALCHEMY_TRACK_MODIFICATIONS, SWAGGER,
     SWAGGER_CONFIG,
 )
+from pybel_web.converters import IntListConverter, ListConverter
 from pybel_web.core import PyBELSQLAlchemy as PyBELSQLAlchemyBase
 from pybel_web.core.celery import PyBELCelery
 from pybel_web.database_service import api_blueprint
@@ -43,8 +45,7 @@ from pybel_web.main_service import ui_blueprint
 from pybel_web.manager import WebManager
 from pybel_web.utils import get_version
 from pybel_web.views import (
-    curation_blueprint, experiment_blueprint, help_blueprint, receiving_blueprint,
-    reporting_blueprint,
+    curation_blueprint, experiment_blueprint, help_blueprint, receiving_blueprint, reporting_blueprint,
 )
 
 log = logging.getLogger(__name__)
@@ -63,34 +64,11 @@ celery = PyBELCelery()
 jquery2_cdn = WebCDN('//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/')
 
 
-class ListConverter(BaseConverter):
-    """A converter for comma-delimited lists."""
-
-    #: The separator for lists
-    sep = ','
-
-    def to_python(self, value: str):
-        """Convert a delimited list."""
-        return value.split(self.sep)
-
-    def to_url(self, values):
-        """Output a list joined with a delimiter."""
-        return self.sep.join(BaseConverter.to_url(self, value) for value in values)
-
-
-class IntListConverter(ListConverter):
-    """A converter for comma-delimited integer lists."""
-
-    def to_python(self, value: str):
-        """Convert a delimited list of integers."""
-        return [int(entry) for entry in super().to_python(value)]
-
-
 def _send_startup_mail(app):
     mail_default_sender = app.config.get(MAIL_DEFAULT_SENDER)
     notify = app.config.get(PYBEL_WEB_STARTUP_NOTIFY)
     if notify:
-        log.info('sending startup notification to %s', notify)
+        log.info(f'sending startup notification to {notify}')
         with app.app_context():
             mail.send_message(
                 subject="BEL Commons Startup",
@@ -99,12 +77,12 @@ def _send_startup_mail(app):
                     socket.gethostname(),
                     getuser(),
                     time.asctime(),
-                    app.config.get(SERVER_NAME)
+                    app.config.get(SERVER_NAME),
                 ),
                 sender=mail_default_sender,
                 recipients=[notify]
             )
-        log.info('notified %s', notify)
+        log.info(f'notified {notify}')
 
 
 def create_application(config: Optional[PyBELWebConfig] = None) -> Flask:
@@ -129,10 +107,10 @@ def create_application(config: Optional[PyBELWebConfig] = None) -> Flask:
     config_json_path = os.environ.get(PYBEL_WEB_CONFIG_JSON)
     if config_json_path is not None:
         if os.path.exists(config_json_path):
-            log.info('importing config from %s', config_json_path)
+            log.info(f'importing config from {config_json_path}')
             app.config.from_json(config_json_path)
         else:
-            log.warning('configuration from environment at %s does not exist', config_json_path)
+            log.warning(f'configuration from environment at {config_json_path} does not exist')
 
     # Set Swagger defaults
     app.config.setdefault(SWAGGER, SWAGGER_CONFIG)
@@ -140,7 +118,7 @@ def create_application(config: Optional[PyBELWebConfig] = None) -> Flask:
     # Set SQLAlchemy defaults
     app.config.setdefault(SQLALCHEMY_TRACK_MODIFICATIONS, False)
     app.config[SQLALCHEMY_DATABASE_URI] = app.config[PYBEL_CONNECTION]
-    log.info('database: %s', app.config.get(PYBEL_CONNECTION))
+    log.info(f'database: {app.config.get(PYBEL_CONNECTION)}')
 
     # Set Mail defaults
     app.config.setdefault(MAIL_DEFAULT_SENDER, ("BEL Commons", 'bel-commons@scai.fraunhofer.de'))
@@ -162,17 +140,18 @@ def create_application(config: Optional[PyBELWebConfig] = None) -> Flask:
 
     mail_server = app.config.get(MAIL_SERVER)
     if mail_server is not None:
-        log.info('using mail server: %s', mail_server)
+        log.info(f'using mail server: {mail_server}')
         mail.init_app(app)
         _send_startup_mail(app)
 
     db = PyBELSQLAlchemy(app)
-    user_datastore = db.manager.user_datastore
+    manager = db.manager
+    user_datastore = manager.user_datastore
     security.init_app(app, user_datastore, register_form=ExtendedRegisterForm)
 
     sentry_dsn = app.config.get(SENTRY_DSN)
     if sentry_dsn is not None:
-        log.info('initiating Sentry: %s', sentry_dsn)
+        log.info(f'initiating Sentry: {sentry_dsn}')
         sentry = Sentry(app, dsn=sentry_dsn)
     else:
         sentry = None
@@ -180,16 +159,18 @@ def create_application(config: Optional[PyBELWebConfig] = None) -> Flask:
     register_error_handlers(app, sentry)
 
     if config.register_transformations:
-        register_transformations(manager=db.manager)
+        register_transformations(manager=manager)
 
     if config.register_users:
-        register_users(app, user_datastore=user_datastore)
+        with open(config.register_users) as file:
+            manifest = json.load(file)
+        register_users_from_manifest(user_datastore=user_datastore, manifest=manifest)
 
     if config.register_examples:
-        register_examples(manager=db.manager, user_datastore=user_datastore)
+        register_examples(manager=manager, user_datastore=user_datastore)
 
     if config.register_admin:
-        register_admin_service(app=app, manager=db.manager, user_datastore=user_datastore)
+        register_admin_service(app=app, manager=manager, user_datastore=user_datastore)
 
     app.register_blueprint(ui_blueprint)
     if config.enable_curation:

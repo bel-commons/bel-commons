@@ -41,5 +41,6 @@ OMICS_DATA_DIR = (
 )
 if OMICS_DATA_DIR is None:
     raise RuntimeError(
-        '{} is not set in the environment. git clone from https://github.com/cthoyt/bel-commons-manuscript'.format(
-            _omics_dir_env_name))
+        f'{_omics_dir_env_name} is not set in the environment. '
+        f'git clone from https://github.com/cthoyt/bel-commons-manuscript'
+    )

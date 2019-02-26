@@ -5,7 +5,7 @@ corresponding to objects"""
 
 import logging
 import time
-from typing import Mapping, Tuple, Union
+from typing import Any, Mapping, Optional, Tuple, Union
 
 import networkx as nx
 import pandas as pd
@@ -134,11 +134,16 @@ def create_omic(data, gene_column, data_column, description, source_name, sep, p
     return result
 
 
-def calculate_scores(graph: BELGraph, data, runs: int, use_tqdm: bool = False) -> Mapping[BaseEntity, Tuple]:
+def calculate_scores(graph: BELGraph,
+                     data: Mapping[str, float],
+                     runs: int,
+                     use_tqdm: bool = False,
+                     tqdm_kwargs: Optional[Mapping[str, Any]] = None,
+                     ) -> Mapping[BaseEntity, Tuple]:
     """Calculate heat diffusion scores.
 
     :param graph: A BEL graph
-    :param dict[str,float] data: A dictionary of {name: data}
+    :param data: A dictionary of {name: data}
     :param runs: The number of permutations
     :param use_tqdm:
     :return: A dictionary of {pybel node tuple: results tuple} from
@@ -151,11 +156,20 @@ def calculate_scores(graph: BELGraph, data, runs: int, use_tqdm: bool = False) -
     overlay_type_data(graph, data, LABEL, GENE, 'HGNC', overwrite=False, impute=0)
 
     candidate_mechanisms = generate_bioprocess_mechanisms(graph, LABEL)
-    scores = calculate_average_scores_on_subgraphs(candidate_mechanisms, LABEL, runs=runs, use_tqdm=use_tqdm)
-    return scores
+    return calculate_average_scores_on_subgraphs(
+        candidate_mechanisms,
+        LABEL,
+        runs=runs,
+        use_tqdm=use_tqdm,
+        tqdm_kwargs=tqdm_kwargs,
+    )
 
 
-def run_heat_diffusion_helper(manager: Manager, experiment: Experiment, use_tqdm: bool = False) -> None:
+def run_heat_diffusion_helper(manager: Manager,
+                              experiment: Experiment,
+                              use_tqdm: bool = False,
+                              tqdm_kwargs: Optional[Mapping[str, Any]] = None,
+                              ) -> None:
     """Run the Heat Diffusion Workflow on an experiment and store information back into original experiment."""
     t = time.time()
 
@@ -167,7 +181,7 @@ def run_heat_diffusion_helper(manager: Manager, experiment: Experiment, use_tqdm
 
     log.info('calculating scores for query [id=%d] with omic %s with %d permutations', experiment.query.id,
              experiment.omic, experiment.permutations)
-    scores = calculate_scores(graph, data, experiment.permutations, use_tqdm=use_tqdm)
+    scores = calculate_scores(graph, data, experiment.permutations, use_tqdm=use_tqdm, tqdm_kwargs=tqdm_kwargs)
     experiment.dump_results(scores)
     experiment.time = time.time() - t
 

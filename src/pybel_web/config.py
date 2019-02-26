@@ -9,6 +9,7 @@ Resources:
 """
 
 import os
+from typing import Optional
 
 from easy_config import EasyConfig
 
@@ -21,8 +22,8 @@ class PyBELWebConfig(EasyConfig):
 
     #: Should example graphs be automatically included?
     register_examples: bool = False
-    #: Should users be pre-loaded?
-    register_users: bool = True
+    #: Path to user manifest file
+    register_users: Optional[str] = None
     register_admin: bool = True
     register_transformations: bool = True
 
