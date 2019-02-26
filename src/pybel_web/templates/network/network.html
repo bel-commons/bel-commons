@@ -82,28 +82,30 @@
                     </a>
                 {% endif %}
 
-                <a href="{{ url_for('ui.view_query_builder', start=network.id) }}"
+                <a href="{{ url_for('ui.view_build_query_from_network', network_id=network.id) }}"
                    class="btn btn-default" data-toggle="popover"
                    title="Perform a Query on this Network"
                    data-content="You can ask specific questions to your network using the Query Builder.">
                     <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
                     Query
                 </a>
-
-                <div class="btn-group">
-                    <a href="{{ url_for('analysis.view_network_uploader', network_id=network.id) }}"
-                       class="btn btn-default" data-toggle="popover"
-                       title="Analyze this Network"
-                       data-content="Upload your experiments and run algorithms on your network.">
-                        <span class="glyphicon glyphicon-flash" aria-hidden="true"></span>
-                        Analyze
-                    </a>
-                    <a class="btn btn-default" href="{{ url_for('analysis.view_experiments', network_id=network.id) }}"
-                       role="button">
-                        <span class="glyphicon glyphicon-tasks" aria-hidden="true"></span>
-                        Results
-                    </a>
-                </div>
+                {% if 'analysis' in blueprints %}
+                    <div class="btn-group">
+                        <a href="{{ url_for('analysis.view_network_uploader', network_id=network.id) }}"
+                           class="btn btn-default" data-toggle="popover"
+                           title="Analyze this Network"
+                           data-content="Upload your experiments and run algorithms on your network.">
+                            <span class="glyphicon glyphicon-flash" aria-hidden="true"></span>
+                            Analyze
+                        </a>
+                        <a class="btn btn-default"
+                           href="{{ url_for('analysis.view_experiments', network_id=network.id) }}"
+                           role="button">
+                            <span class="glyphicon glyphicon-tasks" aria-hidden="true"></span>
+                            Results
+                        </a>
+                    </div>
+                {% endif %}
 
                 {% if current_user.is_authenticated %}
                     <!-- Single button -->

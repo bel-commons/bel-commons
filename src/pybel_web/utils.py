@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 
 import logging
+from typing import Dict, List
 
-import pybel
-from pybel.struct.summary import get_annotation_values_by_annotation, get_pubmed_identifiers
-from pybel_tools.summary import get_annotations
+from pybel import BELGraph
+from pybel.struct.summary import get_annotation_values_by_annotation, get_annotations, get_pubmed_identifiers
 from .constants import VERSION
 
 __all__ = [
@@ -16,16 +16,12 @@ __all__ = [
 log = logging.getLogger(__name__)
 
 
-def calculate_overlap_info(g1, g2):
-    """Calculate a summary over the overlaps between two graphs.
-    
-    :param pybel.BELGraph g1:
-    :param pybel.BELGraph g2:
-    """
+def calculate_overlap_info(g1: BELGraph, g2: BELGraph):
+    """Calculate a summary over the overlaps between two graphs."""
     g1_nodes, g2_nodes = set(g1), set(g2)
     overlap_nodes = g1 & g2
 
-    g1_edges, g2_edges = set(g1.edges_iter()), set(g2.edges_iter())
+    g1_edges, g2_edges = set(g1.edges()), set(g2.edges())
     overlap_edges = g1_edges & g2_edges
 
     g1_citations, g2_citations = get_pubmed_identifiers(g1), get_pubmed_identifiers(g2)
@@ -42,30 +38,25 @@ def calculate_overlap_info(g1, g2):
     }
 
 
-def get_tree_annotations(graph):
+def get_tree_annotations(graph: BELGraph) -> List[Dict]:
     """Build a tree structure with annotation for a given graph.
 
-    :param pybel.BELGraph graph: A BEL Graph
     :return: The JSON structure necessary for building the tree box
-    :rtype: list[dict]
     """
-    annotations = get_annotation_values_by_annotation(graph)
     return [
         {
             'text': annotation,
             'children': [
-                {'text': value}
+                {
+                    'text': value,
+                }
                 for value in sorted(values)
-            ]
+            ],
         }
-        for annotation, values in sorted(annotations.items())
+        for annotation, values in sorted(get_annotation_values_by_annotation(graph).items())
     ]
 
 
-def get_version():
-    """Gets the current BEL Commons version
-
-    :return: The current BEL Commons version
-    :rtype: str
-    """
+def get_version() -> str:
+    """Get the current BEL Commons version string."""
     return VERSION

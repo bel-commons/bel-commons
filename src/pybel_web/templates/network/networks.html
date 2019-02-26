@@ -49,11 +49,9 @@
             $(".list-group-item").each(function () {
                 if (this.children[0].innerHTML.toLowerCase().indexOf(search) != -1) {
                     $(this).show();
-                }
-                else if (this.children[1].childNodes[1].innerHTML.toLowerCase().indexOf(search) != -1) {
+                } else if (this.children[1].childNodes[1].innerHTML.toLowerCase().indexOf(search) != -1) {
                     $(this).show();
-                }
-                else {
+                } else {
                     $(this).hide();
                 }
             });
@@ -109,9 +107,10 @@
             <div class="panel-body">
                 <p>
                     Each curated network is backed by a BEL script. Below are options to summarize the networks'
-                    contents, explore them with an in-browser navigator, or run analyses with data sets such as
-                    differential gene expression data. Upload more networks
-                    <a href="{{ url_for('parser.view_parser') }}">here</a>.
+                    contents{% if 'analysis' in blueprints %},{% else %} or{% endif %} explore them with an in-browser
+                    navigator{% if 'analysis' in blueprints %}, or run analyses with data sets such as differential
+                    gene expression data {% endif %}. {% if 'parser' in blueprints %} Upload more networks
+                    <a href="{{ url_for('parser.view_parser') }}">here</a>.{% endif %}
                 </p>
 
                 <div class="input-group">
@@ -123,7 +122,7 @@
             </div>
 
             <div class="list-group">
-                {% for network in networks %}
+                {% for network in networks|sort(attribute='created', reverse=True) %}
                     <div class="list-group-item">
                         <h4 class="list-group-item-heading">
                             <a href="{{ url_for('ui.view_network', network_id=network.id) }}">
@@ -250,7 +249,7 @@
                                 </li>
 
                                 <li>
-                                    <a href="{{ url_for('ui.view_query_builder', start=network.id ) }}"
+                                    <a href="{{ url_for('ui.view_build_query_from_network', network_id=network.id ) }}"
                                        class="btn btn-default" data-toggle="popover"
                                        title="Perform a Query on this Network"
                                        data-content="You can ask specific questions to your network using the
@@ -260,15 +259,17 @@
                                     </a>
                                 </li>
 
-                                <li>
-                                    <a href="{{ url_for('analysis.view_network_uploader', network_id=network.id) }}"
-                                       class="btn btn-default" data-toggle="popover"
-                                       title="Analyze this Network"
-                                       data-content="Upload your experiments and run algorithms on your network.">
-                                        <span class="glyphicon glyphicon-flash" aria-hidden="true"></span>
-                                        Analyze
-                                    </a>
-                                </li>
+                                {% if 'analysis' in blueprints %}
+                                    <li>
+                                        <a href="{{ url_for('analysis.view_network_uploader', network_id=network.id) }}"
+                                           class="btn btn-default" data-toggle="popover"
+                                           title="Analyze this Network"
+                                           data-content="Upload your experiments and run algorithms on your network.">
+                                            <span class="glyphicon glyphicon-flash" aria-hidden="true"></span>
+                                            Analyze
+                                        </a>
+                                    </li>
+                                {% endif %}
 
                                 <li>
                                     <div class="btn-group">
@@ -356,7 +357,7 @@
                                             <ul class="dropdown-menu">
                                                 {% if network.report and network.report.user == current_user %}
                                                     <li>
-                                                        <a href="{{ url_for('dbs.drop_network', network_id=network.id, next=url_for('ui.view_networks')) }}">
+                                                        <a href="{{ url_for('ui.delete_network', network_id=network.id) }}">
                                                             <span class="glyphicon glyphicon-remove"
                                                                   aria-hidden="true"></span>
                                                             Drop

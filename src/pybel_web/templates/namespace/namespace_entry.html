@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% import "bootstrap/wtf.html" as wtf %}
+{% import "bootstrap/fixes.html" as fixes %}
+{% import "bootstrap/utils.html" as util %}
+{% import "macros.html" as pbw %}
+
+{% block title %}{{ namespace_entry.name }}{% endblock %}
+
+{% block content %}
+    <div class="container">
+        {{ util.flashed_messages(dismissible=True, container=False) }}
+
+        <ol class="breadcrumb">
+            <li><a href="{{ url_for('ui.home') }}">Catalog</a></li>
+            <li><a href="{{ url_for('ui.view_namespaces') }}">Namespaces</a></li>
+            <li>
+                <a href="{{ url_for('ui.view_namespace', namespace_id=namespace_entry.namespace.id) }}">{{ namespace_entry.namespace.name }}</a>
+            </li>
+            <li class="active">{{ namespace_entry.name }}</li>
+        </ol>
+
+        <div class="page-header">
+            <h1><code>{{ namespace_entry.name }}</code></h1>
+        </div>
+
+        <div class="panel panel-default">
+            <div class="panel-body">
+                <dl class="dl-horizontal">
+                    <dt>Name</dt>
+                    <dd>{{ namespace_entry.name }}</dd>
+                    <dt>Namespace Keyword</dt>
+                    <dd>{{ namespace_entry.namespace.keyword }}</dd>
+                    <dt>Namespace</dt>
+                    <dd>
+                        <a href="{{ url_for('ui.view_namespace', namespace_id=namespace_entry.namespace.id) }}">
+                            {{ namespace_entry.namespace.name }}
+                        </a>
+                    </dd>
+                    <dt>Namespace Version</dt>
+                    <dd>{{ namespace_entry.namespace.version }}</dd>
+                    {% if namespace_entry.namespace.url %}
+                        <dt>Namespace URL</dt>
+                        <dd>
+                            <a href="{{ namespace_entry.namespace.url }}">
+                                {{ namespace_entry.namespace.url }}
+                            </a>
+                        </dd>
+                    {% else %}
+                        <dt>Pattern</dt>
+                        <dd>{{ namespace_entry.namespace.pattern }}</dd>
+                    {% endif %}
+                </dl>
+            </div>
+        </div>
+
+        {% set edges = namespace_entry.edges.limit(5).all() %}
+        {% if edges|length > 0 %}
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Sample Annotated Edges <span class="badge">{{ edges|length }}</span></h3>
+                </div>
+
+                {{ pbw.render_edge_list(edges) }}
+
+                <div class="panel-footer">
+                    <p>Showing {{ edges|length }} of {{ namespace_entry.edges.count() }} edges</p>
+                </div>
+            </div>
+        {% endif %}
+
+    </div>
+    {% include "footer.html" %}
+{% endblock %}

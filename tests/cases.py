@@ -2,7 +2,7 @@
 
 """Test cases for PyBEL Web."""
 
-from bio2bel.testing import TemporaryConnectionMethodMixin
+from pybel.testing.cases import TemporaryCacheMixin
 
 from pybel_web.manager import WebManager
 
@@ -11,14 +11,14 @@ __all__ = [
 ]
 
 
-class TemporaryCacheMethodMixin(TemporaryConnectionMethodMixin):
+class TemporaryCacheMethodMixin(TemporaryCacheMixin):
     """Allows for testing with a consistent connection and creation of a manager class wrapping that connection."""
 
     def setUp(self):
         """Set up the class with the given manager and allows an optional populate hook to be overridden."""
         super().setUp()
 
-        self.manager = WebManager.from_connection(self.connection)
+        self.manager = WebManager(connection=self.connection)
         self.manager.create_all()
         self.populate()
 

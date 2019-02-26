@@ -115,11 +115,11 @@
                 </div>
                 <div class="panel-body">
                     <dl class="dl-horizontal">
-                        {% for annotation_entry in annotation_entries %}
-                            <dt>{{ annotation_entry.annotation.name }}</dt>
+                        {% for entry in annotation_entries %}
+                            <dt>{{ entry.namespace.name }}</dt>
                             <dd>
-                                <a href="{{ url_for('ui.view_annotation_entry', annotation_entry_id=annotation_entry.id) }}">
-                                    {{ annotation_entry.name }}
+                                <a href="{{ url_for('ui.view_name', name_id=entry.id) }}">
+                                    {{ entry.name }}
                                 </a>
                             </dd>
                         {% endfor %}

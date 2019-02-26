@@ -6,6 +6,19 @@
 
 {% block title %}Namespaces{% endblock %}
 
+{% block scripts %}
+    {{ super() }}
+
+    <script type="text/javascript" src="https://cdn.datatables.net/v/bs/dt-1.10.16/datatables.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/buttons/1.5.1/js/dataTables.buttons.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            $("#table-namespaces").DataTable();
+        });
+    </script>
+{% endblock %}
+
 {% block content %}
     <div class="container">
         {{ util.flashed_messages(dismissible=True, container=False) }}
@@ -17,13 +30,6 @@
 
         <div class="panel panel-default">
             <div class="panel-heading">
-                {% if current_user.is_admin %}
-                    <div class="btn-group pull-right">
-                        <a class="btn btn-danger btn-xs" href="{{ url_for('dbs.drop_namespaces') }}" role="button">
-                            Drop All
-                        </a>
-                    </div>
-                {% endif %}
                 <h3 class="panel-title">Namespaces</h3>
             </div>
             <div class="panel-body">
@@ -40,37 +46,29 @@
             </div>
         </div>
 
-        <div class="panel panel-default">
-            <div class="list-group">
-                {% for namespace in namespaces %}
-                    <div class="list-group-item">
-                        <h4 class="list-group-item-heading">{{ namespace.name }}
-                            <small class="text-muted">{{ namespace.version }}</small>
-                            {% if current_user.is_admin %}
-                                <a class="btn btn-danger pull-right"
-                                   href="{{ url_for('dbs.drop_namespace_by_id', namespace_id=namespace.id) }}"
-                                   role="button">Drop</a>
-                            {% endif %}
-                        </h4>
-                        <div class="list-group-item-text">
-                            <dl class="dl-horizontal">
-                                <dt>Keyword</dt>
-                                <dd>{{ namespace.keyword }}</dd>
-                                <dt>URL</dt>
-                                <dd><a href="{{ namespace.url }}">{{ namespace.url }}</a></dd>
-                                {% if namespace.description is not none %}
-                                    <dt>Description</dt>
-                                    <dd>{{ namespace.description }}</dd>
-                                {% endif %}
-                                <dt>Uploaded</dt>
-                                <dd>{{ namespace.uploaded }}</dd>
-                            </dl>
-                        </div>
-                    </div>
-                {% endfor %}
-            </div>
-        </div>
-    </div>
+        <table class="table table-striped" id="table-namespaces">
+            <thead>
+            <tr>
+                <th></th>
+                <th>Keyword</th>
+                <th>Name</th>
+                <th>Version</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for namespace in namespaces %}
+                <tr>
+                    <td>
+                        <a href="{{ url_for('ui.view_namespace', namespace_id=namespace.id) }}">{{ namespace.id }}</a>
+                    </td>
+                    <td>{{ namespace.keyword }}</td>
+                    <td>{{ namespace.name }}</td>
+                    <td><a href="{{ namespace.url }}">{{ namespace.version }}</a></td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
 
+    </div>
     {% include "footer.html" %}
 {% endblock %}

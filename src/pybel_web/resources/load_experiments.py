@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""This file runs experiments on the sample BEL and -omics data then uploads it.
+"""This script runs experiments on the sample BEL and -omics data then uploads it.
 
 Prerequisites
 -------------
@@ -12,11 +12,13 @@ Prerequisites
 import json
 import logging
 import os
+from typing import Dict, List, Optional
 
 from pybel.manager import Manager
 from pybel_tools.utils import enable_cool_mode
+from pybel_web.core.models import Query
 from pybel_web.manager_utils import run_heat_diffusion_helper
-from pybel_web.models import Experiment, Omic, Query
+from pybel_web.models import Experiment, Omic
 from pybel_web.resources.constants import BMS_BASE
 from .constants import OMICS_DATA_DIR
 
@@ -27,12 +29,8 @@ enable_cool_mode()
 # 1. build query from all of alzheimer's disease using manifest from AD folder
 # 2. run experiment and upload
 
-def get_manifest(directory):
-    """Gets the manifest from a directory
-
-    :param str directory:
-    :rtype: list[dict]
-    """
+def get_manifest(directory: str) -> List[Dict]:
+    """Get the manifest from a directory."""
     manifest_path = os.path.join(directory, 'manifest.json')
     if not os.path.exists(manifest_path):
         raise RuntimeError('manifest missing from {}'.format(directory))
@@ -41,12 +39,10 @@ def get_manifest(directory):
         return json.load(f)
 
 
-def build_query(directory, manager):
-    """Builds a query for the Alzheimer's disease network
+def build_query(directory: str, manager: Manager) -> Query:
+    """Build a query for the Alzheimer's disease network.
 
-    :param str directory: Directory containing omics data and a manifest
-    :type manager: pybel.manager.Manager
-    :rtype: pybel_web.models.Query
+    :param directory: Directory containing -omics data and a manifest
     """
     manifest = get_manifest(directory)
 
@@ -63,14 +59,14 @@ def build_query(directory, manager):
     return query
 
 
-def create_experiment(query, directory, manager=None, permutations=None):
-    """Creates experiment models
+def create_experiment(query: Query, directory: str, manager: Manager, permutations: Optional[int] = None) -> List[
+    Experiment]:
+    """Create experiment models.
 
-    :param Query query:
-    :param str directory: the directory of omics data resources
-    :type manager: pybel.manager.Manager
-    :param Optional[int] permutations: Number of permutations to run (defaults to 200)
-    :rtype: list[Experiment]
+    :param query:
+    :param str directory: the directory of -*omics* data resources
+    :param manager:
+    :param permutations: Number of permutations to run (defaults to 200)
     """
     omics_manifest = get_manifest(directory)
 
@@ -91,12 +87,8 @@ def create_experiment(query, directory, manager=None, permutations=None):
     return results
 
 
-def upload_experiments(experiments, manager):
-    """Create a manager and upload experiments models
-
-    :param list[pybel_web.models.Experiments] experiments:
-    :type manager: pybel.manager.Manager
-    """
+def upload_experiments(experiments: List[Experiment], manager: Manager):
+    """Upload experiments models."""
     log.info('adding experiments to session')
     manager.session.add_all(experiments)
 
@@ -104,12 +96,8 @@ def upload_experiments(experiments, manager):
     manager.session.commit()
 
 
-def run_experiments(experiments, manager):
-    """Runs experiments and commits after each
-
-    :param iter[Experiment] experiments:
-    :type manager: pybel.manager.Manager
-    """
+def run_experiments(experiments: List[Experiment], manager: Manager) -> None:
+    """Run experiments and commits after each."""
     log.info('running %d experiments', len(experiments))
 
     for experiment in experiments:
@@ -119,53 +107,45 @@ def run_experiments(experiments, manager):
         manager.session.commit()
 
 
-def work_directory(query, omic_directory, connection=None, permutations=None):
+def work_directory(query: Query, omic_directory: str, manager: Manager, permutations: Optional[int] = None) -> None:
     """
 
-    :param Query query:
-    :param str omic_directory:
-    :param connection: database connection string to cache, pre-built :class:`Manager`, or None to use default cache
-    :type connection: Optional[str or pybel.manager.Manager]
-    :param Optional[int] permutations: Number of permutations to run (defaults to 200)
+    :param permutations: Number of permutations to run (defaults to 200)
     """
     log.info('making experiments for directory: %s', omic_directory)
-    experiments = create_experiment(query, directory=omic_directory, manager=connection, permutations=permutations)
+    experiments = create_experiment(query, directory=omic_directory, manager=manager, permutations=permutations)
 
     log.info('uploading experiments for directory: %s', omic_directory)
-    upload_experiments(experiments, manager=connection)
+    upload_experiments(experiments, manager=manager)
 
     log.info('running experiments for directory: %s', omic_directory)
-    run_experiments(experiments, manager=connection)
+    run_experiments(experiments, manager=manager)
 
 
-def work_group(network_directory, omics_directories, connection=None, permutations=None):
+def work_group(network_directory: str, omics_directories: List[str], manager: Manager,
+               permutations: Optional[int] = None):
     """
 
     :param str network_directory:
     :param iter[str] omics_directories:
-    :param connection: database connection string to cache, pre-built :class:`Manager`, or None to use default cache
-    :type connection: Optional[str or pybel.manager.Manager]
+    :param manager: database connection string to cache, pre-built :class:`Manager`, or None to use default cache
+    :type manager: Optional[str or pybel.manager.Manager]
     :param Optional[int] permutations: Number of permutations to run (defaults to 200)
     """
-    query = build_query(directory=network_directory, manager=connection)
+    query = build_query(directory=network_directory, manager=manager)
     log.info('made query %s for %s', query, network_directory)
 
     for omic_directory in omics_directories:
         work_directory(
             query=query,
             omic_directory=omic_directory,
-            connection=connection,
+            manager=manager,
             permutations=permutations,
         )
 
 
-def main(connection=None, permutations=25):
-    """Runs the experiments and uploads them
-
-    :param connection: database connection string to cache, pre-built :class:`Manager`, or None to use default cache
-    :type connection: Optional[str or pybel.manager.Manager]
-    :param int permutations:
-    """
+def main(manager: Manager, permutations: int = 25):
+    """Run the experiments and uploads them."""
     network_directory = os.path.join(BMS_BASE, 'aetionomy', 'neurommsig')
 
     gse1297_directory = os.path.join(OMICS_DATA_DIR, 'GSE1297')
@@ -175,14 +155,14 @@ def main(connection=None, permutations=25):
     omics_directories = [
         gse1297_directory,
         gse28146_directory,
-        gse63063_directory
+        gse63063_directory,
     ]
 
     work_group(
         network_directory=network_directory,
         omics_directories=omics_directories,
-        connection=connection,
-        permutations=permutations
+        manager=manager,
+        permutations=permutations,
     )
 
 

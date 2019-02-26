@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""This module helps make summary pages"""
+"""This module helps make summary pages."""
 
 import datetime
 import logging
@@ -9,7 +9,8 @@ from collections import Counter, OrderedDict
 from flask import Blueprint, render_template, request
 from flask_security import roles_required
 
-from ..models import EdgeComment, EdgeVote, Experiment, Query, Report
+from pybel_web.core.models import Query
+from ..models import EdgeComment, EdgeVote, Experiment, Report
 from ..proxies import manager
 
 __all__ = [

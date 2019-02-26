@@ -1,7 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+"""Load alzheimer's BEL."""
+
 import logging
+from typing import Optional
 
 from pybel.manager import Manager
 from pybel_web.resources.load_networks import alzheimer_directory, upload_bel_directory
@@ -9,13 +12,12 @@ from pybel_web.resources.load_networks import alzheimer_directory, upload_bel_di
 log = logging.getLogger(__name__)
 
 
-def main(connection=None):
-    """Load BEL
+def main(manager: Optional[Manager] = None):
+    """Load BEL."""
+    if manager is None:
+        manager = Manager()
 
-    :param connection: database connection string to cache, pre-built :class:`Manager`, or None to use default cache
-    :type connection: Optional[str or pybel.manager.Manager]
-    """
-    upload_bel_directory(alzheimer_directory, connection=connection)
+    upload_bel_directory(alzheimer_directory, manager)
 
 
 if __name__ == '__main__':

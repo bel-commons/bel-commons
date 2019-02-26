@@ -14,8 +14,8 @@ $(document).ready(function () {
     // Populates the Datatable
     const dataTableConfig = {
         dom: "<'row'<'col-sm-1'><'col-sm-4'l><'col-sm-5'f>>" +
-        "<'row'<'col-sm-12'tr>>" +
-        "<'row'<'col-sm-1'><'col-sm-4'i><'col-sm-7'p>>"
+            "<'row'<'col-sm-12'tr>>" +
+            "<'row'<'col-sm-1'><'col-sm-4'i><'col-sm-7'p>>"
     };
     var table = $("#network-table").DataTable(dataTableConfig);
 

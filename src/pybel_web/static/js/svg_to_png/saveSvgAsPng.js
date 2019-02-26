@@ -57,7 +57,7 @@
                         image.setAttributeNS("http://www.w3.org/1999/xlink", "href", canvas.toDataURL('image/png'));
                         left--;
                         checkDone();
-                    }
+                    };
                     img.onerror = function () {
                         console.log("Could not load " + href);
                         left--;
@@ -90,7 +90,7 @@
             if (rules != null) {
                 for (var j = 0, match; j < rules.length; j++, match = null) {
                     var rule = rules[j];
-                    if (typeof(rule.style) != "undefined") {
+                    if (typeof (rule.style) != "undefined") {
                         var selectorText;
 
                         try {
@@ -219,7 +219,7 @@
 
                 function transferFailed(e) {
                     console.warn('Failed to load font from: ' + font.url);
-                    console.warn(e)
+                    console.warn(e);
                     css += font.text + '\n';
                     processFontQueue(queue);
                 }
@@ -289,8 +289,8 @@
                 height = box.y + box.height;
                 clone.setAttribute('transform', clone.getAttribute('transform').replace(/translate\(.*?\)/, ''));
 
-                var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
-                svg.appendChild(clone)
+                var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                svg.appendChild(clone);
                 clone = svg;
             } else {
                 console.error('Attempted to render non-SVG element', el);
@@ -352,7 +352,7 @@
                 }
             }
         });
-    }
+    };
 
     out$.svgAsDataUri = function (el, options, cb) {
         out$.prepareSvg(el, options, function (svg) {
@@ -361,7 +361,7 @@
                 cb(uri);
             }
         });
-    }
+    };
 
     out$.svgAsPngUri = function (el, options, cb) {
         requireDomNode(el);
@@ -400,7 +400,7 @@
                 }
             }
             cb(png);
-        }
+        };
 
         if (options.canvg) {
             out$.prepareSvg(el, options, convertToPng);
@@ -410,7 +410,7 @@
 
                 image.onload = function () {
                     convertToPng(image, image.width, image.height);
-                }
+                };
 
                 image.onerror = function () {
                     console.error(
@@ -418,12 +418,12 @@
                         window.atob(uri.slice(26)), '\n',
                         "Open the following link to see browser's diagnosis\n",
                         uri);
-                }
+                };
 
                 image.src = uri;
             });
         }
-    }
+    };
 
     out$.download = function (name, uri) {
         if (navigator.msSaveOrOpenBlob) {
@@ -450,16 +450,15 @@
                 }
                 saveLink.click();
                 document.body.removeChild(saveLink);
-            }
-            else {
+            } else {
                 window.open(uri, '_temp', 'menubar=no,toolbar=no,status=no');
             }
         }
-    }
+    };
 
     function uriToBlob(uri) {
         var byteString = window.atob(uri.split(',')[1]);
-        var mimeString = uri.split(',')[0].split(':')[1].split(';')[0]
+        var mimeString = uri.split(',')[0].split(':')[1].split(';')[0];
         var buffer = new ArrayBuffer(byteString.length);
         var intArray = new Uint8Array(buffer);
         for (var i = 0; i < byteString.length; i++) {
@@ -475,7 +474,7 @@
         out$.svgAsDataUri(el, options, function (uri) {
             out$.download(name, uri);
         });
-    }
+    };
 
     out$.saveSvgAsPng = function (el, name, options) {
         requireDomNode(el);
@@ -484,7 +483,7 @@
         out$.svgAsPngUri(el, options, function (uri) {
             out$.download(name, uri);
         });
-    }
+    };
 
     // if define is defined create as an AMD module
     if (typeof define !== 'undefined') {

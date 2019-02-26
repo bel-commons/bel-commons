@@ -31,7 +31,7 @@
             <div class="list-group" id="edge-list">
                 <div class="list-group-item">
                     <h4 class="list-group-item-heading">
-                        <div class="pull-right">
+                        <span class="pull-right">
                             <small class="text-muted">
                                 {% if node.type == 'Gene' %}
                                     Orthologies: {{ node.out_edges.filter_by(relation='orthologous').count() }} |
@@ -46,11 +46,9 @@
                                 {% if current_user.is_admin %}
                                     |
                                     <a href="{{ url_for('dbs.get_node_by_hash', node_hash=node.sha512) }}">JSON</a>
-                                    |
-                                    <a href="{{ url_for('dbs.drop_node', node_hash=node.sha512, next=url_for('ui.view_nodes')) }}">Drop</a>
                                 {% endif %}
                             </small>
-                        </div>
+                        </span>
                     </h4>
                     <div class="list-group-item-text">
                         {% set node_members = node.out_edges.filter_by(relation='hasComponent').all() %}

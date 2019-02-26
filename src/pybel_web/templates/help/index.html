@@ -84,24 +84,26 @@
             </p>
         </a>
 
-        <a class="list-group-item" href="{{ url_for('help.dgx') }}">
-            <h4 class="list-group-item-heading">
-                Differential Gene Expression Analysis Tutorial
-            </h4>
-            <p class="list-group-item-text">
-                A tutorial for finding experiments on the Gene Expression Omnibus (GEO) and performing
-                differential gene expression experiments that can be used with the heat diffusion workflow.
-            </p>
-        </a>
-        <a class="list-group-item" href="{{ url_for('help.heat_diffusion') }}">
-            <h4 class="list-group-item-heading">
-                Heat Diffusion Workflow Tutorial
-            </h4>
-            <p class="list-group-item-text">
-                A tutorial for using BEL Commons to contextualize differential gene expression data and
-                determine which biological processes are dysregulated.
-            </p>
-        </a>
+        {% if 'analysis' in blueprints %}
+            <a class="list-group-item" href="{{ url_for('help.dgx') }}">
+                <h4 class="list-group-item-heading">
+                    Differential Gene Expression Analysis Tutorial
+                </h4>
+                <p class="list-group-item-text">
+                    A tutorial for finding experiments on the Gene Expression Omnibus (GEO) and performing
+                    differential gene expression experiments that can be used with the heat diffusion workflow.
+                </p>
+            </a>
+            <a class="list-group-item" href="{{ url_for('help.heat_diffusion') }}">
+                <h4 class="list-group-item-heading">
+                    Heat Diffusion Workflow Tutorial
+                </h4>
+                <p class="list-group-item-text">
+                    A tutorial for using BEL Commons to contextualize differential gene expression data and
+                    determine which biological processes are dysregulated.
+                </p>
+            </a>
+        {% endif %}
     </div>
 
 </div>

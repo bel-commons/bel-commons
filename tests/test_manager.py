@@ -2,54 +2,31 @@
 
 """Tests for the manager."""
 
+import json
 import logging
+import unittest
 
 import time
 from werkzeug.exceptions import HTTPException
 
-from pybel.constants import INCREASES, PROTEIN
-from pybel.manager.models import Edge, Network, Node
+from pybel.constants import INCREASES, PROTEIN, RELATION
+from pybel.manager.models import Edge, Node
 from pybel.testing.utils import n
-from pybel_web.models import Assembly, EdgeComment, EdgeVote, Query, Report, User
+from pybel_web.core.models import Assembly, Query
+from pybel_web.manager import iter_recent_public_networks
+from pybel_web.models import EdgeComment, EdgeVote, User
 from tests.cases import TemporaryCacheMethodMixin
+from tests.utils import make_edge, make_network, make_report, upgrade_network
 
 log = logging.getLogger(__name__)
 
 
-def make_network(name=None):
-    return Network(name=(str(name) if name is not None else n()), version=n())
-
-
-def upgrade_network(network):
-    return Network(name=network.name, version=n())
-
-
-def make_report(network):
-    return Report(network=network)
-
-
-def make_node():
-    u = n()
-    return Node(type=PROTEIN, bel='p(HGNC:{})'.format(u))
-
-
-def make_edge(n1=None, n2=None):
-    if n1 is None:
-        n1 = make_node()
-    if n2 is None:
-        n2 = make_node()
-    return Edge(source=n1, target=n2, relation=INCREASES, bel='{} increases {}'.format(n1.bel, n2.bel))
-
-
-class MockAdminUser(User):
-
-    @property
-    def is_authenticated(self):
-        return False
-
-    @property
-    def is_admin(self):
-        return True
+def make_simple_edge(n1, n2, relation):
+    e1_data = {
+        RELATION: relation
+    }
+    bel = '{} {} {}'.format(n1.as_bel(), relation, n2.as_bel())
+    return Edge(source=n1, target=n2, relation=relation, bel=bel, data=json.dumps(e1_data))
 
 
 class TestManager(TemporaryCacheMethodMixin):
@@ -72,7 +49,7 @@ class TestManager(TemporaryCacheMethodMixin):
         self.assertEqual(4, self.manager.count_networks())
         self.assertEqual(3, self.manager.count_reports())
 
-        public_networks = list(self.manager.iter_recent_public_networks())
+        public_networks = list(iter_recent_public_networks(self.manager))
         self.assertIn(n1, public_networks)
         self.assertIn(n2, public_networks)
         self.assertEqual(2, len(public_networks))
@@ -88,7 +65,7 @@ class TestManager(TemporaryCacheMethodMixin):
         self.assertEqual(5, self.manager.count_networks())
         self.assertEqual(4, self.manager.count_reports())
 
-        public_networks = list(self.manager.iter_recent_public_networks())
+        public_networks = list(iter_recent_public_networks(self.manager))
         self.assertNotIn(n1, public_networks)
         self.assertIn(n1v2, public_networks)
         self.assertIn(n2, public_networks)
@@ -109,7 +86,7 @@ class TestManager(TemporaryCacheMethodMixin):
         self.add_all_and_commit([u1, u2])
 
         with self.assertRaises(HTTPException):
-            self.manager.safe_get_network(user=u1, network_id=0)
+            self.manager.authenticated_get_network_by_id_or_404(user=u1, network_id=0)
 
         # TODO test conditions for admin, for report, and for actual permission
 
@@ -124,10 +101,10 @@ class TestManager(TemporaryCacheMethodMixin):
         self.assertEqual(2, self.manager.count_networks())
         self.assertEqual(2, self.manager.count_reports())
 
-        self.manager.strict_get_network(user=u1, network_id=n1.id)
+        self.manager.owner_get_network_by_id_or_404(user=u1, network_id=n1.id)
 
         with self.assertRaises(HTTPException):
-            self.manager.strict_get_network(user=u2, network_id=n1.id)
+            self.manager.owner_get_network_by_id_or_404(user=u2, network_id=n1.id)
 
     def test_drop_votes(self):
         edge = make_edge()
@@ -147,8 +124,8 @@ class TestManager(TemporaryCacheMethodMixin):
         n1 = Node(type=PROTEIN, bel='p(HGNC:A)')
         n2 = Node(type=PROTEIN, bel='p(HGNC:B)')
         n3 = Node(type=PROTEIN, bel='p(HGNC:C)')
-        e1 = Edge(source=n1, target=n2, relation=INCREASES, bel='p(HGNC:A) increases p(HGNC:B)')
-        e2 = Edge(source=n2, target=n3, relation=INCREASES, bel='p(HGNC:B) increases p(HGNC:C)')
+        e1 = make_simple_edge(n1, n2, INCREASES)
+        e2 = make_simple_edge(n2, n3, INCREASES)
         u1 = User()
         u2 = User()
         v1 = EdgeVote(user=u1, edge=e1)
@@ -174,8 +151,8 @@ class TestManager(TemporaryCacheMethodMixin):
         n1 = Node(type=PROTEIN, bel='p(HGNC:A)')
         n2 = Node(type=PROTEIN, bel='p(HGNC:B)')
         n3 = Node(type=PROTEIN, bel='p(HGNC:C)')
-        e1 = Edge(source=n1, target=n2, relation=INCREASES, bel='p(HGNC:A) increases p(HGNC:B)')
-        e2 = Edge(source=n2, target=n3, relation=INCREASES, bel='p(HGNC:B) increases p(HGNC:C)')
+        e1 = make_simple_edge(n1, n2, INCREASES)
+        e2 = make_simple_edge(n2, n3, INCREASES)
         u1 = User()
         u2 = User()
         v1 = EdgeComment(user=u1, edge=e1, comment=n())
@@ -199,8 +176,7 @@ class TestManager(TemporaryCacheMethodMixin):
         self.assertEqual(1, self.manager.session.query(EdgeComment).count())
 
     def test_drop_query_cascade_to_parent(self):
-        """Tests that dropping a query gets passed to its parent, and doesn't muck up anything else"""
-
+        """Test that dropping a query gets passed to its parent, and doesn't muck up anything else."""
         q1 = Query()
         self.manager.session.add(q1)
         self.manager.session.commit()
@@ -270,3 +246,7 @@ class TestManager(TemporaryCacheMethodMixin):
 
         self.assertEqual(1, self.manager.count_assemblies())
         self.assertEqual(1, self.manager.count_queries(), msg='Cascade to queries did not work')
+
+
+if __name__ == '__main__':
+    unittest.main()

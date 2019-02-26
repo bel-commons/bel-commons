@@ -264,10 +264,10 @@
                     </tr>
                     </thead>
                     <tbody id="syntaxErrorTable">
-                    {% for number, line, exc, _ in syntax_errors %}
+                    {% for _, exc, _ in syntax_errors %}
                         <tr>
-                            <td>{{ number }}</td>
-                            <td><code>{{ line }}</code></td>
+                            <td>{{ exc.line_number }}</td>
+                            <td><code>{{ exc.line }}</code></td>
                             <td>{{ exc }}</td>
                         </tr>
                     {% endfor %}
@@ -294,10 +294,10 @@
                     </tr>
                     </thead>
                     <tbody>
-                    {% for number, line, exc, _ in graph.warnings %}
+                    {% for _, exc, _ in graph.warnings %}
                         <tr>
-                            <td>{{ number }}</td>
-                            <td><code>{{ line }}</code></td>
+                            <td>{{ exc.line_number }}</td>
+                            <td><code>{{ exc.line }}</code></td>
                             <td>{{ exc }}</td>
                         </tr>
                     {% endfor %}
@@ -320,11 +320,11 @@
                     </tr>
                     </thead>
                     <tbody>
-                    {% for k, v in error_groups %}
-                        {% if v > 1 %}
+                    {% for label, count in error_groups %}
+                        {% if count > 1 %}
                             <tr>
-                                <td><code>{{ k }}</code></td>
-                                <td>{{ v }}</td>
+                                <td><code>{{ label }}</code></td>
+                                <td>{{ count }}</td>
                             </tr>
                         {% endif %}
                     {% endfor %}

@@ -5,7 +5,7 @@
 {% import "bootstrap/utils.html" as util %}
 {% import "macros.html" as pbw %}
 
-{% block title %}Annotation Catalog{% endblock %}
+{% block title %}Namespace Catalog{% endblock %}
 
 {% block content %}
     <div class="container">
@@ -13,36 +13,36 @@
 
         <ol class="breadcrumb">
             <li><a href="{{ url_for('ui.home') }}">Catalog</a></li>
-            <li><a href="{{ url_for('ui.view_annotations') }}">Annotations</a></li>
-            <li>{{ annotation.name }}</li>
+            <li><a href="{{ url_for('ui.view_namespaces') }}">Namespaces</a></li>
+            <li>{{ namespace.keyword }}</li>
         </ol>
 
         <div class="page-header">
-            <h1><code>{{ annotation.name }}</code></h1>
+            <h1><code>{{ namespace.name }}</code></h1>
         </div>
 
         <div class="panel panel-default">
             <div class="panel-body">
                 <dl class="dl-horizontal">
                     <dt>Name</dt>
-                    <dd>{{ annotation.name }}</dd>
+                    <dd>{{ namespace.name }}</dd>
                     <dt>Keyword</dt>
-                    <dd>{{ annotation.keyword }}</dd>
+                    <dd>{{ namespace.keyword }}</dd>
                     <dt>Description</dt>
-                    <dd>{{ annotation.description }}</dd>
-                    <dt>Annospace Version</dt>
-                    <dd>{{ annotation.version }}</dd>
+                    <dd>{{ namespace.description }}</dd>
+                    <dt>Version</dt>
+                    <dd>{{ namespace.version }}</dd>
 
-                    {% if annotation.url %}
+                    {% if namespace.url %}
                         <dt>URL</dt>
                         <dd>
-                            <a href="{{ annotation.url }}">
-                                {{ annotation.url }}
+                            <a href="{{ namespace.url }}">
+                                {{ namespace.url }}
                             </a>
                         </dd>
                     {% else %}
                         <dt>Pattern</dt>
-                        <dd>{{ annotation.pattern }}</dd>
+                        <dd>{{ namespace.pattern }}</dd>
                     {% endif %}
                 </dl>
             </div>
@@ -54,10 +54,10 @@
             </div>
 
             <div class="list-group">
-                {% for entry in annotation.entries.limit(5) %}
+                {% for entry in namespace.entries.limit(5) %}
                     <div class="list-group-item">
                         <h4 class="list-group-item-heading">
-                            <a href="{{ url_for('ui.view_annotation_entry', annotation_entry_id=entry.id) }}">{{ entry.name }}</a>
+                            <a href="{{ url_for('ui.view_name', name_id=entry.id) }}">{{ entry.name }}</a>
                         </h4>
                         {% if entry.label %}
                             <div class="list-group-item-text">
@@ -69,7 +69,7 @@
             </div>
 
             <div class="panel-footer">
-                <p>Showing 5 of {{ annotation.entries.count() }} entries</p>
+                <p>Showing 5 of {{ namespace.entries.count() }} entries</p>
             </div>
         </div>
     </div>

@@ -7,7 +7,6 @@
             In-Edges: {{ node.in_edges.count() }} |
             Out-Edges: {{ node.out_edges.count() }} |
 
-
             {% set node_equivalence_count =  node.out_edges.filter_by(relation='equivalentTo').count() %}
             {% set node_orthology_count =  node.out_edges.filter_by(relation='orthologous').count() %}
             {% set node_class_count =  node.out_edges.filter_by(relation='isA').count() %}
@@ -45,7 +44,7 @@
         <h4 class="list-group-item-heading">
             <a href="{{ url_for('ui.view_edge', edge_hash=edge.sha512) }}">{{ edge.bel }}</a>
 
-            <div class="pull-right">
+            <span class="pull-right">
                 <small class="text-muted">
                     <a href="{{ url_for('ui.view_node', node_hash=edge.source.sha512) }}">
                         View Subject <span class="glyphicon glyphicon-new-window"></span>
@@ -54,7 +53,7 @@
                         View Object <span class="glyphicon glyphicon-new-window"></span>
                     </a>
                 </small>
-            </div>
+            </span>
         </h4>
         <div class="list-group-item-text">
 
@@ -84,11 +83,11 @@
                     <div class="col-lg-6">
                         <h5>Annotations</h5>
                         <dl class="dl-horizontal">
-                            {% for annotation_entry in annotation_entries %}
-                                <dt>{{ annotation_entry.annotation.name }}</dt>
+                            {% for namespace_entry in annotation_entries %}
+                                <dt>{{ namespace_entry.namespace.name }}</dt>
                                 <dd>
-                                    <a href="{{ url_for('ui.view_annotation_entry', annotation_entry_id=annotation_entry.id) }}">
-                                        {{ annotation_entry.name }}
+                                    <a href="{{ url_for('ui.view_name', name_id=namespace_entry.id) }}">
+                                        {{ namespace_entry.name }}
                                     </a>
                                 </dd>
                             {% endfor %}
@@ -127,10 +126,16 @@
             </ul>
         </td>
         <td>
-            {{ query.seeding_to_json()|length }}
+            {% set seeding = query.seeding_to_json() %}
+            {% if seeding %}
+                {{ seeding|length }}
+            {% endif %}
         </td>
         <td>
-            {{ query.pipeline_to_json()|length }}
+            {% set pipeline = query.pipeline_to_json() %}
+            {% if pipeline %}
+                {{ pipeline|length }}
+            {% endif %}
         </td>
         <td>
             <div class="dropdown">
@@ -164,40 +169,41 @@
                 </ul>
             </div>
         </td>
-        <td>
-            {% if query.experiments.count() %}
-                <div class="dropdown">
-                    <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown"
-                            aria-haspopup="true" aria-expanded="true">
-                        Experiments <span class="badge">{{ query.experiments.count() }}</span>
-                        <span class="caret"></span>
-                    </button>
+        {% if 'analysis' in blueprints %}
+            <td>
+                {% if query.experiments.count() %}
+                    <div class="dropdown">
+                        <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown"
+                                aria-haspopup="true" aria-expanded="true">
+                            Experiments <span class="badge">{{ query.experiments.count() }}</span>
+                            <span class="caret"></span>
+                        </button>
 
-
-                    <ul class="dropdown-menu">
-                        <li>
-                            <a href="{{ url_for('analysis.view_query_uploader', query_id=query.id) }}">
-                                <span class="glyphicon glyphicon-upload"></span> Upload
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{{ url_for('analysis.view_experiments', query_id=query.id) }}">
-                                <span class="glyphicon glyphicon-stats" aria-hidden="true"></span> View
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{{ url_for('analysis.view_query_experiment_comparison', query_id=query.id) }}">
-                                <span class="glyphicon glyphicon-eye-open"></span> Compare
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            {% else %}
-                <a class="btn btn-default" href="{{ url_for('analysis.view_query_uploader', query_id=query.id) }}">
-                    <span class="glyphicon glyphicon-upload"></span> Upload
-                </a>
-            {% endif %}
-        </td>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a href="{{ url_for('analysis.view_query_uploader', query_id=query.id) }}">
+                                    <span class="glyphicon glyphicon-upload"></span> Upload
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ url_for('analysis.view_experiments', query_id=query.id) }}">
+                                    <span class="glyphicon glyphicon-stats" aria-hidden="true"></span> View
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ url_for('analysis.view_query_experiment_comparison', query_id=query.id) }}">
+                                    <span class="glyphicon glyphicon-eye-open"></span> Compare
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                {% else %}
+                    <a class="btn btn-default" href="{{ url_for('analysis.view_query_uploader', query_id=query.id) }}">
+                        <span class="glyphicon glyphicon-upload"></span> Upload
+                    </a>
+                {% endif %}
+            </td>
+        {% endif %}
     </tr>
 {%- endmacro %}
 
@@ -210,7 +216,9 @@
             <th>Seeding</th>
             <th>Pipeline</th>
             <th>Actions</th>
-            <th>Experiments</th>
+            {% if 'analysis' in blueprints %}
+                <th>Experiments</th>
+            {% endif %}
         </tr>
         </thead>
         <tbody>
@@ -313,7 +321,7 @@
     <h4>HGNC</h4>
     <dl class="dl-horizontal">
         <dt>Identifier</dt>
-        <dd>{{ gene.identifier }}</dd>
+        <dd><a href="{{ hgnc_manager.identifiers_url }}{{ gene.identifier }}">hgnc:{{ gene.identifier }}</a></dd>
         <dt>Symbol</dt>
         <dd>{{ gene.symbol }}</dd>
         <dt>Name</dt>
@@ -322,8 +330,10 @@
         <dd>{{ gene.locus_group }}</dd>
         <dt>Locus Type</dt>
         <dd>{{ gene.locus_type }}</dd>
-        <dt>Synonyms</dt>
-        <dd>{{ gene.alias_names|join(' | ') }}</dd>
+        {% if gene.alias_names %}
+            <dt>Synonyms</dt>
+            <dd>{{ gene.alias_names|join(' <br /> ')|safe }}</dd>
+        {% endif %}
     </dl>
 {%- endmacro %}
 
@@ -373,32 +383,26 @@
 
 {% macro render_node_go_enrichment(go_manager, node) -%}
     {% if node.namespace_entry.namespace.keyword in ['GO', 'GOBP'] %}
-        {% set go = go_manager.get_go_by_name(node.namespace_entry.name) %}
+        {% set term = go_manager.get_term_by_name(node.namespace_entry.name) %}
     {% else %}
-        {% set go = go_manager.get_go_by_id(node.namespace_entry.name) %}
+        {% set term = go_manager.get_term_by_id(node.namespace_entry.name) %}
     {% endif %}
 
     <h4>Gene Ontology</h4>
     <dl class="dl-horizontal">
         <dt>Identifier</dt>
-        <dd>{{ go['id'] }}</dd>
+        <dd><a href="{{ go_manager.identifiers_url + term.go_id }}">{{ term.go_id }}</a></dd>
+        <dt>Namespace</dt>
+        <dd>{{ term.namespace }}</dd>
         <dt>Name</dt>
-        <dd>{{ go['name'] }}</dd>
-        <dt>Definition</dt>
-        <dd>{{ go['def'] }}</dd>
-        {% if go['xref'] %}
-            <dt>Cross References</dt>
-            <dd>
-                <ul>
-                    {% for go_xref in go['xref'] %}
-                        <li>{{ go_xref }}</li>
-                    {% endfor %}
-                </ul>
-            </dd>
+        <dd>{{ term.name }}</dd>
+        {% if term.definition %}
+            <dt>Definition</dt>
+            <dd>{{ term.definition }}</dd>
         {% endif %}
-        {% if go['synonym'] %}
+        {% if term.synonyms %}
             <dt>Synonyms</dt>
-            <dd>{{ go['synonym']|join(' | ') }}</dd>
+            <dd>{{ term.synonyms|join(' <br/> ')|safe }}</dd>
         {% endif %}
     </dl>
 {%- endmacro %}

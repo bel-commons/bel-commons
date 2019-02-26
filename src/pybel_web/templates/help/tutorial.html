@@ -18,54 +18,61 @@
             <h1>Typical Workflow</h1>
         </div>
 
+        {% if 'parser' in blueprints %}
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h2 class="panel-title">Curation</h2>
+                </div>
+                <div class="panel-body">
+                    <p>
+                        BEL Commons hosts biological knowledge assemblies that are encoded in Biological Expression
+                        Language. BEL supports the assembly of context-specific qualitative causal and correlative
+                        relations between biological entities across multiple modes and scales in BEL Script with
+                        provenance information, external namespace references, relation provenance (citation and
+                        evidence),
+                        and relation metadata such as the biological context (anatomy, cell, disease, etc.).
+                    </p>
+
+                    <h3>Upload and Parse</h3>
+                    <p>
+                        On the <a href="{{ url_for('ui.home') }}">home page</a>, click <a
+                            href="{{ url_for('parser.view_parser') }}">Parse BEL</a>. In the form, choose a file, then
+                        click
+                        "upload".
+                    </p>
+                    <iframe src="https://player.vimeo.com/video/224197756" width="640" height="335" frameborder="0"
+                            webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>
+                    <p>
+                        The link to the BEL Script used in this video can be found <a
+                            href="https://arty.scai.fraunhofer.de/artifactory/bel/knowledge/selventa-small-corpus/">here</a>.
+                    </p>
+
+                    <h3>Share</h3>
+                    <p>
+                        Users can <a href="{{ url_for('project.create_view', url=url_for('ui.home')) }}">create
+                        projects</a>
+                        that allow them to easily share networks with groups of other users. This is useful when
+                        multiple
+                        curators are uploading related BEL Scripts. Later, they can be assembled and queried.
+                    </p>
+                    <iframe src="https://player.vimeo.com/video/224316280" width="640" height="334" frameborder="0"
+                            webkitallowfullscreen mozallowfullscreen allowfullscreen>
+                    </iframe>
+
+                    <h3>Validate Namespaces</h3>
+                    <p>
+                        Large terminologies that are curated for projects investigating new diseases and pathologies can
+                        be
+                        validated by checking their contents using the Ontology Lookup Service, provided by the EBI to
+                        identify duplicate names and enable better semantic integration.
+                    </p>
+                </div>
+            </div>
+        {% endif %}
+
         <div class="panel panel-default">
             <div class="panel-heading">
-                <h2 class="panel-title">1. Curation</h2>
-            </div>
-            <div class="panel-body">
-                <p>
-                    BEL Commons hosts biological knowledge assemblies that are encoded in Biological Expression
-                    Language. BEL supports the assembly of context-specific qualitative causal and correlative
-                    relations between biological entities across multiple modes and scales in BEL Script with
-                    provenance information, external namespace references, relation provenance (citation and evidence),
-                    and relation metadata such as the biological context (anatomy, cell, disease, etc.).
-                </p>
-
-                <h3>Upload and Parse</h3>
-                <p>
-                    On the <a href="{{ url_for('ui.home') }}">home page</a>, click <a
-                        href="{{ url_for('parser.view_parser') }}">Parse BEL</a>. In the form, choose a file, then click
-                    "upload".
-                </p>
-                <iframe src="https://player.vimeo.com/video/224197756" width="640" height="335" frameborder="0"
-                        webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>
-                <p>
-                    The link to the BEL Script used in this video can be found <a
-                        href="https://arty.scai.fraunhofer.de/artifactory/bel/knowledge/selventa-small-corpus/">here</a>.
-                </p>
-
-                <h3>Share</h3>
-                <p>
-                    Users can <a href="{{ url_for('project.create_view', url=url_for('ui.home')) }}">create projects</a>
-                    that allow them to easily share networks with groups of other users. This is useful when multiple
-                    curators are uploading related BEL Scripts. Later, they can be assembled and queried.
-                </p>
-                <iframe src="https://player.vimeo.com/video/224316280" width="640" height="334" frameborder="0"
-                        webkitallowfullscreen mozallowfullscreen allowfullscreen>
-                </iframe>
-
-                <h3>Validate Namespaces</h3>
-                <p>
-                    Large terminologies that are curated for projects investigating new diseases and pathologies can be
-                    validated by checking their contents using the Ontology Lookup Service, provided by the EBI to
-                    identify duplicate names and enable better semantic integration.
-                </p>
-            </div>
-        </div>
-
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                <h3 class="panel-title">2. Summarize a Knowledge Assembly</h3>
+                <h3 class="panel-title">Summarize a Knowledge Assembly</h3>
             </div>
             <div class="panel-body">
                 <p>From the home page, click <a href="{{ url_for('ui.view_networks') }}">List Networks</a>, find your
@@ -93,7 +100,7 @@
 
         <div class="panel panel-default">
             <div class="panel-heading">
-                <h3 class="panel-title">3. Exploration of the Knowledge Base</h3>
+                <h3 class="panel-title">Exploration of the Knowledge Base</h3>
             </div>
             <div class="panel-body">
                 <h3>Query Builder</h3>
@@ -140,31 +147,34 @@
             </div>
         </div>
 
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                <h3 class="panel-title">4. Analyze a Knowledge Assembly</h3>
+        {% if 'analysis' in blueprints %}
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Analyze a Knowledge Assembly</h3>
+                </div>
+                <div class="panel-body">
+                    <p>
+                        Data sets like differential gene expression can be used to quantify the perturbation amplitude
+                        of biological processes in a network using an randomized algorithm based on NPA. Candidate
+                        upstream mechanisms are generated for each biological process and a heat diffusion algorithm is
+                        used
+                        to quantify the cumulative observed effect of upstream genes and gene products based on the
+                        differential gene expression data.
+                    </p>
+                    <p>
+                        This algorithm is general enough that other data types could be used, such as copy number
+                        variations
+                        on SNPs or clinical measurements of neuro-imaging features, which have been annotated to
+                        our Alzheimer Disease Knowledge assembly with NeuroMMSigDB.
+                    </p>
+                    <p>
+                        Data sets can be directly uploaded and analyzed. The results of these experiments can then be
+                        directly overlaid to the interactive network viewer to provide a data-driven analysis of
+                        given networks or sub-networks.
+                    </p>
+                </div>
             </div>
-            <div class="panel-body">
-                <p>
-                    Data sets like differential gene expression can be used to quantify the perturbation amplitude
-                    of biological processes in a network using an randomized algorithm based on NPA. Candidate
-                    upstream mechanisms are generated for each biological process and a heat diffusion algorithm is used
-                    to quantify the cumulative observed effect of upstream genes and gene products based on the
-                    differential gene expression data.
-                </p>
-                <p>
-                    This algorithm is general enough that other data types could be used, such as copy number variations
-                    on SNPs or clinical measurements of neuro-imaging features, which have been annotated to
-                    our Alzheimer Disease Knowledge assembly with NeuroMMSigDB.
-                </p>
-                <p>
-                    Data sets can be directly uploaded and analyzed. The results of these experiments can then be
-                    directly overlaid to the interactive network viewer to provide a data-driven analysis of
-                    given networks or sub-networks.
-                </p>
-            </div>
-        </div>
+        {% endif %}
     </div>
-
     {% include "footer.html" %}
 {% endblock %}

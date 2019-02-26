@@ -1,8 +1,9 @@
 Running with Docker
 ===================
-Docker is very powerful as a general way to specify how things should be installed, but has a steep learning curve.
-After installing and running ``docker-machine`` and ``docker-compose``, BEL Commons can be run with a few simple
-commands.
+Docker is very powerful as a general way to specify how things should be
+installed, but has a steep learning curve. After installing and running
+``docker-machine`` and ``docker-compose``, BEL Commons can be run with
+a few simple commands.
 
 Dockerfile
 ----------

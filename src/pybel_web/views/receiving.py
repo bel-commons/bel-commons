@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
 
+"""A blueprint for receiving uploads of graphs as JSON."""
+
 import logging
 
 from flask import Blueprint, abort, current_app, jsonify, request
 from flask_security.utils import verify_password
 
-from ..manager_utils import next_or_jsonify
-from ..models import User
-from ..proxies import manager
+from pybel_web.manager_utils import next_or_jsonify
+from pybel_web.models import User
+from pybel_web.proxies import celery, manager
 
 __all__ = [
     'receiving_blueprint',
@@ -18,27 +20,6 @@ log = logging.getLogger(__name__)
 receiving_blueprint = Blueprint('receive', __name__, url_prefix='/api/receive')
 
 
-def _get_user():
-    if request.authorization is None:
-        return abort(401, 'Unauthorized')
-
-    username = request.authorization.get('username')
-    password = request.authorization.get('password')
-
-    if username is None or password is None:
-        return jsonify(success=False, code=1, message='no login information provided')
-
-    user = manager.user_datastore.find_user(email=username)
-    if user is None:
-        return jsonify(success=False, code=2, message='user does not exist')
-
-    verified = verify_password(password, user.password)
-    if not verified:
-        return jsonify(success=False, code=3, message='bad password')
-
-    return user
-
-
 @receiving_blueprint.route('/', methods=['POST'])
 def upload():
     """Receive a JSON serialized BEL graph."""
@@ -46,10 +27,12 @@ def upload():
     if not isinstance(user, User):
         return user
 
+    public = request.headers.get('bel-commons-public') in {'true', 't', 'True', 'yes', 'Y', 'y'}
+
     # TODO assume https authentication and use this to assign user to receive network function
     payload = request.get_json()
     connection = current_app.config['SQLALCHEMY_DATABASE_URI']
-    task = current_app.celery.send_task('upload-json', args=[connection, user.id, payload])
+    task = celery.send_task('upload-json', args=[connection, user.id, payload, public])
     return next_or_jsonify('Sent async receive task', task_id=task.id)
 
 
@@ -84,3 +67,24 @@ def get_latest_network_version():
         return jsonify(success=False, code=6, message='user does not have rights to network')
 
     return jsonify(success=True, code=0, network=network.to_json())
+
+
+def _get_user():
+    if request.authorization is None:
+        return abort(401, 'Unauthorized')
+
+    username = request.authorization.get('username')
+    password = request.authorization.get('password')
+
+    if username is None or password is None:
+        return jsonify(success=False, code=1, message='no login information provided')
+
+    user = manager.user_datastore.find_user(email=username)
+    if user is None:
+        return jsonify(success=False, code=2, message='user does not exist')
+
+    verified = verify_password(password, user.password)
+    if not verified:
+        return jsonify(success=False, code=3, message='bad password')
+
+    return user

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-"""
+"""Tests for the Flask app.
+
 Reference for testing Flask
 
 - Flask Documentation http://flask.pocoo.org/docs/0.12/testing/
@@ -12,11 +13,11 @@ import json
 import logging
 import unittest
 
-from bio2bel.testing import TemporaryConnectionMethodMixin
 from flask import url_for
 from flask_security import current_user
 
 from pybel.constants import PYBEL_CONNECTION
+from pybel.testing.cases import TemporaryCacheMixin
 from pybel_web.application import PyBELSQLAlchemy, create_application
 from pybel_web.database_service import api_blueprint
 from pybel_web.main_service import ui_blueprint
@@ -35,7 +36,7 @@ def has_no_empty_params(rule):
     return len(defaults) >= len(arguments)
 
 
-class WebTest(TemporaryConnectionMethodMixin):
+class WebTest(TemporaryCacheMixin):
     def setUp(self):
         """Build a connection, a Flask app, and a Flask app testing client."""
         super().setUp()

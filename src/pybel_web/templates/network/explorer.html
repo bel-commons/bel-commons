@@ -58,7 +58,7 @@
 
     <script type="text/javascript">
         // Arrays with selected nodes to expand/delete
-        window.query = {{ query.id }};
+        window.query = {{ query_id }};
 
         // Initializes popover
         $(function () {
@@ -123,11 +123,12 @@
                 <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#algorithms">
                     Algorithms
                 </button>
-                <a class="btn btn-primary" id="analysis-upload-button">
-                    <span class="glyphicon glyphicon-flash" aria-hidden="true"></span>
-                    Analyze
-                </a>
-
+                {% if 'analysis' in blueprints %}
+                    <a class="btn btn-primary" id="analysis-upload-button">
+                        <span class="glyphicon glyphicon-flash" aria-hidden="true"></span>
+                        Analyze
+                    </a>
+                {% endif %}
             </div>
         </div>
 
@@ -677,22 +678,24 @@
                             </span>
                         </div>
                     </form>
-                    <hr>
-                    <p>
-                        Visualize significantly dysregulated biological processes based on their scores from a
-                        previously loaded heat diffusion <a href="{{ url_for('analysis.view_experiments') }}">
-                        experiment</a>.
-                    </p>
-                    <form id="heat-diffusion-form" method="get">
-                        <div class="input-group">
-                            <input type="text" class="form-control" placeholder="Experiment identifier"
-                                   name="analysis_id" id="analysis_id"/>
-                            <span class="input-group-btn">
+                    {% if 'analysis' in blueprints %}
+                        <hr>
+                        <p>
+                            Visualize significantly dysregulated biological processes based on their scores from a
+                            previously loaded heat diffusion <a href="{{ url_for('analysis.view_experiments') }}">
+                            experiment</a>.
+                        </p>
+                        <form id="heat-diffusion-form" method="get">
+                            <div class="input-group">
+                                <input type="text" class="form-control" placeholder="Experiment identifier"
+                                       name="analysis_id" id="analysis_id"/>
+                                <span class="input-group-btn">
                                 <input type="button" class="btn btn-primary" id="heat-diffusion-button" value="Submit"
                                        data-dismiss="modal"/>
                             </span>
-                        </div>
-                    </form>
+                            </div>
+                        </form>
+                    {% endif %}
                 </div><!-- /.Modal body -->
             </div><!-- /.Modal content -->
         </div><!-- /.Modal dialog -->

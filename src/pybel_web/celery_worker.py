@@ -9,39 +9,43 @@ redundant this nomenclature is.
 import hashlib
 import logging
 import os
+import random
+import time
+from typing import Dict
 
 import requests.exceptions
-import time
+from celery.app.task import Task
 from celery.utils.log import get_task_logger
 from flask import render_template
 from sqlalchemy.exc import IntegrityError, OperationalError
 
-from pybel import from_json, to_bel_path, to_bytes
+from bel_resources.exc import ResourceError
+from pybel import BELGraph, Manager, from_json, from_lines, to_bel_path, to_bytes
 from pybel.constants import METADATA_CONTACT, METADATA_DESCRIPTION, METADATA_LICENSES
 from pybel.manager.citation_utils import enrich_pubmed_citations
 from pybel.parser.exc import InconsistentDefinitionError
-from pybel.resources.exc import ResourceError
-from pybel_tools.mutation import add_canonical_names, add_identifiers, enrich_protein_and_rna_origins
-from pybel_tools.utils import enable_cool_mode
-from pybel_web.application import create_application
-from pybel_web.celery_utils import create_celery
-from pybel_web.constants import get_admin_email, integrity_message, merged_document_folder
-from pybel_web.manager import WebManager
-from pybel_web.manager_utils import (
-    fill_out_report, get_network_summary_dict, insert_graph, make_graph_summary, run_heat_diffusion_helper,
-)
+from pybel.struct.mutation import enrich_protein_and_rna_origins
+from pybel_tools.assembler.html.assembler import get_network_summary_dict
+from .application import create_application
+from .constants import get_admin_email, integrity_message, merged_document_folder
+from .core.celery import PyBELCelery
+from .manager import WebManager
+from .manager_utils import fill_out_report, insert_graph, run_heat_diffusion_helper
+from .models import Report
 
 celery_logger = get_task_logger(__name__)
 log = logging.getLogger(__name__)
 
 logging.basicConfig(level=logging.DEBUG)
-enable_cool_mode()  # turn off warnings for compilation
+logging.getLogger('urllib3.connectionpool').setLevel(logging.ERROR)
+logging.getLogger('pybel.parser').setLevel(logging.CRITICAL)
+
 celery_logger.setLevel(logging.DEBUG)
 log.setLevel(logging.DEBUG)
 
 app = create_application()
 mail = app.extensions.get('mail')
-celery = create_celery(app)
+celery = PyBELCelery.get_celery(app)
 
 dumb_belief_stuff = {
     METADATA_DESCRIPTION: {'Document description'},
@@ -54,26 +58,29 @@ pbw_sender = ("BEL Commons", 'bel-commons@scai.fraunhofer.de')
 
 @celery.task(name='debug-task')
 def run_debug_task():
-    """Run the debug task."""
+    """Run the debug task that sleeps for a trivial amount of time."""
     celery_logger.info('running celery debug task')
     log.info('running celery debug task')
+    time.sleep(random.randint(6, 10))
     return 6 + 2
 
 
-@celery.task(name='summarize-bel')
-def summarize_bel(connection, report_id):
+@celery.task(bind=True, name='summarize-bel', ignore_result=True)
+def summarize_bel(self: Task, connection: str, report_id: int):
     """Parse a BEL script asynchronously and email feedback.
 
-    :param str connection: A connection to build the manager
-    :param int report_id: A report to parse
+    :param self: The task that's being run. Automatically bound.
+    :param connection: A connection to build the manager
+    :param report_id: A report to parse
     """
     manager = WebManager(connection=connection)
 
     t = time.time()
-    report = manager.get_report_by_id(report_id)
+    report = manager.get_report_by_id(report_id)  # FIXME race condition with database?
     source_name = report.source_name
 
-    def make_mail(subject, body):
+    def make_mail(subject: str, body: str) -> None:
+        """Send a mail with the given subject and body."""
         if not mail:
             return
 
@@ -85,7 +92,7 @@ def summarize_bel(connection, report_id):
                 sender=pbw_sender,
             )
 
-    def finish_parsing(subject, body):
+    def finish_parsing(subject: str, body: str) -> str:
         """Send a message and finish parsing.
 
         :param str subject:
@@ -99,7 +106,7 @@ def summarize_bel(connection, report_id):
         return body
 
     try:
-        graph = report.parse_graph(manager=manager)
+        graph = parse_graph(report=report, manager=manager, task=self)
 
     except (ResourceError, requests.exceptions.ConnectionError, requests.exceptions.HTTPError):
         message = 'Connection to resource could not be established.'
@@ -116,7 +123,7 @@ def summarize_bel(connection, report_id):
 
     time_difference = time.time() - t
 
-    send_summary_mail(manager, graph, report, time_difference)
+    send_summary_mail(graph, report, time_difference)
 
     report.time = time_difference
     report.completed = True
@@ -130,13 +137,18 @@ def summarize_bel(connection, report_id):
     return 0
 
 
-@celery.task(name='upload-bel')
-def upload_bel(connection, report_id, enrich_citations=False):
+@celery.task(bind=True, name='upload-bel')
+def upload_bel(task: Task, connection: str, report_id: int, enrich_citations: bool = False):
     """Parse a BEL script asynchronously and send email feedback.
 
-    :param str connection: The connection string
-    :param int report_id: Report identifier
+    :param task: The task that's being run. Automatically bound.
+    :param connection: The connection string
+    :param report_id: Report identifier
+    :param enrich_citations:
     """
+    if not task.request.called_directly:
+        task.update_state(state='STARTED')
+
     manager = WebManager(connection=connection)
 
     t = time.time()
@@ -147,7 +159,8 @@ def upload_bel(connection, report_id, enrich_citations=False):
 
     celery_logger.info('Starting parse task for %s (report %s)', source_name, report_id)
 
-    def make_mail(subject, body):
+    def make_mail(subject: str, body: str) -> None:
+        """Send a mail with the given subject and body."""
         if not mail:
             return
 
@@ -159,7 +172,7 @@ def upload_bel(connection, report_id, enrich_citations=False):
                 sender=pbw_sender,
             )
 
-    def finish_parsing(subject, body):
+    def finish_parsing(subject: str, body: str) -> str:
         make_mail(subject, body)
         report.message = body
         manager.session.commit()
@@ -168,7 +181,7 @@ def upload_bel(connection, report_id, enrich_citations=False):
     celery_logger.info('parsing graph')
 
     try:
-        graph = report.parse_graph(manager=manager)
+        graph = parse_graph(report=report, manager=manager, task=task)
 
     except (ResourceError, requests.exceptions.ConnectionError, requests.exceptions.HTTPError) as e:
         message = 'Connection to resource could not be established: {}'.format(e)
@@ -233,10 +246,6 @@ def upload_bel(connection, report_id, enrich_citations=False):
         message = 'Granted rights for {} to {} after parsing {}'.format(network, report.user, source_name)
         return finish_parsing('Granted Rights from {}'.format(source_name), message)
 
-    celery_logger.info('enriching graph')
-    add_canonical_names(graph)
-    add_identifiers(graph)
-
     if report.infer_origin:
         enrich_protein_and_rna_origins(graph)
 
@@ -273,10 +282,8 @@ def upload_bel(connection, report_id, enrich_citations=False):
 
     celery_logger.info('done storing [%d]. starting to make report.', network.id)
 
-    graph_summary = make_graph_summary(graph)
-
     try:
-        fill_out_report(network, report, graph_summary)
+        fill_out_report(graph=graph, network=network, report=report)
         report.time = time.time() - t
 
         manager.session.add(report)
@@ -286,7 +293,9 @@ def upload_bel(connection, report_id, enrich_citations=False):
         make_mail('Uploaded succeeded for {} ({})'.format(graph, source_name),
                   '{} ({}) is done parsing. Check the network list page.'.format(source_name, graph))
 
-        return network.id
+        return {
+            'network_id': network.id
+        }
 
     except Exception as e:
         manager.session.rollback()
@@ -299,12 +308,12 @@ def upload_bel(connection, report_id, enrich_citations=False):
 
 
 @celery.task(name='merge-project')
-def merge_project(connection, user_id, project_id):
-    """Merges the graphs in a project and does stuff
+def merge_project(connection: str, user_id: int, project_id: int):
+    """Merge the graphs in a project.
 
-    :param str connection: A connection to build the manager
-    :param int user_id: The database identifier of the user
-    :param int project_id: The database identifier of the project
+    :param connection: A connection to build the manager
+    :param user_id: The database identifier of the user
+    :param project_id: The database identifier of the project
     """
     manager = WebManager(connection=connection)
 
@@ -344,11 +353,11 @@ def merge_project(connection, user_id, project_id):
 
 
 @celery.task(name='run-heat-diffusion')
-def run_heat_diffusion(connection, experiment_id):
-    """Runs the heat diffusion workflow.
+def run_heat_diffusion(connection: str, experiment_id: int):
+    """Run the heat diffusion workflow.
 
-    :param str connection: A connection to build the manager
-    :param int experiment_id:
+    :param connection: A connection to build the manager
+    :param experiment_id:
     """
     manager = WebManager(connection=connection)
     experiment = manager.get_experiment_by_id(experiment_id)
@@ -387,12 +396,13 @@ def run_heat_diffusion(connection, experiment_id):
 
 
 @celery.task(name='upload-json')
-def upload_json(connection, user_id, payload):
+def upload_json(connection: str, user_id: int, payload: Dict, public: bool = False):
     """Receives a JSON serialized BEL graph
 
-    :param str connection: A connection to build the manager
-    :param int user_id: the ID of the user to associate with the graph
+    :param connection: A connection to build the manager
+    :param user_id: the ID of the user to associate with the graph
     :param payload: JSON dictionary for :func:`pybel.from_json`
+    :param public: Should the network be made public?
     """
     manager = WebManager(connection=connection)
     user = manager.get_user_by_id(user_id)
@@ -404,7 +414,7 @@ def upload_json(connection, user_id, payload):
         return -1
 
     try:
-        insert_graph(manager, graph, user)
+        insert_graph(manager, graph, user, public=public)
     except Exception:
         celery_logger.exception('unable to insert graph')
         manager.session.rollback()
@@ -413,12 +423,12 @@ def upload_json(connection, user_id, payload):
     return 0
 
 
-def send_summary_mail(graph, report, time_difference):
+def send_summary_mail(graph: BELGraph, report: Report, time_difference: float):
     """Send a mail with a summary.
 
-    :param pybel.BELGraph graph:
-    :param Report report:
-    :param float time_difference: The time difference to log
+    :param graph:
+    :param report:
+    :param time_difference: The time difference to log
     """
     with app.app_context():
         html = render_template(
@@ -446,3 +456,26 @@ def send_summary_mail(graph, report, time_difference):
                 celery_logger.info('HTML printed to file at: %s', path)
             except FileNotFoundError:
                 celery_logger.info('no file printed.')
+
+
+def iterate_report_lines_in_task(report: Report, task: Task):
+    lines = report.get_lines()
+    len_lines = len(lines)
+    for i, line in enumerate(lines, start=1):
+        if not task.request.called_directly:
+            task.update_state(state='PROGRESS', meta={
+                'task': 'parsing',
+                'current_line_number': i,
+                'current_line': line,
+                'total_lines': len_lines,
+            })
+        yield line
+
+
+def parse_graph(report: Report, manager: Manager, task: Task) -> BELGraph:
+    return from_lines(
+        iterate_report_lines_in_task(report, task),
+        manager=manager,
+        allow_nested=report.allow_nested,
+        citation_clearing=report.citation_clearing,
+    )

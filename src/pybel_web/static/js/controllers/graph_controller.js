@@ -133,17 +133,17 @@ function handleExpasyNodeInfo(nodeObject, data) {
 }
 
 function handleGoNodeInfo(nodeObject, data) {
-    if (data.id) {
-        nodeObject['GO Identifier'] = data.id
+    if (data.go_id) {
+        nodeObject['GO Identifier'] = data.go_id
     }
     if (data.name) {
         nodeObject['GO Name'] = data.name
     }
-    if (data.def) {
-        nodeObject['GO Definition'] = data.def
+    if (data.namespace) {
+        nodeObject['GO Namespace'] = data.namespace
     }
-    if (data.alt_id) {
-        nodeObject['GO Alternate Identifiers'] = data.alt_id.join(' | ')
+    if (data.description) {
+        nodeObject['GO Definition'] = data.definition
     }
 }
 
@@ -382,8 +382,7 @@ function displayQueryInfo(query) {
                     }
                 }
                 return object.type + ": [" + arr.join(',') + "] " + queryType;
-            }
-            else if (object.type === 'sample') {
+            } else if (object.type === 'sample') {
                 return object.type + ': [seed=' + object.data.seed + ']';
             }
 
@@ -417,8 +416,7 @@ function displayQueryInfo(query) {
                 if (window.noResults === undefined) {
                     window.noResults = true;
                     alert('Query has no results. Build a new query');
-                }
-                else {
+                } else {
                     window.noResults = undefined;
                 }
             }
@@ -592,8 +590,7 @@ function reloadTree(tree) {
             if (window.noResults === undefined) {
                 window.noResults = true;
                 alert('Query has no results. Build a new query');
-            }
-            else {
+            } else {
                 window.noResults = undefined;
             }
         } else {
@@ -626,13 +623,13 @@ $(document).ready(function () {
             url: "/api/query/" + window.query + "/export/bel",
             dataType: "text"
         }).done(function (response) {
-            downloadText(response, "MyNetwork.bel")
+            downloadText(response, "query-" + window.query + ".bel")
         });
     });
 
     // // Export network as an image
     d3.select("#save-svg-graph").on("click", function () {
-        saveSvgAsPng(d3.select('#graph-svg').nodes()[0], 'MyNetwork.png');
+        saveSvgAsPng(d3.select('#graph-svg').nodes()[0], "query-" + window.query + ".png");
     });
 
     updateQueryTable(window.query);  // Renders table info of the given query
@@ -647,8 +644,7 @@ $(document).ready(function () {
             if (window.noResults === undefined) {
                 window.noResults = true;
                 alert('Query has no results. Build a new query');
-            }
-            else {
+            } else {
                 window.noResults = undefined;
             }
         } else {
@@ -1422,8 +1418,7 @@ function initD3Force(graph, tree) {
             if (edgeArray.indexOf(edgeObject.source[property] + "-" + edgeObject.target[property]) >= 0) {
                 nodesInEdges.push(edgeObject.source[property]);
                 nodesInEdges.push(edgeObject.target[property]);
-            }
-            else return edgeObject;
+            } else return edgeObject;
         });
 
         var nodesNotInEdges = node.filter(function (nodeObject) {

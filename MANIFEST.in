@@ -1,24 +1,12 @@
 graft src
 graft tests
+prune scripts
 
 recursive-include docs/source *.py
 recursive-include docs/source *.rst
+include docs/Makefile
 
-recursive-include migrations/*
-recursive-include migrations *.mako
-recursive-include migrations *.py
-recursive-include migrations *.rst
+global-exclude *.py[cod] __pycache__ *.so *.dylib .DS_Store *.gpickle
 
-recursive-include docs Makefile
-global-exclude docs/*
-
-global-exclude *.py[cod] __pycache__ *.so *.dylib .DS_Store
-
-exclude .bumpversion.cfg
-include *.rst *.txt LICENSE *.ini *.yml docs/Makefile .coveragerc .codecov.yml .codeclimate.yml .flake8
-
-include Dockerfile .dockerignore
-global-exclude examples *.owl
-
-global-exclude alembic alembic/*
-global-exclude scripts scripts/*
+exclude .bumpversion.cfg Dockerfile docker-compose.yml .dockerignore
+include *.rst *.txt *.yml LICENSE *.ini .flake8 .coveragerc

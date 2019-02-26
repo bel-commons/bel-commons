@@ -8,10 +8,12 @@ from flask import redirect, request
 from flask_admin.contrib.sqla import ModelView as ModelViewBase
 from flask_admin.contrib.sqla.ajax import QueryAjaxModelLoader
 from flask_admin.model.ajax import DEFAULT_PAGE_SIZE
-from flask_security import current_user, url_for_security
+from flask_security import SQLAlchemyUserDatastore, current_user, url_for_security
 from sqlalchemy import or_
 
+from pybel import Manager
 from pybel.manager.models import Network
+from .manager_base import iter_recent_public_networks
 from .models import Project
 
 
@@ -85,15 +87,11 @@ class QueryView(ModelView):
     column_display_pk = True
 
 
-def build_network_ajax_manager(manager):
-    """Build an AJAX manager class for use with Flask-Admin.
-
-    :param pybel_web.manager.WebManager manager:
-    :rtype: QueryAjaxModelLoader
-    """
+def build_network_ajax_manager(manager: Manager, user_datastore: SQLAlchemyUserDatastore) -> QueryAjaxModelLoader:
+    """Build an AJAX manager class for use with Flask-Admin."""
 
     class NetworkAjaxModelLoader(QueryAjaxModelLoader):
-        """Custom Network AJAX loader for Flask Admin"""
+        """A custom Network AJAX loader for Flask Admin."""
 
         def __init__(self):
             super(NetworkAjaxModelLoader, self).__init__('networks', manager.session, Network,
@@ -110,20 +108,13 @@ def build_network_ajax_manager(manager):
                 network_chain = chain(
                     current_user.iter_owned_networks(),
                     current_user.iter_shared_networks(),
-                    manager.iter_recent_public_networks()
+                    iter_recent_public_networks(manager),
                 )
 
                 allowed_network_ids = {
                     network.id
                     for network in network_chain
                 }
-
-                if current_user.is_scai:
-                    scai_role = manager.user_datastore.find_or_create_role(name='scai')
-
-                    for user in scai_role.users:
-                        for network in user.iter_owned_networks():
-                            allowed_network_ids.add(network.id)
 
                 if not allowed_network_ids:  # If the current user doesn't have any networks, then return nothing
                     return []
@@ -135,26 +126,22 @@ def build_network_ajax_manager(manager):
     return NetworkAjaxModelLoader()
 
 
-def build_project_view(manager):
-    """Build a Flask-Admin model view for a project.
-
-    :param pybel_web.manager.WebManager manager: A PyBEL manager
-    :rtype: flask_admin.contrib.sqla.ModelView
-    """
+def build_project_view(manager: Manager, user_datastore: SQLAlchemyUserDatastore) -> ModelView:
+    """Build a Flask-Admin model view for a project."""
 
     class ProjectView(ModelViewBase):
-        """Special view to allow users of given projects to manage them"""
+        """Special view to allow users of given projects to manage them."""
 
-        def is_accessible(self):
-            """Checks the current user is logged in"""
+        def is_accessible(self) -> bool:
+            """Check the current user is logged in."""
             return current_user.is_authenticated
 
         def inaccessible_callback(self, name, **kwargs):
-            """redirect to login page if user doesn't have access"""
+            """Redirect to login page if user doesn't have access."""
             return redirect(url_for_security('login', next=request.url))
 
         def get_query(self):
-            """Only show projects that the user is part of"""
+            """Show only projects that the user is part of."""
             parent_query = super(ProjectView, self).get_query()
 
             if current_user.is_admin:
@@ -168,12 +155,12 @@ def build_project_view(manager):
             return parent_query.filter(Project.id.in_(current_projects))
 
         def on_model_change(self, form, model, is_created):
-            """Hacky - automatically add user when they create a project"""
+            """Add the current user when they creating a project, automatically."""
             if current_user not in model.users:
                 model.users.append(current_user)
 
         form_ajax_refs = {
-            'networks': build_network_ajax_manager(manager)
+            'networks': build_network_ajax_manager(manager=manager, user_datastore=user_datastore)
         }
 
     return ProjectView(Project, manager.session)

@@ -1,14 +1,16 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""This file loads the three -omics data sets"""
+"""This script loads the three -omics data sets."""
 
 import json
 import logging
 import os
+from typing import List
 
 from pybel.manager import Manager
 from pybel_web.manager_utils import create_omic
+from pybel_web.models import Omic
 from pybel_web.resources.constants import OMICS_DATA_DIR
 
 log = logging.getLogger(__name__)
@@ -16,8 +18,8 @@ log = logging.getLogger(__name__)
 MANIFEST_FILE_NAME = 'manifest.json'
 
 
-def load_metadata(directory):
-    """Loads the manifest JSON file from this folder
+def load_metadata(directory: str):
+    """Load the manifest JSON file from this folder.
 
     :param str directory:
     :rtype: list[dict[str,str]]
@@ -28,12 +30,11 @@ def load_metadata(directory):
         return json.load(f)
 
 
-def create_omics_models(directory, metadata):
-    """Creates multiple omics models
+def create_omics_models(directory: str, metadata) -> List[Omic]:
+    """Create multiple -omics models.
 
     :param str directory:
     :param list[dict[str,str]] metadata:
-    :rtype: list[pybel_web.models.Omic]
     """
     results = []
 
@@ -54,12 +55,8 @@ def create_omics_models(directory, metadata):
     return results
 
 
-def upload_omics_models(omics, manager):
-    """Create a manager and upload omics models
-
-    :param list[pybel_web.models.Omic] omics:
-    :type manager: pybel.manager.Manager
-    """
+def upload_omics_models(omics: List[Omic], manager: Manager):
+    """Upload omics models."""
     log.info('adding omics models to session')
     manager.session.add_all(omics)
 
@@ -67,11 +64,8 @@ def upload_omics_models(omics, manager):
     manager.session.commit()
 
 
-def write_manifest(directory, omics):
-    """
-    :param str directory:
-    :param list[Omics] omics:
-    """
+def write_manifest(directory: str, omics: List[Omic]) -> None:
+    """Write a manifest of -omics data."""
     manifest_path = os.path.join(directory, MANIFEST_FILE_NAME)
 
     log.info('generating manifest for %s', directory)
@@ -85,11 +79,10 @@ def write_manifest(directory, omics):
         json.dump(manifest_data, file, indent=2)
 
 
-def work_omics(directory, connection=None, reload=False):
+def work_omics(directory: str, manager: Manager, reload: bool = False):
     """
-    :param str directory: Directory containing omics data and a manifest
-    :param connection: database connection string to cache, pre-built :class:`Manager`, or None to use default cache
-    :type connection: Optional[str or pybel.manager.Manager]
+
+    :param directory: Directory containing omics data and a manifest
     :param bool reload: Should the experiments be reloaded?
     """
     if not (os.path.exists(directory) and os.path.isdir(directory)):
@@ -102,15 +95,13 @@ def work_omics(directory, connection=None, reload=False):
 
     metadata = load_metadata(directory)
     omics = create_omics_models(directory, metadata)
-    upload_omics_models(omics, manager=connection)
+    upload_omics_models(omics, manager=manager)
     write_manifest(directory, omics)
 
 
-def main(connection=None, reload=False):
-    """Loads omics models to database
+def main(manager: Manager, reload: bool = False):
+    """Load omics models to database.
 
-    :param connection: database connection string to cache, pre-built :class:`Manager`, or None to use default cache
-    :type connection: Optional[str or pybel.manager.Manager]
     :param bool reload: Should the experiments be reloaded?
     """
     directories = [
@@ -121,7 +112,7 @@ def main(connection=None, reload=False):
 
     for directory in directories:
         try:
-            work_omics(directory=directory, connection=connection, reload=reload)
+            work_omics(directory=directory, manager=manager, reload=reload)
         except Exception:
             log.exception('failed for directory %s', directory)
 

@@ -18,6 +18,7 @@ import-order-style = pycharm
 application-import-names =
     pybel_web
     pybel_tools
+    bel_resources
     pybel
     bio2bel
     tests

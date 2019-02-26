@@ -2,19 +2,23 @@
 
 import logging
 from io import BytesIO, StringIO
+from operator import methodcaller
+from typing import Optional
 
 from flask import Response, jsonify, send_file
 
-from pybel import to_bel_lines, to_bytes, to_csv, to_graphml, to_gsea, to_jgif, to_json, to_sif
-from pybel.canonicalize import node_to_bel
+from pybel import BELGraph, to_bel_lines, to_bytes, to_csv, to_graphml, to_gsea, to_jgif, to_json, to_sif
+from pybel.canonicalize import edge_to_bel
 from pybel.constants import (
-    CAUSAL_DECREASE_RELATIONS, CAUSAL_INCREASE_RELATIONS, DECREASES, FUSION, HASH, INCREASES, MEMBERS, RELATION,
+    CAUSAL_DECREASE_RELATIONS, CAUSAL_INCREASE_RELATIONS, DECREASES, FUSION, INCREASES, MEMBERS, RELATION,
     TWO_WAY_RELATIONS, VARIANTS,
 )
 from pybel.struct.summary import get_pubmed_identifiers
-from pybel.utils import hash_edge, hash_node
-from pybel_cx import to_cx
-from pybel_tools.mutation.metadata import serialize_authors
+
+try:
+    from pybel_cx import to_cx
+except ImportError:
+    to_cx = None
 
 __all__ = [
     'to_json_custom',
@@ -24,52 +28,50 @@ __all__ = [
 log = logging.getLogger(__name__)
 
 
-def to_json_custom(graph, _id='id', source='source', target='target'):
-    """Prepares JSON for the biological network explorer
+def to_json_custom(graph: BELGraph, id_key: str = 'id', source_key: str = 'source', target_key: str = 'target'):
+    """Prepares JSON for the biological network explorer.
 
-    :type graph: pybel.BELGraph
-    :param str _id: The key to use for the identifier of a node, which is calculated with an enumeration
-    :param str source: The key to use for the source node
-    :param str target: The key to use for the target node
+    :param id_key: The key to use for the identifier of a node, which is calculated with an enumeration
+    :param source_key: The key to use for the source node
+    :param target_key: The key to use for the target node
     :rtype: dict
     """
     result = {}
-
     mapping = {}
 
     result['nodes'] = []
-    for i, node in enumerate(sorted(graph, key=hash_node)):
-        nd = graph.node[node].copy()
-        nd[_id] = hash_node(node)
-        nd['bel'] = node_to_bel(nd)
-        if VARIANTS in nd or FUSION in nd or MEMBERS in nd:
-            nd['cname'] = nd['bel']
-        result['nodes'].append(nd)
+    for i, node in enumerate(sorted(graph, key=methodcaller('as_bel'))):
+        data = node.copy()
+        data[id_key] = node.sha512
+        data['bel'] = node.as_bel()
+        if any(attr in data for attr in (VARIANTS, FUSION, MEMBERS)):
+            data['cname'] = data['bel']
+
+        result['nodes'].append(data)
         mapping[node] = i
 
     edge_set = set()
 
     rr = {}
 
-    for u, v, data in graph.edges_iter(data=True):
-
-        if data[RELATION] in TWO_WAY_RELATIONS and (u, v) != tuple(sorted((u, v))):
+    for u, v, key, data in graph.edges(keys=True, data=True):
+        if data[RELATION] in TWO_WAY_RELATIONS and (u, v) != tuple(sorted((u, v), key=methodcaller('as_bel'))):
             continue  # don't keep two way edges twice
 
         entry_code = u, v
 
         if entry_code not in edge_set:  # Avoids duplicate sending multiple edges between nodes with same relation
             rr[entry_code] = {
-                source: mapping[u],
-                target: mapping[v],
+                source_key: mapping[u],
+                target_key: mapping[v],
                 'contexts': []
             }
 
             edge_set.add(entry_code)
 
         payload = {
-            'id': data.get(HASH, hash_edge(u, v, data)),
-            'bel': graph.edge_to_bel(u, v, data=data)
+            'id': key,
+            'bel': edge_to_bel(u, v, data)
         }
         payload.update(data)
 
@@ -86,20 +88,15 @@ def to_json_custom(graph, _id='id', source='source', target='target'):
     return result
 
 
-def serve_network(graph, serve_format=None):
-    """A helper function to serialize a graph and download as a file
-
-    :param pybel.BELGraph graph: A BEL graph
-    :param Optional[str] serve_format: The format to serve the network
-    :rtype: flask.Response
-    """
+def serve_network(graph: BELGraph, serve_format: Optional[str] = None) -> Response:
+    """Help serialize a graph and download as a file."""
     if serve_format is None:
         return jsonify(to_json_custom(graph))
 
-    elif serve_format in {'nl', 'nodelink'}:
+    elif serve_format in {'nl', 'nodelink', 'json'}:
         return jsonify(to_json(graph))
 
-    elif serve_format == 'cx':
+    elif serve_format == 'cx' and to_cx is not None:
         return jsonify(to_cx(graph))
 
     elif serve_format == 'jgif':
@@ -111,11 +108,10 @@ def serve_network(graph, serve_format=None):
             data,
             mimetype='application/octet-stream',
             as_attachment=True,
-            attachment_filename='graph.gpickle'
+            attachment_filename='{}.gpickle'.format(graph.name)
         )
 
     elif serve_format == 'bel':
-        serialize_authors(graph)
         data = '\n'.join(to_bel_lines(graph))
         return Response(data, mimetype='text/plain')
 
@@ -126,7 +122,7 @@ def serve_network(graph, serve_format=None):
         return send_file(
             bio,
             mimetype='text/xml',
-            attachment_filename='graph.graphml',
+            attachment_filename='{}.graphml'.format(graph.name),
             as_attachment=True
         )
 
@@ -137,7 +133,7 @@ def serve_network(graph, serve_format=None):
         data = BytesIO(bio.read().encode('utf-8'))
         return send_file(
             data,
-            attachment_filename="graph.sif",
+            attachment_filename="{}.sif".format(graph.name),
             as_attachment=True
         )
 
@@ -149,7 +145,7 @@ def serve_network(graph, serve_format=None):
         return send_file(
             data,
             mimetype="text/tab-separated-values",
-            attachment_filename="graph.tsv",
+            attachment_filename="{}.tsv".format(graph.name),
             as_attachment=True
         )
 
@@ -160,7 +156,7 @@ def serve_network(graph, serve_format=None):
         data = BytesIO(bio.read().encode('utf-8'))
         return send_file(
             data,
-            attachment_filename="graph.grp",
+            attachment_filename="{}.grp".format(graph.name),
             as_attachment=True
         )
 
@@ -175,7 +171,7 @@ def serve_network(graph, serve_format=None):
         return send_file(
             data,
             mimetype="text/tab-separated-values",
-            attachment_filename="citations.txt",
+            attachment_filename="{}-citations.txt".format(graph.name),
             as_attachment=True
         )
 
