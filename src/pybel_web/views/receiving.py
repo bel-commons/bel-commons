@@ -49,10 +49,10 @@ def _get_user():
 
     user = manager.user_datastore.find_user(email=username)
     if user is None:
-        return jsonify(success=False, code=2, message='user does not exist')
+        return jsonify(success=False, code=2, message=f'user does not exist: {username}')
 
     verified = verify_password(password, user.password)
     if not verified:
-        return jsonify(success=False, code=3, message='bad password')
+        return jsonify(success=False, code=3, message=f'bad password for {username}')
 
     return user
