@@ -4,8 +4,8 @@
 
 import logging
 
+import flask_cors
 from flask import Blueprint, jsonify, request
-from flask_cors import cross_origin
 
 from pybel import from_url
 from pybel.struct import get_annotation_values, get_subgraph_by_annotations, union
@@ -52,7 +52,7 @@ def semantic_merge():
 
 
 @external_blueprint.route('/list_alzheimers_subgraphs/')
-@cross_origin()
+@flask_cors.cross_origin()
 def list_neurommsig_ad_subgraph_names():
     """Returns a list of Alzheimer's Disease NeuroMMSigs
 
@@ -66,7 +66,7 @@ def list_neurommsig_ad_subgraph_names():
 
 
 @external_blueprint.route('/get_alzheimers_subgraphs/')
-@cross_origin()
+@flask_cors.cross_origin()
 def get_neurommsig_ad_subgraph():
     """Returns Alzheimer's Disease NeuroMMSigs
 

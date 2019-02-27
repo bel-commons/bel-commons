@@ -18,13 +18,14 @@ import time
 from getpass import getuser
 from typing import Optional
 
-from flasgger import Swagger
-from flask import Flask
-from flask_bootstrap import Bootstrap, WebCDN
-from flask_mail import Mail
-from flask_security import Security
-from raven.contrib.flask import Sentry
+import flasgger
+import flask
+import flask_bootstrap
+import flask_mail
+import flask_security
+import raven.contrib.flask
 
+import pybel_web.core
 from pybel.constants import PYBEL_CONNECTION, config as pybel_config, get_cache_connection
 from pybel_web.application_utils import (
     register_admin_service, register_error_handlers, register_examples, register_transformations,
@@ -38,7 +39,6 @@ from pybel_web.constants import (
 )
 from pybel_web.converters import IntListConverter, ListConverter
 from pybel_web.core import PyBELSQLAlchemy as PyBELSQLAlchemyBase
-from pybel_web.core.celery import PyBELCelery
 from pybel_web.database_service import api_blueprint
 from pybel_web.forms import ExtendedRegisterForm
 from pybel_web.main_service import ui_blueprint
@@ -52,16 +52,16 @@ log = logging.getLogger(__name__)
 
 _default_config_location = 'pybel_web.config.Config'
 
-bootstrap = Bootstrap()
-mail = Mail()
-security = Security()
-swagger = Swagger()
-celery = PyBELCelery()
+bootstrap = flask_bootstrap.Bootstrap()
+mail = flask_mail.Mail()
+security = flask_security.Security()
+swagger = flasgger.Swagger()
+celery = pybel_web.core.PyBELCelery()
+
 
 # TODO upgrade to jQuery 2?
 # See: https://pythonhosted.org/Flask-Bootstrap/faq.html#why-are-you-shipping-jquery-1-instead-of-jquery-2
-# app.extensions['bootstrap']['cdns']['jquery'] = jquery2_cdn
-jquery2_cdn = WebCDN('//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/')
+# app.extensions['bootstrap']['cdns']['jquery'] = flask_bootstrap.WebCDN('//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/')
 
 
 def _send_startup_mail(app):
@@ -85,9 +85,9 @@ def _send_startup_mail(app):
         log.info(f'notified {notify}')
 
 
-def create_application(config: Optional[PyBELWebConfig] = None) -> Flask:
+def create_application(config: Optional[PyBELWebConfig] = None) -> flask.Flask:
     """Build a Flask app."""
-    app = Flask(__name__)
+    app = flask.Flask(__name__)
 
     if config is None:
         config = PyBELWebConfig.load()
@@ -152,7 +152,7 @@ def create_application(config: Optional[PyBELWebConfig] = None) -> Flask:
     sentry_dsn = app.config.get(SENTRY_DSN)
     if sentry_dsn is not None:
         log.info(f'initiating Sentry: {sentry_dsn}')
-        sentry = Sentry(app, dsn=sentry_dsn)
+        sentry = raven.contrib.flask.Sentry(app, dsn=sentry_dsn)
     else:
         sentry = None
 
