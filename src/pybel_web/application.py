@@ -180,6 +180,9 @@ def create_application(config: Optional[PyBELWebConfig] = None) -> flask.Flask:
     app.register_blueprint(reporting_blueprint)
 
     if has_celery:  # Requires celery!
+        log.info('registering celery-specific apps')
+        app.register_blueprint(receiving_blueprint)
+
         if config.enable_uploader:
             log.info('registering uploading app')
             from pybel_web.views import uploading_blueprint
@@ -187,8 +190,6 @@ def create_application(config: Optional[PyBELWebConfig] = None) -> flask.Flask:
 
         if config.enable_analysis:
             app.register_blueprint(experiment_blueprint)
-
-        app.register_blueprint(receiving_blueprint)
 
     if config.enable_parser:
         log.info('registering parser app')

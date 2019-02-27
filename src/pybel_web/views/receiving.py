@@ -7,6 +7,7 @@ import logging
 from flask import Blueprint, abort, current_app, jsonify, request
 from flask_security.utils import verify_password
 
+from pybel_web.constants import SQLALCHEMY_DATABASE_URI
 from pybel_web.manager_utils import next_or_jsonify
 from pybel_web.models import User
 from pybel_web.proxies import celery, manager
@@ -31,42 +32,9 @@ def upload():
 
     # TODO assume https authentication and use this to assign user to receive network function
     payload = request.get_json()
-    connection = current_app.config['SQLALCHEMY_DATABASE_URI']
+    connection = current_app.config[SQLALCHEMY_DATABASE_URI]
     task = celery.send_task('upload-json', args=[connection, user.id, payload, public])
     return next_or_jsonify('Sent async receive task', task_id=task.id)
-
-
-@receiving_blueprint.route('/get_latest_network_version', methods=['POST'])
-def get_latest_network_version():
-    """Get a network by name.
-
-    ---
-    tags:
-        - network
-    parameters:
-      - name: name
-        in: query
-        description: The network name
-        required: true
-        type: string
-    """
-    user = _get_user()
-    if not isinstance(user, User):
-        return user
-
-    name = request.args.get('name')
-    if name is None:
-        return jsonify(success=False, code=4, message='name argument not supplied')
-
-    network = manager.get_most_recent_network_by_name(name)
-
-    if network is None:
-        return jsonify(success=False, code=5, message='network does not exist')
-
-    if not manager._network_has_permission(user=user, network_id=network.id):
-        return jsonify(success=False, code=6, message='user does not have rights to network')
-
-    return jsonify(success=True, code=0, network=network.to_json())
 
 
 def _get_user():
