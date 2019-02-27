@@ -6,8 +6,6 @@ RUN pip install psycopg2-binary gunicorn
 RUN pip install git+https://github.com/pybel/pybel.git
 RUN pip install git+https://github.com/pybel/pybel-tools.git
 
-ADD requirements.txt /
-RUN pip install -r requirements.txt
-
 COPY . /app
-WORKDIR /app/src
+WORKDIR /app
+RUN pip install .

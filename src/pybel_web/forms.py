@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""Forms encoded in WTForms for PyBEL Web."""
+"""Forms encoded in WTForms for BEL Commons."""
 
 from flask_security import RegisterForm
 from flask_security.forms import get_form_field_label
@@ -29,7 +29,8 @@ class SeedSubgraphForm(FlaskForm):
             (SEED_TYPE_DOWNSTREAM, 'Induce over downstream causal neighbors (2 layers)'),
             (SEED_TYPE_INDUCTION, 'Only induce a subgraph over the given nodes'),
         ],
-        default=SEED_TYPE_NEIGHBORS)
+        default=SEED_TYPE_NEIGHBORS,
+    )
     filter_pathologies = BooleanField('Filter pathology nodes', default=False)
     submit_subgraph = SubmitField('Submit Subgraph')
 
@@ -50,11 +51,15 @@ class ParserForm(FlaskForm):
         DataRequired(),
         FileAllowed(['bel'], 'Only files with the *.bel extension are allowed')
     ])
-    allow_nested = BooleanField('My document contains <a href="http://pybel.readthedocs.io/en/latest/io.html#allow-'
-                                'nested">nested statements</a>')
-    disable_citation_clearing = BooleanField('My document sometimes has evidences before citations - disable <a href="h'
-                                             'ttp://pybel.readthedocs.io/en/latest/io.html#citation-clearing">citation '
-                                             'clearing</a>')
+    allow_nested = BooleanField(
+        'My document contains <a href="http://pybel.readthedocs.io/en/latest/io.html#allow-'
+        'nested">nested statements</a>'
+    )
+    disable_citation_clearing = BooleanField(
+        'My document sometimes has evidences before citations - disable <a href="h'
+        'ttp://pybel.readthedocs.io/en/latest/io.html#citation-clearing">citation '
+        'clearing</a>'
+    )
     feedback = BooleanField('Just email me a summary of my network and error report', default=False)
     public = BooleanField('Make my knowledge assembly publicly available', default=True)
     infer_origin = BooleanField('Enrich protein nodes with their corresponding RNA and gene nodes', default=False)
@@ -64,7 +69,8 @@ class ParserForm(FlaskForm):
             ('utf-8', 'My document is encoded in UTF-8'),
             ('utf_8_sig', 'My document is encoded in UTF-8 with a BOM (for Windows users who are having problems)')
         ],
-        default='utf-8')
+        default='utf-8',
+    )
     submit = SubmitField('Upload')
 
 
@@ -84,7 +90,8 @@ class DifferentialGeneExpressionForm(FlaskForm):
             ('\t', 'My document is a TSV file'),
             (',', 'My document is a CSV file'),
         ],
-        default='\t')
+        default='\t',
+    )
     submit = SubmitField('Analyze')
 
 
