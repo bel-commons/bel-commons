@@ -2,6 +2,8 @@
 
 """An extension to Flask-SQLAlchemy."""
 
+from __future__ import annotations
+
 import logging
 from typing import Type
 
@@ -35,15 +37,15 @@ class PyBELSQLAlchemy(SQLAlchemy):
         self.manager.bind()
 
     @classmethod
-    def get_manager_proxy(cls):
+    def get_manager_proxy(cls) -> Type[Manager]:
         """Get a proxy for the manager from this app."""
         return LocalProxy(cls._get_manager_ca)
 
     @classmethod
-    def _get_manager_ca(cls):
+    def _get_manager_ca(cls) -> Type[Manager]:
         return cls.get_manager(current_app)
 
     @staticmethod
-    def get_manager(app: Flask) -> manager_cls:
+    def get_manager(app: Flask) -> Type[Manager]:
         """Get the manager from this app."""
         return get_state(app).db.manager

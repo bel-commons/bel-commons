@@ -66,8 +66,10 @@ def set_debug(level):
 def set_debug_param(debug):
     if debug == 1:
         set_debug(logging.INFO)
+        log.info('Logging at logging.INFO')
     elif debug == 2:
         set_debug(logging.DEBUG)
+        log.info('Logging at logging.DEBUG')
 
     logging.getLogger('passlib.registry').setLevel(logging.WARNING)
 
@@ -324,11 +326,12 @@ def add(manager: WebManager, email: str, password: str, admin: bool):
         user = ds.create_user(email=email, password=password, confirmed_at=datetime.datetime.now())
 
         if admin:
-            ds.add_role_to_user(user, 'admin')
+            admin_role = ds.find_or_create_role('admin')
+            ds.add_role_to_user(user, admin_role)
 
         ds.commit()
     except Exception:
-        log.exception("Couldn't create user")
+        log.exception(f"Couldn't create user {email}")
 
 
 @users.command()
@@ -366,7 +369,7 @@ def add_role(manager: WebManager, email: str, role: str):
         ds.add_role_to_user(email, role)
         ds.commit()
     except Exception:
-        log.exception("Couldn't add role")
+        log.exception(f"Couldn't assign {email} as {role}")
 
 
 @manage.group()
@@ -385,7 +388,7 @@ def add(manager: WebManager, name: str, description: Optional[str]):
         ds.create_role(name=name, description=description)
         ds.commit()
     except Exception:
-        log.exception("Couldn't create role")
+        log.exception(f"Couldn't create role {name}")
 
 
 @roles.command()
@@ -433,7 +436,7 @@ def export(manager: WebManager, output: TextIO):
             project.to_json()
             for project in manager.session.query(Project).all()
         ],
-        output
+        output,
     )
 
 
@@ -563,8 +566,8 @@ def drop(manager: WebManager, omic_id: Optional[int], yes: bool):
 @manage.command()
 @click.pass_obj
 def summarize(manager: WebManager):
-    """Summarize the contents of the database/"""
-    click.echo('Users: {}'.format(manager.session.query(User).count()))
+    """Summarize the contents of the database."""
+    click.echo(f'Users: {manager.count_users()}')
     click.echo('Roles: {}'.format(manager.session.query(Role).count()))
     click.echo('Projects: {}'.format(manager.session.query(Project).count()))
     click.echo('Reports: {}'.format(manager.session.query(Report).count()))
@@ -622,8 +625,7 @@ if omics_dir is not None or bms_dir is not None:
     if omics_dir is not None and bms_dir is not None:
         @examples.command()
         @click.option('--reload-omics', is_flag=True, help='Reload')
-        @click.option('-p', '--permutations', type=int, help='Number of permutations to run. Defaults to 25.',
-                      default=25)
+        @click.option('-p', '--permutations', type=int, default=25,show_default=True)
         @click.option('--skip-bio2bel', is_flag=True)
         @click.option('--skip-cbn', is_flag=True)
         @click.pass_obj

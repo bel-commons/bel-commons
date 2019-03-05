@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 
+"""Utilities for BEL Commons."""
+
 import logging
 from typing import Dict, List
 
 from pybel import BELGraph
 from pybel.struct.summary import get_annotation_values_by_annotation, get_annotations, get_pubmed_identifiers
-from .constants import VERSION
+from .version import VERSION
 
 __all__ = [
     'calculate_overlap_info',

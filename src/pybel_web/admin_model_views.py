@@ -104,7 +104,7 @@ def build_network_ajax_manager(manager: Manager, user_datastore: SQLAlchemyUserD
             filters = (field.ilike(u'%%%s%%' % term) for field in self._cached_fields)
             query = query.filter(or_(*filters))
 
-            if not current_user.is_admin:
+            if not (current_user.is_authenticated and current_user.is_admin):
                 network_chain = chain(
                     current_user.iter_owned_networks(),
                     current_user.iter_shared_networks(),
@@ -144,7 +144,7 @@ def build_project_view(manager: Manager, user_datastore: SQLAlchemyUserDatastore
             """Show only projects that the user is part of."""
             parent_query = super(ProjectView, self).get_query()
 
-            if current_user.is_admin:
+            if current_user.is_authenticated and current_user.is_admin:
                 return parent_query
 
             current_projects = {

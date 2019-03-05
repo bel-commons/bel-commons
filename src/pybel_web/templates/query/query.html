@@ -21,7 +21,7 @@
             <div class="panel-heading">
                 <h3 class="panel-title">Query {{ query.id }}
 
-                    {% if current_user.is_admin %}
+                    {% if current_user.is_authenticated and current_user.is_admin %}
                         <div class="pull-right">
                             <a href="{{ url_for('dbs.drop_query_by_id', query_id=query.id, next=url_for('ui.home')) }}">
                                 <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
@@ -60,7 +60,7 @@
                     <span class="glyphicon glyphicon-download"></span> Download Transaction
                 </a>
 
-                {% if current_user.is_admin %}
+                {% if current_user.is_authenticated and current_user.is_admin %}
                     <a class="btn btn-warning"
                        href="{{ url_for('dbs.drop_query_by_id', query_id=query.id, next=url_for('ui.view_current_user_activity')) }}">
                         <span class="glyphicon glyphicon-remove"></span> Delete

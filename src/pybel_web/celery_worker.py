@@ -20,14 +20,14 @@ from flask import render_template
 from sqlalchemy.exc import IntegrityError, OperationalError
 
 from bel_resources.exc import ResourceError
-from pybel import BELGraph, Manager, from_json, from_lines, to_bel_path, to_bytes
+from pybel import BELGraph, Manager, from_json, from_lines, to_bytes
 from pybel.constants import METADATA_CONTACT, METADATA_DESCRIPTION, METADATA_LICENSES
 from pybel.manager.citation_utils import enrich_pubmed_citations
 from pybel.parser.exc import InconsistentDefinitionError
 from pybel.struct.mutation import enrich_protein_and_rna_origins
 from pybel_tools.assembler.html.assembler import get_network_summary_dict
 from .application import create_application
-from .constants import get_admin_email, integrity_message, merged_document_folder
+from .constants import get_admin_emails, integrity_message
 from .core.celery import PyBELCelery
 from .manager import WebManager
 from .manager_utils import fill_out_report, insert_graph, run_heat_diffusion_helper
@@ -47,17 +47,17 @@ app = create_application()
 mail = app.extensions.get('mail')
 celery = PyBELCelery.get_celery(app)
 
-dumb_belief_stuff = {
+DEFAULT_METADATA = {
     METADATA_DESCRIPTION: {'Document description'},
     METADATA_CONTACT: {'your@email.com'},
-    METADATA_LICENSES: {'Document license'}
+    METADATA_LICENSES: {'Document license'},
 }
 
 pbw_sender = ("BEL Commons", 'bel-commons@scai.fraunhofer.de')
 
 
 @celery.task(name='debug-task')
-def run_debug_task():
+def run_debug_task() -> int:
     """Run the debug task that sleeps for a trivial amount of time."""
     celery_logger.info('running celery debug task')
     log.info('running celery debug task')
@@ -110,16 +110,15 @@ def summarize_bel(self: Task, connection: str, report_id: int):
 
     except (ResourceError, requests.exceptions.ConnectionError, requests.exceptions.HTTPError):
         message = 'Connection to resource could not be established.'
-        return finish_parsing('Parsing Failed for {}'.format(source_name), message)
+        return finish_parsing(f'Parsing Failed for {source_name}', message)
 
     except InconsistentDefinitionError as e:
-        message = 'Parsing failed for {} because {} was redefined on line {}.'.format(source_name, e.definition,
-                                                                                      e.line_number)
-        return finish_parsing('Parsing Failed for {}'.format(source_name), message)
+        message = f'Parsing failed for {source_name} because {e.definition} was redefined on line {e.line_number}.'
+        return finish_parsing(f'Parsing Failed for {source_name}', message)
 
     except Exception as e:
-        message = 'Parsing failed for {} from a general error: {}'.format(source_name, e)
-        return finish_parsing('Parsing Failed for {}'.format(source_name), message)
+        message = f'Parsing failed for {source_name} from a general error: {e}'
+        return finish_parsing(f'Parsing Failed for {source_name}', message)
 
     time_difference = time.time() - t
 
@@ -157,7 +156,7 @@ def upload_bel(task: Task, connection: str, report_id: int, enrich_citations: bo
     report_id = report.id
     source_name = report.source_name
 
-    celery_logger.info('Starting parse task for %s (report %s)', source_name, report_id)
+    celery_logger.info(f'Starting parse task for {source_name} (report {report_id})')
 
     def make_mail(subject: str, body: str) -> None:
         """Send a mail with the given subject and body."""
@@ -184,35 +183,34 @@ def upload_bel(task: Task, connection: str, report_id: int, enrich_citations: bo
         graph = parse_graph(report=report, manager=manager, task=task)
 
     except (ResourceError, requests.exceptions.ConnectionError, requests.exceptions.HTTPError) as e:
-        message = 'Connection to resource could not be established: {}'.format(e)
-        return finish_parsing('Parsing Failed for {}'.format(source_name), message)
+        message = f'Connection to resource could not be established: {e}'
+        return finish_parsing(f'Parsing Failed for {source_name}', message)
 
     except InconsistentDefinitionError as e:
-        message = 'Parsing failed for {} because {} was redefined on line {}.'.format(source_name, e.definition,
-                                                                                      e.line_number)
-        return finish_parsing('Parsing Failed for {}'.format(source_name), message)
+        message = f'Parsing failed for {source_name} because {e.definition} was redefined on line {e.line_number}.'
+        return finish_parsing(f'Parsing Failed for {source_name}', message)
 
     except Exception as e:
-        message = 'Parsing failed for {} from a general error: {}'.format(source_name, e)
-        return finish_parsing('Parsing Failed for {}'.format(source_name), message)
+        message = f'Parsing failed for {source_name} from a general error: {e}'
+        return finish_parsing(f'Parsing Failed for {source_name}', message)
 
     if not graph.name:
-        message = 'Parsing failed for {} because SET DOCUMENT Name was missing.'.format(source_name)
-        return finish_parsing('Parsing Failed for {}'.format(source_name), message)
+        message = f'Parsing failed for {source_name} because SET DOCUMENT Name was missing.'
+        return finish_parsing(f'Parsing Failed for {source_name}', message)
 
     if not graph.version:
-        message = 'Parsing failed for {} because SET DOCUMENT Version was missing.'.format(source_name)
-        return finish_parsing('Parsing Failed for {}'.format(source_name), message)
+        message = f'Parsing failed for {source_name} because SET DOCUMENT Version was missing.'
+        return finish_parsing(f'Parsing Failed for {source_name}', message)
 
     problem = {
-        k: v
-        for k, v in graph.document.items()
-        if k in dumb_belief_stuff and v in dumb_belief_stuff[k]
+        key: value
+        for key, value in graph.document.items()
+        if key in DEFAULT_METADATA and value in DEFAULT_METADATA[key]
     }
 
     if problem:
-        message = '{} was rejected because it has "default" metadata: {}'.format(source_name, problem)
-        return finish_parsing('Rejected {}'.format(source_name), message)
+        message = f'{source_name} was rejected because it has "default" metadata: {problem}'
+        return finish_parsing(f'Rejected {source_name}', message)
 
     send_summary_mail(graph, report, time.time() - t)
 
@@ -222,29 +220,25 @@ def upload_bel(task: Task, connection: str, report_id: int, enrich_citations: bo
         message = integrity_message.format(graph.name, graph.version)
 
         if network.report.user == report.user:  # This user is being a fool
-            return finish_parsing('Uploading Failed for {}'.format(source_name), message)
+            return finish_parsing(f'Uploading Failed for {source_name}', message)
 
         if hashlib.sha1(network.blob).hexdigest() != hashlib.sha1(to_bytes(graph)).hexdigest():
             with app.app_context():
                 app.extensions['mail'].send_message(
                     subject='Possible attempted Espionage',
-                    recipients=[get_admin_email()],
-                    body='The following user ({} {}) may have attempted espionage of network: {}'.format(
-                        report.user.id,
-                        report.user.email,
-                        network
-                    ),
+                    recipients=get_admin_emails(),
+                    body=f'User ({report.user.id} {report.user.email}) may have attempted espionage of {network}',
                     sender=pbw_sender,
                 )
 
-            return finish_parsing('Upload Failed for {}'.format(source_name), message)
+            return finish_parsing(f'Upload Failed for {source_name}', message)
 
         # Grant rights to this user
         network.users.append(report.user)
         manager.session.commit()
 
-        message = 'Granted rights for {} to {} after parsing {}'.format(network, report.user, source_name)
-        return finish_parsing('Granted Rights from {}'.format(source_name), message)
+        message = f'Granted rights for {network} to {report.user} after parsing {source_name}'
+        return finish_parsing(f'Granted Rights from {source_name}', message)
 
     if report.infer_origin:
         enrich_protein_and_rna_origins(graph)
@@ -260,11 +254,11 @@ def upload_bel(task: Task, connection: str, report_id: int, enrich_citations: bo
         except Exception:
             celery_logger.exception('problem fixing citations')
 
-    upload_failed_text = 'Upload Failed for {}'.format(source_name)
+    upload_failed_text = f'Upload Failed for {source_name}'
 
     try:
-        celery_logger.info('inserting %s with %s', graph, manager.engine.url)
-        network = manager.insert_graph(graph, store_parts=app.config.get("PYBEL_USE_EDGE_STORE", True))
+        celery_logger.info(f'inserting {graph} with {manager.engine.url}')
+        network = manager.insert_graph(graph)
 
     except IntegrityError as e:
         manager.session.rollback()
@@ -280,7 +274,7 @@ def upload_bel(task: Task, connection: str, report_id: int, enrich_citations: bo
         manager.session.rollback()
         return finish_parsing(upload_failed_text, str(e))
 
-    celery_logger.info('done storing [%d]. starting to make report.', network.id)
+    celery_logger.info(f'done storing [{network.id}]. starting to make report.')
 
     try:
         fill_out_report(graph=graph, network=network, report=report)
@@ -290,16 +284,16 @@ def upload_bel(task: Task, connection: str, report_id: int, enrich_citations: bo
         manager.session.commit()
 
         celery_logger.info('report #%d complete [%d]', report.id, network.id)
-        make_mail('Uploaded succeeded for {} ({})'.format(graph, source_name),
-                  '{} ({}) is done parsing. Check the network list page.'.format(source_name, graph))
+        make_mail(f'Uploaded succeeded for {graph} ({source_name})',
+                  f'{source_name} ({graph}) is done parsing. Check the network list page.')
 
         return {
-            'network_id': network.id
+            'network_id': network.id,
         }
 
     except Exception as e:
         manager.session.rollback()
-        make_mail('Report unsuccessful for {}'.format(source_name), str(e))
+        make_mail(f'Report unsuccessful for {source_name}', str(e))
         celery_logger.exception('Problem filling out report')
         return -1
 
@@ -307,53 +301,8 @@ def upload_bel(task: Task, connection: str, report_id: int, enrich_citations: bo
         manager.session.close()
 
 
-@celery.task(name='merge-project')
-def merge_project(connection: str, user_id: int, project_id: int):
-    """Merge the graphs in a project.
-
-    :param connection: A connection to build the manager
-    :param user_id: The database identifier of the user
-    :param project_id: The database identifier of the project
-    """
-    manager = WebManager(connection=connection)
-
-    t = time.time()
-
-    user = manager.get_user_by_id(user_id)
-    project = manager.get_project_by_id(project_id)
-    graph = project.as_bel()
-
-    graph.name = hashlib.sha1(to_bytes(graph)).hexdigest()
-    graph.version = '1.0.0'
-
-    path = os.path.join(merged_document_folder, '{}.bel'.format(graph.name))
-
-    url_link = '{}/download/bel/{}'.format(app.config['PYBEL_MERGE_SERVER_PREFIX'], graph.name)
-
-    if os.path.exists(path):
-        celery_logger.warning('Already merged in: %s', path)
-        celery_logger.warning('Download from: %s', url_link)
-    else:
-        to_bel_path(graph, path)
-        celery_logger.info('Merge took %.2f seconds to %s', time.time() - t, path)
-
-    celery_logger.info('Download from: %s', url_link)
-
-    if mail is not None:
-        mail.send_message(
-            subject='Merged BEL Project BEL Resources: {} '.format(project.name),
-            recipients=[user.email],
-            body='The BEL documents from {} were merged. '
-                 'The resulting BEL script is attached and '
-                 'given the serial number {}. Download from: {}'.format(project.name, graph.name, url_link),
-            sender=pbw_sender
-        )
-
-    return 1
-
-
 @celery.task(name='run-heat-diffusion')
-def run_heat_diffusion(connection: str, experiment_id: int):
+def run_heat_diffusion(connection: str, experiment_id: int) -> int:
     """Run the heat diffusion workflow.
 
     :param connection: A connection to build the manager
@@ -377,16 +326,12 @@ def run_heat_diffusion(connection: str, experiment_id: int):
     finally:
         manager.session.close()
 
-    message = 'Experiment {} on query {} with {} has completed'.format(
-        experiment_id,
-        query_id,
-        source_name,
-    )
+    message = f'Experiment {experiment_id} on query {query_id} with {source_name} has completed.'
 
     if mail is not None:
         with app.app_context():
             mail.send_message(
-                subject='Heat Diffusion Workflow [{}] is Complete'.format(experiment_id),
+                subject=f'Heat Diffusion Workflow [{experiment_id}] is Complete',
                 recipients=[email],
                 body=message,
                 sender=pbw_sender,
@@ -441,19 +386,19 @@ def send_summary_mail(graph: BELGraph, report: Report, time_difference: float):
 
         if mail is not None:
             mail.send_message(
-                subject='Parsing Report for {}'.format(graph),
+                subject=f'Parsing Report for {graph}',
                 recipients=[report.user.email],
-                body='Below is the parsing report for {}, completed in {:.2f} seconds.'.format(graph, time_difference),
+                body=f'Below is the parsing report for {graph}, completed in {time_difference:.2f} seconds.',
                 html=html,
                 sender=pbw_sender,
             )
         else:
-            path = os.path.join(os.path.expanduser('~'), 'Downloads', 'report_{}.html'.format(report.id))
+            path = os.path.join(os.path.expanduser('~'), 'Downloads', f'report_{report.id}.html')
 
             try:
                 with open(path, 'w') as file:
                     print(html, file=file)
-                celery_logger.info('HTML printed to file at: %s', path)
+                celery_logger.info(f'HTML printed to file at: {path}')
             except FileNotFoundError:
                 celery_logger.info('no file printed.')
 

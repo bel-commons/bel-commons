@@ -54,7 +54,7 @@
 
                                     <a href="{{ url_for('ui.view_explorer_node', node_hash=node.sha512) }}">Explore</a>
 
-                                    {% if current_user.is_admin %}
+                                    {% if current_user.is_authenticated and current_user.is_admin %}
                                         |
                                         <a href="{{ url_for('dbs.get_node_by_hash', node_hash=node.sha512) }}">JSON</a>
                                     {% endif %}

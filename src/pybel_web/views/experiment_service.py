@@ -19,10 +19,10 @@ from flask_security import current_user, login_required, roles_required
 from sklearn.cluster import KMeans
 
 from pybel_tools.analysis.heat import RESULT_LABELS
+from ..core.proxies import celery, manager
 from ..forms import DifferentialGeneExpressionForm
 from ..manager_utils import create_omic, next_or_jsonify
 from ..models import Experiment, Omic, UserQuery
-from ..proxies import celery, manager
 
 __all__ = [
     'experiment_blueprint',

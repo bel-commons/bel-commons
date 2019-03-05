@@ -26,7 +26,8 @@ import flask_security
 import raven.contrib.flask
 
 import pybel_web.core
-from pybel.constants import PYBEL_CONNECTION, config as pybel_config, get_cache_connection
+from pybel.config import config as pybel_config
+from pybel.constants import get_cache_connection
 from pybel_web.application_utils import (
     register_admin_service, register_error_handlers, register_examples, register_transformations,
     register_users_from_manifest,
@@ -38,7 +39,7 @@ from pybel_web.constants import (
     SWAGGER_CONFIG,
 )
 from pybel_web.converters import IntListConverter, ListConverter
-from pybel_web.core import PyBELSQLAlchemy as PyBELSQLAlchemyBase
+from pybel_web.core import PyBELSQLAlchemy as PyBELSQLAlchemyBase, FlaskBio2BEL
 from pybel_web.database_service import api_blueprint
 from pybel_web.forms import ExtendedRegisterForm
 from pybel_web.main_service import ui_blueprint
@@ -57,7 +58,7 @@ mail = flask_mail.Mail()
 security = flask_security.Security()
 swagger = flasgger.Swagger()
 celery = pybel_web.core.PyBELCelery()
-
+flask_bio2bel = FlaskBio2BEL()
 
 # TODO upgrade to jQuery 2?
 # See: https://pythonhosted.org/Flask-Bootstrap/faq.html#why-are-you-shipping-jquery-1-instead-of-jquery-2
@@ -101,7 +102,6 @@ def create_application(config: Optional[PyBELWebConfig] = None) -> flask.Flask:
 
     # Load config from PyBEL
     app.config.update(pybel_config)
-    app.config[PYBEL_CONNECTION] = get_cache_connection()  # in case config is set funny
 
     # Load config from JSON
     config_json_path = os.environ.get(PYBEL_WEB_CONFIG_JSON)
@@ -117,8 +117,8 @@ def create_application(config: Optional[PyBELWebConfig] = None) -> flask.Flask:
 
     # Set SQLAlchemy defaults
     app.config.setdefault(SQLALCHEMY_TRACK_MODIFICATIONS, False)
-    app.config[SQLALCHEMY_DATABASE_URI] = app.config[PYBEL_CONNECTION]
-    log.info(f'database: {app.config.get(PYBEL_CONNECTION)}')
+    app.config[SQLALCHEMY_DATABASE_URI] = get_cache_connection()
+    log.info(f'database: {app.config.get(SQLALCHEMY_DATABASE_URI)}')
 
     # Set Mail defaults
     app.config.setdefault(MAIL_DEFAULT_SENDER, ("BEL Commons", 'bel-commons@scai.fraunhofer.de'))
@@ -133,7 +133,8 @@ def create_application(config: Optional[PyBELWebConfig] = None) -> flask.Flask:
     # Initialize extensions
     bootstrap.init_app(app)
     swagger.init_app(app)
-
+    flask_bio2bel.init_app(app)
+    
     has_celery = CELERY_BROKER_URL in app.config
     if has_celery:
         celery.init_app(app)

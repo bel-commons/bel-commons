@@ -9,9 +9,9 @@ from collections import Counter, OrderedDict
 from flask import Blueprint, render_template, request
 from flask_security import roles_required
 
-from pybel_web.core.models import Query
+from ..core.models import Query
+from ..core.proxies import manager
 from ..models import EdgeComment, EdgeVote, Experiment, Report
-from ..proxies import manager
 
 __all__ = [
     'reporting_blueprint',

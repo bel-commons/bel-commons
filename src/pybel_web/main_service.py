@@ -4,13 +4,12 @@
 
 import datetime
 import logging
-import os
 import sys
 from collections import defaultdict
 from operator import itemgetter
 
 import flask
-from flask import Blueprint, abort, current_app, flash, redirect, render_template, request, url_for
+from flask import Blueprint, current_app, flash, redirect, render_template, request, url_for
 from flask_security import current_user, login_required, roles_required
 
 import pybel.struct.query
@@ -22,13 +21,12 @@ from pybel.struct.pipeline.exc import MissingPipelineFunctionError
 from pybel.struct.query import QueryMissingNetworksError
 from pybel_tools.biogrammar.double_edges import summarize_completeness
 from pybel_tools.summary.error_summary import calculate_error_by_annotation
-from .constants import SQLALCHEMY_DATABASE_URI, merged_document_folder
+from .constants import SQLALCHEMY_DATABASE_URI
 from .core.models import Query
+from .core.proxies import flask_bio2bel, celery, manager
 from .explorer_toolbox import get_explorer_toolbox
-from .external_managers import manager_dict
 from .manager_utils import next_or_jsonify
 from .models import EdgeComment, EdgeVote, Experiment, Omic, User
-from .proxies import celery, manager
 from .utils import calculate_overlap_info, get_version as get_bel_commons_version
 
 __all__ = [
@@ -155,7 +153,7 @@ def view_nodes():
         count=count,
         limit=limit,
         offset=offset,
-        **manager_dict
+        **flask_bio2bel.manager_dict
     )
 
 
@@ -166,7 +164,7 @@ def view_node(node_hash: str):
     return render_template(
         'node/node.html',
         node=node,
-        **manager_dict
+        **flask_bio2bel.manager_dict
     )
 
 
@@ -444,16 +442,10 @@ def view_name(name_id: int):
     )
 
 
-@ui_blueprint.route('/imprint')
-def view_imprint():
-    """Render the imprint."""
-    return render_template('meta/imprint.html')
-
-
-@ui_blueprint.route('/terms-and-conditions')
-def view_terms_and_conditions():
-    """Render the terms and conditions."""
-    return render_template('meta/terms_and_conditions.html')
+@ui_blueprint.route('/legal')
+def view_legal():
+    """Render the legal info."""
+    return render_template('meta/legal.html')
 
 
 @ui_blueprint.route('/about')
@@ -470,7 +462,7 @@ def view_about():
         ('Deployed', time_instantiated),
     ]
 
-    if current_user.is_admin:
+    if current_user.is_authenticated and current_user.is_admin:
         metadata.extend([
             ('Database', current_app.config[SQLALCHEMY_DATABASE_URI]),
         ])
@@ -478,7 +470,7 @@ def view_about():
     return render_template(
         'meta/about.html',
         metadata=metadata,
-        managers=manager_dict,
+        managers=flask_bio2bel.manager_dict,
         blueprints=set(current_app.blueprints),
     )
 
@@ -603,23 +595,6 @@ def view_query_comparison(query_1_id: int, query_2_id: int):
         query_2_id=query_2_id,
         data=data,
     )
-
-
-@ui_blueprint.route('/download/bel/<fid>')
-def download_saved_file(fid: str):
-    """Download a BEL file.
-
-    :param fid: The file's identifier
-    """
-    path = os.path.join(merged_document_folder, f'{fid}.bel')
-
-    if not os.path.exists(path):
-        abort(404, 'BEL file does not exist')
-
-    rv = flask.send_file(path)
-
-    # TODO delete as cleanup
-    return rv
 
 
 ##########################################

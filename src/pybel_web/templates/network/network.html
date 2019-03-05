@@ -168,7 +168,7 @@
                     </div>
                 {% endif %}
 
-                {% if current_user.is_admin %}
+                {% if current_user.is_authenticated and current_user.is_admin %}
                     <a class="btn btn-danger" role="button"
                        href="{{ url_for('dbs.drop_network', network_id=network.id, next=url_for('ui.home')) }}">
                         <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
@@ -350,7 +350,7 @@
                             <td>
                                 {{ (100 * tanimoto)|round|int }}%
 
-                                {% if current_user.is_admin %}
+                                {% if current_user.is_authenticated and current_user.is_admin %}
                                     <a href="{{ url_for('ui.view_network_comparison', network_1_id=network.id, network_2_id=other_network.id) }}">
                                         <span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span>
                                     </a>

@@ -128,7 +128,7 @@
             <div class="panel-heading">
                 <h3 class="panel-title">Experiment {{ experiment.id }}
 
-                    {% if current_user.is_admin %}
+                    {% if current_user.is_authenticated and current_user.is_admin %}
                         <div class="pull-right">
                             <a href="{{ url_for('dbs.drop_experiment_by_id', experiment_id=experiment.id, next=url_for('ui.home')) }}">
                                 <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>

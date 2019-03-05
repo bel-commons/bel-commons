@@ -4,17 +4,21 @@
 {% import "bootstrap/fixes.html" as fixes %}
 {% import "bootstrap/utils.html" as util %}
 
-{% block title %}Imprint{% endblock %}
+{% block title %}Terms &amp; Conditions{% endblock %}
 
 {% block content %}
     <div class="container">
         {{ util.flashed_messages(dismissible=True, container=False) }}
 
         <div class="page-header">
-            <h1>Imprint and Publishing Notes</h1>
+            <h1>Terms &amp; Conditions</h1>
         </div>
 
+        <!-- Imprint -->
         <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Imprint and Publishing Notes</h3>
+            </div>
             <div class="panel-body">
                 <p>The Fraunhofer Institute for Algorithms and Scientific Computing SCAI</p>
 
@@ -76,14 +80,27 @@
                         Administration, Purchasing and Real Estate) and Information Systems
                     </li>
                 </ul>
+            </div>
+        </div>
 
-                <h2>Terms and Conditions</h2>
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Fraunhofer SCAI Terms and Conditions</h3>
+            </div>
+            <div class="panel-body">
                 <p>
                     By using any <em>BEL Commons</em> services, you accept our <a
                         href="https://www.scaiview.com/en/terms-and-conditions.html">Terms and Conditions of Use</a>.
                 </p>
+            </div>
+        </div>
 
-                <h2>Disclaimer</h2>
+        <!-- Academic Disclaimer -->
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Fraunhofer SCAI Disclaimer</h3>
+            </div>
+            <div class="panel-body">
                 <p>
                     We cannot assume any liability for the content of external pages. Solely
                     the operators of those linked pages are responsible for their
@@ -107,6 +124,36 @@
                 </p>
             </div>
         </div>
+
+        <!-- Academic Disclaimer -->
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Fraunhofer SCAI Academic Disclaimer</h3>
+            </div>
+            <div class="panel-body">
+                <p>
+                    BEL Commons is a purely academic attempt to build the first ever useful user interface for BEL.
+                    In the future, parts of this site will remain academic and become open source, while other
+                    parts will inspire the development of enterprise-grade software from our department.
+                </p>
+            </div>
+        </div>
+
+        <!--- IMI Disclaimer -->
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">IMI Disclaimer</h3>
+            </div>
+            <div class="panel-body">
+                <p>
+                    This site reflects the author's view and neither IMI nor the European Union, EFPIA, or any
+                    associated partners are responsible for any use that may be made of the information contained
+                    therein.
+                </p>
+            </div>
+        </div>
+
+
     </div>
 
     {% include "footer.html" %}

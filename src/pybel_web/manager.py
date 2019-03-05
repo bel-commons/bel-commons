@@ -156,12 +156,18 @@ class _WebManager(WebManagerBase):
     def authenticated_query_from_network_by_id_or_404(self, user: User, network_id: int) -> Query:
         """Make a query from the given network."""
         network = self.authenticated_get_network_by_id_or_404(user=user, network_id=network_id)
-        user_query = UserQuery.from_network(network, user=user)
 
-        self.session.add(user_query)
+        if isinstance(user, User):
+            user_query = UserQuery.from_network(network, user=user if isinstance(user, User) else None)
+            self.session.add(user_query)
+            rv = user_query.query
+        else:
+            rv = Query.from_network(network)
+            self.session.add(rv)
+
         self.session.commit()
 
-        return user_query.query
+        return rv
 
     def authenticated_get_graph_by_id_or_404(self, user: User, network_id: int) -> BELGraph:
         """Get the network as a BEL graph or aborts if the user does not have permission to view."""
@@ -393,17 +399,22 @@ class WebManager(_WebManager):
     def list_queries(self) -> List[Query]:
         q = self.session.query(UserQuery)
 
-        if not current_user.is_admin:
+        if not (current_user.is_authenticated and current_user.is_admin):
             q = q.filter(UserQuery.public)
 
         q = q.order_by(UserQuery.created.desc())
         return q.all()
 
     def build_query(self, q: pybel.struct.query.Query) -> Query:
-        user_query = UserQuery.from_query(manager=self, query=q, user=current_user)
-        self.session.add(user_query)
+        if isinstance(current_user, User):
+            user_query = UserQuery.from_query(manager=self, query=q, user=current_user)
+            self.session.add(user_query)
+            rv = user_query.query
+        else:
+            rv = Query.from_query(manager=self, query=q)
+            self.session.add(rv)
         self.session.commit()
-        return user_query.query
+        return rv
 
     def build_query_from_project(self, project: Project) -> Query:
         user_query = UserQuery.from_project(project=project, user=current_user)

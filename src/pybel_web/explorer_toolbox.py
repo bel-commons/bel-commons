@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""Constants for building the niological network explorer's transformations toolbox."""
+"""Constants for building the biological network explorer's transformations toolbox."""
 
 from typing import List, Tuple
 

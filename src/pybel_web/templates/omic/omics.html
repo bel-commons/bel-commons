@@ -8,7 +8,7 @@
 
 {% block scripts %}
     {{ super() }}
-    {% if current_user.is_admin %}
+    {% if current_user.is_authenticated and current_user.is_admin %}
         <script src="{{ url_for('static', filename='js/bootstrap-confirmation.min.js') }}"></script>
         <script>
             $('[data-toggle=confirmation]').confirmation({

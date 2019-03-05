@@ -35,10 +35,9 @@ from pybel_tools.summary import (
     get_authors, get_incorrect_names_by_namespace, get_naked_names, get_undefined_namespace_names,
 )
 from .constants import AND, BLACK_LIST, PATHOLOGY_FILTER, PATHS_METHOD, RANDOM_PATH, UNDIRECTED
-from .external_managers import *
+from .core.proxies import flask_bio2bel, manager
 from .manager_utils import fill_out_report, next_or_jsonify
 from .models import EdgeComment, Project, Report, User, UserQuery
-from .proxies import manager
 from .send_utils import serve_network, to_json_custom
 from .utils import get_tree_annotations
 
@@ -1587,37 +1586,36 @@ def get_enriched_node_json(node: Node) -> Optional[Mapping]:
         return
 
     node['annotations'] = {}
-
-    if namespace.upper() == 'HGNC' and hgnc_manager:
-        model = hgnc_manager.get_node(node)
+    if namespace.upper() == 'HGNC' and flask_bio2bel.hgnc_manager:
+        model = flask_bio2bel.hgnc_manager.get_node(node)
         node['annotations']['HGNC'] = {'missing': True} if model is None else model.to_dict()
 
-    elif namespace.upper() == 'CHEBI' and chebi_manager:
-        model = chebi_manager.get_chemical_from_data(node)
+    elif namespace.upper() == 'CHEBI' and flask_bio2bel.chebi_manager:
+        model = flask_bio2bel.chebi_manager.get_chemical_from_data(node)
         node['annotations']['CHEBI'] = {'missing': True} if model is None else model.to_json()
 
-    elif namespace.upper() in {'EGID', 'ENTREZ', 'NCBIGENE'} and entrez_manager:
-        model = entrez_manager.lookup_node(node)
+    elif namespace.upper() in {'EGID', 'ENTREZ', 'NCBIGENE'} and flask_bio2bel.entrez_manager:
+        model = flask_bio2bel.entrez_manager.lookup_node(node)
         node['annotations']['ENTREZ'] = {'missing': True} if model is None else model.to_json()
 
-    elif namespace.upper() in {'EXPASY', 'EC', 'ECCODE', 'EC-CODE'} and expasy_manager:
-        model = expasy_manager.get_enzyme_by_id(node.name or node.identifier)
+    elif namespace.upper() in {'EXPASY', 'EC', 'ECCODE', 'EC-CODE'} and flask_bio2bel.expasy_manager:
+        model = flask_bio2bel.expasy_manager.get_enzyme_by_id(node.name or node.identifier)
         node['annotations']['EXPASY'] = {'missing': True} if model is None else model.to_json()
 
-    elif namespace.lower() in {'gocc', 'goccid', 'gobp', 'gobpid', 'go'} and go_manager:
-        model = go_manager.lookup_term(node)
+    elif namespace.lower() in {'gocc', 'goccid', 'gobp', 'gobpid', 'go'} and flask_bio2bel.go_manager:
+        model = flask_bio2bel.go_manager.lookup_term(node)
         node['annotations']['GO'] = {'missing': True} if model is None else model.to_json()
 
-    elif namespace.lower() in {'mesh', 'meshc', 'meshpp', 'meshd', 'meshcs'} and mesh_manager:
-        model = mesh_manager.look_up_node(node)
+    elif namespace.lower() in {'mesh', 'meshc', 'meshpp', 'meshd', 'meshcs'} and flask_bio2bel.mesh_manager:
+        model = flask_bio2bel.mesh_manager.look_up_node(node)
         node['annotations']['MESH'] = {'missing': True} if model is None else model.to_json()
 
-    elif namespace.lower() == 'rgd' and rgd_manager:
-        model = rgd_manager.get_rat_gene_from_bel(node)
+    elif namespace.lower() == 'rgd' and flask_bio2bel.rgd_manager:
+        model = flask_bio2bel.rgd_manager.get_rat_gene_from_bel(node)
         node['annotations']['RGD'] = {'missing': True} if model is None else model.to_json()
 
-    elif namespace.lower() == 'mgi' and mgi_manager:
-        model = mgi_manager.get_mouse_gene_from_bel(node)
+    elif namespace.lower() == 'mgi' and flask_bio2bel.mgi_manager:
+        model = flask_bio2bel.mgi_manager.get_mouse_gene_from_bel(node)
         node['annotations']['MGI'] = {'missing': True} if model is None else model.to_json()
 
     return node

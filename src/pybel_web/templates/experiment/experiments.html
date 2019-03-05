@@ -9,7 +9,7 @@
 
 {% block scripts %}
     {{ super() }}
-    {% if current_user.is_admin %}
+    {% if current_user.is_authenticated and current_user.is_admin %}
         <script src="{{ url_for('static', filename='js/bootstrap-confirmation.min.js') }}"></script>
         <script>
             $('[data-toggle=confirmation]').confirmation({
@@ -31,7 +31,7 @@
 
         <div class="panel panel-default">
             <div class="panel-heading">
-                {% if current_user.is_admin %}
+                {% if current_user.is_authenticated and current_user.is_admin %}
                     <div class="btn-group pull-right">
                         <a class="btn btn-danger btn-xs"
                            href="{{ url_for('analysis.drop_experiments', next=url_for('ui.home')) }}"

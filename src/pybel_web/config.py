@@ -49,7 +49,7 @@ class Config:
     TESTING = os.environ.get('PYBEL_WEB_TESTING', False)
 
     CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', 'amqp://localhost')
-    CELERY_BACKEND_URL = os.environ.get('CELERY_BACKEND_URL', 'amqp://localhost')
+    CELERY_BACKEND_URL = os.environ.get('CELERY_BACKEND_URL', 'redis://localhost')
 
     SECURITY_REGISTERABLE = True
     SECURITY_CONFIRMABLE = False

@@ -68,7 +68,7 @@ class PyBELSQLAlchemyUserDataStore(SQLAlchemyUserDatastore):
 class WebManagerBase(Manager):
     """Extensions to the PyBEL manager and :class:`SQLAlchemyUserDataStore` to support PyBEL-Web."""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.user_datastore = PyBELSQLAlchemyUserDataStore(self)
 
@@ -83,7 +83,7 @@ class WebManagerBase(Manager):
             yield from self.list_recent_networks()
 
         else:
-            log.debug('getting all networks for user [%s]', self)
+            log.debug(f'getting all networks for user [{user}]')
             yield from user.iter_available_networks()
             yield from iter_recent_public_networks(self)
 
@@ -138,7 +138,7 @@ class WebManagerBase(Manager):
         """Get a namespace by its identifier, if it exists."""
         return self.session.query(Namespace).get(namespace_id)
 
-    def drop_queries_by_user_id(self, user_id: int) -> None:
+    def drop_queries_by_user_id(self, user_id: int) -> None:  # FIXME
         """Drop queries associated with the given user."""
         self.session.query(Query).filter(Query.user_id == user_id).delete()
         self.session.commit()
@@ -168,7 +168,7 @@ class WebManagerBase(Manager):
             vote = EdgeVote(
                 edge=edge,
                 user=user,
-                agreed=agreed
+                agreed=agreed,
             )
             self.session.add(vote)
             self.session.commit()
@@ -253,13 +253,6 @@ class WebManagerBase(Manager):
         return rv
 
     def get_top_overlaps(self, network: Network, user: User, number: int = 10) -> List[Tuple[Network, float]]:
-        """
-
-        :param network:
-        :param user:
-        :param number:
-        :return:
-        """
         overlap_counter = self.get_node_overlaps(network)
         allowed_network_ids = self.get_network_ids_with_permission(user)
 
@@ -315,7 +308,7 @@ class WebManagerBase(Manager):
         if key == 'annotation':
             return {
                 'annotations': sanitize_annotation(form.getlist(value)),
-                'or': not form.get(AND)
+                'or': not form.get(AND),
             }
 
         if key in {'pubmed', 'authors'}:
@@ -338,7 +331,7 @@ class WebManagerBase(Manager):
             ('pubmed', "pubmed_selection[]"),
             ('authors', 'author_selection[]'),
             ('annotation', 'annotation_selection[]'),
-            (form["seed_method"], "node_selection[]")
+            (form["seed_method"], "node_selection[]"),
         ]
 
         query_dict['seeding'] = [
@@ -353,7 +346,7 @@ class WebManagerBase(Manager):
 
         query_dict["pipeline"] = [
             {
-                'function': to_snake_case(function_name)
+                'function': to_snake_case(function_name),
             }
             for function_name in form.getlist("pipeline[]")
             if function_name

@@ -8,9 +8,9 @@ from flask import Blueprint, abort, current_app, jsonify, request
 from flask_security.utils import verify_password
 
 from pybel_web.constants import SQLALCHEMY_DATABASE_URI
+from pybel_web.core.proxies import celery, manager
 from pybel_web.manager_utils import next_or_jsonify
 from pybel_web.models import User
-from pybel_web.proxies import celery, manager
 
 __all__ = [
     'receiving_blueprint',

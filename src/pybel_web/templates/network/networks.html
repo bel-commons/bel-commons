@@ -379,7 +379,7 @@
                                                             </a>
                                                         {% endif %}
                                                     </li>
-                                                {% elif current_user.is_admin %}
+                                                {% elif current_user.is_authenticated and current_user.is_admin %}
                                                     <li>
                                                         <a href="{{ url_for('dbs.drop_network', network_id=network.id, next=url_for('ui.view_networks')) }}">
                                                             <span class="glyphicon glyphicon-remove"

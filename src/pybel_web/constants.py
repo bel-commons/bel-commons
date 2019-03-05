@@ -2,9 +2,9 @@
 
 """Constants for BEL Commons."""
 
-import os
+from typing import List
 
-from pybel.constants import PYBEL_DIR, config
+from pybel.config import config
 
 VERSION = '0.2.4'
 
@@ -57,18 +57,11 @@ BLACK_LIST = {
 }
 
 
-def get_admin_email():
+def get_admin_emails() -> List[str]:
     rv = config.get(PYBEL_WEB_ADMIN_EMAIL)
     if rv is None:
         raise RuntimeError(f'{PYBEL_WEB_ADMIN_EMAIL} is not set')
-    return rv
-
-
-def get_admin_password():
-    rv = config.get(PYBEL_WEB_ADMIN_PASSWORD)
-    if rv is None:
-        raise RuntimeError(f'{PYBEL_WEB_ADMIN_PASSWORD} is not set')
-    return rv
+    return [rv]
 
 
 SWAGGER_CONFIG = {
@@ -82,7 +75,3 @@ SWAGGER_CONFIG = {
     },
     'version': '0.1.0',
 }
-
-merged_document_folder = os.path.join(PYBEL_DIR, 'pbw_merged_documents')
-if not os.path.exists(merged_document_folder):
-    os.mkdir(merged_document_folder)

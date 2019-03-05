@@ -26,7 +26,7 @@ extensions = [
     'sphinx.ext.intersphinx',
     'sphinx.ext.todo',
     'sphinx.ext.coverage',
-    'sphinx.ext.viewcode'
+    'sphinx.ext.viewcode',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -46,8 +46,8 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = 'PyBEL Web'
-copyright = '2016-2018, Charles Tapley Hoyt'
+project = 'BEL Commons'
+copyright = '2016-2019, Charles Tapley Hoyt'
 author = 'Charles Tapley Hoyt'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -56,7 +56,7 @@ author = 'Charles Tapley Hoyt'
 #
 
 # The full version, including alpha/beta/rc tags.
-release = '0.2.4'
+release = '0.3.0-dev'
 
 # The short X.Y version.
 parsed_version = re.match(
@@ -239,7 +239,7 @@ html_static_path = []
 # html_search_scorer = 'scorer.js'
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'pybel_webdoc'
+htmlhelp_basename = 'bel_commons_doc'
 
 # -- Options for LaTeX output ---------------------------------------------
 
@@ -265,7 +265,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'PyBEL_Web.tex', u'PyBEL Web Documentation',
+    (master_doc, 'bel-commons.tex', u'BEL Commons Documentation',
      u'Charles Tapley Hoyt', 'manual'),
 ]
 
@@ -307,7 +307,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'pybel_web', u'PyBEL Web Documentation',
+    (master_doc, 'bel_commons', u'BEL Commons Documentation',
      [author], 1)
 ]
 
@@ -322,8 +322,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'PyBEL Web', u'PyBEL Web Documentation',
-     author, 'PyBEL Web', 'One line description of project.',
+    (master_doc, 'BEL Commons', u'BEL Commons Documentation',
+     author, 'BEL Commons', 'A web interface for PyBEL.',
      'Miscellaneous'),
 ]
 

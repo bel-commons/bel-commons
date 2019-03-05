@@ -14,19 +14,19 @@ import os
 import time
 from typing import Iterable, List, Optional, Set
 
+from bel_repository import BELRepository
+from pybel_web.external_managers import (
+    chebi_manager, entrez_manager, expasy_manager, go_manager, hgnc_manager, interpro_manager, mirtarbase_manager,
+)
 from sqlalchemy.exc import OperationalError
 
 import pybel
-from bel_repository import BELRepository
 from bio2bel import AbstractManager
 from pybel import from_path, from_pickle, to_pickle
 from pybel.manager import Manager
 from pybel.manager.models import Network
 from pybel.struct.grouping import get_subgraphs_by_annotation
 from pybel.struct.mutation import strip_annotations
-from pybel_web.external_managers import (
-    chebi_manager, entrez_manager, expasy_manager, go_manager, hgnc_manager, interpro_manager, mirtarbase_manager,
-)
 from pybel_web.manager_utils import insert_graph
 from pybel_web.resources.constants import (
     alzheimer_directory, cbn_human, cbn_mouse, cbn_rat, neurommsig_directory, parkinsons_directory, selventa_directory,

@@ -36,10 +36,7 @@
                     </ul>
                 </li>
                 <li>
-                    <a href="{{ url_for('ui.view_terms_and_conditions') }}">Terms and Conditions</a>
-                </li>
-                <li>
-                    <a href="{{ url_for('ui.view_imprint') }}">Imprint</a>
+                    <a href="{{ url_for('ui.view_legal') }}">Legal</a>
                 </li>
             </ul>
 
@@ -50,7 +47,7 @@
                            aria-haspopup="true"
                            aria-expanded="false">{{ current_user.email }} <span class="caret"></span></a>
                         <ul class="dropdown-menu">
-                            {% if current_user.is_admin %}
+                            {% if current_user.is_authenticated and current_user.is_admin %}
                                 <li><a class="nav-header" href="{{ url_for('admin.index') }}">Admin</a></li>
                             {% endif %}
                             <li><a href="{{ url_for('project.create_view', url=url_for('ui.home')) }}">Create

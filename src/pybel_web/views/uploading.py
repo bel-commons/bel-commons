@@ -5,12 +5,13 @@
 import hashlib
 import logging
 import time
+
 from flask import Blueprint, current_app, flash, redirect, render_template, url_for
 from flask_security import current_user, login_required, roles_required
 
-from pybel_web.forms import ParserForm
-from pybel_web.models import Report
-from pybel_web.proxies import celery, manager
+from ..core.proxies import celery, manager
+from ..forms import ParserForm
+from ..models import Report
 
 __all__ = [
     'uploading_blueprint',
