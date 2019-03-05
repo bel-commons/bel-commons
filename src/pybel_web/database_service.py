@@ -1618,6 +1618,13 @@ def get_enriched_node_json(node: Node) -> Optional[Mapping]:
         model = flask_bio2bel.mgi_manager.get_mouse_gene_from_bel(node)
         node['annotations']['MGI'] = {'missing': True} if model is None else model.to_json()
 
+    elif namespace.lower() in {'hbp', 'conso'} and flask_bio2bel.conso_manager:
+        model = flask_bio2bel.conso_manager.normalize_node(node)
+        node['annotations']['CONSO'] = (
+            {'missing': True} if model is None else
+            flask_bio2bel.conso_manager.get_json(model.identifier)
+        )
+
     return node
 
 

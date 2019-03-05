@@ -45,6 +45,7 @@ class FlaskBio2BEL:
         self.mgi_manager = None
         self.mesh_manager = None
         self.sider_manager = None
+        self.conso_manager = None
 
         self.manager_dict = {}
 
@@ -216,6 +217,14 @@ class FlaskBio2BEL:
             log.debug('Using Bio2BEL RGD')
             self.rgd_manager = bio2bel_rgd.Manager(connection=self.connection)
             self.rgd_manager.create_all()
+
+        try:
+            import conso.manager
+        except ImportError:
+            pass
+        else:
+            log.debug('Using Bio2BEL CONSO')
+            self.conso_manager = conso.manager.Manager()
 
         self.manager_dict.update({
             name: manager
