@@ -23,10 +23,10 @@ from pybel_tools.biogrammar.double_edges import summarize_completeness
 from pybel_tools.summary.error_summary import calculate_error_by_annotation
 from .constants import SQLALCHEMY_DATABASE_URI
 from .core.models import Query
-from .core.proxies import flask_bio2bel, celery, manager
+from .core.proxies import celery, flask_bio2bel, manager
 from .explorer_toolbox import get_explorer_toolbox
 from .manager_utils import next_or_jsonify
-from .models import EdgeComment, EdgeVote, Experiment, Omic, User
+from .models import EdgeComment, EdgeVote, Experiment, Omic, Report, User
 from .utils import calculate_overlap_info, get_version as get_bel_commons_version
 
 __all__ = [
@@ -660,6 +660,16 @@ def rollback():
     """Roll back the transaction for when something bad happens."""
     manager.session.rollback()
     return next_or_jsonify('rolled back')
+
+
+@ui_blueprint.route('/admin/freedom')
+@roles_required('admin')
+def freedom():
+    """Do what is right and just - make all networks public."""
+    for report in manager.session.query(Report).filter_by(public=False):
+        report.public = True
+    manager.session.commit()
+    return redirect(url_for('.home'))
 
 
 @ui_blueprint.route('/admin/nuke/')
