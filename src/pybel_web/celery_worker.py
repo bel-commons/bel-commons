@@ -27,11 +27,11 @@ from pybel.parser.exc import InconsistentDefinitionError
 from pybel.struct.mutation import enrich_protein_and_rna_origins
 from pybel_tools.assembler.html.assembler import get_network_summary_dict
 from .application import create_application
-from .constants import get_admin_emails, integrity_message
+from .constants import integrity_message, MAIL_DEFAULT_SENDER
 from .core.celery import PyBELCelery
 from .manager import WebManager
 from .manager_utils import fill_out_report, insert_graph, run_heat_diffusion_helper
-from .models import Report
+from .models import Report, User
 
 celery_logger = get_task_logger(__name__)
 log = logging.getLogger(__name__)
@@ -52,9 +52,6 @@ DEFAULT_METADATA = {
     METADATA_CONTACT: {'your@email.com'},
     METADATA_LICENSES: {'Document license'},
 }
-
-pbw_sender = ("BEL Commons", 'bel-commons@scai.fraunhofer.de')
-
 
 @celery.task(name='debug-task')
 def run_debug_task() -> int:
@@ -81,16 +78,14 @@ def summarize_bel(self: Task, connection: str, report_id: int):
 
     def make_mail(subject: str, body: str) -> None:
         """Send a mail with the given subject and body."""
-        if not mail:
-            return
-
-        with app.app_context():
-            mail.send_message(
-                subject=subject,
-                recipients=[report.user.email],
-                body=body,
-                sender=pbw_sender,
-            )
+        if mail:
+            with app.app_context():
+                mail.send_message(
+                    subject=subject,
+                    recipients=[report.user.email],
+                    body=body,
+                    sender=app.config[MAIL_DEFAULT_SENDER],
+                )
 
     def finish_parsing(subject: str, body: str) -> str:
         """Send a message and finish parsing.
@@ -168,7 +163,7 @@ def upload_bel(task: Task, connection: str, report_id: int, enrich_citations: bo
                 subject=subject,
                 recipients=[report.user.email],
                 body=body,
-                sender=pbw_sender,
+                sender=app.config[MAIL_DEFAULT_SENDER],
             )
 
     def finish_parsing(subject: str, body: str) -> str:
@@ -223,13 +218,18 @@ def upload_bel(task: Task, connection: str, report_id: int, enrich_citations: bo
             return finish_parsing(f'Uploading Failed for {source_name}', message)
 
         if hashlib.sha1(network.blob).hexdigest() != hashlib.sha1(to_bytes(graph)).hexdigest():
-            with app.app_context():
-                app.extensions['mail'].send_message(
-                    subject='Possible attempted Espionage',
-                    recipients=get_admin_emails(),
-                    body=f'User ({report.user.id} {report.user.email}) may have attempted espionage of {network}',
-                    sender=pbw_sender,
-                )
+            recipients = [
+                user.email
+                for user in manager.session.query(User.email).filter(User.is_admin).all()
+            ]
+            if recipients:
+                with app.app_context():
+                    app.extensions['mail'].send_message(
+                        subject='Possible attempted Espionage',
+                        recipients=recipients,
+                        body=f'User ({report.user.id} {report.user.email}) may have attempted espionage of {network}',
+                        sender=app.config[MAIL_DEFAULT_SENDER],
+                    )
 
             return finish_parsing(f'Upload Failed for {source_name}', message)
 
@@ -334,7 +334,7 @@ def run_heat_diffusion(connection: str, experiment_id: int) -> int:
                 subject=f'Heat Diffusion Workflow [{experiment_id}] is Complete',
                 recipients=[email],
                 body=message,
-                sender=pbw_sender,
+                sender=app.config[MAIL_DEFAULT_SENDER],
             )
 
     return experiment_id
@@ -390,7 +390,7 @@ def send_summary_mail(graph: BELGraph, report: Report, time_difference: float):
                 recipients=[report.user.email],
                 body=f'Below is the parsing report for {graph}, completed in {time_difference:.2f} seconds.',
                 html=html,
-                sender=pbw_sender,
+                sender=app.config[MAIL_DEFAULT_SENDER],
             )
         else:
             path = os.path.join(os.path.expanduser('~'), 'Downloads', f'report_{report.id}.html')

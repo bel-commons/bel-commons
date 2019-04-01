@@ -6,8 +6,6 @@ from typing import List
 
 from pybel.config import config
 
-VERSION = '0.2.4'
-
 # Configuration parameter names
 PYBEL_WEB_ADMIN_EMAIL = 'PYBEL_WEB_ADMIN_EMAIL'
 PYBEL_WEB_ADMIN_PASSWORD = 'PYBEL_WEB_ADMIN_PASSWORD'
@@ -55,14 +53,6 @@ BLACK_LIST = {
     QUERY,
     AND,
 }
-
-
-def get_admin_emails() -> List[str]:
-    rv = config.get(PYBEL_WEB_ADMIN_EMAIL)
-    if rv is None:
-        raise RuntimeError(f'{PYBEL_WEB_ADMIN_EMAIL} is not set')
-    return [rv]
-
 
 SWAGGER_CONFIG = {
     'title': 'BEL Commons API',

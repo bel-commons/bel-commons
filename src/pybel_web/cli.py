@@ -135,7 +135,9 @@ def run(host, port, debug, config, enable_parser, register_examples, with_gunico
         _additional_files=[config] if config else None,
     )
 
-    app = create_application(pybel_web_config)
+    app = create_application(
+        pybel_web_config=pybel_web_config,
+    )
 
     if with_gunicorn:
         gunicorn_app = make_gunicorn_app(app, host, port, workers)

@@ -13,12 +13,25 @@ from typing import Optional
 
 from easy_config import EasyConfig
 
+HOME = os.path.expanduser('~')
+CONFIG_DIRECTORY = os.path.join(HOME, '.config')
+
+
+class PyBELConfig(EasyConfig):
+    """Configuration for PyBEL."""
+
+    NAME = 'pybel'
+    FILES = [os.path.join(CONFIG_DIRECTORY, 'pybel', 'config.ini')]
+
+    # Connection to the database
+    connection: Optional[str] = None
+
 
 class PyBELWebConfig(EasyConfig):
     """Configuration for BEL Commons."""
 
     NAME = 'pybel_web'
-    FILES = [os.path.join(os.path.expanduser('~'), '.config', 'pybel-web', 'config.ini')]
+    FILES = [os.path.join(CONFIG_DIRECTORY, 'pybel-web', 'config.ini')]
 
     #: Should example graphs be automatically included?
     register_examples: bool = False
