@@ -7,10 +7,7 @@
  *
  */
 
-
-
 $(document).ready(function () {
-
     // Populates the Datatable
     const dataTableConfig = {
         dom: "<'row'<'col-sm-1'><'col-sm-4'l><'col-sm-5'f>>" +
@@ -51,11 +48,9 @@ $(document).ready(function () {
                 );
             }
         });
-
     });
 
-
-    // Autocompletion for author seeding
+    // Auto-completion for author seeding
     $("#author_selection").select2({
         theme: "bootstrap",
         minimumInputLength: 2,
@@ -246,8 +241,3 @@ $(function () {
         }
     );
 });
-
-
-
-
-
