@@ -5,17 +5,25 @@
 import logging
 from typing import Dict, List
 
+from flask import request
+
 from pybel import BELGraph
 from pybel.struct.summary import get_annotation_values_by_annotation, get_annotations, get_pubmed_identifiers
 from .version import VERSION
 
 __all__ = [
+    'get_version',
     'calculate_overlap_info',
     'get_tree_annotations',
-    'get_version',
+    'add_edge_filter',
 ]
 
 log = logging.getLogger(__name__)
+
+
+def get_version() -> str:
+    """Get the current BEL Commons version string."""
+    return VERSION
 
 
 def calculate_overlap_info(g1: BELGraph, g2: BELGraph):
@@ -59,6 +67,15 @@ def get_tree_annotations(graph: BELGraph) -> List[Dict]:
     ]
 
 
-def get_version() -> str:
-    """Get the current BEL Commons version string."""
-    return VERSION
+def add_edge_filter(edge_query, limit_default=None, offset_default=None):
+    limit = request.args.get('limit', type=int, default=limit_default)
+    offset = request.args.get('offset', type=int, default=offset_default)
+
+    if limit is not None:
+        edge_query = edge_query.limit(limit)
+
+    if offset is not None:
+        edge_query = edge_query.offset(offset)
+
+    return edge_query
+

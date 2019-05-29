@@ -16,7 +16,6 @@ from flask import Blueprint, Response, abort, current_app, flash, jsonify, make_
 from flask_security import current_user, login_required, roles_required
 from sqlalchemy import func, or_
 
-import pybel_web.core.models
 from bel_resources import write_annotation, write_namespace
 from pybel import BELGraph
 from pybel.constants import NAMESPACE, NAMESPACE_DOMAIN_OTHER
@@ -35,11 +34,16 @@ from pybel_tools.summary import (
     get_authors, get_incorrect_names_by_namespace, get_naked_names, get_undefined_namespace_names,
 )
 from .constants import AND, BLACK_LIST, PATHOLOGY_FILTER, PATHS_METHOD, RANDOM_PATH, UNDIRECTED
+from .core import models
 from .core.proxies import flask_bio2bel, manager
 from .manager_utils import fill_out_report, next_or_jsonify
 from .models import EdgeComment, Project, Report, User, UserQuery
 from .send_utils import serve_network, to_json_custom
-from .utils import get_tree_annotations
+from .utils import add_edge_filter, get_tree_annotations
+
+__all__ = [
+    'api_blueprint',
+]
 
 log = logging.getLogger(__name__)
 
@@ -433,15 +437,13 @@ def edges_by_network(network_id: int):
       200:
         description: The edges in the network
     """
-    offset = request.args.get('offset', default=0, type=int)
-    limit = request.args.get('limit', default=100, type=int)
-
     # FIXME check user rights for network
 
     edges = manager.session.query(Edge). \
         join(network_edge).join(Network). \
-        filter(Network.id == network_id). \
-        offset(offset).limit(limit)
+        filter(Network.id == network_id)
+
+    edges = add_edge_filter(edges, limit_default=100, offset_default=0)
 
     return jsonify([
         edge.to_json(include_id=True, include_hash=True)
@@ -1279,17 +1281,8 @@ def get_edges():
         required: false
         type: integer
     """
-    limit = request.args.get('limit', type=int)
-    offset = request.args.get('offset', type=int)
-
     edge_query = manager.session.query(Edge)
-
-    if limit is not None:
-        edge_query = edge_query.limit(limit)
-
-    if offset is not None:
-        edge_query = edge_query.offset(offset)
-
+    edge_query = add_edge_filter(edge_query)
     return jsonify([
         manager._help_get_edge_entry(edge=edge, user=current_user)
         for edge in edge_query.all()
@@ -1310,8 +1303,9 @@ def get_edges_by_bel(bel: str):
         required: true
         type: string
     """
-    edges = manager.query_edges(bel=bel)
-    return jsonify(edges)
+    edge_query = manager.query_edges(bel=bel)
+    edge_query = add_edge_filter(edge_query)
+    return jsonify_edges(edge_query)
 
 
 @api_blueprint.route('/api/edge/by_bel/source/<source_bel>')
@@ -1328,8 +1322,9 @@ def get_edges_by_source_bel(source_bel: str):
         required: true
         type: string
     """
-    edges = manager.query_edges(source=source_bel)
-    return jsonify(edges)
+    edge_query = manager.query_edges(source=source_bel)
+    edge_query = add_edge_filter(edge_query)
+    return jsonify_edges(edge_query)
 
 
 @api_blueprint.route('/api/edge/by_bel/target/<target_bel>')
@@ -1346,8 +1341,36 @@ def get_edges_by_target_bel(target_bel: str):
         required: true
         type: string
     """
-    edges = manager.query_edges(target=target_bel)
-    return jsonify(edges)
+    edge_query = manager.query_edges(target=target_bel)
+    edge_query = add_edge_filter(edge_query)
+    return jsonify_edges(edge_query)
+
+
+@api_blueprint.route('/api/edge/by_type/<source_function>/<target_function>')
+def get_edges_typed(source_function: str, target_function: str):
+    """Get edges whose source and target match the given types.
+
+    ---
+    tags:
+      - edge
+    parameters:
+      - name: source_function
+        in: path
+        description: A BEL Type
+        required: true
+        type: string
+      - name: target_function
+        in: path
+        description: A BEL Type
+        required: true
+        type: string
+    """
+    edge_query = manager.query_edges(
+        source_function=source_function,
+        target_function=target_function,
+    )
+    edge_query = add_edge_filter(edge_query)
+    return jsonify_edges(edge_query)
 
 
 @api_blueprint.route('/api/edge/<edge_hash>')
@@ -1473,6 +1496,14 @@ def jsonify_nodes(nodes: Iterable[Node]) -> Response:
     return jsonify([
         node.to_json()
         for node in nodes
+    ])
+
+
+def jsonify_edges(edges: Iterable[Edge]) -> Response:
+    """Convert a list of edges to JSON."""
+    return jsonify([
+        edge.to_json(include_id=True)
+        for edge in edges
     ])
 
 
@@ -1721,7 +1752,7 @@ def drop_queries():
     manager.session.query(UserQuery).delete()
     manager.session.commit()
 
-    manager.session.query(pybel_web.core.models.Query).delete()
+    manager.session.query(models.Query).delete()
     manager.session.commit()
 
     return next_or_jsonify('Dropped all queries')
