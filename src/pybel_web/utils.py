@@ -3,9 +3,9 @@
 """Utilities for BEL Commons."""
 
 import logging
-from typing import Dict, List
+from typing import Dict, List, Optional, TypeVar
 
-from flask import request
+from flask import abort, request
 
 from pybel import BELGraph
 from pybel.struct.summary import get_annotation_values_by_annotation, get_annotations, get_pubmed_identifiers
@@ -16,6 +16,7 @@ __all__ = [
     'calculate_overlap_info',
     'get_tree_annotations',
     'add_edge_filter',
+    'return_or_404',
 ]
 
 log = logging.getLogger(__name__)
@@ -79,3 +80,12 @@ def add_edge_filter(edge_query, limit_default=None, offset_default=None):
 
     return edge_query
 
+
+X = TypeVar('X')
+
+
+def return_or_404(x: Optional[X], message: str) -> X:
+    """Return the given argument or abort with the given message."""
+    if x is None:
+        abort(404, message)
+    return x

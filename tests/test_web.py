@@ -21,7 +21,7 @@ from pybel.testing.cases import TemporaryCacheMixin
 from pybel_web.application import PyBELSQLAlchemy, create_application
 from pybel_web.database_service import api_blueprint
 from pybel_web.main_service import ui_blueprint
-
+from pybel_web.manager import WebManager
 log = logging.getLogger(__name__)
 log.setLevel(10)
 
@@ -82,10 +82,7 @@ class WebTest(TemporaryCacheMixin):
             self.manager.create_all()
 
     @property
-    def manager(self):
-        """
-        :rtype: pybel_web.manager.WebManager
-        """
+    def manager(self) -> WebManager:
         return PyBELSQLAlchemy.get_manager(self.app)
 
     @property

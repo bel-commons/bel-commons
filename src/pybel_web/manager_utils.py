@@ -4,11 +4,11 @@
 corresponding to objects"""
 
 import logging
-import time
 from typing import Any, Mapping, Optional, Tuple, Union
 
 import networkx as nx
 import pandas as pd
+import time
 from flask import Response, abort, flash, jsonify, redirect, request
 
 from pybel import BELGraph, Manager
@@ -59,12 +59,13 @@ def fill_out_report(*, graph: BELGraph, network: Network, report: Report):
     report.completed = True
 
 
-def insert_graph(manager: Manager,
-                 graph: BELGraph,
-                 user: Union[int, User] = 1,
-                 public: bool = False,
-                 use_tqdm: bool = False,
-                 ) -> Network:
+def insert_graph(
+        manager: Manager,
+        graph: BELGraph,
+        user: Union[int, User] = 1,
+        public: bool = False,
+        use_tqdm: bool = False,
+) -> Network:
     """Insert a graph and also make a report.
 
     :param manager: A PyBEL manager
@@ -98,18 +99,17 @@ def insert_graph(manager: Manager,
     return network
 
 
-def create_omic(data, gene_column, data_column, description, source_name, sep, public: bool = False, user=None) -> Omic:
-    """Create an omics model.
-
-    :param str or file data:
-    :param str gene_column:
-    :param str data_column:
-    :param str description:
-    :param str source_name:
-    :param str sep:
-    :param bool public:
-    :param Optional[User] user:
-    """
+def create_omic(
+        data,
+        gene_column: str,
+        data_column: str,
+        description: str,
+        source_name: str,
+        sep: str,
+        public: bool = False,
+        user: Optional[User] = None,
+) -> Omic:
+    """Create an omics model."""
     df = pd.read_csv(data, sep=sep)
 
     if gene_column not in df.columns:
@@ -134,19 +134,20 @@ def create_omic(data, gene_column, data_column, description, source_name, sep, p
     return result
 
 
-def calculate_scores(graph: BELGraph,
-                     data: Mapping[str, float],
-                     runs: int,
-                     use_tqdm: bool = False,
-                     tqdm_kwargs: Optional[Mapping[str, Any]] = None,
-                     ) -> Mapping[BaseEntity, Tuple]:
+def calculate_scores(
+        graph: BELGraph,
+        data: Mapping[str, float],
+        runs: int,
+        use_tqdm: bool = False,
+        tqdm_kwargs: Optional[Mapping[str, Any]] = None,
+) -> Mapping[BaseEntity, Tuple]:
     """Calculate heat diffusion scores.
 
     :param graph: A BEL graph
     :param data: A dictionary of {name: data}
     :param runs: The number of permutations
     :param use_tqdm:
-    :return: A dictionary of {pybel node tuple: results tuple} from
+    :return: A dictionary of {pybel node: results tuple} from
      :py:func:`pybel_tools.analysis.ucmpa.calculate_average_scores_on_subgraphs`
     """
     remove_nodes_by_namespace(graph, {'MGI', 'RGD'})
@@ -165,11 +166,12 @@ def calculate_scores(graph: BELGraph,
     )
 
 
-def run_heat_diffusion_helper(manager: Manager,
-                              experiment: Experiment,
-                              use_tqdm: bool = False,
-                              tqdm_kwargs: Optional[Mapping[str, Any]] = None,
-                              ) -> None:
+def run_heat_diffusion_helper(
+        manager: Manager,
+        experiment: Experiment,
+        use_tqdm: bool = False,
+        tqdm_kwargs: Optional[Mapping[str, Any]] = None,
+) -> None:
     """Run the Heat Diffusion Workflow on an experiment and store information back into original experiment."""
     t = time.time()
 
@@ -186,7 +188,13 @@ def run_heat_diffusion_helper(manager: Manager,
     experiment.time = time.time() - t
 
 
-def next_or_jsonify(message: str, *args, status: int = 200, category: str = 'message', **kwargs) -> Response:
+def next_or_jsonify(
+        message: str,
+        *args,
+        status: int = 200,
+        category: str = 'message',
+        **kwargs,
+) -> Response:
     """Wrap a redirect if the ``next`` argument is set in the request otherwise sends JSON feedback.
 
     :param message: The message to send

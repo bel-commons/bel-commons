@@ -50,6 +50,7 @@ from pybel_web.views import (
 
 __all__ = [
     'create_application',
+    'PyBELSQLAlchemy',
 ]
 
 log = logging.getLogger(__name__)
@@ -160,7 +161,7 @@ def create_application(
         register_examples(manager=manager, user_datastore=user_datastore)
 
     if pybel_web_config.register_admin:
-        register_admin_service(app=app, manager=manager, user_datastore=user_datastore)
+        register_admin_service(app=app, manager=manager)
 
     app.register_blueprint(ui_blueprint)
     if pybel_web_config.enable_curation:

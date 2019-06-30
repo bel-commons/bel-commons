@@ -70,8 +70,8 @@ def list_namespaces():
 
 
 def _build_namespace_helper(graph, namespace, names):
-    """Helps build a response holding a BEL namespace"""
-    si = StringIO()
+    """Help build a response holding a BEL namespace."""
+    file = StringIO()
 
     write_namespace(
         namespace_name=namespace,
@@ -83,10 +83,10 @@ def _build_namespace_helper(graph, namespace, names):
         citation_description=f'This namespace was serialized by PyBEL v{get_pybel_version()} from {graph}',
         cacheable=False,
         values=names,
-        file=si,
+        file=file,
     )
 
-    output = make_response(si.getvalue())
+    output = make_response(file.getvalue())
     output.headers["Content-Disposition"] = f'attachment; filename={namespace}.belns'
     output.headers["Content-type"] = "text/plain"
     return output
@@ -94,7 +94,7 @@ def _build_namespace_helper(graph, namespace, names):
 
 @api_blueprint.route('/api/network/<int:network_id>/builder/namespace/undefined/<namespace>')
 def download_undefined_namespace(network_id, namespace):
-    """Outputs a namespace built for this undefined namespace
+    """Output a namespace built for this undefined namespace.
 
     ---
     tags:
@@ -161,7 +161,7 @@ def download_naked_names(network_id):
 
 def _build_annotation_helper(graph: BELGraph, annotation: str, values: Mapping[str, str]) -> Response:
     """Build an annotation document helper."""
-    si = StringIO()
+    file = StringIO()
 
     write_annotation(
         keyword=annotation,
@@ -170,10 +170,10 @@ def _build_annotation_helper(graph: BELGraph, annotation: str, values: Mapping[s
         author_contact=graph.contact,
         citation_name=graph.name,
         description=f'This annotation was serialized by PyBEL v{get_pybel_version()} from {graph}',
-        file=si,
+        file=file,
     )
 
-    output = make_response(si.getvalue())
+    output = make_response(file.getvalue())
     output.headers["Content-Disposition"] = f"attachment; filename={annotation}.belanno"
     output.headers["Content-type"] = "text/plain"
     return output
@@ -181,7 +181,7 @@ def _build_annotation_helper(graph: BELGraph, annotation: str, values: Mapping[s
 
 @api_blueprint.route('/api/network/<int:network_id>/builder/annotation/list/<annotation>')
 def download_list_annotation(network_id, annotation):
-    """Outputs an annotation built from the given list definition
+    """Output an annotation built from the given list definition.
 
     ---
     tags:
@@ -257,7 +257,7 @@ def suggest_annotation():
 @api_blueprint.route('/api/network/<int:network_id>')
 @roles_required('admin')
 def get_network_metadata(network_id):
-    """Returns network metadata
+    """Get a network's metadata.
 
     ---
     tags:
@@ -386,7 +386,7 @@ def annotations_by_network(network_id: int):
 
 @api_blueprint.route('/api/network/<int:network_id>/citations')
 def citations_by_network(network_id: int):
-    """Gets all of the citations in a given network
+    """Get all of the citations in a given network.
 
     ---
     tags:
@@ -407,7 +407,7 @@ def citations_by_network(network_id: int):
 
 @api_blueprint.route('/api/network/<int:network_id>/edges')
 def edges_by_network(network_id: int):
-    """Gets all of the edges in a network
+    """Get all of the edges in a network.
 
     ---
     tags:
@@ -453,7 +453,7 @@ def edges_by_network(network_id: int):
 
 @api_blueprint.route('/api/network/<int:network_id>/nodes/')
 def nodes_by_network(network_id: int):
-    """Gets all of the nodes in a network
+    """Get all of the nodes in a network.
 
     ---
     tags:
@@ -581,7 +581,7 @@ def claim_network(network_id: int):
     return next_or_jsonify(
         f'Claimed {network} in {time.time() - t:.2f} seconds',
         network={'id': network.id},
-        owner={'id': current_user.id}
+        owner={'id': current_user.id},
     )
 
 
@@ -606,7 +606,7 @@ def pillage() -> Response:
 
 @api_blueprint.route('/api/network/<int:network_id>/export/<serve_format>')
 def export_network(network_id: int, serve_format: str) -> Response:
-    """Builds a graph from the given network id and sends it in the given format
+    """Build a graph from the given network and sends it in the given format.
 
     ---
     tags:
@@ -641,7 +641,7 @@ def export_network(network_id: int, serve_format: str) -> Response:
 
 @api_blueprint.route('/api/network/<int:network_id>/summarize')
 def get_graph_info_json(network_id: int) -> Response:
-    """Gets a summary of the given network
+    """Get a summary of the given network.
 
     ---
     tags:
@@ -662,7 +662,7 @@ def get_graph_info_json(network_id: int) -> Response:
 
 @api_blueprint.route('/api/network/<int:network_id>/name')
 def get_network_name_by_id(network_id: int) -> Response:
-    """Returns network name given its id
+    """Return the name of the given network.
 
     ---
     tags:
@@ -679,7 +679,7 @@ def get_network_name_by_id(network_id: int) -> Response:
 
 
 def update_network_status(network_id: int, public: bool) -> Response:
-    """Update whether a network is public or private"""
+    """Update whether a network is public or private."""
     network = manager.get_network_by_id_or_404(network_id)
 
     if network.report is None:
@@ -701,7 +701,7 @@ def update_network_status(network_id: int, public: bool) -> Response:
 @api_blueprint.route('/api/network/<int:network_id>/make_public')
 @login_required
 def make_network_public(network_id: int):
-    """Makes a given network public using admin powers
+    """Make a given network public using admin powers.
 
     ---
     tags:
@@ -719,7 +719,7 @@ def make_network_public(network_id: int):
 @api_blueprint.route('/api/network/<int:network_id>/make_private')
 @login_required
 def make_network_private(network_id: int):
-    """Makes a given network private using admin powers
+    """Make a given network private using admin powers.
 
     ---
     tags:
@@ -740,7 +740,7 @@ def make_network_private(network_id: int):
 
 @api_blueprint.route('/api/query/<int:query_id>.json')
 def download_query_json(query_id: int):
-    """Downloads the query"""
+    """Get the results of a given query."""
     query = manager.cu_get_query_by_id_or_404(query_id=query_id)
     query_json = query.to_json()
     return jsonify(query_json)
@@ -748,7 +748,7 @@ def download_query_json(query_id: int):
 
 @lru_cache(maxsize=256)
 def get_tree_from_query(query_id: int) -> Optional[List[Dict]]:
-    """Gets the tree json for a given network
+    """Get the tree json for the results of a given query.
 
     :raises: werkzeug.exceptions.HTTPException
     """
@@ -774,7 +774,6 @@ def get_tree_api(query_id: int):
         required: true
         type: integer
     """
-
     rv = {
         'query': query_id,
     }
@@ -1379,7 +1378,7 @@ def get_edge_by_hash(edge_hash: str):
 
     ---
     tags:
-        - edge
+      - edge
     parameters:
       - name: edge_hash
         in: path
@@ -1398,7 +1397,7 @@ def search_edge_by_hash(edge_hash: str):
 
     ---
     tags:
-        - edge
+      - edge
     parameters:
       - name: edge_hash
         in: path
@@ -1514,7 +1513,7 @@ def get_nodes():
 
     ---
     tags:
-        - node
+      - node
     parameters:
       - name: limit
         in: query
@@ -1547,7 +1546,7 @@ def get_node_by_hash(node_hash: str):
 
     ---
     tags:
-        - node
+      - node
     parameters:
       - name: node_hash
         in: path
@@ -1566,7 +1565,7 @@ def nodes_by_bel(bel: str):
 
     ---
     tags:
-        - node
+      - node
     """
     nodes = manager.query_nodes(bel=bel)
     return jsonify_nodes(nodes)
@@ -1578,7 +1577,7 @@ def nodes_by_name(name: str):
 
     ---
     tags:
-        - node
+      - node
     """
     nodes = manager.query_nodes(name=name)
     return jsonify_nodes(nodes)
@@ -1590,7 +1589,7 @@ def nodes_by_namespace(namespace: str):
 
     ---
     tags:
-        - namespace
+      - namespace
     """
     nodes = manager.query_nodes(namespace=namespace)
     return jsonify_nodes(nodes)
@@ -1602,7 +1601,7 @@ def nodes_by_namespace_name(namespace: str, name: str):
 
     ---
     tags:
-        - namespace
+      - namespace
     """
     nodes = manager.query_nodes(namespace=namespace, name=name)
     return jsonify_nodes(nodes)
@@ -1665,7 +1664,7 @@ def get_node_suggestion():
 
     ---
     tags:
-        - node
+      - node
     parameters:
       - name: q
         in: query
@@ -1747,7 +1746,7 @@ def drop_queries():
 
     ---
     tags:
-        - query
+      - query
     """
     manager.session.query(UserQuery).delete()
     manager.session.commit()
@@ -1831,13 +1830,13 @@ def get_query_parent(query_id):
     if not query.parent:
         return jsonify({
             'id': query.id,
-            'parent': False
+            'parent': False,
         })
-
-    return jsonify({
-        'id': query.parent.id,
-        'parent': True
-    })
+    else:
+        return jsonify({
+            'id': query.parent.id,
+            'parent': True,
+        })
 
 
 @api_blueprint.route('/api/query/<int:query_id>/ancestor')
@@ -1937,7 +1936,7 @@ def add_applier_to_query(query_id: int, name: str):
 
     ---
     tags:
-        - query
+      - query
     parameters:
       - name: query_id
         in: path
@@ -1954,16 +1953,16 @@ def add_applier_to_query(query_id: int, name: str):
 
 
 @api_blueprint.route('/api/query/<int:query_id>/add_node_list_applier/<name>/<node_hashes>')
-def add_node_list_applier_to_query(query_id: int, name: str, node_hashes):
+def add_node_list_applier_to_query(query_id: int, name: str, node_hashes: str):
     """Build a new query with a node list applier added to the end of the pipeline.
 
-    :param int query_id: A query's database identifier
-    :param str name: The name of the function to apply at the end of the query
-    :param list[str] node_hashes: The node identifiers to use as the argument to the function
+    :param query_id: A query's database identifier
+    :param name: The name of the function to apply at the end of the query
+    :param node_hashes: The node identifiers to use as the argument to the function
 
     ---
     tags:
-        - query
+      - query
     parameters:
       - name: query_id
         in: path
@@ -2068,7 +2067,7 @@ def get_all_users():
 
     ---
     tags:
-        - user
+      - user
     """
     return jsonify([
         user.to_json(include_id=True)
@@ -2083,7 +2082,7 @@ def get_current_user():
 
     ---
     tags:
-        - user
+      - user
     """
     return jsonify(current_user.to_json())
 
@@ -2095,7 +2094,7 @@ def add_user_role(user, role):
 
     ---
     tags:
-        - user
+      - user
     """
     manager.user_datastore.add_role_to_user(user, role)
     manager.user_datastore.commit()
@@ -2109,7 +2108,7 @@ def drop_user_role(user, role):
 
     ---
     tags:
-        - user
+      - user
     """
     manager.user_datastore.remove_role_from_user(user, role)
     manager.user_datastore.commit()
@@ -2123,7 +2122,7 @@ def drop_user(user_id: int) -> Response:
 
     ---
     tags:
-        - user
+      - user
     parameters:
       - name: user_id
         in: path
@@ -2248,7 +2247,7 @@ def drop_experiment_by_id(experiment_id: int):
         f'Dropped experiment {experiment.id}',
         experiment={
             'id': experiment.id,
-            'description': experiment.description
+            'description': experiment.description,
         }
     )
 
@@ -2260,7 +2259,7 @@ def download_analysis(experiment_id: int):
 
     ---
     tags:
-        - experiment
+      - experiment
     parameters:
       - name: experiment_id
         in: path
@@ -2305,7 +2304,7 @@ def grant_network_to_project(network_id: int, project_id: int):
 
     ---
     tags:
-        - network
+      - network
     parameters:
       - name: network_id
         in: path
@@ -2341,8 +2340,8 @@ def grant_network_to_user(network_id: int, user_id: int):
 
     ---
     tags:
-        - network
-        - user
+      - network
+      - user
     parameters:
       - name: network_id
         in: path
@@ -2373,7 +2372,7 @@ def get_all_projects():
 
     ---
     tags:
-        - project
+      - project
     """
     return jsonify([
         project.to_json(include_id=True)
@@ -2388,7 +2387,7 @@ def get_project_metadata(project_id: int):
 
     ---
     tags:
-        - project
+      - project
     parameters:
       - name: project_id
         in: path
@@ -2409,7 +2408,7 @@ def drop_project_by_id(project_id: int):
 
     ---
     tags:
-        - project
+      - project
     parameters:
       - name: project_id
         in: path
@@ -2435,7 +2434,7 @@ def summarize_project(project_id: int):
 
     ---
     tags:
-        - project
+      - project
     parameters:
       - name: project_id
         in: path
@@ -2477,7 +2476,7 @@ def export_project_network(project_id: int, serve_format: str):
 
     ---
     tags:
-        - project
+      - project
     parameters:
       - name: project_id
         in: path
@@ -2516,7 +2515,7 @@ def export_project_network(project_id: int, serve_format: str):
 @api_blueprint.route('/api/meta/config')
 @roles_required('admin')
 def view_config():
-    """Lists the application configuration"""
+    """List the application configuration."""
     return jsonify({
         key: str(value)
         for key, value in current_app.config.items()
@@ -2525,13 +2524,13 @@ def view_config():
 
 @api_blueprint.route('/api/meta/blacklist')
 def get_blacklist():
-    """Return list of blacklist constants"""
+    """Return a list of blacklist constants."""
     return jsonify(sorted(BLACK_LIST))
 
 
 @api_blueprint.route('/api/text/report')
 def get_recent_report():
-    """Gets the recent reports"""
+    """Get the recent reports."""
     lines = manager.get_recent_reports()
     output = make_response('\n'.join(lines))
     output.headers["Content-type"] = "text/plain"

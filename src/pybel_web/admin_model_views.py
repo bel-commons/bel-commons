@@ -2,13 +2,12 @@
 
 """This module contains model views for the Flask-admin interface."""
 
-from itertools import chain
-
 from flask import redirect, request
 from flask_admin.contrib.sqla import ModelView as ModelViewBase
 from flask_admin.contrib.sqla.ajax import QueryAjaxModelLoader
 from flask_admin.model.ajax import DEFAULT_PAGE_SIZE
-from flask_security import SQLAlchemyUserDatastore, current_user, url_for_security
+from flask_security import current_user, url_for_security
+from itertools import chain
 from sqlalchemy import or_
 
 from pybel import Manager
@@ -18,34 +17,38 @@ from .models import Project
 
 
 class ModelView(ModelViewBase):
-    """Adds plugin for Flask-Security to Flask-Admin model views"""
+    """Adds plugin for Flask-Security to Flask-Admin model views."""
 
     def is_accessible(self):
-        """Checks the current user is an admin"""
+        """Checks the current user is an admin."""
         return current_user.is_authenticated and current_user.is_admin
 
     def inaccessible_callback(self, name, **kwargs):
-        """redirect to login page if user doesn't have access"""
+        """redirect to login page if user doesn't have access."""
         return redirect(url_for_security('login', next=request.url))
 
 
 class NetworkView(ModelView):
-    """Special view for PyBEL Networks"""
+    """Special view for PyBEL Networks."""
+
     column_exclude_list = ['blob', 'sha512', 'authors', 'description', 'copyright', 'disclaimer', 'licenses']
 
 
 class AnnotationView(ModelView):
-    """Special view for PyBEL annotations"""
+    """Special view for PyBEL annotations."""
+
     column_exclude_list = ['type', 'usage', 'author', 'license', 'citation_description']
 
 
 class NamespaceView(ModelView):
-    """Special view for PyBEL namespaces"""
+    """Special view for PyBEL namespaces."""
+
     column_exclude_list = ['query_url', 'description', 'author', 'license', 'citation_description']
 
 
 class ReportView(ModelView):
-    """Special view for reports"""
+    """Special view for reports."""
+
     column_exclude_list = ['source', 'calculations', 'source_hash']
     column_display_pk = True
     column_default_sort = ('created', True)
@@ -54,51 +57,65 @@ class ReportView(ModelView):
 
 
 class NodeView(ModelView):
-    """Special view for PyBEL Nodes"""
+    """A :mod:`flask_admin` view for PyBEL Nodes."""
+
     column_exclude_list = ['blob', 'sha512']
 
 
 class EdgeView(ModelView):
-    """Special view for PyBEL Edges"""
+    """A :mod:`flask_admin` view for PyBEL Edges."""
+
     column_exclude_list = ['blob', 'sha512']
 
 
 class CitationView(ModelView):
+    """A :mod:`flask_admin` view for citations."""
+
     column_exclude_list = ['blob', 'sha512']
 
 
 class EvidenceView(ModelView):
+    """A :mod:`flask_admin` for evidences."""
+
     column_exclude_list = ['blob', 'sha512']
 
 
 class ExperimentView(ModelView):
+    """A :mod:`flask_admin` for experiments."""
+
     column_exclude_list = ['source', 'result']
 
 
 class UserView(ModelView):
-    """Special view for Users"""
+    """A :mod:`flask_admin` view for users."""
+
     column_exclude_list = ['password']
 
 
 class QueryView(ModelView):
-    """Special view for Queries"""
+    """A :mod:`flask_admin` view for queries."""
+
     column_exclude_list = ['dump']
     column_default_sort = ('created', True)
     column_display_pk = True
 
 
-def build_network_ajax_manager(manager: Manager, user_datastore: SQLAlchemyUserDatastore) -> QueryAjaxModelLoader:
+def build_network_ajax_manager(manager: Manager) -> QueryAjaxModelLoader:
     """Build an AJAX manager class for use with Flask-Admin."""
 
     class NetworkAjaxModelLoader(QueryAjaxModelLoader):
         """A custom Network AJAX loader for Flask Admin."""
 
         def __init__(self):
-            super(NetworkAjaxModelLoader, self).__init__('networks', manager.session, Network,
-                                                         fields=[Network.name])
+            super(NetworkAjaxModelLoader, self).__init__(
+                'networks',
+                manager.session,
+                Network,
+                fields=[Network.name],
+            )
 
         def get_list(self, term, offset=0, limit=DEFAULT_PAGE_SIZE):
-            """Overrides get_list to be lazy and tricky about only getting current user's networks"""
+            """Call ``get_list`` but override to be lazy and tricky about only getting current user's networks."""
             query = self.session.query(self.model)
 
             filters = (field.ilike(u'%%%s%%' % term) for field in self._cached_fields)
@@ -126,7 +143,7 @@ def build_network_ajax_manager(manager: Manager, user_datastore: SQLAlchemyUserD
     return NetworkAjaxModelLoader()
 
 
-def build_project_view(manager: Manager, user_datastore: SQLAlchemyUserDatastore) -> ModelView:
+def build_project_view(manager: Manager) -> ModelView:
     """Build a Flask-Admin model view for a project."""
 
     class ProjectView(ModelViewBase):
@@ -160,7 +177,7 @@ def build_project_view(manager: Manager, user_datastore: SQLAlchemyUserDatastore
                 model.users.append(current_user)
 
         form_ajax_refs = {
-            'networks': build_network_ajax_manager(manager=manager, user_datastore=user_datastore)
+            'networks': build_network_ajax_manager(manager=manager),
         }
 
     return ProjectView(Project, manager.session)

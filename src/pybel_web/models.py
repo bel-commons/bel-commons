@@ -9,7 +9,7 @@ import datetime
 import itertools as itt
 from operator import attrgetter
 from pickle import dumps, loads
-from typing import Dict, Iterable, List, Mapping, Tuple
+from typing import Dict, Iterable, List, Mapping, Tuple, Any
 
 from flask_security import RoleMixin, UserMixin
 from pandas import DataFrame
@@ -80,7 +80,7 @@ class Role(Base, RoleMixin):
     name = Column(String(80), unique=True, nullable=False)
     description = Column(Text)
 
-    def __str__(self):
+    def __str__(self):  # noqa: D105
         return self.name
 
     def to_json(self) -> Mapping:
@@ -109,12 +109,12 @@ class User(Base, UserMixin):
 
     @property
     def is_admin(self) -> bool:
-        """Is this user an administrator?"""
+        """Return if this user is an administrator."""
         return self.has_role('admin')
 
     @property
     def is_beta_tester(self) -> bool:
-        """Is this user cut out for the truth?"""
+        """Return if this user is a beta tester."""
         return self.is_admin or self.has_role('beta')
 
     def iter_owned_networks(self) -> Iterable[Network]:
@@ -171,21 +171,23 @@ class User(Base, UserMixin):
     def has_experiment_rights(self, experiment: Experiment) -> bool:
         """Check if the user has rights to this experiment."""
         return (
-                experiment.public or
-                self.is_admin or
-                self == experiment.user
+            experiment.public or
+            self.is_admin or
+            self == experiment.user
         )
 
     def __hash__(self):
+        """Hash this user by their email."""
         return hash(self.email)
 
-    def __eq__(self, other):
-        return self.email == other.email
+    def __eq__(self, other) -> bool:
+        """Check that this user is the same as another by email."""
+        return isinstance(other, User) and self.email == other.email
 
-    def __repr__(self):
-        return '<User email={}>'.format(self.email)
+    def __repr__(self):  # noqa: D105
+        return f'<User email={self.email}>'
 
-    def __str__(self):
+    def __str__(self):  # noqa: D105
         return self.email
 
     def to_json(self, include_id: bool = True) -> Mapping:
@@ -265,13 +267,16 @@ class UserQuery(Base):
         )
 
     def seeding_to_json(self):
+        """Return this query's seeding as a JSON object."""
         return self.query.seeding_to_json()
 
     def pipeline_to_json(self):
+        """Return this query's pipeline as a JSON object."""
         return self.query.pipeline_to_json()
 
     @property
-    def networks(self) -> List[Network]:
+    def networks(self) -> List[Network]:  # noqa: D401
+        """The query's networks"""
         return self.query.networks
 
 
@@ -300,10 +305,10 @@ class Project(Base):
         """Return a merged instance of all of the contained networks."""
         return union(network.as_bel() for network in self.networks)
 
-    def __str__(self):
+    def __str__(self):  # noqa: D105
         return self.name
 
-    def to_json(self, include_id: bool = True) -> Mapping:
+    def to_json(self, include_id: bool = True) -> Mapping[str, Any]:
         """Output this project as a JSON dictionary."""
         result = {
             'name': self.name,
@@ -351,9 +356,9 @@ class Omic(Base):
     user = relationship(User, backref=backref('omics', lazy='dynamic'))
 
     def __repr__(self):
-        return '<Omic id={}, source_name={}>'.format(self.id, self.source_name)
+        return f'<Omic id={self.id}, source_name={self.source_name}>'
 
-    def __str__(self):
+    def __str__(self):  # noqa: D105
         return str(self.source_name)
 
     @property
@@ -381,14 +386,12 @@ class Omic(Base):
 
         df_cols = [gene_column, data_column]
 
-        result = {
+        return {
             gene: value
             for _, gene, value in df.loc[df[gene_column].notnull(), df_cols].itertuples()
         }
 
-        return result
-
-    def to_json(self, include_id: bool = True) -> Dict:
+    def to_json(self, include_id: bool = True) -> Dict[str, Any]:
         """Serialize as a dictionary."""
         result = {
             'created': str(self.created),
@@ -417,13 +420,13 @@ class Experiment(Base):
     created = Column(DateTime, default=datetime.datetime.utcnow, doc='The date on which this analysis was run')
     public = Column(Boolean, nullable=False, default=False, doc='Should the experimental results be public?')
 
-    query_id = Column(Integer, ForeignKey('{}.id'.format(Query.__tablename__)), nullable=False, index=True)
+    query_id = Column(Integer, ForeignKey(f'{Query.__tablename__}.id'), nullable=False, index=True)
     query = relationship(Query, backref=backref("experiments", lazy='dynamic'))
 
-    user_id = Column(Integer, ForeignKey('{}.id'.format(User.__tablename__)))
+    user_id = Column(Integer, ForeignKey(f'{User.__tablename__}.id'))
     user = relationship(User, backref=backref('experiments', lazy='dynamic'))
 
-    omic_id = Column(Integer, ForeignKey('{}.id'.format(Omic.__tablename__)), nullable=False, index=True)
+    omic_id = Column(Integer, ForeignKey(f'{Omic.__tablename__}.id'), nullable=False, index=True)
     omic = relationship(Omic, backref=backref('experiments', lazy='dynamic'))
 
     type = Column(String(8), nullable=False, default='CMPA', index=True,
@@ -459,7 +462,7 @@ class Experiment(Base):
         ]
 
     def __repr__(self):
-        return '<Experiment omic={}, query={}>'.format(self.omic.id, self.query.id)
+        return f'<Experiment omic_id={self.omic_id}, query_id={self.query_id}>'
 
     @property
     def source_name(self) -> str:
@@ -506,7 +509,7 @@ class Report(Base):
 
     network_id = Column(
         Integer,
-        ForeignKey('{}.id'.format(Network.__tablename__)),
+        ForeignKey(f'{Network.__tablename__}.id'),
         nullable=True,
         doc='The network that was uploaded'
     )
@@ -559,15 +562,15 @@ class Report(Base):
 
     def __repr__(self):
         if self.incomplete:
-            return '<Report {}: incomplete {}>'.format(self.id, self.source_name)
+            return f'<Report {self.id}: incomplete {self.source_name}>'
 
         if self.failed:
-            return '<Report {}: failed)>'.format(self.id)
+            return f'<Report {self.id}: failed)>'
 
         if self.network:
-            return '<Report {}: completed {}>'.format(self.id, self.network)
+            return f'<Report {self.id}: completed {self.network}>'
 
-        return '<Report {}: cancelled>'.format(self.id)
+        return f'<Report {self.id}: cancelled>'
 
 
 class EdgeVote(Base):
@@ -576,10 +579,10 @@ class EdgeVote(Base):
     __tablename__ = VOTE_TABLE_NAME
     id = Column(Integer, primary_key=True)
 
-    edge_id = Column(Integer, ForeignKey('{}.id'.format(Edge.__tablename__)), nullable=False)
+    edge_id = Column(Integer, ForeignKey(f'{Edge.__tablename__}.id'), nullable=False)
     edge = relationship(Edge, backref=backref('votes', lazy='dynamic', cascade="all, delete-orphan"))
 
-    user_id = Column(Integer, ForeignKey('{}.id'.format(User.__tablename__)), nullable=False,
+    user_id = Column(Integer, ForeignKey(f'{User.__tablename__}.id'), nullable=False,
                      doc='The user who made this vote')
     user = relationship(User, backref=backref('votes', lazy='dynamic'))
 
@@ -614,10 +617,10 @@ class EdgeComment(Base):
     __tablename__ = COMMENT_TABLE_NAME
     id = Column(Integer, primary_key=True)
 
-    edge_id = Column(Integer, ForeignKey('{}.id'.format(Edge.__tablename__)))
+    edge_id = Column(Integer, ForeignKey(f'{Edge.__tablename__}.id'))
     edge = relationship(Edge, backref=backref('comments', lazy='dynamic', cascade="all, delete-orphan"))
 
-    user_id = Column(Integer, ForeignKey('{}.id'.format(USER_TABLE_NAME)), nullable=False,
+    user_id = Column(Integer, ForeignKey(f'{User.__tablename__}.id'), nullable=False,
                      doc='The user who made this comment')
     user = relationship(User, backref=backref('comments', lazy='dynamic'))
 
@@ -648,11 +651,11 @@ class NetworkOverlap(Base):
 
     __tablename__ = OVERLAP_TABLE_NAME
 
-    left_id = Column(Integer, ForeignKey('{}.id'.format(Network.__tablename__)), primary_key=True)
+    left_id = Column(Integer, ForeignKey(f'{Network.__tablename__}.id'), primary_key=True)
     left = relationship(Network, foreign_keys=[left_id],
                         backref=backref('overlaps', lazy='dynamic', cascade="all, delete-orphan"))
 
-    right_id = Column(Integer, ForeignKey('{}.id'.format(Network.__tablename__)), primary_key=True)
+    right_id = Column(Integer, ForeignKey(f'{Network.__tablename__}.id'), primary_key=True)
     right = relationship(Network, foreign_keys=[right_id],
                          backref=backref('incoming_overlaps', lazy='dynamic', cascade="all, delete-orphan"))
 

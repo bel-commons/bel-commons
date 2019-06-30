@@ -1,17 +1,25 @@
-from pybel.constants import PROTEIN, INCREASES
-from pybel.manager import Network, Node, Edge
+# -*- coding: utf-8 -*-
+
+"""Utilities for testing BEL Commons."""
+
+from typing import Optional
+
+from pybel.constants import INCREASES, PROTEIN
+from pybel.manager import Edge, Network, Node
 from pybel.testing.utils import n
-from pybel_web.models import Report, User
+from pybel_web.models import Report
 
 
-def make_network(name: str = None):
+def make_network(name: str = None) -> Network:
+    """Make a network with a dummy name and version."""
     return Network(
         name=(str(name) if name is not None else n()),
         version=n(),
     )
 
 
-def upgrade_network(network: Network):
+def upgrade_network(network: Network) -> Network:
+    """Make a new network with the same name and a new version."""
     return Network(
         name=network.name,
         version=n(),
@@ -19,28 +27,24 @@ def upgrade_network(network: Network):
 
 
 def make_report(network: Network) -> Report:
+    """Make a report for the network."""
     return Report(network=network)
 
 
 def make_node() -> Node:
-    u = n()
-    return Node(type=PROTEIN, bel='p(HGNC:{})'.format(u))
+    """Make a dummy node."""
+    return Node(type=PROTEIN, bel=f'p(HGNC:{n()})')
 
 
-def make_edge(n1=None, n2=None) -> Edge:
-    if n1 is None:
-        n1 = make_node()
-    if n2 is None:
-        n2 = make_node()
-    return Edge(source=n1, target=n2, relation=INCREASES, bel='{} increases {}'.format(n1.bel, n2.bel))
-
-
-class MockAdminUser(User):
-
-    @property
-    def is_authenticated(self):
-        return False
-
-    @property
-    def is_admin(self):
-        return True
+def make_edge(source: Optional[Node] = None, target: Optional[Node] = None) -> Edge:
+    """Make a dummy edge."""
+    if source is None:
+        source = make_node()
+    if target is None:
+        target = make_node()
+    return Edge(
+        source=source,
+        target=target,
+        relation=INCREASES,
+        bel=f'{source.bel} increases {target.bel}',
+    )

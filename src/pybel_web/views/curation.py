@@ -1,11 +1,14 @@
 # -*- coding: utf-8 -*-
 
+"""Curation blueprint, views, and utilities."""
+
 import codecs
 import logging
 import re
-import time
 from io import StringIO
 
+import time
+from bel_resources import parse_bel_resource, write_namespace
 from flask import Blueprint, make_response, render_template, request
 from flask_security import current_user, login_required, roles_required
 from flask_wtf import FlaskForm
@@ -14,7 +17,6 @@ from ols_client import OlsClient
 from wtforms import fields
 from wtforms.validators import DataRequired
 
-from bel_resources import parse_bel_resource, write_namespace
 from pybel.constants import NAMESPACE_DOMAIN_TYPES
 from pybel.utils import get_version as get_pybel_version
 from pybel_tools.document_utils import write_boilerplate
@@ -25,7 +27,8 @@ curation_blueprint = Blueprint('curation', __name__, url_prefix='/curation')
 
 
 class BoilerplateForm(FlaskForm):
-    """Builds a form for generating BEL script templates"""
+    """A form for generating BEL script templates."""
+
     name = fields.StringField('Document Name', validators=[DataRequired()])
     description = fields.StringField('Document Description', validators=[DataRequired()])
     pmids = fields.StringField('PubMed Identifiers, separated by commas')
@@ -42,7 +45,8 @@ class BoilerplateForm(FlaskForm):
 
 
 class MergeNamespaceForm(FlaskForm):
-    """Builds a form for merging namespace files"""
+    """A form for merging namespace files."""
+
     file = FileField('BEL Namespace Files', render_kw={'multiple': True}, validators=[
         DataRequired(),
         FileAllowed(['belns'], 'Only files with the *.belns extension are allowed')
@@ -65,7 +69,8 @@ class MergeNamespaceForm(FlaskForm):
 
 
 class ValidateResourceForm(FlaskForm):
-    """Builds a form for validating a namespace"""
+    """A form for validating a namespace."""
+
     file = FileField('BEL Namespace or Annotation', validators=[
         DataRequired(),
         FileAllowed(['belns', 'belanno'], 'Only files with the *.belns or *.belanno extension are allowed')
@@ -73,19 +78,20 @@ class ValidateResourceForm(FlaskForm):
     submit = fields.SubmitField('Validate')
 
     def parse_bel_resource(self):
+        """Parse the BEL resource file submitted to this form."""
         return parse_bel_resource(codecs.iterdecode(self.file.data.stream, 'utf-8'))
 
 
 @curation_blueprint.route('/bel/template', methods=['GET', 'POST'])
 @login_required
 def get_boilerplate():
-    """Serves the form for building a template BEL script"""
+    """Serve the form for building a template BEL script."""
     form = BoilerplateForm()
 
     if not form.validate_on_submit():
         return render_template('curation/boilerplate.html', form=form)
 
-    si = StringIO()
+    file = StringIO()
 
     pmids = [int(x.strip()) for x in form.pmids.data.split(',') if x]
     entrez_ids = [int(x.strip()) for x in form.entrez_ids.data.split(',') if x]
@@ -99,12 +105,12 @@ def get_boilerplate():
         version='1.0.0',
         pmids=pmids,
         entrez_ids=entrez_ids,
-        file=si
+        file=file,
     )
 
     identifier = re.sub(r"\s+", '_', form.name.data.lower())
 
-    output = make_response(si.getvalue())
+    output = make_response(file.getvalue())
     output.headers["Content-Disposition"] = "attachment; filename={}.bel".format(identifier)
     output.headers["Content-type"] = "text/plain"
     return output
@@ -113,7 +119,7 @@ def get_boilerplate():
 @curation_blueprint.route('/namespace/merge', methods=['GET', 'POST'])
 @login_required
 def merge_namespaces():
-    """Serves the page for merging bel namespaces"""
+    """Serve the page for merging BEL namespaces."""
     form = MergeNamespaceForm()
 
     if not form.validate_on_submit():
@@ -130,7 +136,7 @@ def merge_namespaces():
         resource = parse_bel_resource(codecs.iterdecode(file, 'utf-8'))
         names |= set(resource['Values'])
 
-    si = StringIO()
+    file = StringIO()
 
     write_namespace(
         namespace_name=form.name.data,
@@ -145,10 +151,10 @@ def merge_namespaces():
         author_copyright=form.licenses.data,
         values=names,
         cacheable=False,
-        file=si
+        file=file,
     )
 
-    output = make_response(si.getvalue())
+    output = make_response(file.getvalue())
     output.headers["Content-Disposition"] = "attachment; filename={}.belns".format(form.keyword.data)
     output.headers["Content-type"] = "text/plain"
     return output
@@ -156,7 +162,7 @@ def merge_namespaces():
 
 @curation_blueprint.route('/namespace/validate', methods=['GET', 'POST'])
 def validate_resource():
-    """Provides suggestions for namespace and annotation curation"""
+    """Provide suggestions for namespace and annotation curation."""
     form = ValidateResourceForm()
 
     if not form.validate_on_submit():
@@ -168,7 +174,7 @@ def validate_resource():
             paragraphs=[
                 """This service wraps the EBI OLS's suggestion service in order to generate a table for mapping
                 custom BEL namespaces to standard ontologies."""
-            ]
+            ],
         )
 
     resource = form.parse_bel_resource()
@@ -193,12 +199,12 @@ def validate_resource():
         data=results,
         missing_suggestion=missing_suggestion,
         timer=round(time.time() - t),
-        namespace_name=resource['Namespace']['NameString']
+        namespace_name=resource['Namespace']['NameString'],
     )
 
 
 @curation_blueprint.route('/interface')
 @roles_required('admin')
 def view_curation_interface():
-    """View the curation interface prototype"""
+    """View the curation interface prototype."""
     return render_template('curation/curate.html')

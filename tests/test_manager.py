@@ -4,7 +4,6 @@
 
 import json
 import logging
-import unittest
 
 import time
 from werkzeug.exceptions import HTTPException
@@ -21,11 +20,12 @@ from tests.utils import make_edge, make_network, make_report, upgrade_network
 log = logging.getLogger(__name__)
 
 
-def make_simple_edge(n1, n2, relation):
+def make_simple_edge(n1: Node, n2: Node, relation: str) -> Edge:
+    """Make a simple edge between two nodes."""
     e1_data = {
-        RELATION: relation
+        RELATION: relation,
     }
-    bel = '{} {} {}'.format(n1.as_bel(), relation, n2.as_bel())
+    bel = f'{n1.as_bel()} {relation} {n2.as_bel()}'
     return Edge(source=n1, target=n2, relation=relation, bel=bel, data=json.dumps(e1_data))
 
 
@@ -33,7 +33,7 @@ class TestManager(TemporaryCacheMethodMixin):
     """Test the PyBEL Web WebManager class."""
 
     def test_manager_iter_recent_public_networks(self):
-        """Test iteration of the latest public networks"""
+        """Test iteration of the latest public networks."""
         n1, n2, n3, n4 = networks = [make_network('Network {}'.format(i)) for i in range(1, 5)]
 
         self.add_all(networks)
@@ -81,6 +81,7 @@ class TestManager(TemporaryCacheMethodMixin):
         """Test getting networks accessible to a given user through a project."""
 
     def test_safe_get_network(self):
+        """Test getting a network as a given user."""
         u1 = User()
         u2 = User()
         self.add_all_and_commit([u1, u2])
@@ -106,7 +107,8 @@ class TestManager(TemporaryCacheMethodMixin):
         with self.assertRaises(HTTPException):
             self.manager.owner_get_network_by_id_or_404(user=u2, network_id=n1.id)
 
-    def test_drop_votes(self):
+    def test_create_votes(self):
+        """Test creating votes for edges."""
         edge = make_edge()
         user = User(email='test@example.com')
         self.manager.session.add_all([edge, user])
@@ -121,6 +123,7 @@ class TestManager(TemporaryCacheMethodMixin):
         self.assertFalse(vote.agreed)
 
     def test_drop_edge_cascade_to_vote(self):
+        """Test the drop cascade from edge to votes."""
         n1 = Node(type=PROTEIN, bel='p(HGNC:A)')
         n2 = Node(type=PROTEIN, bel='p(HGNC:B)')
         n3 = Node(type=PROTEIN, bel='p(HGNC:C)')
@@ -148,6 +151,7 @@ class TestManager(TemporaryCacheMethodMixin):
         self.assertEqual(1, self.manager.session.query(EdgeVote).count())
 
     def test_drop_edge_cascade_to_comment(self):
+        """Test that dropping an edge cascades to all comments."""
         n1 = Node(type=PROTEIN, bel='p(HGNC:A)')
         n2 = Node(type=PROTEIN, bel='p(HGNC:B)')
         n3 = Node(type=PROTEIN, bel='p(HGNC:C)')
@@ -213,6 +217,7 @@ class TestManager(TemporaryCacheMethodMixin):
         self.assertIsNotNone(self.manager.session.query(Query).get(q4.id))
 
     def test_drop_all_queries(self):
+        """Test dropping all queries."""
         q1 = Query()
         q2 = Query(parent=q1)
         q3 = Query(parent=q1)
@@ -229,6 +234,7 @@ class TestManager(TemporaryCacheMethodMixin):
         self.assertEqual(0, self.manager.count_queries())
 
     def test_drop_assembly_cascade_query(self):
+        """Test that dropping an assembly cascades to queries using it."""
         a1 = Assembly()
         a2 = Assembly()
         q1 = Query(assembly=a1)
@@ -246,7 +252,3 @@ class TestManager(TemporaryCacheMethodMixin):
 
         self.assertEqual(1, self.manager.count_assemblies())
         self.assertEqual(1, self.manager.count_queries(), msg='Cascade to queries did not work')
-
-
-if __name__ == '__main__':
-    unittest.main()

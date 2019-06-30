@@ -42,7 +42,7 @@ extract_useful_subgraph = Pipeline.from_functions([
     remove_pathologies,
     remove_associations,
     collapse_to_genes,
-    remove_isolated_nodes
+    remove_isolated_nodes,
 ])
 
 

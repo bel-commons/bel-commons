@@ -22,7 +22,7 @@ SQLALCHEMY_DATABASE_URI = 'SQLALCHEMY_DATABASE_URI'
 class PyBELCelery:
     """Wrap celery utilities."""
 
-    def __init__(self, app: Optional[Flask] = None):
+    def __init__(self, app: Optional[Flask] = None):  # noqa: D105
         self.app = app
         self.blueprint = Blueprint('task', __name__, url_prefix='/api/task')
 
@@ -53,7 +53,7 @@ class PyBELCelery:
         if app is not None:
             self.init_app(app)
 
-    def init_app(self, app: Flask):
+    def init_app(self, app: Flask) -> None:
         """Initialize the app with a Celery instance."""
         app.extensions['celery'] = _create_celery(app)
         app.register_blueprint(self.blueprint)

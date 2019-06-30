@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""Configurations for PyBEL Web.
+"""Configurations for BEL Commons.
 
 Resources:
 
@@ -31,7 +31,9 @@ class PyBELWebConfig(EasyConfig):
     """Configuration for BEL Commons."""
 
     NAME = 'pybel_web'
-    FILES = [os.path.join(CONFIG_DIRECTORY, 'pybel-web', 'config.ini')]
+    FILES = [
+        os.path.join(CONFIG_DIRECTORY, 'pybel-web', 'config.ini'),
+    ]
 
     #: Should example graphs be automatically included?
     register_examples: bool = False
@@ -48,14 +50,17 @@ class PyBELWebConfig(EasyConfig):
 
 
 class Config:
-    """This is the default configuration to be used in a development environment. It assumes you have:
-    
+    """This is the default configuration to be used in a development environment.
+
+    It assumes you have:
+
     - SQLite for the PyBEL Cache on localhost
     - RabbitMQ or another message broker supporting the AMQP protocol running on localhost
 
     If it's running on redis, use ``CELERY_BROKER_URL = 'redis://XXX:6379'`` where XXX is the name of the container
     in docker-compose or localhost if running locally.
     """
+
     #: The Flask app secret key. CHANGE THIS
     SECRET_KEY = os.environ.get('SECRET_KEY', 'pybel_not_default_key1234567890')
     DEBUG = os.environ.get('PYBEL_WEB_DEBUG', False)

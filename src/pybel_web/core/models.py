@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""SQLAlchemy models for PyBEL Web."""
+"""SQLAlchemy models for BEL Commons."""
 
 from __future__ import annotations
 
@@ -56,7 +56,7 @@ class Assembly(Base):
         return union(network.as_bel() for network in self.networks)
 
     @classmethod
-    def from_networks(cls, networks: List[Network]) -> 'Assembly':
+    def from_networks(cls, networks: List[Network]) -> Assembly:
         """Build an assembly from a list of networks."""
         return Assembly(
             networks=networks,
@@ -69,7 +69,7 @@ class Assembly(Base):
         return _hash_tuple(tuple(sorted({network.id for network in networks})))
 
     @staticmethod
-    def from_network(network: Network) -> 'Assembly':
+    def from_network(network: Network) -> Assembly:
         """Builds an assembly from a singular network."""
         return Assembly.from_networks(networks=[network])
 
@@ -79,7 +79,7 @@ class Assembly(Base):
             'networks': [
                 network.to_json()
                 for network in self.networks
-            ]
+            ],
         }
 
         if self.name:
@@ -87,13 +87,13 @@ class Assembly(Base):
 
         return result
 
-    def __repr__(self):
+    def __repr__(self):  # noqa: D105
         return '<Assembly {} with [{}]>'.format(
             self.id,
             ', '.join(str(network.id) for network in self.networks)
         )
 
-    def __str__(self):
+    def __str__(self):  # noqa: D105
         return ', '.join(map(str, self.networks))
 
 
@@ -126,7 +126,7 @@ class Query(Base):
         """Get the network identifiers from the contained assembly."""
         return [network.id for network in self.assembly.networks]
 
-    def __repr__(self):
+    def __repr__(self):  # noqa: D105
         return '<Query id={}, seeding={}, pipeline={}>'.format(self.id, self.seeding_to_json(), self.pipeline_to_json())
 
     """Seeding"""
@@ -145,7 +145,7 @@ class Query(Base):
                         SEED_DATA: [
                             parse_result_to_dsl(node_dict)
                             for node_dict in entry[SEED_DATA]
-                        ]
+                        ],
                     }
                     if entry[SEED_METHOD] in NODE_SEED_TYPES else
                     entry
@@ -232,11 +232,12 @@ class Query(Base):
         return result
 
     @staticmethod
-    def from_query_args(manager: Manager,
-                        network_ids: List[int],
-                        seeding: Optional[Seeding] = None,
-                        pipeline: Optional[Pipeline] = None,
-                        ) -> Query:
+    def from_query_args(
+            manager: Manager,
+            network_ids: List[int],
+            seeding: Optional[Seeding] = None,
+            pipeline: Optional[Pipeline] = None,
+    ) -> Query:
         """Build an ORM model from the arguments for a PyBEL query."""
         q = pybel.struct.query.Query(network_ids, seeding=seeding, pipeline=pipeline)
         return Query.from_query(manager, q)

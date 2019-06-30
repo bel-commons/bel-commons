@@ -46,7 +46,7 @@ def _iterate_user_strings(manager_: WebManager) -> Iterable[str]:
         yield f'{user.id}\t{user.email}\t{user.password}\t{roles_}\t{user.name if user.name else ""}'
 
 
-def set_debug(level):
+def _set_logging_level(level: int) -> None:
     logging.basicConfig(level=level, format="%(asctime)s - %(levelname)s - %(name)s - %(message)s", datefmt='%H:%M:%S')
 
     pybel_log = logging.getLogger('pybel')
@@ -63,18 +63,19 @@ def set_debug(level):
     logging.getLogger('bio2bel_chebi').setLevel(level)
 
 
-def set_debug_param(debug):
+def _set_debug_param(debug: int) -> None:
     if debug == 1:
-        set_debug(logging.INFO)
+        _set_logging_level(logging.INFO)
         log.info('Logging at logging.INFO')
     elif debug == 2:
-        set_debug(logging.DEBUG)
+        _set_logging_level(logging.DEBUG)
         log.info('Logging at logging.DEBUG')
 
     logging.getLogger('passlib.registry').setLevel(logging.WARNING)
 
 
-def number_of_workers():
+def number_of_workers() -> int:
+    """Calculate the default number of workers."""
     return (multiprocessing.cpu_count() * 2) + 1
 
 
@@ -127,7 +128,7 @@ def main():
 @click.option('-w', '--workers', type=int, default=number_of_workers(), help='Number of workers')
 def run(host, port, debug, config, enable_parser, register_examples, with_gunicorn, workers):
     """Run the web application."""
-    set_debug_param(debug)
+    _set_debug_param(debug)
 
     pybel_web_config = PyBELWebConfig.load(
         register_examples=register_examples,
@@ -160,7 +161,7 @@ def worker(concurrency, broker, debug):
         broker=broker,
         loglevel=debug,
         traceback=True,
-        concurrency=concurrency
+        concurrency=concurrency,
     )
 
 
@@ -197,7 +198,7 @@ def load(manager: WebManager, file: TextIO):
             if 4 <= len(line):
                 u.name = line[3]
 
-            click.echo('added {}'.format(u))
+            click.echo(f'added {u}')
             ds.commit()
 
             if 3 <= len(line):
@@ -212,9 +213,9 @@ def load(manager: WebManager, file: TextIO):
 @click.option('-u', '--user-dump', type=click.File('w'), default=sys.stdout, help='Place to dump user data')
 @click.confirmation_option()
 @click.pass_obj
-def drop(manager: WebManager, user_dump: bool):
+def drop(manager: WebManager, user_dump):
     """Drop the database."""
-    click.echo('Dumping users to {}'.format(user_dump))
+    click.echo(f'Dumping users to {user_dump}')
     for s in _iterate_user_strings(manager):
         click.echo(s, file=user_dump)
     click.echo('Done dumping users')
@@ -311,7 +312,7 @@ def users():
 @users.command()
 @click.pass_obj
 def ls(manager: WebManager):
-    """Lists all users"""
+    """Lists all users."""
     for s in _iterate_user_strings(manager):
         click.echo(s)
 
@@ -492,7 +493,7 @@ def assemblies():
 @click.option('-y', '--yes', is_flag=True)
 @click.pass_obj
 def drop(manager: WebManager, assembly_id: Optional[int], yes: bool):
-    """Drops either a single or all Experiment models"""
+    """Drop either a single or all Assembly models."""
     if assembly_id is not None:
         manager.session.query(assembly_id).get(assembly_id).delete()
         manager.session.commit()
@@ -608,7 +609,7 @@ if omics_dir is not None or bms_dir is not None:
         def load_omics(manager: WebManager, reload: bool):
             """Load omics."""
             from .resources.load_omics import main
-            set_debug(logging.INFO)
+            _set_logging_level(logging.INFO)
             main(manager, reload=reload)
 
     if bms_dir is not None:
@@ -618,7 +619,7 @@ if omics_dir is not None or bms_dir is not None:
         def load_networks(manager: WebManager, skip_cbn: bool):
             """Load networks."""
             from .resources.load_networks import load_bms, load_cbn
-            set_debug(logging.INFO)
+            _set_logging_level(logging.INFO)
             load_bms(manager)
 
             if not skip_cbn:
@@ -637,7 +638,7 @@ if omics_dir is not None or bms_dir is not None:
             from .resources.load_networks import load_bms, load_bio2bel, load_cbn
             from .resources.load_experiments import main as load_experiments_main
 
-            set_debug(logging.INFO)
+            _set_logging_level(logging.INFO)
 
             load_omics_main(manager, reload=reload_omics)
             load_bms(manager)
@@ -657,7 +658,7 @@ if omics_dir is not None or bms_dir is not None:
         def load_experiments(manager: WebManager, permutations):
             """Load experiments."""
             from .resources.load_experiments import main
-            set_debug(logging.INFO)
+            _set_logging_level(logging.INFO)
             main(manager, permutations=permutations)
 
 
@@ -667,7 +668,7 @@ if omics_dir is not None or bms_dir is not None:
 @click.option('-a', '--drop-all', is_flag=True)
 @click.pass_obj
 def wasteland(manager: WebManager, drop_most: bool, drop_all: bool):
-    """Drop the PyBEL-Web specific stuff."""
+    """Drop the models specific to BEL Commons."""
     for table in [Experiment, UserQuery, Query]:
         _drop_table(manager, table)
 

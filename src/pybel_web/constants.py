@@ -2,10 +2,6 @@
 
 """Constants for BEL Commons."""
 
-from typing import List
-
-from pybel.config import config
-
 # Configuration parameter names
 PYBEL_WEB_ADMIN_EMAIL = 'PYBEL_WEB_ADMIN_EMAIL'
 PYBEL_WEB_ADMIN_PASSWORD = 'PYBEL_WEB_ADMIN_PASSWORD'

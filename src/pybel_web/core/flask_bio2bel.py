@@ -24,7 +24,7 @@ log = logging.getLogger(__name__)
 class FlaskBio2BEL:
     """A wrapper around Bio2BEL repositories for Flask."""
 
-    def __init__(self, app: Optional[flask.Flask] = None) -> None:
+    def __init__(self, app: Optional[flask.Flask] = None) -> None:  # noqa: D105
         self.app = app
         self.connection = get_cache_connection()
 

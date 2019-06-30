@@ -10,16 +10,16 @@ import hashlib
 import logging
 import os
 import random
-import time
 from typing import Dict
 
 import requests.exceptions
+import time
+from bel_resources.exc import ResourceError
 from celery.app.task import Task
 from celery.utils.log import get_task_logger
 from flask import render_template
 from sqlalchemy.exc import IntegrityError, OperationalError
 
-from bel_resources.exc import ResourceError
 from pybel import BELGraph, Manager, from_json, from_lines, to_bytes
 from pybel.constants import METADATA_CONTACT, METADATA_DESCRIPTION, METADATA_LICENSES
 from pybel.manager.citation_utils import enrich_pubmed_citations
@@ -27,7 +27,7 @@ from pybel.parser.exc import InconsistentDefinitionError
 from pybel.struct.mutation import enrich_protein_and_rna_origins
 from pybel_tools.assembler.html.assembler import get_network_summary_dict
 from .application import create_application
-from .constants import integrity_message, MAIL_DEFAULT_SENDER
+from .constants import MAIL_DEFAULT_SENDER, integrity_message
 from .core.celery import PyBELCelery
 from .manager import WebManager
 from .manager_utils import fill_out_report, insert_graph, run_heat_diffusion_helper
@@ -53,6 +53,7 @@ DEFAULT_METADATA = {
     METADATA_LICENSES: {'Document license'},
 }
 
+
 @celery.task(name='debug-task')
 def run_debug_task() -> int:
     """Run the debug task that sleeps for a trivial amount of time."""
@@ -63,10 +64,10 @@ def run_debug_task() -> int:
 
 
 @celery.task(bind=True, name='summarize-bel', ignore_result=True)
-def summarize_bel(self: Task, connection: str, report_id: int):
+def summarize_bel(task: Task, connection: str, report_id: int):
     """Parse a BEL script asynchronously and email feedback.
 
-    :param self: The task that's being run. Automatically bound.
+    :param task: The task that's being run. Automatically bound.
     :param connection: A connection to build the manager
     :param report_id: A report to parse
     """
@@ -101,7 +102,7 @@ def summarize_bel(self: Task, connection: str, report_id: int):
         return body
 
     try:
-        graph = parse_graph(report=report, manager=manager, task=self)
+        graph = parse_graph(report=report, manager=manager, task=task)
 
     except (ResourceError, requests.exceptions.ConnectionError, requests.exceptions.HTTPError):
         message = 'Connection to resource could not be established.'
@@ -290,13 +291,11 @@ def upload_bel(task: Task, connection: str, report_id: int, enrich_citations: bo
         return {
             'network_id': network.id,
         }
-
     except Exception as e:
         manager.session.rollback()
         make_mail(f'Report unsuccessful for {source_name}', str(e))
         celery_logger.exception('Problem filling out report')
         return -1
-
     finally:
         manager.session.close()
 
@@ -342,7 +341,7 @@ def run_heat_diffusion(connection: str, experiment_id: int) -> int:
 
 @celery.task(name='upload-json')
 def upload_json(connection: str, user_id: int, payload: Dict, public: bool = False):
-    """Receives a JSON serialized BEL graph
+    """Receive and process a JSON serialized BEL graph.
 
     :param connection: A connection to build the manager
     :param user_id: the ID of the user to associate with the graph
@@ -381,7 +380,7 @@ def send_summary_mail(graph: BELGraph, report: Report, time_difference: float):
             graph=graph,
             report=report,
             time=time_difference,
-            **get_network_summary_dict(graph)
+            **get_network_summary_dict(graph),
         )
 
         if mail is not None:
@@ -404,6 +403,7 @@ def send_summary_mail(graph: BELGraph, report: Report, time_difference: float):
 
 
 def iterate_report_lines_in_task(report: Report, task: Task):
+    """Iterate through the lines in a :class:`Report` while keeping a celery :class:`Task` informed of progress."""
     lines = report.get_lines()
     len_lines = len(lines)
     for i, line in enumerate(lines, start=1):
@@ -418,6 +418,7 @@ def iterate_report_lines_in_task(report: Report, task: Task):
 
 
 def parse_graph(report: Report, manager: Manager, task: Task) -> BELGraph:
+    """Parse a graph from a report while keeping a celery :class:`Task` informed of progress."""
     return from_lines(
         iterate_report_lines_in_task(report, task),
         manager=manager,

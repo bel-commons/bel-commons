@@ -121,7 +121,7 @@ def register_error_handlers(app: Flask, sentry: Sentry) -> None:
 
     @app.errorhandler(403)
     def forbidden_error(error):
-        """You must not cross this error"""
+        """You must not cross this error."""
         return render_template('errors/403.html')
 
 
@@ -139,7 +139,7 @@ def register_examples(manager: Manager, user_datastore: SQLAlchemyUserDatastore)
                 insert_graph(manager, graph, user=test_user, public=False)
 
 
-def register_admin_service(app: Flask, manager: Manager, user_datastore: SQLAlchemyUserDatastore) -> Admin:
+def register_admin_service(app: Flask, manager: Manager) -> Admin:
     """Add a Flask-Admin database front-end."""
     admin = Admin(app, template_mode='bootstrap3')
 
@@ -161,6 +161,6 @@ def register_admin_service(app: Flask, manager: Manager, user_datastore: SQLAlch
     admin.add_view(ModelView(EdgeVote, manager.session, category='Edge'))
     admin.add_view(ModelView(EdgeComment, manager.session, category='Edge'))
     admin.add_view(ModelView(NetworkOverlap, manager.session, category='Network'))
-    admin.add_view(build_project_view(manager=manager, user_datastore=user_datastore))
+    admin.add_view(build_project_view(manager=manager))
 
     return admin

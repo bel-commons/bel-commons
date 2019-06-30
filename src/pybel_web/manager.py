@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 
-"""Extensions to the PyBEL manager to support PyBEL-Web."""
+"""Extensions to the PyBEL manager to support BEL Commons."""
 
 import logging
-import time
 from functools import lru_cache
-from typing import Iterable, List, Optional, TypeVar
+from typing import Iterable, List, Optional
 
 import networkx
+import time
 from flask import Response, abort, current_app, render_template
 from flask_security import current_user
 
@@ -18,6 +18,7 @@ from pybel_tools.utils import prepare_c3, prepare_c3_time_series
 from .core.models import Query
 from .manager_base import WebManagerBase, iter_recent_public_networks, iter_unique_networks
 from .models import Experiment, Project, User, UserQuery
+from .utils import return_or_404
 
 __all__ = [
     'WebManager',
@@ -34,7 +35,7 @@ class _WebManager(WebManagerBase):
 
         :raises: werkzeug.exceptions.HTTPException
         """
-        return _return_or_404(
+        return return_or_404(
             self.get_experiment_by_id(experiment_id),
             f'Experiment {experiment_id} does not exist',
         )
@@ -72,7 +73,7 @@ class _WebManager(WebManagerBase):
 
         :raises: werkzeug.exceptions.HTTPException
         """
-        return _return_or_404(
+        return return_or_404(
             self.get_namespace_by_id(namespace_id),
             f'namespace {namespace_id} does not exist',
         )
@@ -89,7 +90,7 @@ class _WebManager(WebManagerBase):
 
         :raises: werkzeug.exceptions.HTTPException
         """
-        return _return_or_404(
+        return return_or_404(
             self.session.query(Citation).get(citation_id),
             f'citation {citation_id} does not exist',
         )
@@ -99,7 +100,7 @@ class _WebManager(WebManagerBase):
 
         :raises: werkzeug.exceptions.HTTPException
         """
-        return _return_or_404(
+        return return_or_404(
             self.get_citation_by_pmid(pubmed_identifier=pubmed_identifier),
             f'citation with pmid:{pubmed_identifier} does not exist',
         )
@@ -109,7 +110,7 @@ class _WebManager(WebManagerBase):
 
         :raises: werkzeug.exceptions.HTTPException
         """
-        return _return_or_404(
+        return return_or_404(
             self.get_author_by_name(name),
             f'author named {name} does not exist',
         )
@@ -119,7 +120,7 @@ class _WebManager(WebManagerBase):
 
         :raises: werkzeug.exceptions.HTTPException
         """
-        return _return_or_404(
+        return return_or_404(
             self.session.query(Evidence).get(evidence_id),
             f'evidence {evidence_id} does not exist',
         )
@@ -129,7 +130,7 @@ class _WebManager(WebManagerBase):
 
         :raises: werkzeug.exceptions.HTTPException
         """
-        return _return_or_404(
+        return return_or_404(
             self.get_network_by_id(network_id),
             f'network {network_id} does not exist',
         )
@@ -241,7 +242,7 @@ class _WebManager(WebManagerBase):
 
         :raises: werkzeug.exceptions.HTTPException
         """
-        return _return_or_404(
+        return return_or_404(
             self.get_query_by_id(query_id),
             f'query {query_id} does not exist',
         )
@@ -304,7 +305,7 @@ class _WebManager(WebManagerBase):
 
         :raises: werkzeug.exceptions.HTTPException
         """
-        return _return_or_404(
+        return return_or_404(
             self.get_node_by_hash(node_hash),
             f'node {node_hash[:8]} does not exist',
         )
@@ -314,7 +315,7 @@ class _WebManager(WebManagerBase):
 
         :raises: werkzeug.exceptions.HTTPException
         """
-        return _return_or_404(
+        return return_or_404(
             self.get_edge_by_hash(edge_hash),
             f'edge {edge_hash[:8]} does not exist',
         )
@@ -324,7 +325,7 @@ class _WebManager(WebManagerBase):
 
         :raises: werkzeug.exceptions.HTTPException
         """
-        return _return_or_404(
+        return return_or_404(
             self.get_project_by_id(project_id),
             f'project {project_id} does not exist',
         )
@@ -346,7 +347,7 @@ class _WebManager(WebManagerBase):
 
         :raises: werkzeug.exceptions.HTTPException
         """
-        return _return_or_404(
+        return return_or_404(
             self.get_user_by_id(user_id),
             f'user {user_id} does not exist',
         )
@@ -427,12 +428,3 @@ class WebManager(_WebManager):
         q = pybel.struct.query.Query([network.id for network in node.networks])
         q.append_seeding_neighbors(node.as_bel())
         return self.build_query(q)
-
-
-X = TypeVar('X')
-
-
-def _return_or_404(x: X, msg: str) -> X:
-    if x is None:
-        abort(404, msg)
-    return x
