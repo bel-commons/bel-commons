@@ -23,7 +23,6 @@ from pybel_web.resources.constants import BMS_BASE
 from .constants import OMICS_DATA_DIR
 
 log = logging.getLogger(__name__)
-enable_cool_mode()
 
 
 # 1. build query from all of alzheimer's disease using manifest from AD folder

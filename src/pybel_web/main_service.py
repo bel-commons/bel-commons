@@ -367,7 +367,7 @@ def view_query_builder():
         'query/query_builder.html',
         networks=networks,
         current_user=current_user,
-        preselected=request.args.get('start', type=int)
+        preselected=request.args.get('start', type=int),
     )
 
 

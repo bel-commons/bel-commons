@@ -25,7 +25,7 @@ from pybel.manager.models import (
     edge_annotation, edge_property, network_edge, network_node, node_modification,
 )
 from pybel.utils import get_version as pybel_version
-from pybel_tools.utils import enable_cool_mode, get_version as pybel_tools_get_version
+from pybel_tools.utils import get_version as pybel_tools_get_version
 from .application import create_application
 from .config import PyBELWebConfig
 from .core.models import Assembly, Query, assembly_network
@@ -274,7 +274,6 @@ def networks():
 @click.pass_obj
 def parse(manager: WebManager, path: str, public: bool):
     """Parses a BEL script and uploads."""
-    enable_cool_mode()
     t = time.time()
     graph = from_path(path, manager=manager)
     log.info('parsing done in %.2f seconds', time.time() - t)
@@ -628,7 +627,7 @@ if omics_dir is not None or bms_dir is not None:
     if omics_dir is not None and bms_dir is not None:
         @examples.command()
         @click.option('--reload-omics', is_flag=True, help='Reload')
-        @click.option('-p', '--permutations', type=int, default=25,show_default=True)
+        @click.option('-p', '--permutations', type=int, default=25, show_default=True)
         @click.option('--skip-bio2bel', is_flag=True)
         @click.option('--skip-cbn', is_flag=True)
         @click.pass_obj
