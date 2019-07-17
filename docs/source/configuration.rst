@@ -15,7 +15,7 @@ is necessary since celery has a problem with flask's url builder function
 
 Add an entry ``PYBEL_CONNECTION`` with the database connection string to either
 a local SQLite database or a proper relational database management system. It's
-suggested to ``pip install mysqlclient`` in combination with MySQL since it
+suggested to ``pip install psycopg2-binary`` in combination with MySQL since it
 enables multi-threading.
 
 For a deployment with a local instance of RabbitMQ, the default configuration

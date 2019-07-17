@@ -6,11 +6,14 @@ disease-specific, mechanistic insight.
 
 Citation
 --------
-If you find BEL Commons useful in your work, please consider citing [Hoyt2018]_:
+If you find BEL Commons useful in your work, please consider citing [Hoyt2018]_ and [Hoyt2017]_:
 
 .. [Hoyt2018] Hoyt, C. T., Domingo-Fernández, D., & Hofmann-Apitius, M. (2018). `BEL Commons: an environment for
               exploration and analysis of networks encoded in Biological Expression Language
               <https://doi.org/10.1093/database/bay126>`_. *Database*, 2018(3), 1–11.
+.. [Hoyt2017] Hoyt, C. T., Konotopez, A., & Ebeling, C., (2018). `PyBEL: a computational framework for Biological
+              Expression Language <https://doi.org/10.1093/bioinformatics/btx660>`_. *Bioinformatics (Oxford, England)*,
+              34(4), 703–704.
 
 System Requirements
 -------------------
@@ -27,8 +30,8 @@ Hardware
 ~~~~~~~~
 At least 2GB RAM for PyBEL's parser
 
-Installation |license|
-----------------------
+Installation
+------------
 Get the latest code on `GitHub <https://github.com/bel-commons/bel-commons>`_
 with:
 
@@ -43,6 +46,13 @@ or PostgreSQL and install their corresponding connectors:
 
     $ python3 -m pip install psycopg2-binary
 
+License
+-------
+This repository is under the `MIT License <https://github.com/bel-commons/bel-commons/blob/master/LICENSE>`_.
+
+
+Usage
+-----
 Reset the Database
 ~~~~~~~~~~~~~~~~~~
 For the times when you just have to burn it down and start over:
@@ -63,5 +73,5 @@ Acknowledgement
 ---------------
 This package was originally developed with the results from the master's work
 of `Charles Tapley Hoyt <https://github.com/cthoyt>`_ at `Fraunhofer SCAI <https://www.scai.fraunhofer.de/>`_ with
-partial support from the `IMI <https://www.imi.europa.eu/>`_ projects,
+partial support from the `IMI <https://www.imi.europa.eu/>`_ project,
 `AETIONOMY <http://www.aetionomy.eu/>`_.
