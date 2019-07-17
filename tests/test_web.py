@@ -18,16 +18,16 @@ from flask_security import current_user
 
 from pybel.constants import PYBEL_CONNECTION
 from pybel.testing.cases import TemporaryCacheMixin
-from pybel_web.application import PyBELSQLAlchemy, create_application
-from pybel_web.database_service import api_blueprint
-from pybel_web.main_service import ui_blueprint
-from pybel_web.manager import WebManager
+from bel_commons.application import PyBELSQLAlchemy, create_application
+from bel_commons.database_service import api_blueprint
+from bel_commons.main_service import ui_blueprint
+from bel_commons.manager import WebManager
+
 log = logging.getLogger(__name__)
-log.setLevel(10)
 
 TEST_USER_EMAIL = 'test@example.com'
 TEST_USER_PASSWORD = 'password'
-TEST_SECRET_KEY = 'pybel_web_tests'
+TEST_SECRET_KEY = 'bel_commons_tests'
 
 
 def has_no_empty_params(rule):

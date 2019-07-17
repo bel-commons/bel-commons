@@ -1,13 +1,12 @@
 Installation
 ============
-This application is written in Python 3. Future releases will be Python
-3.7+ only.
+This application runs on Python 3.7+.
 
 Database
 --------
 For production, it is preferred to use a multi-threading relational database
-management system. PyBEL has been best tested on MySQL, so this is preferred
-for now.
+management system. PyBEL has been best tested on PostgreSQL, so this is
+preferred for now.
 
 Message Broker
 --------------

@@ -3,15 +3,15 @@
 """Constants for BEL Commons."""
 
 # Configuration parameter names
-PYBEL_WEB_ADMIN_EMAIL = 'PYBEL_WEB_ADMIN_EMAIL'
-PYBEL_WEB_ADMIN_PASSWORD = 'PYBEL_WEB_ADMIN_PASSWORD'
-PYBEL_WEB_CONFIG_JSON = 'PYBEL_WEB_CONFIG_JSON'
-PYBEL_WEB_CONFIG_OBJECT = 'PYBEL_WEB_CONFIG_OBJECT'
+BEL_COMMONS_ADMIN_EMAIL = 'BEL_COMMONS_ADMIN_EMAIL'
+BEL_COMMONS_ADMIN_PASSWORD = 'BEL_COMMONS_ADMIN_PASSWORD'
+BEL_COMMONS_CONFIG_JSON = 'BEL_COMMONS_CONFIG_JSON'
+BEL_COMMONS_CONFIG_OBJECT = 'BEL_COMMONS_CONFIG_OBJECT'
 
-PYBEL_WEB_USER_MANIFEST = 'PYBEL_WEB_USER_MANIFEST'
+BEL_COMMONS_USER_MANIFEST = 'BEL_COMMONS_USER_MANIFEST'
 
-PYBEL_WEB_USE_PARSER_API = 'PYBEL_WEB_USE_PARSER_API'
-PYBEL_WEB_STARTUP_NOTIFY = 'PYBEL_WEB_STARTUP_NOTIFY'
+BEL_COMMONS_USE_PARSER_API = 'BEL_COMMONS_USE_PARSER_API'
+BEL_COMMONS_STARTUP_NOTIFY = 'BEL_COMMONS_STARTUP_NOTIFY'
 SENTRY_DSN = 'SENTRY_DSN'
 SWAGGER = 'SWAGGER'
 SQLALCHEMY_DATABASE_URI = 'SQLALCHEMY_DATABASE_URI'
@@ -54,10 +54,8 @@ SWAGGER_CONFIG = {
     'title': 'BEL Commons API',
     'description': 'This exposes the functions of PyBEL as a RESTful API',
     'contact': {
-        'responsibleOrganization': 'Fraunhofer SCAI',
         'responsibleDeveloper': 'Charles Tapley Hoyt',
-        'email': 'charles.hoyt@scai.fraunhofer.de',
-        'url': 'https://www.scai.fraunhofer.de/de/geschaeftsfelder/bioinformatik.html',
+        'email': 'cthoyt@gmail.com',
     },
     'version': '0.1.0',
 }

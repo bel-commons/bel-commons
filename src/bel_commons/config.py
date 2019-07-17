@@ -27,12 +27,12 @@ class PyBELConfig(EasyConfig):
     connection: Optional[str] = None
 
 
-class PyBELWebConfig(EasyConfig):
+class BELCommonsConfig(EasyConfig):
     """Configuration for BEL Commons."""
 
-    NAME = 'pybel_web'
+    NAME = 'bel_commons'
     FILES = [
-        os.path.join(CONFIG_DIRECTORY, 'pybel-web', 'config.ini'),
+        os.path.join(CONFIG_DIRECTORY, 'bel_commons', 'config.ini'),
     ]
 
     #: Should example graphs be automatically included?
@@ -61,10 +61,10 @@ class Config:
     in docker-compose or localhost if running locally.
     """
 
-    #: The Flask app secret key. CHANGE THIS
-    SECRET_KEY = os.environ.get('SECRET_KEY', 'pybel_not_default_key1234567890')
-    DEBUG = os.environ.get('PYBEL_WEB_DEBUG', False)
-    TESTING = os.environ.get('PYBEL_WEB_TESTING', False)
+    #: The Flask app secret key.
+    SECRET_KEY = os.environ.get('BEL_COMMONS_SECRET_KEY')
+    DEBUG = os.environ.get('BEL_COMMONS_DEBUG', False)
+    TESTING = os.environ.get('BEL_COMMONS_TESTING', False)
 
     CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', 'amqp://localhost')
     CELERY_BACKEND_URL = os.environ.get('CELERY_BACKEND_URL', 'redis://localhost')
@@ -76,4 +76,4 @@ class Config:
     #: What hash algorithm should we use for passwords
     SECURITY_PASSWORD_HASH = 'pbkdf2_sha512'
     #: What salt should we use to hash passwords? DEFINITELY CHANGE THIS
-    SECURITY_PASSWORD_SALT = os.environ.get('SECURITY_PASSWORD_SALT', 'pybel_not_default_salt1234567890')
+    SECURITY_PASSWORD_SALT = os.environ.get('SECURITY_PASSWORD_SALT')

@@ -1,6 +1,5 @@
 BEL Commons Documentation
 =========================
-
 .. toctree::
    :maxdepth: 2
 

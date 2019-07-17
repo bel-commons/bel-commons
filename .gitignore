@@ -96,6 +96,5 @@ scratch/*
 .pytest_cache
 manifest.json
 .DS_Store
-src/pybel_web/resources/users/default_users.json
 
 .mypy_cache

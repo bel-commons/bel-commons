@@ -4,10 +4,11 @@
 
 from typing import Optional
 
+
 from pybel.constants import INCREASES, PROTEIN
 from pybel.manager import Edge, Network, Node
 from pybel.testing.utils import n
-from pybel_web.models import Report
+from bel_commons.models import Report
 
 
 def make_network(name: str = None) -> Network:

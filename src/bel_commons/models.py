@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""SQLAlchemy models for PyBEL Web."""
+"""SQLAlchemy models for BEL Commons."""
 
 from __future__ import annotations
 
@@ -72,7 +72,7 @@ projects_networks = Table(
 
 
 class Role(Base, RoleMixin):
-    """Represents the role of a user in PyBEL Web."""
+    """Represents the role of a user in BEL Commons."""
 
     __tablename__ = ROLE_TABLE_NAME
     id = Column(Integer, primary_key=True)
@@ -93,7 +93,7 @@ class Role(Base, RoleMixin):
 
 
 class User(Base, UserMixin):
-    """Represents a user of PyBEL Web."""
+    """Represents a user of BEL Commons."""
 
     __tablename__ = USER_TABLE_NAME
     id = Column(Integer, primary_key=True)

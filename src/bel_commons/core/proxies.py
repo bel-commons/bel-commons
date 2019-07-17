@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 
-"""Local proxies for PyBEL Web."""
+"""Local proxies for BEL Commons."""
 
-from pybel_web.core.celery import PyBELCelery
-from pybel_web.core.flask_bio2bel import FlaskBio2BEL
-from pybel_web.core.sqlalchemy import PyBELSQLAlchemy
+from .celery import PyBELCelery
+from .flask_bio2bel import FlaskBio2BEL
+from .sqlalchemy import PyBELSQLAlchemy
 
 __all__ = [
     'celery',

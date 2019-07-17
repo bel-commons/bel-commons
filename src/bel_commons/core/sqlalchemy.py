@@ -21,7 +21,7 @@ log = logging.getLogger(__name__)
 
 
 class PyBELSQLAlchemy(SQLAlchemy):
-    """An extension of Flask-SQLAlchemy to support the PyBEL Web manager."""
+    """An extension of Flask-SQLAlchemy to support the BEL Commons manager."""
 
     #: The class to use to build a manager.
     manager_cls: Type[Manager] = Manager

@@ -2,7 +2,7 @@
 
 """Runs the Celery worker for BEL Commons.
 
-Use: :code:`python3 -m celery -A pybel_web.celery_worker.celery worker` while also laughing at how ridiculously
+Use: :code:`python3 -m celery -A bel_commons.celery_worker.celery worker` while also laughing at how ridiculously
 redundant this nomenclature is.
 """
 
@@ -89,13 +89,7 @@ def summarize_bel(task: Task, connection: str, report_id: int):
                 )
 
     def finish_parsing(subject: str, body: str) -> str:
-        """Send a message and finish parsing.
-
-        :param str subject:
-        :param str body:
-        :return: The body
-        :rtype: str
-        """
+        """Send a message and finish parsing."""
         make_mail(subject, body)
         report.message = body
         manager.session.commit()

@@ -6,6 +6,7 @@ import datetime
 import logging
 from typing import Dict, Iterable
 
+from bel_commons.core.models import Assembly, Query
 from flask import Flask, g, render_template
 from flask_admin import Admin
 from flask_security import SQLAlchemyUserDatastore
@@ -16,7 +17,6 @@ from pybel.examples import *
 from pybel.manager.models import Author, Citation, Edge, Evidence, Namespace, NamespaceEntry, Network, Node
 from pybel.struct.mutation import expand_node_neighborhood, expand_nodes_neighborhoods, infer_child_relations
 from pybel.struct.pipeline import in_place_transformation, uni_in_place_transformation
-from pybel_web.core.models import Assembly, Query
 from .admin_model_views import (
     CitationView, EdgeView, EvidenceView, ExperimentView, ModelView, NamespaceView, NetworkView, NodeView, QueryView,
     ReportView, UserView, build_project_view,

@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 
-"""Test cases for PyBEL Web."""
+"""Test cases for BEL Commons."""
 
 from pybel.testing.cases import TemporaryCacheMixin
-
-from pybel_web.manager import WebManager
+from bel_commons.manager import WebManager
 
 __all__ = [
     'TemporaryCacheMethodMixin',

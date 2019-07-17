@@ -4,16 +4,17 @@
 
 import json
 import logging
-
 import time
+
+
 from werkzeug.exceptions import HTTPException
 
 from pybel.constants import INCREASES, PROTEIN, RELATION
 from pybel.manager.models import Edge, Node
 from pybel.testing.utils import n
-from pybel_web.core.models import Assembly, Query
-from pybel_web.manager import iter_recent_public_networks
-from pybel_web.models import EdgeComment, EdgeVote, User
+from bel_commons.core.models import Assembly, Query
+from bel_commons.manager import iter_recent_public_networks
+from bel_commons.models import EdgeComment, EdgeVote, User
 from tests.cases import TemporaryCacheMethodMixin
 from tests.utils import make_edge, make_network, make_report, upgrade_network
 
@@ -30,7 +31,7 @@ def make_simple_edge(n1: Node, n2: Node, relation: str) -> Edge:
 
 
 class TestManager(TemporaryCacheMethodMixin):
-    """Test the PyBEL Web WebManager class."""
+    """Test the BEL Commons WebManager class."""
 
     def test_manager_iter_recent_public_networks(self):
         """Test iteration of the latest public networks."""

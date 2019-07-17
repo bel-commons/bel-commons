@@ -8,10 +8,10 @@ import logging
 import os
 from typing import List
 
-from pybel.manager import Manager
-from pybel_web.manager_utils import create_omic
-from pybel_web.models import Omic
-from pybel_web.resources.constants import OMICS_DATA_DIR
+from pybel import Manager
+from bel_commons.manager_utils import create_omic
+from bel_commons.models import Omic
+from bel_commons.resources.constants import OMICS_DATA_DIR
 
 log = logging.getLogger(__name__)
 
@@ -21,7 +21,7 @@ MANIFEST_FILE_NAME = 'manifest.json'
 def load_metadata(directory: str):
     """Load the manifest JSON file from this folder.
 
-    :param str directory:
+    :param directory:
     :rtype: list[dict[str,str]]
     """
     metadata_path = os.path.join(directory, 'metadata.json')
@@ -31,9 +31,9 @@ def load_metadata(directory: str):
 
 
 def create_omics_models(directory: str, metadata) -> List[Omic]:
-    """Create multiple -omics models.
+    """Create multiple *-omics* models.
 
-    :param str directory:
+    :param directory:
     :param list[dict[str,str]] metadata:
     """
     results = []
@@ -56,16 +56,16 @@ def create_omics_models(directory: str, metadata) -> List[Omic]:
 
 
 def upload_omics_models(omics: List[Omic], manager: Manager):
-    """Upload omics models."""
-    log.info('adding omics models to session')
+    """Upload *-omics* models."""
+    log.info('adding -omics models to session')
     manager.session.add_all(omics)
 
-    log.info('committing omics models')
+    log.info('committing -omics models')
     manager.session.commit()
 
 
 def write_manifest(directory: str, omics: List[Omic]) -> None:
-    """Write a manifest of -omics data."""
+    """Write a manifest of *-omics* data."""
     manifest_path = os.path.join(directory, MANIFEST_FILE_NAME)
 
     log.info('generating manifest for %s', directory)
@@ -83,6 +83,7 @@ def work_omics(directory: str, manager: Manager, reload: bool = False):
     """
 
     :param directory: Directory containing omics data and a manifest
+    :param manager:
     :param bool reload: Should the experiments be reloaded?
     """
     if not (os.path.exists(directory) and os.path.isdir(directory)):
@@ -100,7 +101,7 @@ def work_omics(directory: str, manager: Manager, reload: bool = False):
 
 
 def main(manager: Manager, reload: bool = False):
-    """Load omics models to database.
+    """Load *-omics* models to database.
 
     :param bool reload: Should the experiments be reloaded?
     """

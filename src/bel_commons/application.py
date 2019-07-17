@@ -18,35 +18,35 @@ import time
 from getpass import getuser
 from typing import Optional
 
+import bel_commons.core
 import flasgger
 import flask
 import flask_bootstrap
 import flask_mail
 import flask_security
 import raven.contrib.flask
-
-import pybel_web.core
-from pybel.constants import get_cache_connection
-from pybel_web.application_utils import (
+from bel_commons.application_utils import (
     register_admin_service, register_error_handlers, register_examples, register_transformations,
     register_users_from_manifest,
 )
-from pybel_web.config import PyBELConfig, PyBELWebConfig
-from pybel_web.constants import (
-    CELERY_BROKER_URL, MAIL_DEFAULT_SENDER, MAIL_SERVER, PYBEL_WEB_CONFIG_JSON, PYBEL_WEB_CONFIG_OBJECT,
-    PYBEL_WEB_STARTUP_NOTIFY, SENTRY_DSN, SERVER_NAME, SQLALCHEMY_DATABASE_URI, SQLALCHEMY_TRACK_MODIFICATIONS, SWAGGER,
+from bel_commons.config import BELCommonsConfig
+from bel_commons.constants import (
+    CELERY_BROKER_URL, MAIL_DEFAULT_SENDER, MAIL_SERVER, BEL_COMMONS_CONFIG_JSON, BEL_COMMONS_CONFIG_OBJECT,
+    BEL_COMMONS_STARTUP_NOTIFY, SENTRY_DSN, SERVER_NAME, SQLALCHEMY_DATABASE_URI, SQLALCHEMY_TRACK_MODIFICATIONS, SWAGGER,
     SWAGGER_CONFIG,
 )
-from pybel_web.converters import IntListConverter, ListConverter
-from pybel_web.core import FlaskBio2BEL, PyBELSQLAlchemy as PyBELSQLAlchemyBase
-from pybel_web.database_service import api_blueprint
-from pybel_web.forms import ExtendedRegisterForm
-from pybel_web.main_service import ui_blueprint
-from pybel_web.manager import WebManager
-from pybel_web.utils import get_version
-from pybel_web.views import (
+from bel_commons.converters import IntListConverter, ListConverter
+from bel_commons.core import FlaskBio2BEL, PyBELSQLAlchemy as PyBELSQLAlchemyBase
+from bel_commons.database_service import api_blueprint
+from bel_commons.forms import ExtendedRegisterForm
+from bel_commons.main_service import ui_blueprint
+from bel_commons.manager import WebManager
+from bel_commons.utils import get_version
+from bel_commons.views import (
     curation_blueprint, experiment_blueprint, help_blueprint, receiving_blueprint, reporting_blueprint,
 )
+
+from pybel.constants import get_cache_connection
 
 __all__ = [
     'create_application',
@@ -55,13 +55,13 @@ __all__ = [
 
 log = logging.getLogger(__name__)
 
-_default_config_location = 'pybel_web.config.Config'
+_default_config_location = 'bel_commons.config.Config'
 
 bootstrap = flask_bootstrap.Bootstrap()
 mail = flask_mail.Mail()
 security = flask_security.Security()
 swagger = flasgger.Swagger()
-celery = pybel_web.core.PyBELCelery()
+celery = bel_commons.core.PyBELCelery()
 flask_bio2bel = FlaskBio2BEL()
 
 
@@ -72,27 +72,23 @@ flask_bio2bel = FlaskBio2BEL()
 
 def create_application(
         *,
-        pybel_config: Optional[PyBELConfig] = None,
-        pybel_web_config: Optional[PyBELWebConfig] = None,
+        bel_commons_config: Optional[BELCommonsConfig] = None,
 ) -> flask.Flask:
     """Build a Flask app."""
     app = flask.Flask(__name__)
 
-    if pybel_config is None:
-        pybel_config = PyBELConfig.load()
-
-    if pybel_web_config is None:
-        pybel_web_config = PyBELWebConfig.load()
+    if bel_commons_config is None:
+        bel_commons_config = BELCommonsConfig.load()
 
     # Load default config from object
-    config_object_name = os.environ.get(PYBEL_WEB_CONFIG_OBJECT)
+    config_object_name = os.environ.get(BEL_COMMONS_CONFIG_OBJECT)
     if config_object_name is not None:
         app.config.from_object(config_object_name)
     else:
         app.config.from_object(_default_config_location)
 
     # Load config from JSON
-    config_json_path = os.environ.get(PYBEL_WEB_CONFIG_JSON)
+    config_json_path = os.environ.get(BEL_COMMONS_CONFIG_JSON)
     if config_json_path is not None:
         if os.path.exists(config_json_path):
             log.info(f'importing config from {config_json_path}')
@@ -149,22 +145,22 @@ def create_application(
 
     register_error_handlers(app, sentry)
 
-    if pybel_web_config.register_transformations:
+    if bel_commons_config.register_transformations:
         register_transformations(manager=manager)
 
-    if pybel_web_config.register_users:
-        with open(pybel_web_config.register_users) as file:
+    if bel_commons_config.register_users:
+        with open(bel_commons_config.register_users) as file:
             manifest = json.load(file)
         register_users_from_manifest(user_datastore=user_datastore, manifest=manifest)
 
-    if pybel_web_config.register_examples:
+    if bel_commons_config.register_examples:
         register_examples(manager=manager, user_datastore=user_datastore)
 
-    if pybel_web_config.register_admin:
+    if bel_commons_config.register_admin:
         register_admin_service(app=app, manager=manager)
 
     app.register_blueprint(ui_blueprint)
-    if pybel_web_config.enable_curation:
+    if bel_commons_config.enable_curation:
         app.register_blueprint(curation_blueprint)
     app.register_blueprint(help_blueprint)
     app.register_blueprint(api_blueprint)
@@ -174,17 +170,17 @@ def create_application(
         log.info('registering celery-specific apps')
         app.register_blueprint(receiving_blueprint)
 
-        if pybel_web_config.enable_uploader:
+        if bel_commons_config.enable_uploader:
             log.info('registering uploading app')
-            from pybel_web.views import uploading_blueprint
+            from bel_commons.views import uploading_blueprint
             app.register_blueprint(uploading_blueprint)
 
-        if pybel_web_config.enable_analysis:
+        if bel_commons_config.enable_analysis:
             app.register_blueprint(experiment_blueprint)
 
-    if pybel_web_config.enable_parser:
+    if bel_commons_config.enable_parser:
         log.info('registering parser app')
-        from pybel_web.views import build_parser_service
+        from bel_commons.views import build_parser_service
         build_parser_service(app)
 
     return app
@@ -199,7 +195,7 @@ class PyBELSQLAlchemy(PyBELSQLAlchemyBase):
 def send_startup_mail(app: flask.Flask) -> None:
     """Send an email upon the app's startup."""
     mail_default_sender = app.config.get(MAIL_DEFAULT_SENDER)
-    notify = app.config.get(PYBEL_WEB_STARTUP_NOTIFY)
+    notify = app.config.get(BEL_COMMONS_STARTUP_NOTIFY)
     if notify:
         log.info(f'sending startup notification to {notify}')
         with app.app_context():

@@ -354,7 +354,7 @@ class _WebManager(WebManagerBase):
 
 
 class WebManager(_WebManager):
-    """A manager for PyBEL Web that uses the current user for authentication."""
+    """A manager for BEL Commons that uses the current user for authentication."""
 
     def cu_query_from_network_by_id_or_404(self, network_id: int) -> Query:
         return self.authenticated_query_from_network_by_id_or_404(user=current_user, network_id=network_id)

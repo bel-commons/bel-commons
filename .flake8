@@ -5,7 +5,7 @@ exclude =
     .git,
     __pycache__,
     docs/source/conf.py,
-    src/pybel_web/cli.py,
+    src/bel_commons/cli.py,
     build,
     dist,
     tests/fixtures/*,
@@ -16,7 +16,7 @@ exclude =
 max-complexity = 10
 import-order-style = pycharm
 application-import-names =
-    pybel_web
+    bel_commons
     pybel_tools
     bel_resources
     pybel

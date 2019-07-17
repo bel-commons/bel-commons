@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""Entrypoint module, in case you use ``python3 -m pybel_web``.
+"""Entrypoint module, in case you use ``python3 -m bel_commons``.
 
 Why does this file exist, and why ``__main__``? For more info, read:
 

@@ -2,7 +2,7 @@
 
 """A command line application for managing BEL Commons.
 
-Run with ``python -m pybel_web`` or simply as ``pybel-web``.
+Run with ``python -m bel_commons`` or simply as ``pybel-web``.
 """
 
 import datetime
@@ -36,7 +36,7 @@ from .models import (
     projects_networks, projects_users, users_networks,
 )
 
-log = logging.getLogger('pybel_web')
+log = logging.getLogger('bel_commons')
 
 
 def _iterate_user_strings(manager_: WebManager) -> Iterable[str]:
@@ -55,7 +55,7 @@ def _set_logging_level(level: int) -> None:
     pbt_log = logging.getLogger('pybel_tools')
     pbt_log.setLevel(level)
 
-    pbw_log = logging.getLogger('pybel_web')
+    pbw_log = logging.getLogger('bel_commons')
     pbw_log.setLevel(level)
 
     logging.getLogger('bio2bel_hgnc').setLevel(level)
@@ -130,14 +130,14 @@ def run(host, port, debug, config, enable_parser, register_examples, with_gunico
     """Run the web application."""
     _set_debug_param(debug)
 
-    pybel_web_config = PyBELWebConfig.load(
+    bel_commons_config = PyBELWebConfig.load(
         register_examples=register_examples,
         enable_parser=enable_parser,
         _additional_files=[config] if config else None,
     )
 
     app = create_application(
-        pybel_web_config=pybel_web_config,
+        bel_commons_config=bel_commons_config,
     )
 
     if with_gunicorn:

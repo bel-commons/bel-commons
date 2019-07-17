@@ -7,7 +7,7 @@ import logging
 from typing import Optional
 
 from pybel.manager import Manager
-from pybel_web.resources.load_networks import alzheimer_directory, upload_bel_directory
+from bel_commons.resources.load_networks import alzheimer_directory, upload_bel_directory
 
 log = logging.getLogger(__name__)
 

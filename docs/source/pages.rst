@@ -1,4 +1,4 @@
 Pages
 =====
-.. automodule:: pybel_web.main_service
+.. automodule:: bel_commons.main_service
     :members:

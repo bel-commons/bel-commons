@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""Test constants for PyBEL Web."""
+"""Test constants for BEL Commons."""
 
 import logging
 import os

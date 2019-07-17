@@ -14,7 +14,7 @@ services:
       SECRET_KEY: ${SECRET_KEY}
       SECURITY_PASSWORD_SALT: ${SECURITY_PASSWORD_SALT}
     restart: always
-    command: gunicorn -b 0.0.0.0:5000 pybel_web.wsgi:app --log-level=INFO
+    command: gunicorn -b 0.0.0.0:5000 bel_commons.wsgi:app --log-level=INFO
     # add more workers later -w ${PYBEL_GUNICORN_NUMBER_WORKERS}
     ports:
       - 80:5000
@@ -35,7 +35,7 @@ services:
       SECRET_KEY: ${SECRET_KEY}
       SECURITY_PASSWORD_SALT: ${SECURITY_PASSWORD_SALT}
     restart: always
-    command: celery worker -A pybel_web.celery_worker.celery -l INFO
+    command: celery worker -A bel_commons.celery_worker.celery -l INFO
     depends_on:
      - database
      - broker

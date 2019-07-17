@@ -9,8 +9,8 @@ from flask import Blueprint, jsonify, request
 
 from pybel import from_url
 from pybel.struct import get_annotation_values, get_subgraph_by_annotations, union
-from pybel_web.core.proxies import manager
-from pybel_web.send_utils import serve_network
+from bel_commons.core.proxies import manager
+from bel_commons.send_utils import serve_network
 
 log = logging.getLogger(__name__)
 
@@ -20,7 +20,7 @@ external_blueprint = Blueprint('external', __name__, url_prefix='/api/external/n
 
 @belief_blueprint.route('merge', methods=["POST"])
 def semantic_merge():
-    """Performs a semantic merge on BEL documents
+    """Perform a semantic merge on BEL documents.
 
     This endpoint receives a list of URLs, parses them synchronously, performs a semantic merge, then serializes
     a BEL document as the response.
