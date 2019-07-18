@@ -176,9 +176,11 @@
                                 <h4>
                                     <a href="https://github.com/bio2bel/{{ name[:-8] }}">{{ name[:-8] }}</a>
                                 </h4>
-                                {% if m.summarize %}
+                                {% if name in unpopulated %}
+                                    <p>Unpopulated</p>
+                                {% elif name in summaries %}
                                     <dl class="dl-horizontal">
-                                        {% for k, v in m.summarize().items() %}
+                                        {% for k, v in summaries[name].items() %}
                                             <dt>{{ k }}</dt>
                                             <dd>
                                                 {% if v is mapping %}
@@ -190,7 +192,7 @@
                                         {% endfor %}
                                     </dl>
                                 {% else %}
-                                    <p>Missing <i>summarize</i> function</p>
+                                    <p>Unable to summarize</p>
                                 {% endif %}
                             </div>
                         {% endfor %}

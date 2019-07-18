@@ -24,10 +24,10 @@ from pybel.manager.models import (
     Author, Citation, Edge, Evidence, Modification, Namespace, NamespaceEntry, Network, Node, Property, author_citation,
     edge_annotation, edge_property, network_edge, network_node, node_modification,
 )
-from pybel.utils import get_version as pybel_version
-from pybel_tools.utils import get_version as pybel_tools_get_version
+from pybel.version import get_version as pybel_version
+from pybel_tools.version import get_version as pybel_tools_get_version
 from .application import create_application
-from .config import PyBELWebConfig
+from .config import BELCommonsConfig
 from .core.models import Assembly, Query, assembly_network
 from .manager import WebManager
 from .manager_utils import insert_graph
@@ -130,7 +130,7 @@ def run(host, port, debug, config, enable_parser, register_examples, with_gunico
     """Run the web application."""
     _set_debug_param(debug)
 
-    bel_commons_config = PyBELWebConfig.load(
+    bel_commons_config = BELCommonsConfig.load(
         register_examples=register_examples,
         enable_parser=enable_parser,
         _additional_files=[config] if config else None,

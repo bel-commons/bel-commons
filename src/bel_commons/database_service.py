@@ -17,7 +17,7 @@ from flask_security import current_user, login_required, roles_required
 from sqlalchemy import func, or_
 
 from bel_resources import write_annotation, write_namespace
-from pybel import BELGraph
+from pybel import BELGraph, get_version as get_pybel_version
 from pybel.constants import NAMESPACE, NAMESPACE_DOMAIN_OTHER
 from pybel.manager.citation_utils import enrich_citation_model, get_pubmed_citation_response
 from pybel.manager.models import Author, Citation, Edge, NamespaceEntry, Network, Node, network_edge
@@ -26,7 +26,6 @@ from pybel.struct.pipeline.decorators import deprecated, no_arguments_map
 from pybel.struct.pipeline.exc import MissingPipelineFunctionError
 from pybel.struct.query import Query
 from pybel.struct.summary import get_pubmed_identifiers
-from pybel.utils import get_version as get_pybel_version
 from pybel_tools.analysis.heat import RESULT_LABELS
 from pybel_tools.filters.node_filters import exclude_pathology_filter
 from pybel_tools.selection import get_subgraph_by_node_filter

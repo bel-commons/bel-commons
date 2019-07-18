@@ -1,4 +1,4 @@
-BEL Commons |build| |docs| 
+BEL Commons |build| |docs|
 ==========================
 An environment for curating, validating, and exploring knowledge assemblies
 encoded in Biological Expression Language (BEL) to support elucidating
@@ -49,7 +49,6 @@ or PostgreSQL and install their corresponding connectors:
 License
 -------
 This repository is under the `MIT License <https://github.com/bel-commons/bel-commons/blob/master/LICENSE>`_.
-
 
 Usage
 -----

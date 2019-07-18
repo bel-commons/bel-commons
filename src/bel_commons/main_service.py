@@ -12,7 +12,9 @@ import flask
 from flask import Blueprint, current_app, flash, redirect, render_template, request, url_for
 from flask_security import current_user, login_required, roles_required
 
+import pybel
 import pybel.struct.query
+import pybel_tools
 from pybel.manager.models import Citation, Edge, Evidence, Namespace, NamespaceEntry
 from pybel.struct.grouping.annotations import get_subgraphs_by_annotation
 from pybel.struct.mutation import collapse_to_genes, remove_associations, remove_isolated_nodes, remove_pathologies
@@ -453,13 +455,10 @@ def view_legal():
 @ui_blueprint.route('/about')
 def view_about():
     """Send the about page."""
-    from pybel.utils import get_version as get_pybel_version
-    from pybel_tools.utils import get_version as get_pybel_tools_version
-
     metadata = [
         ('Python Version', sys.version),
-        ('PyBEL Version', get_pybel_version()),
-        ('PyBEL Tools Version', get_pybel_tools_version()),
+        ('PyBEL Version', pybel.get_version()),
+        ('PyBEL Tools Version', pybel_tools.get_version()),
         ('BEL Commons Version', get_bel_commons_version()),
         ('Deployed', time_instantiated),
     ]
@@ -469,10 +468,23 @@ def view_about():
             ('Database', current_app.config[SQLALCHEMY_DATABASE_URI]),
         ])
 
+    unpopulated = set()
+    summaries = {}
+    for name, manager in flask_bio2bel.manager_dict.items():
+        try:
+            if not manager.is_populated():
+                unpopulated.add(name)
+                continue
+            summaries[name] = manager.summarize()
+        except Exception:
+            log.exception(f'Could not summarize {name}')
+
     return render_template(
         'meta/about.html',
         metadata=metadata,
         managers=flask_bio2bel.manager_dict,
+        unpopulated=unpopulated,
+        summaries=summaries,
         blueprints=set(current_app.blueprints),
     )
 

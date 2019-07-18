@@ -11,8 +11,8 @@ import flask
 from flask import current_app
 from werkzeug.local import LocalProxy
 
-from pybel.constants import get_cache_connection
 from pybel.struct.pipeline import in_place_transformation
+from ..constants import SQLALCHEMY_DATABASE_URI
 
 __all__ = [
     'FlaskBio2BEL',
@@ -26,7 +26,6 @@ class FlaskBio2BEL:
 
     def __init__(self, app: Optional[flask.Flask] = None) -> None:  # noqa: D107
         self.app = app
-        self.connection = get_cache_connection()
 
         self.chebi_manager = None
         self.hgnc_manager = None
@@ -51,6 +50,11 @@ class FlaskBio2BEL:
 
         if self.app is not None:
             self.init_app(self.app)
+
+    @property
+    def connection(self) -> str:
+        """Get the app's connection."""
+        return self.app.config[SQLALCHEMY_DATABASE_URI]
 
     def init_app(self, app: flask.Flask) -> None:
         """Initialize a Flask app."""
