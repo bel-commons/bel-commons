@@ -6,14 +6,14 @@ import datetime
 import logging
 from typing import Dict, Iterable
 
-from bel_commons.core.models import Assembly, Query
 from flask import Flask, g, render_template
 from flask_admin import Admin
 from flask_security import SQLAlchemyUserDatastore
 from raven.contrib.flask import Sentry
 
+from bel_commons.core.models import Assembly, Query
 from pybel import BELGraph, Manager
-from pybel.examples import *
+from pybel.examples import braf_graph, egf_graph, homology_graph, sialic_acid_graph, statin_graph
 from pybel.manager.models import Author, Citation, Edge, Evidence, Namespace, NamespaceEntry, Network, Node
 from pybel.struct.mutation import expand_node_neighborhood, expand_nodes_neighborhoods, infer_child_relations
 from pybel.struct.pipeline import in_place_transformation, uni_in_place_transformation
@@ -29,7 +29,7 @@ log = logging.getLogger(__name__)
 logging.getLogger('urllib3.connectionpool').setLevel(logging.WARNING)
 
 
-def register_transformations(manager: Manager):
+def register_transformations(manager: Manager) -> None:  # noqa: D202
     """Register several manager-based PyBEL transformation functions."""
 
     @uni_in_place_transformation
@@ -101,7 +101,7 @@ def register_users_from_manifest(user_datastore: SQLAlchemyUserDatastore, manife
     user_datastore.commit()
 
 
-def register_error_handlers(app: Flask, sentry: Sentry) -> None:
+def register_error_handlers(app: Flask, sentry: Sentry) -> None:  # noqa: D202
     """Register the 500 and 403 error handlers."""
 
     @app.errorhandler(500)
@@ -126,6 +126,7 @@ def register_error_handlers(app: Flask, sentry: Sentry) -> None:
 
 
 def register_examples(manager: Manager, user_datastore: SQLAlchemyUserDatastore) -> None:
+    """Insert example graphs."""
     for graph in (sialic_acid_graph, egf_graph, statin_graph, homology_graph):
         if not manager.has_name_version(graph.name, graph.version):
             log.info('uploading public example graph: %s', graph)

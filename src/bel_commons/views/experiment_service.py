@@ -162,6 +162,7 @@ def drop_experiment(experiment_id):
     responses:
       200:
         description: The experiment was dropped
+
     """
     manager.session.query(Experiment).get(experiment_id).delete()
     manager.session.commit()
@@ -171,7 +172,7 @@ def drop_experiment(experiment_id):
 @experiment_blueprint.route('/from_query/<int:query_id>/upload', methods=('GET', 'POST'))
 @login_required
 def view_query_uploader(query_id: int):
-    """Renders the asynchronous analysis page.
+    """Render the asynchronous analysis page.
 
     :param query_id: The identifier of the query to upload against
     """
@@ -245,7 +246,7 @@ def view_network_uploader(network_id: int):
 
 @experiment_blueprint.route('/comparison/<list:experiment_ids>.tsv')
 def download_experiment_comparison(experiment_ids: List[int]):
-    """Different data analyses on same query
+    """Render a comparison of several experiments.
 
     :param experiment_ids: The identifiers of experiments to compare
     """

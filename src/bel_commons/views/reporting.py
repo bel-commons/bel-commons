@@ -53,7 +53,7 @@ def _get_vote_timeseries(name, interval=None):
 @reporting_blueprint.route('/')
 @roles_required('admin')
 def view_report():
-    """This view gives an overview of the user actions in the last 7 days"""
+    """Render an overview of users' actions in the last 7 days."""
     interval = request.args.get('days', type=int)
     if interval is not None:
         interval = datetime.datetime.now() - datetime.timedelta(days=interval)
@@ -74,13 +74,15 @@ def view_report():
 
     return render_template(
         'reporting/report.html',
-        charts=charts
+        charts=charts,
     )
 
 
 @reporting_blueprint.route('/network', methods=['GET'])
 @roles_required('admin')
 def view_networks():
-    """Shows the uploading reporting"""
-    return render_template('reporting/networks.html',
-                           reports=manager.session.query(Report).order_by(Report.created.desc()).all())
+    """Render the uploading reporting view."""
+    return render_template(
+        'reporting/networks.html',
+        reports=manager.session.query(Report).order_by(Report.created.desc()).all(),
+    )

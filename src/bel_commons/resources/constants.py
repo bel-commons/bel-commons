@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+"""Constants for resources for BEL Commons."""
+
 import os
 
 _default_bms_dir = os.path.join(os.path.expanduser('~'), 'dev', 'bms')

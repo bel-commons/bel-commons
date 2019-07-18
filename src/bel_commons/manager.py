@@ -3,18 +3,18 @@
 """Extensions to the PyBEL manager to support BEL Commons."""
 
 import logging
+import time
 from functools import lru_cache
 from typing import Iterable, List, Optional
 
 import networkx
-import time
 from flask import Response, abort, current_app, render_template
 from flask_security import current_user
+from pybel_tools.utils import prepare_c3, prepare_c3_time_series
 
 import pybel.struct.query
 from pybel import BELGraph
 from pybel.manager.models import Author, Citation, Edge, Evidence, Namespace, Network, Node
-from pybel_tools.utils import prepare_c3, prepare_c3_time_series
 from .core.models import Query
 from .manager_base import WebManagerBase, iter_recent_public_networks, iter_unique_networks
 from .models import Experiment, Project, User, UserQuery
@@ -228,7 +228,7 @@ class _WebManager(WebManagerBase):
         )
 
     def authenticated_render_network_summary_or_404(self, network_id: int, user: User, template: str) -> Response:
-        """Render a network if the current user has the necessary rights
+        """Render a network if the current user has the necessary rights.
 
         :param network_id: The network to render
         :param user:
@@ -357,32 +357,43 @@ class WebManager(_WebManager):
     """A manager for BEL Commons that uses the current user for authentication."""
 
     def cu_query_from_network_by_id_or_404(self, network_id: int) -> Query:
+        """Get a query for the given network or 404 if it doesn't exist while authenticated as the current user."""
         return self.authenticated_query_from_network_by_id_or_404(user=current_user, network_id=network_id)
 
     def cu_authenticated_get_graph_by_id_or_404(self, network_id: int) -> BELGraph:
+        """Get a graph or 404 if it doesn't exist while authenticated as the current user."""
         return self.authenticated_get_graph_by_id_or_404(user=current_user, network_id=network_id)
 
     def cu_owner_get_network_by_id_or_404(self, network_id: int) -> Network:
+        """Get a network if the current user is the owner."""
         return self.owner_get_network_by_id_or_404(user=current_user, network_id=network_id)
 
     def cu_get_network_by_id_or_404(self, network_id: int) -> Network:
+        """Get a network or 404 if it doesn't exist while authenticated as the current user."""
         return self.authenticated_get_network_by_id_or_404(user=current_user, network_id=network_id)
 
     def cu_render_network_summary_or_404(self, network_id: int, template: str) -> Response:
-        return self.authenticated_render_network_summary_or_404(user=current_user, network_id=network_id,
-                                                                template=template)
+        """Render the summary for a network while authenticated as the current user."""
+        return self.authenticated_render_network_summary_or_404(
+            user=current_user,
+            network_id=network_id,
+            template=template, )
 
     def cu_get_query_by_id_or_404(self, query_id: int) -> Query:
+        """Get a query or 404 if it doesn't exist while authenticated as the current user."""
         return self.authenticated_get_query_by_id_or_404(user=current_user, query_id=query_id)
 
     def cu_get_graph_from_query_id_or_404(self, query_id: int) -> Optional[BELGraph]:
+        """Get a BEL graph from the query or 404 if it doesn't exist while authenticated as the current user."""
         return self.authenticated_get_graph_from_query_id_or_404(user=current_user, query_id=query_id)
 
     def cu_authenticated_get_project_by_id_or_404(self, project_id: int) -> Project:
+        """Get a project or 404 if it doesn't exist while authenticated as the current user."""
         return self.authenticated_get_project_by_id_or_404(user=current_user, project_id=project_id)
 
     def cu_list_networks(self) -> List[Network]:
-        return self.authenticated_list_networks(current_user)
+        """List networks available to the current user."""
+        return self.authenticated_list_networks(user=current_user)
 
     def authenticated_list_networks(self, user: User) -> List[Network]:
         """Get all networks tagged as public or uploaded by the current user.
@@ -397,7 +408,9 @@ class WebManager(_WebManager):
 
         return list(iter_unique_networks(self.iter_networks_with_permission(user)))
 
+    # FIXME needs more logic for what logged in users/admins/anonymous users see
     def list_queries(self) -> List[Query]:
+        """List all user queries in the database."""
         q = self.session.query(UserQuery)
 
         if not (current_user.is_authenticated and current_user.is_admin):
@@ -407,6 +420,7 @@ class WebManager(_WebManager):
         return q.all()
 
     def build_query(self, q: pybel.struct.query.Query) -> Query:
+        """Build a query model from a PyBEL query."""
         if isinstance(current_user, User):
             user_query = UserQuery.from_query(manager=self, query=q, user=current_user)
             self.session.add(user_query)
@@ -418,6 +432,7 @@ class WebManager(_WebManager):
         return rv
 
     def build_query_from_project(self, project: Project) -> Query:
+        """Build a query from a project."""
         user_query = UserQuery.from_project(project=project, user=current_user)
         user_query.query.assembly.name = f'{time.asctime()} query of {project.name}'
         self.session.add(user_query)
@@ -425,6 +440,7 @@ class WebManager(_WebManager):
         return user_query.query
 
     def build_query_from_node(self, node: Node) -> Query:
+        """Build a query from a node model."""
         q = pybel.struct.query.Query([network.id for network in node.networks])
         q.append_seeding_neighbors(node.as_bel())
         return self.build_query(q)

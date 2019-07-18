@@ -8,10 +8,10 @@ import logging
 import os
 from typing import List
 
-from pybel import Manager
 from bel_commons.manager_utils import create_omic
 from bel_commons.models import Omic
 from bel_commons.resources.constants import OMICS_DATA_DIR
+from pybel import Manager
 
 log = logging.getLogger(__name__)
 
@@ -48,7 +48,7 @@ def create_omics_models(directory: str, metadata) -> List[Omic]:
         log.info('creating omics from %s', omics_path)
         omics = create_omic(
             data=omics_path,
-            **omics_info
+            **omics_info,
         )
         results.append(omics)
 
@@ -80,7 +80,7 @@ def write_manifest(directory: str, omics: List[Omic]) -> None:
 
 
 def work_omics(directory: str, manager: Manager, reload: bool = False):
-    """
+    """Generate models and manifest for data in the given directory.
 
     :param directory: Directory containing omics data and a manifest
     :param manager:
@@ -116,6 +116,7 @@ def main(manager: Manager, reload: bool = False):
             work_omics(directory=directory, manager=manager, reload=reload)
         except Exception:
             log.exception('failed for directory %s', directory)
+            continue
 
 
 if __name__ == '__main__':

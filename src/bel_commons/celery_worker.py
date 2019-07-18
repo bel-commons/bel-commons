@@ -25,14 +25,13 @@ from pybel.constants import METADATA_CONTACT, METADATA_DESCRIPTION, METADATA_LIC
 from pybel.manager.citation_utils import enrich_pubmed_citations
 from pybel.parser.exc import InconsistentDefinitionError
 from pybel.struct.mutation import enrich_protein_and_rna_origins
-from pybel_tools.assembler.html.assembler import get_network_summary_dict
 from .application import create_application
 from .constants import MAIL_DEFAULT_SENDER, integrity_message
 from .core.celery import PyBELCelery
 from .manager import WebManager
 from .manager_utils import fill_out_report, insert_graph, run_heat_diffusion_helper
 from .models import Report, User
-
+from pybel_tools.assembler.html.assembler import BELGraphSummary
 celery_logger = get_task_logger(__name__)
 log = logging.getLogger(__name__)
 
@@ -374,7 +373,7 @@ def send_summary_mail(graph: BELGraph, report: Report, time_difference: float):
             graph=graph,
             report=report,
             time=time_difference,
-            **get_network_summary_dict(graph),
+            summary=BELGraphSummary.from_graph(graph),
         )
 
         if mail is not None:

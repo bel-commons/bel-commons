@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+"""Utilities for rendering BEL graphs via the response."""
+
 import logging
 from io import BytesIO, StringIO
 from operator import methodcaller
@@ -29,8 +31,9 @@ log = logging.getLogger(__name__)
 
 
 def to_json_custom(graph: BELGraph, id_key: str = 'id', source_key: str = 'source', target_key: str = 'target'):
-    """Prepares JSON for the biological network explorer.
+    """Prepare JSON for the biological network explorer.
 
+    :param graph: A BEL graph
     :param id_key: The key to use for the identifier of a node, which is calculated with an enumeration
     :param source_key: The key to use for the source node
     :param target_key: The key to use for the target node
@@ -64,14 +67,14 @@ def to_json_custom(graph: BELGraph, id_key: str = 'id', source_key: str = 'sourc
             rr[entry_code] = {
                 source_key: mapping[u],
                 target_key: mapping[v],
-                'contexts': []
+                'contexts': [],
             }
 
             edge_set.add(entry_code)
 
         payload = {
             'id': key,
-            'bel': edge_to_bel(u, v, data)
+            'bel': edge_to_bel(u, v, data),
         }
         payload.update(data)
 
@@ -108,7 +111,7 @@ def serve_network(graph: BELGraph, serve_format: Optional[str] = None) -> Respon
             data,
             mimetype='application/octet-stream',
             as_attachment=True,
-            attachment_filename='{}.gpickle'.format(graph.name)
+            attachment_filename=f'{graph.name}.bel.pickle',
         )
 
     elif serve_format == 'bel':
@@ -122,8 +125,8 @@ def serve_network(graph: BELGraph, serve_format: Optional[str] = None) -> Respon
         return send_file(
             bio,
             mimetype='text/xml',
-            attachment_filename='{}.graphml'.format(graph.name),
-            as_attachment=True
+            attachment_filename=f'{graph.name}.bel.graphml',
+            as_attachment=True,
         )
 
     elif serve_format == 'sif':
@@ -133,8 +136,8 @@ def serve_network(graph: BELGraph, serve_format: Optional[str] = None) -> Respon
         data = BytesIO(bio.read().encode('utf-8'))
         return send_file(
             data,
-            attachment_filename="{}.sif".format(graph.name),
-            as_attachment=True
+            attachment_filename=f"{graph.name}.bel.sif",
+            as_attachment=True,
         )
 
     elif serve_format == 'csv':
@@ -145,8 +148,8 @@ def serve_network(graph: BELGraph, serve_format: Optional[str] = None) -> Respon
         return send_file(
             data,
             mimetype="text/tab-separated-values",
-            attachment_filename="{}.tsv".format(graph.name),
-            as_attachment=True
+            attachment_filename=f"{graph.name}.bel.tsv",
+            as_attachment=True,
         )
 
     elif serve_format == 'gsea':
@@ -156,8 +159,8 @@ def serve_network(graph: BELGraph, serve_format: Optional[str] = None) -> Respon
         data = BytesIO(bio.read().encode('utf-8'))
         return send_file(
             data,
-            attachment_filename="{}.grp".format(graph.name),
-            as_attachment=True
+            attachment_filename=f"{graph.name}.grp",
+            as_attachment=True,
         )
 
     elif serve_format == 'citations':
@@ -171,8 +174,8 @@ def serve_network(graph: BELGraph, serve_format: Optional[str] = None) -> Respon
         return send_file(
             data,
             mimetype="text/tab-separated-values",
-            attachment_filename="{}-citations.txt".format(graph.name),
-            as_attachment=True
+            attachment_filename=f"{graph.name}-citations.txt",
+            as_attachment=True,
         )
 
-    raise TypeError('{} is not a valid format'.format(serve_format))
+    raise TypeError(f'{serve_format} is not a valid format')

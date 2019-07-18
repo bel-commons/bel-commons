@@ -41,7 +41,6 @@ def parser():
 @help_blueprint.route('/query-builder')
 def query_builder():
     """View the help page for the Query Builder."""
-
     function_dict = [
         (fname.replace('_', ' ').title(), f.__doc__.split('\n\n')[0])
         for fname, f in no_arguments_map.items()

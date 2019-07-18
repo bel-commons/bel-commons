@@ -103,7 +103,9 @@ def home():
 
 @ui_blueprint.route('/network')
 def view_networks():
-    """The networks page has two components: a search box, and a list of networks. Each network is shown by name,
+    """Render the networks page.
+
+    The networks page has two components: a search box, and a list of networks. Each network is shown by name,
     with the version number and the first author. Each has several actions:
 
     1. View one of the following summaries:
@@ -692,22 +694,6 @@ def view_config():
 #######################################
 # The following endpoints are helpers #
 #######################################
-
-@ui_blueprint.route('/project/<int:project_id>/merge/<int:user_id>')
-def send_async_project_merge(user_id: int, project_id: int):
-    """A helper endpoint to submit a project to the asynchronous task queue to merge its associated networks.
-
-    :param user_id: The identifier of the user sending the task
-    :param project_id: The identifier of the project to merge
-    """
-    task = celery.send_task('merge-project', args=[
-        current_app.config['SQLALCHEMY_DATABASE_URI'],
-        user_id,
-        project_id
-    ])
-    flash(f'Merge task sent: {task}')
-    return redirect(url_for('ui.view_current_user_activity'))
-
 
 @ui_blueprint.route('/network/<int:network_id>/induction-query/')
 def build_summary_link_query(network_id: int):

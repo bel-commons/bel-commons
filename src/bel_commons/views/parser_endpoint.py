@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+"""A Flask route factory for a stateful BEL parser API endpoint."""
+
 import logging
 import time
 from uuid import uuid4
@@ -34,17 +36,16 @@ def build_parser_service(app: Flask):
         tags:
             - parser
         """
-        result = {
+        return jsonify({
             'status': 'ok',
             'graph_number_nodes': graph.number_of_nodes(),
             'graph_number_edges': graph.number_of_edges(),
-        }
-        result.update(graph.document)
-        return jsonify(result)
+            **graph.document,
+        })
 
     @app.route('/api/parser/parse/<statement>', methods=['GET', 'POST'])
     def parse_bel(statement):
-        """Parses a URL-encoded BEL statement.
+        """Parse a URL-encoded BEL statement.
 
         ---
         tags:
@@ -65,17 +66,17 @@ def build_parser_service(app: Flask):
             METADATA_TIME_ADDED: str(time.asctime()),
             METADATA_IP: request.remote_addr,
             METADATA_HOST: request.host,
-            METADATA_USER: request.remote_user
+            METADATA_USER: request.remote_user,
+            **request.args,
         })
-        parser.control_parser.annotations.update(request.args)
 
         try:
             res = parser.statement.parseString(statement)
-            return jsonify(**res.asDict())
-
         except Exception as e:
             return jsonify({
                 'status': 'bad',
                 'exception': str(e),
                 'input': statement,
             })
+        else:
+            return jsonify(**res.asDict())

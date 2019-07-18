@@ -1,14 +1,17 @@
 # -*- coding: utf-8 -*-
 
-"""Utilities in this package should not depend on anything (especially proxies), and should instead take arguments
-corresponding to objects"""
+"""Utilities for the manager.
+
+Utilities in this package should not depend on anything (especially proxies), and should instead take arguments
+corresponding to objects.
+"""
 
 import logging
+import time
 from typing import Any, Mapping, Optional, Tuple, Union
 
 import networkx as nx
 import pandas as pd
-import time
 from flask import Response, abort, flash, jsonify, redirect, request
 
 from pybel import BELGraph, Manager
@@ -17,11 +20,11 @@ from pybel.dsl import BaseEntity
 from pybel.manager.models import Network
 from pybel.struct.mutation import collapse_to_genes
 from pybel_tools.analysis.heat import calculate_average_scores_on_subgraphs
-from pybel_tools.assembler.html.assembler import get_network_summary_dict
 from pybel_tools.filters import remove_nodes_by_namespace
 from pybel_tools.generation import generate_bioprocess_mechanisms
 from pybel_tools.integration import overlay_type_data
 from pybel_tools.mutation import rewire_variants_to_genes
+from pybel_tools.summary import BELGraphSummary
 from .constants import LABEL
 from .models import Experiment, Omic, Report, User
 
@@ -37,7 +40,7 @@ __all__ = [
 ]
 
 
-def fill_out_report(*, graph: BELGraph, network: Network, report: Report):
+def fill_out_report(graph: BELGraph, network: Network, report: Report) -> None:
     """Fill out the report for the network."""
     number_nodes = graph.number_of_nodes()
 
@@ -55,7 +58,7 @@ def fill_out_report(*, graph: BELGraph, network: Network, report: Report):
     report.number_components = nx.number_weakly_connected_components(graph)
     report.network_density = nx.density(graph)
     report.average_degree = average_degree
-    report.dump_calculations(get_network_summary_dict(graph))
+    report.dump_calculations(BELGraphSummary.from_graph(graph))
     report.completed = True
 
 

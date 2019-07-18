@@ -7,9 +7,9 @@ from __future__ import annotations
 import codecs
 import datetime
 import itertools as itt
+import pickle
 from operator import attrgetter
-from pickle import dumps, loads
-from typing import Dict, Iterable, List, Mapping, Tuple, Any
+from typing import Any, Dict, Iterable, List, Mapping, Tuple
 
 from flask_security import RoleMixin, UserMixin
 from pandas import DataFrame
@@ -23,6 +23,7 @@ from pybel import BELGraph, Manager
 from pybel.dsl import BaseEntity
 from pybel.manager.models import Base, Edge, LONGBLOB, Network
 from pybel.struct import union
+from pybel_tools.summary import BELGraphSummary
 from .core.models import Query
 
 EXPERIMENT_TABLE_NAME = 'pybel_experiment'
@@ -170,11 +171,7 @@ class User(Base, UserMixin):
 
     def has_experiment_rights(self, experiment: Experiment) -> bool:
         """Check if the user has rights to this experiment."""
-        return (
-            experiment.public or
-            self.is_admin or
-            self == experiment.user
-        )
+        return experiment.public or self.is_admin or self == experiment.user
 
     def __hash__(self):
         """Hash this user by their email."""
@@ -276,7 +273,7 @@ class UserQuery(Base):
 
     @property
     def networks(self) -> List[Network]:  # noqa: D401
-        """The query's networks"""
+        """The query's networks."""
         return self.query.networks
 
 
@@ -355,10 +352,10 @@ class Omic(Base):
     user_id = Column(Integer, ForeignKey('{}.id'.format(USER_TABLE_NAME)))
     user = relationship(User, backref=backref('omics', lazy='dynamic'))
 
-    def __repr__(self):
+    def __repr__(self) -> str:  # noqa: D105
         return f'<Omic id={self.id}, source_name={self.source_name}>'
 
-    def __str__(self):  # noqa: D105
+    def __str__(self) -> str:  # noqa: D105
         return str(self.source_name)
 
     @property
@@ -372,11 +369,11 @@ class Omic(Base):
 
     def set_source_df(self, df: DataFrame) -> None:
         """Set the source with a DataFrame by pickling it."""
-        self.source = dumps(df)
+        self.source = pickle.dumps(df)
 
     def get_source_df(self) -> DataFrame:
         """Load the pickled pandas DataFrame from the source file."""
-        return loads(self.source)
+        return pickle.loads(self.source)
 
     def get_source_dict(self) -> Mapping[str, float]:
         """Get a dictionary from gene to value."""
@@ -446,12 +443,12 @@ class Experiment(Base):
 
         :param scores: The scores to store in this experiment
         """
-        self.result = dumps(scores)
+        self.result = pickle.dumps(scores)
         self.completed = True
 
     def get_results_df(self) -> Mapping[BaseEntity, Tuple]:
         """Load the pickled pandas DataFrame back into an object."""
-        return loads(self.result)
+        return pickle.loads(self.result)
 
     def get_data_list(self) -> List[Tuple[BaseEntity, Tuple]]:
         """Load the data into a usable list."""
@@ -461,7 +458,7 @@ class Experiment(Base):
             if scores[0]
         ]
 
-    def __repr__(self):
+    def __repr__(self):  # noqa: D105
         return f'<Experiment omic_id={self.omic_id}, query_id={self.query_id}>'
 
     @property
@@ -519,17 +516,17 @@ class Report(Base):
         """Decode the lines stored in this."""
         return codecs.decode(self.source, self.encoding or 'utf-8').split('\n')
 
-    def dump_calculations(self, calculations: Mapping) -> None:
+    def dump_calculations(self, calculations: BELGraphSummary) -> None:
         """Store a summary calculations dictionary."""
-        self.calculations = dumps(calculations)
+        self.calculations = pickle.dumps(calculations)
 
-    def get_calculations(self) -> Dict:
+    def get_calculations(self) -> BELGraphSummary:
         """Get the summary calculations dictionary from this network."""
-        return loads(self.calculations)
+        return pickle.loads(self.calculations)
 
     @property
     def is_displayable(self) -> bool:
-        """Is this network small enough to confidently display?"""
+        """Check if this network is small enough to confidently display."""
         return self.number_nodes and self.number_nodes < 100
 
     @property
@@ -557,10 +554,10 @@ class Report(Base):
             ('Network density', self.network_density),
             ('Components', self.number_components),
             ('Average degree', self.average_degree),
-            ('Compilation warnings', self.number_warnings)
+            ('Compilation warnings', self.number_warnings),
         ])
 
-    def __repr__(self):
+    def __repr__(self) -> str:  # noqa: D105
         if self.incomplete:
             return f'<Report {self.id}: incomplete {self.source_name}>'
 
@@ -598,13 +595,13 @@ class EdgeVote(Base):
         return {
             'id': self.id,
             'edge': {
-                'id': self.edge.id
+                'id': self.edge.id,
             },
             'user': {
                 'id': self.user.id,
                 'email': self.user.email,
             },
-            'vote': self.agreed
+            'vote': self.agreed,
         }
 
 
@@ -636,13 +633,13 @@ class EdgeComment(Base):
         return {
             'id': self.id,
             'edge': {
-                'id': self.edge.id
+                'id': self.edge.id,
             },
             'user': {
                 'id': self.user.id,
                 'email': self.user.email,
             },
-            'comment': self.comment
+            'comment': self.comment,
         }
 
 

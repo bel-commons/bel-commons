@@ -476,7 +476,7 @@ def drop_network_helper(network_id: int) -> Response:
     """Drop a network."""
     network = manager.cu_owner_get_network_by_id_or_404(network_id=network_id)
     redirect_arg = request.args.get('next')
-    log.info('dropping network %s', network_id)
+    log.info(f'dropping network {network_id}')
 
     try:
         manager.drop_network(network)
@@ -496,7 +496,11 @@ def drop_network_helper(network_id: int) -> Response:
         })
 
     else:
-        return next_or_jsonify(f'Dropped network #{network_id}', network_id=network_id, action='drop network')
+        return next_or_jsonify(
+            f'Dropped network #{network_id}',
+            network_id=network_id,
+            action='drop network',
+        )
 
 
 @api_blueprint.route('/api/network/<int:network_id>', methods=['DELETE', 'GET', 'POST'])
@@ -518,6 +522,7 @@ def drop_network(network_id: int):
     responses:
       200:
         description: The network was dropped
+
     """
     if request.method == 'DELETE':
         return drop_network_helper(network_id)
@@ -1015,6 +1020,7 @@ def get_nodes_by_betweenness_centrality(query_id, node_number):
         description: The number of top between-nodes to return
         required: true
         type: integer
+
     """
     graph = manager.cu_get_graph_from_query_id_or_404(query_id)
 

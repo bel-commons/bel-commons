@@ -1,5 +1,5 @@
 [flake8]
-ignore = E501,I100,I101,I201,I202
+ignore = E501,I100,I101,I201,I202,C901
 exclude =
     .tox,
     .git,
@@ -9,6 +9,7 @@ exclude =
     build,
     dist,
     tests/fixtures/*,
+    tests/*
     *.pyc,
     *.egg-info,
     .cache,

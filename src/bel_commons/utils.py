@@ -69,6 +69,7 @@ def get_tree_annotations(graph: BELGraph) -> List[Dict]:
 
 
 def add_edge_filter(edge_query, limit_default=None, offset_default=None):
+    """Add a limit and/or offset to an edge query."""
     limit = request.args.get('limit', type=int, default=limit_default)
     offset = request.args.get('offset', type=int, default=offset_default)
 

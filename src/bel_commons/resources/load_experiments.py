@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""This script runs experiments on the sample BEL and -omics data then uploads it.
+"""This script runs experiments on the sample BEL and *-omics* data then uploads it.
 
 Prerequisites
 -------------
@@ -12,13 +12,13 @@ Prerequisites
 import json
 import logging
 import os
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Mapping, Optional
 
+from bel_commons.core.models import Query
+from bel_commons.manager_utils import run_heat_diffusion_helper
+from bel_commons.models import Experiment, Omic
+from bel_commons.resources.constants import BMS_BASE, OMICS_DATA_DIR
 from pybel.manager import Manager
-from .constants import BMS_BASE, OMICS_DATA_DIR
-from ..core.models import Query
-from ..manager_utils import run_heat_diffusion_helper
-from ..models import Experiment, Omic
 
 log = logging.getLogger(__name__)
 
@@ -39,7 +39,7 @@ def get_manifest(directory: str) -> List[Dict]:
 def build_query(directory: str, manager: Manager) -> Query:
     """Build a query for the Alzheimer's disease network.
 
-    :param directory: Directory containing -omics data and a manifest
+    :param directory: Directory containing *-omics* data and a manifest
     """
     manifest = get_manifest(directory)
 
@@ -56,10 +56,12 @@ def build_query(directory: str, manager: Manager) -> Query:
     return query
 
 
-def create_experiment(query: Query,
-                      directory: str,
-                      manager: Manager,
-                      permutations: Optional[int] = None) -> List[Experiment]:
+def create_experiment(
+        query: Query,
+        directory: str,
+        manager: Manager,
+        permutations: Optional[int] = None,
+) -> List[Experiment]:
     """Create experiment models.
 
     :param query:
@@ -76,7 +78,6 @@ def create_experiment(query: Query,
             query=query,
             permutations=permutations or 200,
         )
-
         for omic_metadata in omics_manifest
     ]
 
@@ -90,11 +91,12 @@ def upload_experiments(experiments: List[Experiment], manager: Manager):
     manager.session.commit()
 
 
-def run_experiments(experiments: List[Experiment],
-                    manager: Manager,
-                    use_tqdm: bool = True,
-                    tqdm_kwargs: Optional[Mapping[str, Any]] = None,
-                    ) -> None:
+def run_experiments(
+        experiments: List[Experiment],
+        manager: Manager,
+        use_tqdm: bool = True,
+        tqdm_kwargs: Optional[Mapping[str, Any]] = None,
+) -> None:
     """Run experiments and commits after each."""
     log.info('running %d experiments', len(experiments))
 
@@ -105,12 +107,14 @@ def run_experiments(experiments: List[Experiment],
         manager.session.commit()
 
 
-def work_directory(query: Query,
-                   omic_directory: str,
-                   manager: Manager,
-                   permutations: Optional[int] = None,
-                   use_tqdm: bool = True,
-                   ) -> None:
+def work_directory(
+        query: Query,
+        omic_directory: str,
+        manager: Manager,
+        permutations: Optional[int] = None,
+        use_tqdm: bool = True,
+) -> None:
+    """Make models, upload, and run experiments for all data in a given directory."""
     log.info(f'making experiments for directory: {omic_directory}')
     experiments = create_experiment(query, directory=omic_directory, manager=manager, permutations=permutations)
 
@@ -121,12 +125,13 @@ def work_directory(query: Query,
     run_experiments(experiments, manager=manager, use_tqdm=use_tqdm)
 
 
-def work_group(network_directory: str,
-               omics_directories: List[str],
-               manager: Manager,
-               permutations: Optional[int] = None,
-               ) -> None:
-    """
+def work_group(
+        network_directory: str,
+        omics_directories: List[str],
+        manager: Manager,
+        permutations: Optional[int] = None,
+) -> None:
+    """Make models, upload, and run experiments for all data in several directories.
 
     :param network_directory:
     :param omics_directories:

@@ -19,22 +19,18 @@ from bio2bel import AbstractManager
 from sqlalchemy.exc import OperationalError
 
 import pybel
+from bel_commons.resources.constants import (
+    alzheimer_directory, cbn_human, cbn_mouse, cbn_rat, neurommsig_directory, parkinsons_directory, selventa_directory,
+)
 from pybel import from_path, from_pickle, to_pickle
 from pybel.manager import Manager
 from pybel.manager.models import Network
 from pybel.struct.grouping import get_subgraphs_by_annotation
 from pybel.struct.mutation import strip_annotations
-from bel_commons.resources.constants import (
-    alzheimer_directory, cbn_human, cbn_mouse, cbn_rat, neurommsig_directory, parkinsons_directory, selventa_directory,
-)
-from bel_commons.external_managers import (
-    chebi_manager, entrez_manager, expasy_manager, go_manager, hgnc_manager, interpro_manager, mirtarbase_manager,
-)
 from ..manager_utils import insert_graph
 
 __all__ = [
     'load_cbn',
-    'load_bio2bel',
     'load_bms',
 ]
 
@@ -51,7 +47,7 @@ _jgf_extension = '.jgf'
 
 
 def upload_pickles(directory: str, manager: Manager, blacklist: Optional[Set[str]] = None) -> List[Network]:
-    """Uploads all of the BEL documents in a given directory."""
+    """Upload all BEL documents in a given directory."""
     results = []
     repo = BELRepository(directory)
     graphs = repo.get_graphs(manager=manager)
@@ -178,22 +174,6 @@ def upload_jgf_directory(directory: str, manager: Manager):
             log.info('could not insert %s', graph)
 
     log.info('done in %.2f seconds', time.time() - t)
-
-
-def load_bio2bel(manager: Manager) -> None:
-    """Load Bio2BEL content as BEL."""
-    bio2bel_managers = (
-        chebi_manager,
-        entrez_manager,
-        expasy_manager,
-        go_manager,
-        hgnc_manager,
-        interpro_manager,
-        mirtarbase_manager,
-    )
-
-    for bio2bel_manager in bio2bel_managers:
-        upload_with_manager(bio2bel_manager=bio2bel_manager, manager=manager)
 
 
 def upload_with_manager(bio2bel_manager: AbstractManager, manager: Manager) -> Optional[Network]:

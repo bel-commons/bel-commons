@@ -70,7 +70,7 @@ class Assembly(Base):
 
     @staticmethod
     def from_network(network: Network) -> Assembly:
-        """Builds an assembly from a singular network."""
+        """Build an assembly from a singular network."""
         return Assembly.from_networks(networks=[network])
 
     def to_json(self) -> Mapping:
@@ -219,7 +219,7 @@ class Query(Base):
 
     @staticmethod
     def from_network(network: Network) -> Query:
-        """Build a query from a network"""
+        """Build a query from a network."""
         return Query.from_networks(networks=[network])
 
     @staticmethod

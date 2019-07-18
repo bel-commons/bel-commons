@@ -22,7 +22,7 @@ SQLALCHEMY_DATABASE_URI = 'SQLALCHEMY_DATABASE_URI'
 class PyBELCelery:
     """Wrap celery utilities."""
 
-    def __init__(self, app: Optional[Flask] = None):  # noqa: D105
+    def __init__(self, app: Optional[Flask] = None):  # noqa: D107
         self.app = app
         self.blueprint = Blueprint('task', __name__, url_prefix='/api/task')
 
@@ -41,6 +41,7 @@ class PyBELCelery:
             responses:
               200:
                 description: JSON describing the state of the task
+
             """
             task = AsyncResult(uuid, app=self._get_celery_ca())
 

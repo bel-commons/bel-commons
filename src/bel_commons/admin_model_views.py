@@ -2,12 +2,13 @@
 
 """This module contains model views for the Flask-admin interface."""
 
+from itertools import chain
+
 from flask import redirect, request
 from flask_admin.contrib.sqla import ModelView as ModelViewBase
 from flask_admin.contrib.sqla.ajax import QueryAjaxModelLoader
 from flask_admin.model.ajax import DEFAULT_PAGE_SIZE
 from flask_security import current_user, url_for_security
-from itertools import chain
 from sqlalchemy import or_
 
 from pybel import Manager
@@ -20,11 +21,11 @@ class ModelView(ModelViewBase):
     """Adds plugin for Flask-Security to Flask-Admin model views."""
 
     def is_accessible(self):
-        """Checks the current user is an admin."""
+        """Check if the current user is an admin."""
         return current_user.is_authenticated and current_user.is_admin
 
     def inaccessible_callback(self, name, **kwargs):
-        """redirect to login page if user doesn't have access."""
+        """Redirect to login page if user doesn't have access."""
         return redirect(url_for_security('login', next=request.url))
 
 
@@ -100,7 +101,7 @@ class QueryView(ModelView):
     column_display_pk = True
 
 
-def build_network_ajax_manager(manager: Manager) -> QueryAjaxModelLoader:
+def build_network_ajax_manager(manager: Manager) -> QueryAjaxModelLoader:  # noqa: D202
     """Build an AJAX manager class for use with Flask-Admin."""
 
     class NetworkAjaxModelLoader(QueryAjaxModelLoader):
@@ -143,7 +144,7 @@ def build_network_ajax_manager(manager: Manager) -> QueryAjaxModelLoader:
     return NetworkAjaxModelLoader()
 
 
-def build_project_view(manager: Manager) -> ModelView:
+def build_project_view(manager: Manager) -> ModelView:  # noqa: D202
     """Build a Flask-Admin model view for a project."""
 
     class ProjectView(ModelViewBase):
