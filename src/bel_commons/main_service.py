@@ -470,12 +470,12 @@ def view_about():
 
     unpopulated = set()
     summaries = {}
-    for name, manager in flask_bio2bel.manager_dict.items():
+    for name, m in flask_bio2bel.manager_dict.items():
         try:
-            if not manager.is_populated():
+            if not m.is_populated():
                 unpopulated.add(name)
                 continue
-            summaries[name] = manager.summarize()
+            summaries[name] = m.summarize()
         except Exception:
             log.exception(f'Could not summarize {name}')
 
@@ -552,18 +552,22 @@ def view_summarize_stratified(network_id: int, annotation: str):
     useful_summaries = {}
 
     for name, subgraph in graphs.items():
-        summaries[name] = subgraph.summary_dict()
-        summaries[name]['node_overlap'] = subgraph.number_of_nodes() / graph.number_of_nodes()
-        summaries[name]['edge_overlap'] = subgraph.number_of_edges() / graph.number_of_edges()
-        summaries[name]['citation_overlap'] = summaries[name]['Citations'] / graph_summary['Citations']
-        summaries[name]['errors'] = len(errors[name]) if name in errors else 0
-        summaries[name]['error_density'] = (len(errors[name]) / graph.number_of_nodes()) if name in errors else 0
-
+        subgraph_summary = subgraph.summary_dict()
+        summaries[name] = {
+            'node_overlap': subgraph.number_of_nodes() / graph.number_of_nodes(),
+            'edge_overlap': subgraph.number_of_edges() / graph.number_of_edges(),
+            'citation_overlap': subgraph_summary['Citations'] / graph_summary['Citations'],
+            'errors': len(errors[name]) if name in errors else 0,
+            'error_density': (len(errors[name]) / graph.number_of_nodes()) if name in errors else 0,
+            **subgraph_summary
+        }
         useful_subgraph = extract_useful_subgraph(subgraph)
-        useful_summaries[name] = useful_subgraph.summary_dict()
-        useful_summaries[name]['node_overlap'] = subgraph.number_of_nodes() / graph.number_of_nodes()
-        useful_summaries[name]['edge_overlap'] = subgraph.number_of_edges() / graph.number_of_edges()
-        useful_summaries[name]['citation_overlap'] = summaries[name]['Citations'] / graph_summary['Citations']
+        useful_summaries[name] = {
+            'node_overlap': subgraph.number_of_nodes() / graph.number_of_nodes(),
+            'edge_overlap': subgraph.number_of_edges() / graph.number_of_edges(),
+            'citation_overlap': summaries[name]['Citations'] / graph_summary['Citations'],
+            **useful_subgraph.summary_dict()
+        }
 
     return render_template(
         'network/summarize_stratified.html',
