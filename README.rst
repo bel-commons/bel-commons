@@ -1,5 +1,5 @@
-BEL Commons
-===========
+BEL Commons |build| |docs| 
+==========================
 An environment for curating, validating, and exploring knowledge assemblies
 encoded in Biological Expression Language (BEL) to support elucidating
 disease-specific, mechanistic insight.
@@ -75,3 +75,11 @@ This package was originally developed with the results from the master's work
 of `Charles Tapley Hoyt <https://github.com/cthoyt>`_ at `Fraunhofer SCAI <https://www.scai.fraunhofer.de/>`_ with
 partial support from the `IMI <https://www.imi.europa.eu/>`_ project,
 `AETIONOMY <http://www.aetionomy.eu/>`_.
+
+.. |build| image:: https://travis-ci.com/bel-commons/bel-commons.svg?branch=master
+    :target: https://travis-ci.com/bel-commons/bel-commons
+    :alt: Travis-CI Build Status
+
+.. |docs| image:: https://readthedocs.org/projects/bel-commons/badge/?version=latest
+    :target: https://bel-commons.readthedocs.io/en/latest/?badge=latest
+    :alt: Documentation Status
