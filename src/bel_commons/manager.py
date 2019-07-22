@@ -10,11 +10,11 @@ from typing import Iterable, List, Optional
 import networkx
 from flask import Response, abort, current_app, render_template
 from flask_security import current_user
-from pybel_tools.utils import prepare_c3, prepare_c3_time_series
 
 import pybel.struct.query
 from pybel import BELGraph
 from pybel.manager.models import Author, Citation, Edge, Evidence, Namespace, Network, Node
+from pybel_tools.utils import prepare_c3, prepare_c3_time_series
 from .core.models import Query
 from .manager_base import WebManagerBase, iter_recent_public_networks, iter_unique_networks
 from .models import Experiment, Project, User, UserQuery

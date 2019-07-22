@@ -110,12 +110,13 @@ def register_error_handlers(app: Flask, sentry: Sentry) -> None:  # noqa: D202
 
         Run a rollback and send some information to Sentry.
         """
-        kwargs = {}
-        if app.config.get(SENTRY_DSN):
-            kwargs.update(dict(
+        if SENTRY_DSN in app.config:
+            kwargs = dict(
                 event_id=g.sentry_event_id,
                 public_dsn=sentry.client.get_public_dsn('https'),
-            ))
+            )
+        else:
+            kwargs = {}
 
         return render_template('errors/500.html', **kwargs)
 

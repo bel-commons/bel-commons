@@ -11,29 +11,58 @@ Resources:
 import os
 from typing import Optional
 
+from dataclasses_json import dataclass_json
 from easy_config import EasyConfig
 
+from pybel.config import CONFIG_FILE_PATHS
+
 HOME = os.path.expanduser('~')
-CONFIG_DIRECTORY = os.path.join(HOME, '.config')
 
 
-class PyBELConfig(EasyConfig):
-    """Configuration for PyBEL."""
-
-    NAME = 'pybel'
-    FILES = [os.path.join(CONFIG_DIRECTORY, 'pybel', 'config.ini')]
-
-    # Connection to the database
-    connection: Optional[str] = None
-
-
+@dataclass_json
 class BELCommonsConfig(EasyConfig):
-    """Configuration for BEL Commons."""
+    """Configuration for BEL Commons.
 
-    NAME = 'bel_commons'
-    FILES = [
-        os.path.join(CONFIG_DIRECTORY, 'bel_commons', 'config.ini'),
-    ]
+    It assumes you have:
+
+    - SQLite for the PyBEL Cache on localhost
+    - RabbitMQ or another message broker supporting the AMQP protocol running on localhost
+    """
+
+    NAME = 'bel-commons'
+    FILES = CONFIG_FILE_PATHS
+
+    #: The Flask app secret key.
+    SECRET_KEY: str
+
+    #: Flask app debug mode
+    DEBUG: bool = False
+    #: Flask app testing mode
+    TESTING: bool = False
+
+    JSONIFY_PRETTYPRINT_REGULAR: bool = True
+
+    #: Should celery be used?
+    USE_CELERY: bool = False
+
+    #: Celery broker URL. If it's running on redis, use ``CELERY_BROKER_URL = 'redis://XXX:6379'`` where XXX is the
+    # name of the container in docker-compose or localhost if running locally.
+    CELERY_BROKER_URL: str = 'amqp://localhost'
+
+    #: Celery backend url
+    CELERY_BACKEND_URL: Optional[str] = 'redis://localhost'
+
+    SECURITY_REGISTERABLE: bool = True
+    SECURITY_CONFIRMABLE: bool = False
+    SECURITY_SEND_REGISTER_EMAIL: bool = False
+    SECURITY_RECOVERABLE: bool = True
+
+    #: What hash algorithm should we use for passwords
+    SECURITY_PASSWORD_HASH: Optional[str] = 'pbkdf2_sha512'
+    #: What salt should to use to hash passwords
+    SECURITY_PASSWORD_SALT: Optional[str] = None
+
+    MAIL_SERVER: Optional[str] = None
 
     #: Should example graphs be automatically included?
     register_examples: bool = False
@@ -48,32 +77,9 @@ class BELCommonsConfig(EasyConfig):
     enable_analysis: bool = False
     enable_curation: bool = False
 
+    def __post_init__(self) -> None:  # noqa: D105
+        if self.SECURITY_REGISTERABLE and not self.SECURITY_PASSWORD_SALT:
+            raise ValueError('Configuration is missing SECURITY_PASSWORD_SALT')
 
-class Config:
-    """This is the default configuration to be used in a development environment.
-
-    It assumes you have:
-
-    - SQLite for the PyBEL Cache on localhost
-    - RabbitMQ or another message broker supporting the AMQP protocol running on localhost
-
-    If it's running on redis, use ``CELERY_BROKER_URL = 'redis://XXX:6379'`` where XXX is the name of the container
-    in docker-compose or localhost if running locally.
-    """
-
-    #: The Flask app secret key.
-    SECRET_KEY = os.environ.get('BEL_COMMONS_SECRET_KEY')
-    DEBUG = os.environ.get('BEL_COMMONS_DEBUG', False)
-    TESTING = os.environ.get('BEL_COMMONS_TESTING', False)
-
-    CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', 'amqp://localhost')
-    CELERY_BACKEND_URL = os.environ.get('CELERY_BACKEND_URL', 'redis://localhost')
-
-    SECURITY_REGISTERABLE = True
-    SECURITY_CONFIRMABLE = False
-    SECURITY_SEND_REGISTER_EMAIL = False
-    SECURITY_RECOVERABLE = True
-    #: What hash algorithm should we use for passwords
-    SECURITY_PASSWORD_HASH = 'pbkdf2_sha512'
-    #: What salt should we use to hash passwords? DEFINITELY CHANGE THIS
-    SECURITY_PASSWORD_SALT = os.environ.get('SECURITY_PASSWORD_SALT')
+        if self.SECURITY_SEND_REGISTER_EMAIL and not self.MAIL_SERVER:
+            raise ValueError('Configuration is missing MAIL_SERVER')

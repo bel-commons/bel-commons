@@ -6,32 +6,35 @@ Use: :code:`python3 -m celery -A bel_commons.celery_worker.celery worker` while 
 redundant this nomenclature is.
 """
 
+from __future__ import annotations
+
 import hashlib
 import logging
 import os
 import random
+import time
 from typing import Dict
 
 import requests.exceptions
-import time
-from bel_resources.exc import ResourceError
 from celery.app.task import Task
 from celery.utils.log import get_task_logger
 from flask import render_template
 from sqlalchemy.exc import IntegrityError, OperationalError
 
+from bel_resources.exc import ResourceError
 from pybel import BELGraph, Manager, from_json, from_lines, to_bytes
 from pybel.constants import METADATA_CONTACT, METADATA_DESCRIPTION, METADATA_LICENSES
 from pybel.manager.citation_utils import enrich_pubmed_citations
 from pybel.parser.exc import InconsistentDefinitionError
 from pybel.struct.mutation import enrich_protein_and_rna_origins
+from pybel_tools.assembler.html.assembler import BELGraphSummary
 from .application import create_application
 from .constants import MAIL_DEFAULT_SENDER, integrity_message
 from .core.celery import PyBELCelery
 from .manager import WebManager
 from .manager_utils import fill_out_report, insert_graph, run_heat_diffusion_helper
 from .models import Report, User
-from pybel_tools.assembler.html.assembler import BELGraphSummary
+
 celery_logger = get_task_logger(__name__)
 log = logging.getLogger(__name__)
 
@@ -125,7 +128,7 @@ def summarize_bel(task: Task, connection: str, report_id: int):
     return 0
 
 
-@celery.task(bind=True, name='upload-bel')
+@celery.task(bind=True, name='upload-bel')  # noqa: C901
 def upload_bel(task: Task, connection: str, report_id: int, enrich_citations: bool = False):
     """Parse a BEL script asynchronously and send email feedback.
 

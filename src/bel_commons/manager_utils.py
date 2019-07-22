@@ -6,6 +6,8 @@ Utilities in this package should not depend on anything (especially proxies), an
 corresponding to objects.
 """
 
+from __future__ import annotations
+
 import logging
 import time
 from typing import Any, Mapping, Optional, Tuple, Union

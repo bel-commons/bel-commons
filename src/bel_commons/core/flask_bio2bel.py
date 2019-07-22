@@ -56,7 +56,7 @@ class FlaskBio2BEL:
         """Get the app's connection."""
         return self.app.config[SQLALCHEMY_DATABASE_URI]
 
-    def init_app(self, app: flask.Flask) -> None:
+    def init_app(self, app: flask.Flask) -> None:  # noqa: C901
         """Initialize a Flask app."""
         self.app = app
         app.extensions['bio2bel'] = self

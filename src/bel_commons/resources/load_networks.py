@@ -14,19 +14,18 @@ import os
 import time
 from typing import Iterable, List, Optional, Set
 
-from bel_repository import BELRepository
-from bio2bel import AbstractManager
 from sqlalchemy.exc import OperationalError
 
 import pybel
 from bel_commons.resources.constants import (
     alzheimer_directory, cbn_human, cbn_mouse, cbn_rat, neurommsig_directory, parkinsons_directory, selventa_directory,
 )
+from bel_repository import BELRepository
+from bio2bel import AbstractManager
 from pybel import from_path, from_pickle, to_pickle
 from pybel.manager import Manager
 from pybel.manager.models import Network
-from pybel.struct.grouping import get_subgraphs_by_annotation
-from pybel.struct.mutation import strip_annotations
+from pybel.struct import get_subgraphs_by_annotation, strip_annotations
 from ..manager_utils import insert_graph
 
 __all__ = [

@@ -1,5 +1,7 @@
 [flake8]
-ignore = E501,I100,I101,I201,I202,C901
+ignore =
+    # Line too long, please.
+    # E501
 exclude =
     .tox,
     .git,
@@ -14,12 +16,14 @@ exclude =
     *.egg-info,
     .cache,
     .eggs
-max-complexity = 10
+max-line-length = 120
+max-complexity = 15
 import-order-style = pycharm
 application-import-names =
     bel_commons
     pybel_tools
     bel_resources
+    bel_repository
     pybel
     bio2bel
     tests

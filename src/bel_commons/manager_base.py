@@ -11,11 +11,11 @@ from typing import Dict, Iterable, List, Mapping, Optional, Set, Tuple
 
 import werkzeug.datastructures
 from flask_security import SQLAlchemyUserDatastore
-from pybel_tools.utils import min_tanimoto_set_similarity
 from sqlalchemy import and_, func
 
 from pybel import Manager
 from pybel.manager.models import Edge, Namespace, Network
+from pybel_tools.utils import min_tanimoto_set_similarity
 from .constants import AND
 from .core.models import Assembly, Query
 from .models import EdgeComment, EdgeVote, Experiment, NetworkOverlap, Omic, Project, Report, Role, User
@@ -59,7 +59,7 @@ def to_snake_case(function_name: str) -> str:
 
 
 class PyBELSQLAlchemyUserDataStore(SQLAlchemyUserDatastore):
-    """A wrapper around the SQLAlchemyUserDatastore from Flask-Security with the BEL Commons User and Role models."""
+    """Wraps :class:`flask_security.SQLAlchemyUserDatastore` with the BEL Commons User and Role models."""
 
     def __init__(self, db) -> None:  # noqa:D107
         super().__init__(db=db, user_model=User, role_model=Role)
