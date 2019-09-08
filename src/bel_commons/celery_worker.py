@@ -22,7 +22,7 @@ from flask import render_template
 from sqlalchemy.exc import IntegrityError, OperationalError
 
 from bel_resources.exc import ResourceError
-from pybel import BELGraph, Manager, from_json, from_lines, to_bytes
+from pybel import BELGraph, Manager, from_nodelink, from_lines, to_bytes
 from pybel.constants import METADATA_CONTACT, METADATA_DESCRIPTION, METADATA_LICENSES
 from pybel.manager.citation_utils import enrich_pubmed_citations
 from pybel.parser.exc import InconsistentDefinitionError
@@ -348,7 +348,7 @@ def upload_json(connection: str, user_id: int, payload: Dict, public: bool = Fal
     user = manager.get_user_by_id(user_id)
 
     try:
-        graph = from_json(payload)
+        graph = from_nodelink(payload)
     except Exception:
         celery_logger.exception('unable to parse JSON')
         return -1

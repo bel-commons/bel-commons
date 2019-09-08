@@ -22,7 +22,7 @@ from bel_commons.resources.constants import (
 )
 from bel_repository import BELRepository
 from bio2bel import AbstractManager
-from pybel import from_path, from_pickle, to_pickle
+from pybel import from_bel_script, from_pickle, to_pickle
 from pybel.manager import Manager
 from pybel.manager.models import Network
 from pybel.struct import get_subgraphs_by_annotation, strip_annotations
@@ -106,7 +106,7 @@ def upload_neurommsig_graphs(manager: Manager):
     if os.path.exists(gpickle_path):
         graph = from_pickle(gpickle_path)
     elif os.path.exists(path):
-        graph = from_path(path, manager=manager)
+        graph = from_bel_script(path, manager=manager)
         to_pickle(graph, gpickle_path)
     else:
         raise RuntimeError('missing NeuroMMSig source file: {}'.format(path))

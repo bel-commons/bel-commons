@@ -18,7 +18,7 @@ import click
 from flask import Flask
 from tqdm import tqdm
 
-from pybel import BELGraph, from_path
+from pybel import BELGraph, from_bel_script
 from pybel.cli import connection_option, graph_pickle_argument
 from pybel.manager.models import (
     Author, Citation, Edge, Evidence, Modification, Namespace, NamespaceEntry, Network, Node, Property, author_citation,
@@ -275,7 +275,7 @@ def networks():
 def parse(manager: WebManager, path: str, public: bool):
     """Parses a BEL script and uploads."""
     t = time.time()
-    graph = from_path(path, manager=manager)
+    graph = from_bel_script(path, manager=manager)
     log.info('parsing done in %.2f seconds', time.time() - t)
     insert_graph(manager, graph, public=public, use_tqdm=True)
 
