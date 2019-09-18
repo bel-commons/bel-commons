@@ -22,7 +22,7 @@ from pybel.constants import NAMESPACE, NAMESPACE_DOMAIN_OTHER
 from pybel.manager.citation_utils import enrich_citation_model, get_pubmed_citation_response
 from pybel.manager.models import Author, Citation, Edge, NamespaceEntry, Network, Node, network_edge
 from pybel.struct import get_random_path, get_subgraph_by_annotations
-from pybel.struct.pipeline.decorators import deprecated, no_arguments_map
+from pybel.struct.pipeline.decorators import no_arguments_map
 from pybel.struct.pipeline.exc import MissingPipelineFunctionError
 from pybel.struct.query import Query
 from pybel.struct.summary import get_pubmed_identifiers
@@ -1710,7 +1710,7 @@ def get_pipeline_function_names():
     return jsonify([
         p.replace("_", " ").capitalize()
         for p in no_arguments_map
-        if p not in deprecated and q in p.replace("_", " ").casefold()
+        if q in p.replace("_", " ").casefold()
     ])
 
 
