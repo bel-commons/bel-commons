@@ -81,5 +81,5 @@ class BELCommonsConfig(EasyConfig):
         if self.SECURITY_REGISTERABLE and not self.SECURITY_PASSWORD_SALT:
             raise ValueError('Configuration is missing SECURITY_PASSWORD_SALT')
 
-        if self.SECURITY_SEND_REGISTER_EMAIL and not self.MAIL_SERVER:
+        if self.SECURITY_REGISTERABLE and self.SECURITY_SEND_REGISTER_EMAIL and not self.MAIL_SERVER:
             raise ValueError('Configuration is missing MAIL_SERVER')
