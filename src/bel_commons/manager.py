@@ -17,7 +17,7 @@ from pybel.manager.models import Author, Citation, Edge, Evidence, Namespace, Ne
 from pybel_tools.utils import prepare_c3, prepare_c3_time_series
 from .core.models import Query
 from .manager_base import WebManagerBase, iter_recent_public_networks, iter_unique_networks
-from .models import Experiment, Project, User, UserQuery
+from .models import Experiment, Project, Report, User, UserQuery
 from .utils import return_or_404
 
 __all__ = [
@@ -190,16 +190,18 @@ class _WebManager(WebManagerBase):
     def authenticated_render_network_summary(self, user: User, network: Network, template: str) -> Response:
         """Render the graph summary page."""
         graph = network.as_bel()
-        context = network.report.get_calculations()
-        citation_years = context['citation_years']
-        function_count = context['function_count']
-        relation_count = context['relation_count']
-        error_count = context['error_count']
-        transformations_count = context['modifications_count']
-        hub_data = context['hub_data']
-        disease_data = context['disease_data']
-        variants_count = context['variants_count']
-        namespaces_count = context['namespaces_count']
+        report: Report = network.report
+        context = report.get_calculations()
+
+        citation_years = context.citation_years
+        function_count = context.function_count
+        relation_count = context.relation_count
+        error_count = context.error_count
+        transformations_count = context.modifications_count
+        hub_data = context.hub_data
+        disease_data = context.disease_data
+        variants_count = context.variants_count
+        namespaces_count = context.namespaces_count
 
         overlaps = self.get_top_overlaps(user=user, network=network)
         network_versions = self.get_networks_by_name(network.name)
@@ -224,7 +226,7 @@ class _WebManager(WebManagerBase):
             chart_7_data=prepare_c3(hub_data, 'Top Hubs'),
             chart_9_data=prepare_c3(disease_data, 'Pathologies') if disease_data else None,
             chart_10_data=prepare_c3_time_series(citation_years, 'Number of articles') if citation_years else None,
-            **context
+            # **context
         )
 
     def authenticated_render_network_summary_or_404(self, network_id: int, user: User, template: str) -> Response:
@@ -377,7 +379,8 @@ class WebManager(_WebManager):
         return self.authenticated_render_network_summary_or_404(
             user=current_user,
             network_id=network_id,
-            template=template, )
+            template=template,
+        )
 
     def cu_get_query_by_id_or_404(self, query_id: int) -> Query:
         """Get a query or 404 if it doesn't exist while authenticated as the current user."""

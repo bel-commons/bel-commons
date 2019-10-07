@@ -518,7 +518,7 @@ class Report(Base):
 
     def dump_calculations(self, calculations: BELGraphSummary) -> None:
         """Store a summary calculations dictionary."""
-        self.calculations = pickle.dumps(calculations)
+        self.calculations = pickle.dumps(calculations, protocol=pickle.HIGHEST_PROTOCOL)
 
     def get_calculations(self) -> BELGraphSummary:
         """Get the summary calculations dictionary from this network."""

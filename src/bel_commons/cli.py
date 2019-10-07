@@ -131,9 +131,9 @@ def run(host, port, debug, config, enable_parser, register_examples, with_gunico
     _set_debug_param(debug)
 
     bel_commons_config = BELCommonsConfig.load(
-        register_examples=register_examples,
-        enable_parser=enable_parser,
-        _additional_files=[config] if config else None,
+        register_examples=bool(register_examples),
+        enable_parser=bool(enable_parser),
+        _additional_files=[config] if config is not None else None,
     )
 
     app = create_application(

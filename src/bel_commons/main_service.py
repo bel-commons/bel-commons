@@ -100,6 +100,8 @@ def home():
         database_histogram=hist,
         manager=manager,
         blueprints=set(current_app.blueprints),
+        pybel_version=pybel.get_version(),
+        pybel_tools_version=pybel_tools.get_version(),
     )
 
 

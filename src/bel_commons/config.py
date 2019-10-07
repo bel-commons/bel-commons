@@ -16,8 +16,6 @@ from easy_config import EasyConfig
 
 from pybel.config import CONFIG_FILE_PATHS
 
-HOME = os.path.expanduser('~')
-
 
 @dataclass_json
 class BELCommonsConfig(EasyConfig):
@@ -50,7 +48,7 @@ class BELCommonsConfig(EasyConfig):
     CELERY_BROKER_URL: str = 'amqp://localhost'
 
     #: Celery backend url
-    CELERY_BACKEND_URL: Optional[str] = 'redis://localhost'
+    CELERY_BACKEND_URL: str = 'redis://localhost'
 
     SECURITY_REGISTERABLE: bool = True
     SECURITY_CONFIRMABLE: bool = False
@@ -58,9 +56,9 @@ class BELCommonsConfig(EasyConfig):
     SECURITY_RECOVERABLE: bool = True
 
     #: What hash algorithm should we use for passwords
-    SECURITY_PASSWORD_HASH: Optional[str] = 'pbkdf2_sha512'
+    SECURITY_PASSWORD_HASH: str = 'pbkdf2_sha512'
     #: What salt should to use to hash passwords
-    SECURITY_PASSWORD_SALT: Optional[str] = None
+    SECURITY_PASSWORD_SALT: str = str(os.urandom(8))
 
     MAIL_SERVER: Optional[str] = None
 
@@ -83,3 +81,10 @@ class BELCommonsConfig(EasyConfig):
 
         if self.SECURITY_REGISTERABLE and self.SECURITY_SEND_REGISTER_EMAIL and not self.MAIL_SERVER:
             raise ValueError('Configuration is missing MAIL_SERVER')
+
+
+if __name__ == '__main__':
+    import json
+
+    b = BELCommonsConfig.load()
+    print(json.dumps(b.to_dict(), indent=2))
