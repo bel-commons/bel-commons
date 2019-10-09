@@ -17,7 +17,7 @@ __all__ = [
     'uploading_blueprint',
 ]
 
-log = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 uploading_blueprint = Blueprint('parser', __name__)
 
@@ -27,7 +27,7 @@ uploading_blueprint = Blueprint('parser', __name__)
 def run_debug():
     """Run the debug task."""
     task = celery.send_task('debug-task')
-    log.info('Parse task from %s', task.id)
+    logger.info('Parse task from %s', task.id)
     flash(f'Queued Celery debug task: {task.id}.')
     return redirect(url_for('.view_parser'))
 
@@ -78,11 +78,11 @@ def view_parser():
     connection = current_app.config['SQLALCHEMY_DATABASE_URI']
     if form.feedback.data:
         task = celery.send_task('summarize-bel', args=[connection, report_id])
-        log.info(f'Email summary task from {current_user_str}: report={report_id}/task={task.id}')
+        logger.info(f'Email summary task from {current_user_str}: report={report_id}/task={task.id}')
         flash(f'Queued email summary task {report_id} for {report_name}.')
     else:
         task = celery.send_task('upload-bel', args=[connection, report_id])
-        log.info(f'Parse task from {current_user_str}: report={report_id}/task={task.id}')
+        logger.info(f'Parse task from {current_user_str}: report={report_id}/task={task.id}')
         flash(f'Queued parsing task {report_id} for {report_name}.')
 
     return redirect(url_for('ui.view_current_user_activity'))

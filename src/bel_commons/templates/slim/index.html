@@ -1,0 +1,103 @@
+{% extends "slim/base.html" %}
+
+{% import "bootstrap/wtf.html" as wtf %}
+{% import "bootstrap/fixes.html" as fixes %}
+{% import "bootstrap/utils.html" as util %}
+
+{% block title %}BEL Commons Slim{% endblock %}
+
+{% block head %}
+    {{ super() }}
+
+    <script src="//code.jquery.com/jquery-1.12.4.js"></script>
+    <script src="https://cdn.datatables.net/1.10.13/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.10.13/js/dataTables.bootstrap.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            $("#networks-table").DataTable();
+        });
+    </script>
+{% endblock %}
+
+{% block content %}
+    <div class="container">
+        {{ util.flashed_messages(dismissible=True, container=False) }}
+
+        <div class="jumbotron" style="margin-top: 50px;">
+            <div class="row">
+                <img alt="BEL Commons Logo" width="150" style="float: left; margin-right:25px;"
+                     src="{{ url_for('static', filename='img/BELcommons-square-1024.png') }}">
+                <h1>BEL Commons Slim</h1>
+                <small>
+                    Running on PyBEL v{{ pybel_version }}, PyBEL-Tools v{{ pybel_tools_version }},
+                    and BEL Commons v{{ bel_commons_version }}
+                </small>
+            </div>
+        </div>
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Upload</h3>
+            </div>
+            <div class="panel-body">
+                {{ wtf.quick_form(form, form_type='horizontal', button_map={'submit_button': 'btn btn-primary'}) }}
+            </div>
+        </div>
+
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Networks</h3>
+            </div>
+            <table class="table table-striped table-striped" id="networks-table">
+                <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Version</th>
+                    <th>Uploaded</th>
+                    <th>Authors</th>
+                    <th>Nodes</th>
+                    <th>Edges</th>
+                    <th>Citations</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for network in networks|sort(attribute='created', reverse=True) %}
+                    <tr>
+                        <td>
+                            <a href="{{ url_for('.view_network', network_id=network.id) }}">
+                                {{ network.name|replace('_', ' ') }}
+                            </a>
+                        </td>
+                        <td>{{ network.version }}</td>
+                        <td>{{ network.created }}</td>
+                        <td>
+                            {% if network.authors %}
+                                {% set authors_split = network.authors.split(',') %}
+                                {% if authors_split|length > 1 %}
+                                    {{ authors_split[0] }}, <i>et. al</i>
+                                {% else %}
+                                    {{ network.authors }}
+                                {% endif %}
+                            {% endif %}
+                        </td>
+                        <td class="text-right">{{ network.report.number_nodes }}</td>
+                        <td class="text-right">{{ network.report.number_edges }}</td>
+                        <td class="text-right">{{ network.report.number_citations }}</td>
+                        <td>
+                            <a href="#">
+                                <span class="glyphicon glyphicon-download" aria-hidden="true"></span>
+                                JGIF
+                            </a>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+{% endblock %}
+

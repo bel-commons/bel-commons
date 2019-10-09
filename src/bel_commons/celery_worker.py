@@ -21,29 +21,30 @@ from celery.utils.log import get_task_logger
 from flask import render_template
 from sqlalchemy.exc import IntegrityError, OperationalError
 
+from bel_commons.application import create_application
+from bel_commons.celery_utils import parse_graph
+from bel_commons.constants import MAIL_DEFAULT_SENDER, integrity_message
+from bel_commons.core.celery import PyBELCelery
+from bel_commons.manager import WebManager
+from bel_commons.manager_utils import fill_out_report, insert_graph, run_heat_diffusion_helper
+from bel_commons.models import Report, User
 from bel_resources.exc import ResourceError
-from pybel import BELGraph, Manager, from_nodelink, from_lines, to_bytes
+from pybel import BELGraph, from_nodelink, to_bytes
 from pybel.constants import METADATA_CONTACT, METADATA_DESCRIPTION, METADATA_LICENSES
 from pybel.manager.citation_utils import enrich_pubmed_citations
 from pybel.parser.exc import InconsistentDefinitionError
 from pybel.struct.mutation import enrich_protein_and_rna_origins
-from pybel_tools.assembler.html.assembler import BELGraphSummary
-from .application import create_application
-from .constants import MAIL_DEFAULT_SENDER, integrity_message
-from .core.celery import PyBELCelery
-from .manager import WebManager
-from .manager_utils import fill_out_report, insert_graph, run_heat_diffusion_helper
-from .models import Report, User
+from pybel_tools.summary import BELGraphSummary
 
 celery_logger = get_task_logger(__name__)
-log = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 logging.basicConfig(level=logging.DEBUG)
 logging.getLogger('urllib3.connectionpool').setLevel(logging.ERROR)
 logging.getLogger('pybel.parser').setLevel(logging.CRITICAL)
 
 celery_logger.setLevel(logging.DEBUG)
-log.setLevel(logging.DEBUG)
+logger.setLevel(logging.DEBUG)
 
 app = create_application()
 mail = app.extensions.get('mail')
@@ -60,7 +61,7 @@ DEFAULT_METADATA = {
 def run_debug_task() -> int:
     """Run the debug task that sleeps for a trivial amount of time."""
     celery_logger.info('running celery debug task')
-    log.info('running celery debug task')
+    logger.info('running celery debug task')
     time.sleep(random.randint(6, 10))
     return 6 + 2
 
@@ -280,7 +281,7 @@ def upload_bel(task: Task, connection: str, report_id: int, enrich_citations: bo
         manager.session.add(report)
         manager.session.commit()
 
-        celery_logger.info('report #%d complete [%d]', report.id, network.id)
+        celery_logger.info(f'report #{report.id} complete [{network.id}]')
         make_mail(f'Uploaded succeeded for {graph} ({source_name})',
                   f'{source_name} ({graph}) is done parsing. Check the network list page.')
 
@@ -396,28 +397,3 @@ def send_summary_mail(graph: BELGraph, report: Report, time_difference: float):
                 celery_logger.info(f'HTML printed to file at: {path}')
             except FileNotFoundError:
                 celery_logger.info('no file printed.')
-
-
-def iterate_report_lines_in_task(report: Report, task: Task):
-    """Iterate through the lines in a :class:`Report` while keeping a celery :class:`Task` informed of progress."""
-    lines = report.get_lines()
-    len_lines = len(lines)
-    for i, line in enumerate(lines, start=1):
-        if not task.request.called_directly:
-            task.update_state(state='PROGRESS', meta={
-                'task': 'parsing',
-                'current_line_number': i,
-                'current_line': line,
-                'total_lines': len_lines,
-            })
-        yield line
-
-
-def parse_graph(report: Report, manager: Manager, task: Task) -> BELGraph:
-    """Parse a graph from a report while keeping a celery :class:`Task` informed of progress."""
-    return from_lines(
-        iterate_report_lines_in_task(report, task),
-        manager=manager,
-        allow_nested=report.allow_nested,
-        citation_clearing=report.citation_clearing,
-    )

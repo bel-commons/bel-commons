@@ -2,7 +2,6 @@
 
 """Utilities for rendering BEL graphs via the response."""
 
-import logging
 from io import BytesIO, StringIO
 from operator import methodcaller
 from typing import Optional
@@ -26,8 +25,6 @@ __all__ = [
     'to_json_custom',
     'serve_network',
 ]
-
-log = logging.getLogger(__name__)
 
 
 def to_json_custom(graph: BELGraph, id_key: str = 'id', source_key: str = 'source', target_key: str = 'target'):

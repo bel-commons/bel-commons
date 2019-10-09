@@ -2,8 +2,6 @@
 
 """A blueprint for receiving uploads of graphs as JSON."""
 
-import logging
-
 from flask import Blueprint, abort, current_app, jsonify, request
 from flask_security.utils import verify_password
 
@@ -15,8 +13,6 @@ from bel_commons.models import User
 __all__ = [
     'receiving_blueprint',
 ]
-
-log = logging.getLogger(__name__)
 
 receiving_blueprint = Blueprint('receive', __name__, url_prefix='/api/receive')
 

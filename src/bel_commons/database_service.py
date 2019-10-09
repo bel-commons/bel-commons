@@ -44,7 +44,7 @@ __all__ = [
     'api_blueprint',
 ]
 
-log = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 # TODO add url_prefix='/api'
 api_blueprint = Blueprint('dbs', __name__)
@@ -303,7 +303,7 @@ def drop_networks():
       200:
         description: All networks were dropped
     """
-    log.info('dropping all networks')
+    logger.info('dropping all networks')
 
     for network_id, in manager.session.query(Network.id).all():
         drop_network_helper(network_id)
@@ -358,7 +358,7 @@ def namespaces_by_network(network_id: int):
       200:
         description: The namespaces described in this network
     """
-    log.info('network_id: %s', network_id)
+    logger.info('network_id: %s', network_id)
     abort(501)
 
 
@@ -379,7 +379,7 @@ def annotations_by_network(network_id: int):
       200:
         description: The annotations referenced by the network
     """
-    log.info('network_id: %s', network_id)
+    logger.info('network_id: %s', network_id)
     abort(501)
 
 
@@ -400,7 +400,7 @@ def citations_by_network(network_id: int):
       200:
         description: The citations referenced by the edges in the network
     """
-    log.info('network_id: %s', network_id)
+    logger.info('network_id: %s', network_id)
     abort(501)
 
 
@@ -475,7 +475,7 @@ def drop_network_helper(network_id: int) -> Response:
     """Drop a network."""
     network = manager.cu_owner_get_network_by_id_or_404(network_id=network_id)
     redirect_arg = request.args.get('next')
-    log.info(f'dropping network {network_id}')
+    logger.info(f'dropping network {network_id}')
 
     try:
         manager.drop_network(network)
@@ -935,8 +935,8 @@ def get_paths(query_id, source_id, target_id):
     cutoff = request.args.get('cutoff', default=7, type=int)
 
     if source not in network or target not in network:
-        log.info('Source/target node not in network')
-        log.info('Nodes in network: %s', network.nodes())
+        logger.info('Source/target node not in network')
+        logger.info('Nodes in network: %s', network.nodes())
         abort(500, 'Source/target node not in network')
 
     if undirected:
@@ -958,7 +958,7 @@ def get_paths(query_id, source_id, target_id):
     try:
         shortest_path = nx.shortest_path(network, source=source, target=target)
     except nx.NetworkXNoPath:
-        log.debug(f'No paths between {source} and {target}')
+        logger.debug(f'No paths between {source} and {target}')
 
         # Returns normal message if it is not a random call from graph_controller.js
         if RANDOM_PATH not in request.args:
@@ -1879,7 +1879,7 @@ def add_pipeline_entry(query_id: int, name: str, *args, **kwargs) -> Response:
     try:
         qo = query.build_appended(name, *args, **kwargs)
     except MissingPipelineFunctionError:
-        log.error('missing pipeline function: %s', name)
+        logger.error('missing pipeline function: %s', name)
         return abort(403, f'Invalid function name: {name}')
 
     if current_user.is_authenticated:

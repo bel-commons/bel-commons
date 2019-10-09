@@ -13,7 +13,7 @@ from bel_commons.models import Omic
 from bel_commons.resources.constants import OMICS_DATA_DIR
 from pybel import Manager
 
-log = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 MANIFEST_FILE_NAME = 'manifest.json'
 
@@ -25,7 +25,7 @@ def load_metadata(directory: str):
     :rtype: list[dict[str,str]]
     """
     metadata_path = os.path.join(directory, 'metadata.json')
-    log.info('loading metadata from %s', metadata_path)
+    logger.info('loading metadata from %s', metadata_path)
     with open(metadata_path) as f:
         return json.load(f)
 
@@ -42,10 +42,10 @@ def create_omics_models(directory: str, metadata) -> List[Omic]:
         omics_path = os.path.join(directory, omics_info['source_name'])
 
         if not os.path.exists(omics_path):
-            log.warning('omics file does not exist: %s', omics_path)
+            logger.warning('omics file does not exist: %s', omics_path)
             continue
 
-        log.info('creating omics from %s', omics_path)
+        logger.info('creating omics from %s', omics_path)
         omics = create_omic(
             data=omics_path,
             **omics_info,
@@ -57,10 +57,10 @@ def create_omics_models(directory: str, metadata) -> List[Omic]:
 
 def upload_omics_models(omics: List[Omic], manager: Manager):
     """Upload *-omics* models."""
-    log.info('adding -omics models to session')
+    logger.info('adding -omics models to session')
     manager.session.add_all(omics)
 
-    log.info('committing -omics models')
+    logger.info('committing -omics models')
     manager.session.commit()
 
 
@@ -68,13 +68,13 @@ def write_manifest(directory: str, omics: List[Omic]) -> None:
     """Write a manifest of *-omics* data."""
     manifest_path = os.path.join(directory, MANIFEST_FILE_NAME)
 
-    log.info('generating manifest for %s', directory)
+    logger.info('generating manifest for %s', directory)
     manifest_data = [
         omic.to_json(include_id=True)
         for omic in omics
     ]
 
-    log.info('writing manifest to %s', manifest_path)
+    logger.info('writing manifest to %s', manifest_path)
     with open(manifest_path, 'w') as file:
         json.dump(manifest_data, file, indent=2)
 
@@ -87,11 +87,11 @@ def work_omics(directory: str, manager: Manager, reload: bool = False):
     :param bool reload: Should the experiments be reloaded?
     """
     if not (os.path.exists(directory) and os.path.isdir(directory)):
-        log.warning('directory does not exist: %s', directory)
+        logger.warning('directory does not exist: %s', directory)
         return
 
     if not reload and os.path.exists(os.path.join(directory, MANIFEST_FILE_NAME)):
-        log.info('omics data already built for %s', directory)
+        logger.info('omics data already built for %s', directory)
         return
 
     metadata = load_metadata(directory)
@@ -115,11 +115,11 @@ def main(manager: Manager, reload: bool = False):
         try:
             work_omics(directory=directory, manager=manager, reload=reload)
         except Exception:
-            log.exception('failed for directory %s', directory)
+            logger.exception('failed for directory %s', directory)
             continue
 
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(name)s - %(message)s")
-    log.setLevel(logging.INFO)
+    logger.setLevel(logging.INFO)
     main(Manager())

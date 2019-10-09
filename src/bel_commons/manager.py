@@ -14,7 +14,7 @@ from flask_security import current_user
 import pybel.struct.query
 from pybel import BELGraph
 from pybel.manager.models import Author, Citation, Edge, Evidence, Namespace, Network, Node
-from pybel_tools.utils import prepare_c3, prepare_c3_time_series
+from pybel_tools.summary import BELGraphSummary
 from .core.models import Query
 from .manager_base import WebManagerBase, iter_recent_public_networks, iter_unique_networks
 from .models import Experiment, Project, Report, User, UserQuery
@@ -24,7 +24,7 @@ __all__ = [
     'WebManager',
 ]
 
-log = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 class _WebManager(WebManagerBase):
@@ -191,17 +191,7 @@ class _WebManager(WebManagerBase):
         """Render the graph summary page."""
         graph = network.as_bel()
         report: Report = network.report
-        context = report.get_calculations()
-
-        citation_years = context.citation_years
-        function_count = context.function_count
-        relation_count = context.relation_count
-        error_count = context.error_count
-        transformations_count = context.modifications_count
-        hub_data = context.hub_data
-        disease_data = context.disease_data
-        variants_count = context.variants_count
-        namespaces_count = context.namespaces_count
+        context: BELGraphSummary = report.get_calculations()
 
         overlaps = self.get_top_overlaps(user=user, network=network)
         network_versions = self.get_networks_by_name(network.name)
@@ -214,19 +204,18 @@ class _WebManager(WebManagerBase):
             graph=graph,
             network_versions=network_versions,
             overlaps=overlaps,
-            chart_1_data=prepare_c3(function_count, 'Entity Type'),
-            chart_2_data=prepare_c3(relation_count, 'Relationship Type'),
-            chart_3_data=prepare_c3(error_count, 'Error Type') if error_count else None,
-            chart_4_data=prepare_c3(transformations_count) if transformations_count else None,
-            number_transformations=sum(transformations_count.values()),
-            chart_5_data=prepare_c3(variants_count, 'Node Variants'),
-            number_variants=sum(variants_count.values()),
-            chart_6_data=prepare_c3(namespaces_count, 'Namespaces'),
-            number_namespaces=len(namespaces_count),
-            chart_7_data=prepare_c3(hub_data, 'Top Hubs'),
-            chart_9_data=prepare_c3(disease_data, 'Pathologies') if disease_data else None,
-            chart_10_data=prepare_c3_time_series(citation_years, 'Number of articles') if citation_years else None,
-            # **context
+            chart_1_data=context.prepare_c3_for_function_count(),
+            chart_2_data=context.prepare_c3_for_relation_count(),
+            chart_3_data=context.prepare_c3_for_error_count(),
+            chart_4_data=context.prepare_c3_for_transformations(),
+            number_transformations=sum(context.modifications_count.values()),
+            chart_5_data=context.prepare_c3_for_variants(),
+            number_variants=sum(context.variants_count.values()),
+            chart_6_data=context.prepare_c3_for_namespace_count(),
+            number_namespaces=len(context.namespaces_count),
+            chart_7_data=context.prepare_c3_for_hub_data(),
+            chart_9_data=context.prepare_c3_for_pathology_count(),
+            chart_10_data=context.prepare_c3_for_citation_years(),
         )
 
     def authenticated_render_network_summary_or_404(self, network_id: int, user: User, template: str) -> Response:
@@ -269,10 +258,10 @@ class _WebManager(WebManagerBase):
         """Check if the user has the rights to run the given query."""
         query = self.get_query_by_id_or_404(query_id)
 
-        log.debug('checking if user [%s] has rights to query [id=%s]', user, query_id)
+        logger.debug('checking if user [%s] has rights to query [id=%s]', user, query_id)
 
         if user.is_authenticated and user.is_admin:
-            log.debug('[%s] is admin and can access query [id=%d]', user, query_id)
+            logger.debug('[%s] is admin and can access query [id=%d]', user, query_id)
             return query  # admins are never missing the rights to a query
 
         permissive_network_ids = self.get_network_ids_with_permission(user=user)
@@ -286,18 +275,18 @@ class _WebManager(WebManagerBase):
 
         :raises: werkzeug.exceptions.HTTPException
         """
-        log.debug(f'getting query [id={query_id}] from database')
+        logger.debug(f'getting query [id={query_id}] from database')
         t = time.time()
         query = self.authenticated_get_query_by_id_or_404(user=user, query_id=query_id)
-        log.debug(f'got query [id={query_id}] in {time.time() - t:.2f} seconds')
+        logger.debug(f'got query [id={query_id}] in {time.time() - t:.2f} seconds')
 
-        log.debug(f'running query [id={query_id}]')
+        logger.debug(f'running query [id={query_id}]')
         t = time.time()
         try:
             result = query.run(self)
-            log.debug(f'ran query [id={query_id}] in {time.time() - t:.2f} seconds')
+            logger.debug(f'ran query [id={query_id}] in {time.time() - t:.2f} seconds')
         except networkx.exception.NetworkXError as e:
-            log.warning(f'query [id={query_id}] failed after {time.time() - t:.2f} seconds')
+            logger.warning(f'query [id={query_id}] failed after {time.time() - t:.2f} seconds')
             raise e
 
         return result

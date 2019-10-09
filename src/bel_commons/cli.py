@@ -36,7 +36,7 @@ from .models import (
     projects_networks, projects_users, users_networks,
 )
 
-log = logging.getLogger('bel_commons')
+logger = logging.getLogger('bel_commons')
 
 
 def _iterate_user_strings(manager_: WebManager) -> Iterable[str]:
@@ -49,14 +49,14 @@ def _iterate_user_strings(manager_: WebManager) -> Iterable[str]:
 def _set_logging_level(level: int) -> None:
     logging.basicConfig(level=level, format="%(asctime)s - %(levelname)s - %(name)s - %(message)s", datefmt='%H:%M:%S')
 
-    pybel_log = logging.getLogger('pybel')
-    pybel_log.setLevel(level)
+    pybel_logger = logging.getLogger('pybel')
+    pybel_logger.setLevel(level)
 
-    pbt_log = logging.getLogger('pybel_tools')
-    pbt_log.setLevel(level)
+    pbt_logger = logging.getLogger('pybel_tools')
+    pbt_logger.setLevel(level)
 
-    pbw_log = logging.getLogger('bel_commons')
-    pbw_log.setLevel(level)
+    pbw_logger = logging.getLogger('bel_commons')
+    pbw_logger.setLevel(level)
 
     logging.getLogger('bio2bel_hgnc').setLevel(level)
     logging.getLogger('bio2bel_mirtarbase').setLevel(level)
@@ -66,10 +66,10 @@ def _set_logging_level(level: int) -> None:
 def _set_debug_param(debug: int) -> None:
     if debug == 1:
         _set_logging_level(logging.INFO)
-        log.info('Logging at logging.INFO')
+        logger.info('Logging at logging.INFO')
     elif debug == 2:
         _set_logging_level(logging.DEBUG)
-        log.info('Logging at logging.DEBUG')
+        logger.info('Logging at logging.DEBUG')
 
     logging.getLogger('passlib.registry').setLevel(logging.WARNING)
 
@@ -276,7 +276,7 @@ def parse(manager: WebManager, path: str, public: bool):
     """Parses a BEL script and uploads."""
     t = time.time()
     graph = from_bel_script(path, manager=manager)
-    log.info('parsing done in %.2f seconds', time.time() - t)
+    logger.info('parsing done in %.2f seconds', time.time() - t)
     insert_graph(manager, graph, public=public, use_tqdm=True)
 
 
@@ -333,7 +333,7 @@ def add(manager: WebManager, email: str, password: str, admin: bool):
 
         ds.commit()
     except Exception:
-        log.exception(f"Couldn't create user {email}")
+        logger.exception(f"Couldn't create user {email}")
 
 
 @users.command()
@@ -357,7 +357,7 @@ def make_admin(manager: WebManager, email: str):
         ds.add_role_to_user(email, 'admin')
         ds.commit()
     except Exception:
-        log.exception("Couldn't make admin")
+        logger.exception("Couldn't make admin")
 
 
 @users.command()
@@ -371,7 +371,7 @@ def add_role(manager: WebManager, email: str, role: str):
         ds.add_role_to_user(email, role)
         ds.commit()
     except Exception:
-        log.exception(f"Couldn't assign {email} as {role}")
+        logger.exception(f"Couldn't assign {email} as {role}")
 
 
 @manage.group()
@@ -390,7 +390,7 @@ def add(manager: WebManager, name: str, description: Optional[str]):
         ds.create_role(name=name, description=description)
         ds.commit()
     except Exception:
-        log.exception(f"Couldn't create role {name}")
+        logger.exception(f"Couldn't create role {name}")
 
 
 @roles.command()

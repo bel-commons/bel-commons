@@ -21,7 +21,6 @@ import flasgger
 import flask_bootstrap
 import flask_mail
 import flask_security
-import raven.contrib.flask
 from flask import Flask
 from flask_security import SQLAlchemyUserDatastore
 
@@ -40,7 +39,7 @@ from bel_commons.database_service import api_blueprint
 from bel_commons.forms import ExtendedRegisterForm
 from bel_commons.main_service import ui_blueprint
 from bel_commons.manager import WebManager
-from bel_commons.utils import get_version
+from bel_commons.version import get_version
 from bel_commons.views import (
     curation_blueprint, experiment_blueprint, help_blueprint, receiving_blueprint, reporting_blueprint,
 )
@@ -51,7 +50,7 @@ __all__ = [
     'PyBELSQLAlchemy',
 ]
 
-log = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 bootstrap = flask_bootstrap.Bootstrap()
 mail = flask_mail.Mail()
@@ -66,6 +65,16 @@ flask_bio2bel = FlaskBio2BEL()
 # app.extensions['bootstrap']['cdns']['jquery'] = \
 # flask_bootstrap.WebCDN('//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/')
 
+class PyBELSQLAlchemy(PyBELSQLAlchemyBase):
+    """An updated PyBELSQLAlchemy using the WebManager."""
+
+    manager_cls = WebManager
+
+    @property
+    def user_datastore(self) -> SQLAlchemyUserDatastore:
+        """Get the user datastore from this manager."""
+        return self.manager.user_datastore
+
 
 def create_application(*, bel_commons_config: Optional[BELCommonsConfig] = None) -> Flask:
     """Build a Flask app."""
@@ -78,13 +87,10 @@ def create_application(*, bel_commons_config: Optional[BELCommonsConfig] = None)
     # Set SQLAlchemy defaults
     app.config.setdefault(SQLALCHEMY_TRACK_MODIFICATIONS, False)
     app.config[SQLALCHEMY_DATABASE_URI] = get_cache_connection()
-    log.info(f'database: {app.config.get(SQLALCHEMY_DATABASE_URI)}')
+    logger.info(f'database: {app.config.get(SQLALCHEMY_DATABASE_URI)}')
 
     # Set Swagger defaults
     app.config.setdefault(SWAGGER, SWAGGER_CONFIG)
-
-    # Set Mail defaults
-    app.config.setdefault(MAIL_DEFAULT_SENDER, ("BEL Commons", 'bel-commons@scai.fraunhofer.de'))
 
     # Add converters
     app.url_map.converters.update({
@@ -101,7 +107,11 @@ def create_application(*, bel_commons_config: Optional[BELCommonsConfig] = None)
         celery.init_app(app)
 
     if bel_commons_config.MAIL_SERVER is not None:
-        log.info(f'using mail server: {bel_commons_config.MAIL_SERVER}')
+        logger.info(f'using mail server: {bel_commons_config.MAIL_SERVER}')
+
+        # Set Mail defaults
+        app.config.setdefault(MAIL_DEFAULT_SENDER, ("BEL Commons", 'bel-commons@scai.fraunhofer.de'))
+
         mail.init_app(app)
         send_startup_mail(app)
 
@@ -112,12 +122,13 @@ def create_application(*, bel_commons_config: Optional[BELCommonsConfig] = None)
 
     sentry_dsn = app.config.get(SENTRY_DSN)
     if sentry_dsn is not None:
-        log.info(f'initiating Sentry: {sentry_dsn}')
+        import raven.contrib.flask
+        logger.info(f'initiating Sentry: {sentry_dsn}')
         sentry = raven.contrib.flask.Sentry(app, dsn=sentry_dsn)
     else:
         sentry = None
 
-    register_error_handlers(app, sentry)
+    register_error_handlers(app, sentry=sentry)
 
     if bel_commons_config.register_transformations:
         register_transformations(manager=manager)
@@ -141,11 +152,11 @@ def create_application(*, bel_commons_config: Optional[BELCommonsConfig] = None)
     app.register_blueprint(reporting_blueprint)
 
     if bel_commons_config.USE_CELERY:  # Requires celery!
-        log.info('registering celery-specific apps')
+        logger.info('registering celery-specific apps')
         app.register_blueprint(receiving_blueprint)
 
         if bel_commons_config.enable_uploader:
-            log.info('registering uploading app')
+            logger.info('registering uploading app')
             from bel_commons.views import uploading_blueprint
             app.register_blueprint(uploading_blueprint)
 
@@ -153,22 +164,12 @@ def create_application(*, bel_commons_config: Optional[BELCommonsConfig] = None)
             app.register_blueprint(experiment_blueprint)
 
     if bel_commons_config.enable_parser:
-        log.info('registering parser app')
+        logger.info('registering parser app')
         from bel_commons.views import build_parser_service
         build_parser_service(app)
 
+    logger.info('done creating app')
     return app
-
-
-class PyBELSQLAlchemy(PyBELSQLAlchemyBase):
-    """An updated PyBELSQLAlchemy using the WebManager."""
-
-    manager_cls = WebManager
-
-    @property
-    def user_datastore(self) -> SQLAlchemyUserDatastore:
-        """Get the user datastore from this manager."""
-        return self.manager.user_datastore
 
 
 def send_startup_mail(app: Flask) -> None:
@@ -176,7 +177,7 @@ def send_startup_mail(app: Flask) -> None:
     mail_default_sender = app.config.get(MAIL_DEFAULT_SENDER)
     notify = app.config.get(BEL_COMMONS_STARTUP_NOTIFY)
     if notify:
-        log.info(f'sending startup notification to {notify}')
+        logger.info(f'sending startup notification to {notify}')
         send_message(
             app=app,
             mail=mail,
@@ -189,9 +190,9 @@ def send_startup_mail(app: Flask) -> None:
                 app.config.get(SERVER_NAME),
             ),
             sender=mail_default_sender,
-            recipients=[notify]
+            recipients=[notify],
         )
-        log.info(f'notified {notify}')
+        logger.info(f'notified {notify}')
 
 
 def send_message(app: Flask, mail: flask_mail.Mail, *args, **kwargs) -> None:

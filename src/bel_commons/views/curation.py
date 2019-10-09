@@ -21,7 +21,7 @@ from pybel import get_version as get_pybel_version
 from pybel.constants import NAMESPACE_DOMAIN_TYPES
 from pybel_tools.document_utils import write_boilerplate
 
-log = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 curation_blueprint = Blueprint('curation', __name__, url_prefix='/curation')
 
@@ -125,14 +125,14 @@ def merge_namespaces():
     if not form.validate_on_submit():
         return render_template('curation/merge_namespaces.html', form=form)
 
-    log.warning(form.file)
+    logger.warning(form.file)
 
     files = request.files.getlist("file")
 
     names = set()
 
     for file in files:
-        log.warning('file: %s', file)
+        logger.warning('file: %s', file)
         resource = parse_bel_resource(codecs.iterdecode(file, 'utf-8'))
         names |= set(resource['Values'])
 

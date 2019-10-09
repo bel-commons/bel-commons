@@ -20,7 +20,7 @@ from bel_commons.models import Experiment, Omic
 from bel_commons.resources.constants import BMS_BASE, OMICS_DATA_DIR
 from pybel.manager import Manager
 
-log = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 # 1. build query from all of alzheimer's disease using manifest from AD folder
@@ -84,10 +84,10 @@ def create_experiment(
 
 def upload_experiments(experiments: List[Experiment], manager: Manager):
     """Upload experiments models."""
-    log.info('adding experiments to session')
+    logger.info('adding experiments to session')
     manager.session.add_all(experiments)
 
-    log.info('committing experiments')
+    logger.info('committing experiments')
     manager.session.commit()
 
 
@@ -98,11 +98,11 @@ def run_experiments(
         tqdm_kwargs: Optional[Mapping[str, Any]] = None,
 ) -> None:
     """Run experiments and commits after each."""
-    log.info('running %d experiments', len(experiments))
+    logger.info('running %d experiments', len(experiments))
 
     for experiment in experiments:
         run_heat_diffusion_helper(manager, experiment, use_tqdm=use_tqdm, tqdm_kwargs=tqdm_kwargs)
-        log.info('done in %.2f seconds', experiment.time)
+        logger.info('done in %.2f seconds', experiment.time)
         manager.session.add(experiment)
         manager.session.commit()
 
@@ -115,13 +115,13 @@ def work_directory(
         use_tqdm: bool = True,
 ) -> None:
     """Make models, upload, and run experiments for all data in a given directory."""
-    log.info(f'making experiments for directory: {omic_directory}')
+    logger.info(f'making experiments for directory: {omic_directory}')
     experiments = create_experiment(query, directory=omic_directory, manager=manager, permutations=permutations)
 
-    log.info(f'uploading experiments for directory: {omic_directory}')
+    logger.info(f'uploading experiments for directory: {omic_directory}')
     upload_experiments(experiments, manager=manager)
 
-    log.info(f'running experiments for directory: {omic_directory}')
+    logger.info(f'running experiments for directory: {omic_directory}')
     run_experiments(experiments, manager=manager, use_tqdm=use_tqdm)
 
 
@@ -139,7 +139,7 @@ def work_group(
     :param  permutations: Number of permutations to run (defaults to 200)
     """
     query = build_query(directory=network_directory, manager=manager)
-    log.info('made query %s for %s', query, network_directory)
+    logger.info('made query %s for %s', query, network_directory)
 
     for omic_directory in omics_directories:
         work_directory(
@@ -174,5 +174,5 @@ def main(manager: Manager, permutations: int = 25):
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(name)s - %(message)s")
-    log.setLevel(logging.INFO)
+    logger.setLevel(logging.INFO)
     main(Manager())
