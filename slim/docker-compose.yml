@@ -1,0 +1,54 @@
+# Follow guide at https://realpython.com/blog/python/dockerizing-flask-with-compose-and-machine-from-localhost-to-the-cloud/
+
+version: '3'
+
+services:
+  web:
+    build: .
+    volumes:
+     - .:/app
+    environment:
+      SQLALCHEMY_DATABASE_URI: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@database:5432/${POSTGRES_DB}
+      CELERY_BROKER_URL: amqp://broker
+      CELERY_BACKEND_URL: redis://result_backend
+      SECRET_KEY: ${SECRET_KEY}
+    restart: always
+    command: gunicorn -b 0.0.0.0:5000 bel_commons.slim:flask_app --log-level=INFO
+    ports:
+      - 80:5000
+    depends_on:
+     - database
+     - broker
+     - result_backend
+     - worker
+
+  worker:
+    build: .
+    volumes:
+     - .:/app
+    environment:
+      SQLALCHEMY_DATABASE_URI: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@database:5432/${POSTGRES_DB}
+      CELERY_BROKER_URL: amqp://broker
+      CELERY_BACKEND_URL: redis://result_backend
+      SECRET_KEY: ${SECRET_KEY}
+    restart: always
+    command: celery worker -A bel_commons.slim.celery -l INFO
+    depends_on:
+     - database
+     - broker
+     - result_backend
+
+  database:
+    image: postgres:11.1
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - 5432:5432
+
+  broker:
+    image: rabbitmq:3.7.7-alpine
+
+  result_backend:
+    image: redis:4.0.11-alpine

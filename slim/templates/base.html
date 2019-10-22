@@ -9,4 +9,7 @@
 {% block head %}
     {{ super() }}
     {{ fixes.ie8() }}
+
+    <script src="{{ url_for('static', filename='js/d3.3.5.17.min.js') }}" charset="utf-8"></script>
+    <script src="{{ url_for('static', filename='js/c3.min.js') }}"></script>
 {% endblock %}

@@ -2,7 +2,15 @@
 
 """BEL Commons Slim.
 
-Run with ``python -m bel_commons.slim``
+Run the celery worker with:
+
+``python -m celery worker -A bcs.celery_app -l INFO -E``
+
+- ``-E`` means monitor events.
+
+Run the WSGI server with:
+
+``python bcs.py``
 """
 
 from __future__ import annotations
@@ -12,10 +20,11 @@ import logging
 import time
 
 import requests.exceptions
+from bel_resources.exc import ResourceError
 from celery import Celery
 from celery.app.task import Task
 from celery.utils.log import get_task_logger
-from flask import Flask, flash, render_template
+from flask import Blueprint, Flask, abort, flash, jsonify, redirect, render_template, request, url_for
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileAllowed, FileField
 from sqlalchemy.exc import IntegrityError, OperationalError
@@ -32,47 +41,50 @@ from bel_commons.constants import SQLALCHEMY_DATABASE_URI, SQLALCHEMY_TRACK_MODI
 from bel_commons.core.celery import CELERY_BROKER_URL, CELERY_RESULT_BACKEND
 from bel_commons.manager_utils import fill_out_report
 from bel_commons.models import Report
-from bel_resources.exc import ResourceError
 from pybel.constants import get_cache_connection
+from pybel.io.new_jgif import to_jgif
 from pybel.parser.exc import InconsistentDefinitionError
 
-logger = logging.getLogger(__name__)
-celery_logger = get_task_logger(__name__)
+logger = logging.getLogger('bel_commons.slim')
+celery_logger = get_task_logger('bel_commons.slim')
 
 bel_commons_config = BELCommonsConfig.load()
 
-app = Flask(__name__)
-app.config.update(bel_commons_config.to_dict())
+flask_app = Flask('bcs')
+flask_app.config.update(bel_commons_config.to_dict())
 
 # Set SQLAlchemy defaults
-app.config.setdefault(SQLALCHEMY_TRACK_MODIFICATIONS, False)
-app.config.setdefault(SQLALCHEMY_DATABASE_URI, get_cache_connection())
-logger.info(f'database: {app.config.get(SQLALCHEMY_DATABASE_URI)}')
+flask_app.config.setdefault(SQLALCHEMY_TRACK_MODIFICATIONS, False)
+flask_app.config.setdefault(SQLALCHEMY_DATABASE_URI, get_cache_connection())
+logger.info(f'database: {flask_app.config.get(SQLALCHEMY_DATABASE_URI)}')
+
+# Set Celery defaults
+flask_app.config.setdefault(CELERY_RESULT_BACKEND, f'db+{flask_app.config[SQLALCHEMY_DATABASE_URI]}')
+
+UPLOAD_URL = 'UPLOAD_URL'
 
 ##########
 # CELERY #
 ##########
 
-backend = app.config.get(CELERY_RESULT_BACKEND)
-if backend is None:
-    backend = f'db+{app.config[SQLALCHEMY_DATABASE_URI]}'
-
-celery = Celery(
-    app.import_name,
-    broker=app.config[CELERY_BROKER_URL],
-    backend=backend,
+celery_app = Celery(
+    flask_app.import_name,
+    broker=flask_app.config[CELERY_BROKER_URL],
+    backend=flask_app.config[CELERY_RESULT_BACKEND],
 )
 
-celery.conf.update(app.config)
+logger.info(f'celery_app={celery_app}')
 
-bootstrap.init_app(app)
+celery_app.conf.update(flask_app.config)
 
-db = PyBELSQLAlchemy(app)
+bootstrap.init_app(flask_app)
+
+db = PyBELSQLAlchemy(flask_app)
 manager = db.manager
 
 
-@celery.task(bind=True)  # noqa: C901
-def upload_bel(task: Task, report_id: int):
+@celery_app.task(bind=True)  # noqa: C901
+def parse(task: Task, report_id: int):
     """Parse a BEL script asynchronously and send email feedback."""
     if not task.request.called_directly:
         task.update_state(state='STARTED')
@@ -80,8 +92,7 @@ def upload_bel(task: Task, report_id: int):
     t = time.time()
     report = manager.get_report_by_id(report_id)
 
-    report_id = report.id
-    source_name = report.source_name
+    report_id, source_name = report.id, report.source_name
 
     celery_logger.info(f'Starting parse task for {source_name} (report {report_id})')
 
@@ -95,23 +106,21 @@ def upload_bel(task: Task, report_id: int):
     try:
         graph = parse_graph(report=report, manager=manager, task=task)
     except (ResourceError, requests.exceptions.ConnectionError, requests.exceptions.HTTPError) as e:
-        return finish_parsing(
-            f'Parsing Failed for {source_name}. Connection to resource could not be established: {e}',
-        )
+        message = f'Parsing Failed for {source_name}. Connection to resource could not be established: {e}'
+        return finish_parsing(message)
     except InconsistentDefinitionError as e:
-        return finish_parsing(
-            f'Parsing Failed for {source_name} because {e.definition} was redefined on line {e.line_number}',
-        )
+        message = f'Parsing Failed for {source_name} because {e.definition} was redefined on line {e.line_number}'
+        return finish_parsing(message)
     except Exception as e:
-        return finish_parsing(
-            f'Parsing Failed for {source_name} from a general error: {e}',
-        )
+        message = f'Parsing Failed for {source_name} from a general error: {e}'
+        return finish_parsing(message)
 
     if not graph.name:
         return finish_parsing(f'Parsing Failed for {source_name} because SET DOCUMENT Name was missing.')
     if not graph.version:
         return finish_parsing(f'Parsing Failed for {source_name} because SET DOCUMENT Version was missing.')
 
+    # TODO split into second task
     try:
         celery_logger.info(f'inserting {graph} with {manager.engine.url}')
         network = manager.insert_graph(graph)
@@ -142,9 +151,9 @@ def upload_bel(task: Task, report_id: int):
         return {
             'network_id': network.id,
         }
-    except Exception:
+    except Exception as e:
         manager.session.rollback()
-        celery_logger.exception('Problem filling out report')
+        celery_logger.exception(f'Problem filling out report: {e}')
         return -1
     finally:
         manager.session.close()
@@ -160,7 +169,7 @@ class UploadForm(FlaskForm):
 
     submit = SubmitField('Upload')
 
-    def get_report(self) -> Report:
+    def _get_report(self) -> Report:
         """Get an initial report for the data in this form."""
         source_bytes = self.file.data.stream.read()
         source_sha512 = hashlib.sha512(source_bytes).hexdigest()
@@ -175,43 +184,50 @@ class UploadForm(FlaskForm):
             infer_origin=True,
         )
 
+    def send_parse_task(self):
+        """Send the form's file to get parsed."""
+        report = self._get_report()
+        manager.session.add(report)
 
-@app.route('/')
+        try:
+            manager.session.commit()
+        except Exception:
+            manager.session.rollback()
+            flash('Unable to upload BEL document')
+        else:
+            report_id, report_name = report.id, report.source_name
+            logger.debug(f'Got report {report_id}: {report_name}')
+
+            manager.session.close()
+
+            time.sleep(2)  # half hearted attempt to not get a race condition
+
+            task = parse.apply_async(args=[report_id])
+
+            logger.info(f'Parse task={task.id} for report={report_id}')
+            flash(f'Queued parsing task {report_id} for {report_name}.')
+
+
+def get_running_tasks():
+    """Get running tasks in Celery."""
+    i = celery_app.control.inspect()
+    # TODO
+
+
+ui = Blueprint('ui', __name__)
+
+
+@ui.route('/', methods=['GET', 'POST'])
 def view_home():
     """Render the home page."""
     form = UploadForm()
 
-    if not form.validate_on_submit():  # No upload data to send.
-        return render_template(
-            'slim/index.html',
-            form=form,
-            networks=manager.list_networks(),
-            pybel_version=pybel.get_version(),
-            pybel_tools_version=pybel_tools.get_version(),
-            bel_commons_version=bel_commons.get_version(),
-        )
-
-    report = form.get_report()
-    manager.session.add(report)
-
-    try:
-        manager.session.commit()
-    except Exception:
-        manager.session.rollback()
-        flash('Unable to upload BEL document')
-    else:
-        report_id, report_name = report.id, report.source_name
-        manager.session.close()
-
-        time.sleep(2)  # half hearted attempt to not get a race condition
-
-        connection = app.config[SQLALCHEMY_DATABASE_URI]
-        task = celery.send_task('upload-bel', args=[connection, report_id])
-        logger.info(f'Parse task={task.id} for report={report_id}')
-        flash(f'Queued parsing task {report_id} for {report_name}.')
+    if form.validate_on_submit():  # No upload data to send.
+        form.send_parse_task()
 
     return render_template(
-        'slim/index.html',
+        'index.html',
+        form=form,
         networks=manager.list_networks(),
         pybel_version=pybel.get_version(),
         pybel_tools_version=pybel_tools.get_version(),
@@ -219,16 +235,19 @@ def view_home():
     )
 
 
-@app.route('/network/<int:network_id>')
+@ui.route('/network/<int:network_id>', methods=['GET'])
 def view_network(network_id: int):
     """Render a network page."""
     network = manager.get_network_by_id(network_id)
+    graph = network.as_bel()
     report: Report = network.report
     context = report.get_calculations()
 
     return render_template(
-        'slim/network.html',
+        'network.html',
+        graph=graph,
         network=network,
+        context=context,
         chart_1_data=context.prepare_c3_for_function_count(),
         chart_2_data=context.prepare_c3_for_relation_count(),
         chart_3_data=context.prepare_c3_for_error_count(),
@@ -244,5 +263,47 @@ def view_network(network_id: int):
     )
 
 
+@ui.route('/network/<int:network_id>.jgif', methods=['GET'])
+def download(network_id: int):
+    """Render a network page."""
+    data = to_jgif(manager.get_graph_by_id(network_id))
+    return jsonify(data)
+
+
+@ui.route('/network/<int:network_id>/upload', methods=['GET'])
+def upload(network_id: int):
+    """Upload the JGIF for the graph."""
+    payload = to_jgif(manager.get_graph_by_id(network_id))
+
+    external_upload_url = flask_app.config.get(UPLOAD_URL)
+    if external_upload_url is not None:
+        response = requests.post(external_upload_url, json=payload)
+    else:
+        logger.info('Debugging receive endpoint')
+        response = requests.post('http://localhost:5000/receive', json=payload)
+
+    flash(f'Response: {response}/{response.json()}')
+    return redirect(url_for('.view_home'))
+
+
+if UPLOAD_URL not in flask_app.config:
+    @ui.route('/receive', methods=['POST'])
+    def receive():
+        """Mock the receiver endpoint for JGIF."""
+        payload = request.get_json()
+        if payload is None:
+            return abort(500, 'No data received.')
+
+        metadata = payload.get('metadata')
+        if metadata is None:
+            return abort(500, 'Invalid payload, missing "metadata" key')
+
+        logger.info(f'Received network {metadata}.\nNot doing anything.')
+        return jsonify(metadata)
+
+flask_app.register_blueprint(ui)
+
 if __name__ == '__main__':
-    app.run(debug=True)
+    logging.basicConfig(level=logging.INFO)
+    logger.setLevel(logging.INFO)
+    flask_app.run(debug=True)

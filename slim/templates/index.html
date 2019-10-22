@@ -1,4 +1,4 @@
-{% extends "slim/base.html" %}
+{% extends "base.html" %}
 
 {% import "bootstrap/wtf.html" as wtf %}
 {% import "bootstrap/fixes.html" as fixes %}
@@ -21,10 +21,10 @@
 {% endblock %}
 
 {% block content %}
-    <div class="container">
+    <div class="container" style="padding-top: 50px">
         {{ util.flashed_messages(dismissible=True, container=False) }}
 
-        <div class="jumbotron" style="margin-top: 50px;">
+        <div class="jumbotron">
             <div class="row">
                 <img alt="BEL Commons Logo" width="150" style="float: left; margin-right:25px;"
                      src="{{ url_for('static', filename='img/BELcommons-square-1024.png') }}">
@@ -45,6 +45,20 @@
             </div>
         </div>
 
+        {% if tasks is defined %}
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Tasks</h3>
+                </div>
+                <ul>
+                    {% for task in tasks %}
+                        <li>
+                            {{ task }}
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
 
         <div class="panel panel-default">
             <div class="panel-heading">
@@ -53,26 +67,27 @@
             <table class="table table-striped table-striped" id="networks-table">
                 <thead>
                 <tr>
+                    <th>Uploaded</th>
                     <th>Name</th>
                     <th>Version</th>
-                    <th>Uploaded</th>
                     <th>Authors</th>
                     <th>Nodes</th>
                     <th>Edges</th>
                     <th>Citations</th>
+                    <th>Warnings</th>
                     <th></th>
                 </tr>
                 </thead>
                 <tbody>
                 {% for network in networks|sort(attribute='created', reverse=True) %}
                     <tr>
+                        <td>{{ network.created.strftime('%Y-%m-%d %H:%M') }}</td>
                         <td>
                             <a href="{{ url_for('.view_network', network_id=network.id) }}">
                                 {{ network.name|replace('_', ' ') }}
                             </a>
                         </td>
                         <td>{{ network.version }}</td>
-                        <td>{{ network.created }}</td>
                         <td>
                             {% if network.authors %}
                                 {% set authors_split = network.authors.split(',') %}
@@ -86,10 +101,17 @@
                         <td class="text-right">{{ network.report.number_nodes }}</td>
                         <td class="text-right">{{ network.report.number_edges }}</td>
                         <td class="text-right">{{ network.report.number_citations }}</td>
+                        <td class="text-right">{{ network.report.number_warnings }}</td>
                         <td>
-                            <a href="#">
+                            <a href="{{ url_for('.download', network_id=network.id) }}">
                                 <span class="glyphicon glyphicon-download" aria-hidden="true"></span>
                                 JGIF
+                            </a>
+                        </td>
+                        <td>
+                            <a href="{{ url_for('.upload', network_id=network.id) }}">
+                                <span class="glyphicon glyphicon-upload" aria-hidden="true"></span>
+                                Send
                             </a>
                         </td>
                     </tr>

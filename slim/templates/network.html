@@ -1,4 +1,4 @@
-{% extends "slim/base.html" %}
+{% extends "base.html" %}
 
 {% import "bootstrap/wtf.html" as wtf %}
 {% import "bootstrap/fixes.html" as fixes %}
@@ -12,11 +12,14 @@
 {% block head %}
     {{ super() }}
 
-    <script type="text/javascript" src="https://cdn.datatables.net/v/bs/dt-1.10.16/datatables.min.js"></script>
+    <script src="{{ url_for('static', filename='js/d3.3.5.17.min.js') }}" charset="utf-8"></script>
+    <script src="{{ url_for('static', filename='js/c3.min.js') }}"></script>
+    <script src="https://cdn.datatables.net/1.10.13/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.10.13/js/dataTables.bootstrap.min.js"></script>
 
     <script>
         $(document).ready(function () {
-            $("#regulatory-pairs-table").DataTable();
+            / $("#regulatory-pairs-table").DataTable();
         });
     </script>
 {% endblock %}
@@ -32,15 +35,20 @@
             <li><a href="{{ url_for('.view_home') }}">Home</a></li>
             <li class="active">{{ network }}</li>
             <li class="pull-right">
-                <a type="button" class="btn btn-default btn-xs">
+                <a href="{{ url_for('.download', network_id=network.id) }}" type="button"
+                   class="btn btn-default btn-xs">
                     Download JGIF
+                </a>
+                <a href="{{ url_for('.upload', network_id=network.id) }}" type="button" class="btn btn-default btn-xs">
+                    Upload JGIF
                 </a>
             </li>
         </ol>
 
+        <a id="overview"></a>
         <div class="panel panel-default">
             <div class="panel-heading">
-                <h3 class="panel-title">Provenance</h3>
+                <h3 class="panel-title">Overview</h3>
             </div>
             <div class="panel-body">
                 <div class="row">
@@ -83,9 +91,9 @@
                             <dt>Number Components</dt>
                             <dd>{{ network.report.number_components }}</dd>
                             <dt>Network Density</dt>
-                            <dd>{{ network.report.network_density }}</dd>
+                            <dd>{{ network.report.network_density|round(5) }}</dd>
                             <dt>Average Degree</dt>
-                            <dd>{{ network.report.average_degree }}</dd>
+                            <dd>{{ network.report.average_degree|round(3) }}</dd>
                             <dt>Number Citations</dt>
                             <dd>{{ network.report.number_citations }}</dd>
                             <dt>Number BEL Errors</dt>
@@ -144,6 +152,34 @@
                         <div id="chart12"></div>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <a id="compiler-warnings"></a>
+        <div class="panel panel-danger panel-table">
+            <div class="panel-heading">
+                <h3 class="panel-title">Compiler Warnings</h3>
+            </div>
+            <table class="table table-hover table-responsive table-striped">
+                <thead>
+                <tr>
+                    <th>Line</th>
+                    <th>BEL</th>
+                    <th>Feedback</th>
+                </tr>
+                </thead>
+                <tbody id="myTable">
+                {% for _, exc, _ in graph.warnings %}
+                    <tr>
+                        <td>{{ exc.line_number }}</td>
+                        <td><code>{{ exc.line }}</code></td>
+                        <td>{{ exc }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            <div class="panel-footer">
+                <ul class="pagination pagination pagination-sm" style="margin:0;" id="myPager"></ul>
             </div>
         </div>
     </div>
