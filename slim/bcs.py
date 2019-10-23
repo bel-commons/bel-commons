@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import hashlib
 import logging
+import os
 import time
 
 import requests.exceptions
@@ -41,14 +42,16 @@ from bel_commons.constants import SQLALCHEMY_DATABASE_URI, SQLALCHEMY_TRACK_MODI
 from bel_commons.core.celery import CELERY_BROKER_URL, CELERY_RESULT_BACKEND
 from bel_commons.manager_utils import fill_out_report
 from bel_commons.models import Report
+from pybel import to_jgif
 from pybel.constants import get_cache_connection
-from pybel.io.new_jgif import to_jgif
 from pybel.parser.exc import InconsistentDefinitionError
 
 logger = logging.getLogger('bel_commons.slim')
 celery_logger = get_task_logger('bel_commons.slim')
 
-bel_commons_config = BELCommonsConfig.load()
+bel_commons_config = BELCommonsConfig.load(
+    SECRET_KEY=str(os.urandom(8)),
+)
 
 flask_app = Flask('bcs')
 flask_app.config.update(bel_commons_config.to_dict())
@@ -62,6 +65,8 @@ logger.info(f'database: {flask_app.config.get(SQLALCHEMY_DATABASE_URI)}')
 flask_app.config.setdefault(CELERY_RESULT_BACKEND, f'db+{flask_app.config[SQLALCHEMY_DATABASE_URI]}')
 
 UPLOAD_URL = 'UPLOAD_URL'
+if UPLOAD_URL in os.environ:
+    flask_app.config[UPLOAD_URL] = os.environ[UPLOAD_URL]
 
 ##########
 # CELERY #
