@@ -13,9 +13,9 @@ services:
       CELERY_BACKEND_URL: redis://result_backend
       SECRET_KEY: ${SECRET_KEY}
     restart: always
-    command: gunicorn -b 0.0.0.0:5000 bel_commons.slim:flask_app --log-level=INFO
+    command: gunicorn -b 0.0.0.0:5000 bcs:flask_app --log-level=INFO
     ports:
-      - 80:5000
+      - 5002:5000
     depends_on:
      - database
      - broker
@@ -32,7 +32,7 @@ services:
       CELERY_BACKEND_URL: redis://result_backend
       SECRET_KEY: ${SECRET_KEY}
     restart: always
-    command: celery worker -A bel_commons.slim.celery -l INFO
+    command: celery worker -A bcs.celery_app -l INFO
     depends_on:
      - database
      - broker
