@@ -2,7 +2,7 @@
 
 """Utilities for celery."""
 
-from celery import Task
+from celery.task import Task
 
 from bel_commons.models import Report
 from pybel import BELGraph, Manager
@@ -28,7 +28,7 @@ def iterate_report_lines_in_task(report: Report, task: Task):
         yield line
 
 
-def parse_graph(report: Report, manager: Manager, task: Task, **kwargs) -> BELGraph:
+def parse_graph(report: Report, manager: Manager, task: Task) -> BELGraph:
     """Parse a graph from a report while keeping a celery :class:`Task` informed of progress."""
     lines = iterate_report_lines_in_task(report, task)
     graph = BELGraph()
@@ -38,6 +38,6 @@ def parse_graph(report: Report, manager: Manager, task: Task, **kwargs) -> BELGr
         manager=manager,
         allow_nested=report.allow_nested,
         citation_clearing=report.citation_clearing,
-        **kwargs,
+        no_identifier_validation=not report.identifier_validation,
     )
     return graph
