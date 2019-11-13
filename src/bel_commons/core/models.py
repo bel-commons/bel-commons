@@ -5,7 +5,9 @@
 from __future__ import annotations
 
 import datetime
+import hashlib
 import json
+import pickle
 from typing import Dict, Iterable, List, Mapping, Optional, Union
 
 from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Table, Text
@@ -18,7 +20,6 @@ from pybel.manager import Base, Network
 from pybel.struct.query import SEED_DATA, SEED_METHOD, Seeding
 from pybel.struct.query.constants import NODE_SEED_TYPES
 from pybel.tokens import parse_result_to_dsl
-from pybel.utils import _hash_tuple
 
 __all__ = [
     'Assembly',
@@ -36,6 +37,10 @@ assembly_network = Table(
     Column('network_id', Integer, ForeignKey('{}.id'.format(Network.__tablename__))),
     Column('assembly_id', Integer, ForeignKey('{}.id'.format(ASSEMBLY_TABLE_NAME)))
 )
+
+
+def _hash_tuple(t):
+    hashlib.md5(pickle.dumps(t)).hexdigest()
 
 
 class Assembly(Base):
@@ -233,10 +238,10 @@ class Query(Base):
 
     @staticmethod
     def from_query_args(
-            manager: Manager,
-            network_ids: List[int],
-            seeding: Optional[Seeding] = None,
-            pipeline: Optional[Pipeline] = None,
+        manager: Manager,
+        network_ids: List[int],
+        seeding: Optional[Seeding] = None,
+        pipeline: Optional[Pipeline] = None,
     ) -> Query:
         """Build an ORM model from the arguments for a PyBEL query."""
         q = pybel.struct.query.Query(network_ids, seeding=seeding, pipeline=pipeline)
