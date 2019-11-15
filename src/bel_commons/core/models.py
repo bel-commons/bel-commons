@@ -39,8 +39,8 @@ assembly_network = Table(
 )
 
 
-def _hash_tuple(t):
-    hashlib.md5(pickle.dumps(t)).hexdigest()
+def _md5_hash_tuple(t) -> str:
+    return hashlib.md5(pickle.dumps(t)).hexdigest()
 
 
 class Assembly(Base):
@@ -52,7 +52,7 @@ class Assembly(Base):
     created = Column(DateTime, default=datetime.datetime.utcnow, doc='The date and time of upload')
 
     name = Column(String(255), unique=True, nullable=True)
-    sha512 = Column(String(255), nullable=True, index=True)
+    md5 = Column(String(255), nullable=True, index=True)
 
     networks = relationship(Network, secondary=assembly_network, backref=backref('assemblies', lazy='dynamic'))
 
@@ -65,13 +65,13 @@ class Assembly(Base):
         """Build an assembly from a list of networks."""
         return Assembly(
             networks=networks,
-            sha512=cls.get_network_list_sha512(networks),
+            md5=cls.get_network_list_md5(networks),
         )
 
     @staticmethod
-    def get_network_list_sha512(networks: List[Network]) -> str:
+    def get_network_list_md5(networks: List[Network]) -> str:
         """Build a sorted tuple of the unique network identifiers and hash it with SHA-512."""
-        return _hash_tuple(tuple(sorted({network.id for network in networks})))
+        return _md5_hash_tuple(tuple(sorted({network.id for network in networks})))
 
     @staticmethod
     def from_network(network: Network) -> Assembly:

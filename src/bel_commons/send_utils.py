@@ -45,7 +45,7 @@ def to_json_custom(
     result['nodes'] = []
     for i, node in enumerate(sorted(graph, key=methodcaller('as_bel'))):
         data = node.copy()
-        data[id_key] = node.sha512
+        data[id_key] = node.md5
         data['bel'] = node.as_bel()
         if any(attr in data for attr in (VARIANTS, FUSION, MEMBERS)):
             data['cname'] = data['bel']

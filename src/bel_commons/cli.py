@@ -292,6 +292,14 @@ def upload(manager: WebManager, graph: BELGraph, public: bool):
     insert_graph(manager, graph, public=public, use_tqdm=True)
 
 
+@networks.command()  # noqa:F811
+@click.pass_obj
+def ls(manager: WebManager):
+    """List network names, versions, and optionally, descriptions."""
+    for n in manager.list_networks():
+        click.echo('{}\t{}\t{}'.format(n.id, n.name, n.version))
+
+
 @manage.group()
 def reports():
     """Manage reports."""

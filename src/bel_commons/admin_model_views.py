@@ -32,7 +32,7 @@ class ModelView(ModelViewBase):
 class NetworkView(ModelView):
     """Special view for PyBEL Networks."""
 
-    column_exclude_list = ['blob', 'sha512', 'authors', 'description', 'copyright', 'disclaimer', 'licenses']
+    column_exclude_list = ['blob', 'md5', 'authors', 'description', 'copyright', 'disclaimer', 'licenses']
 
 
 class AnnotationView(ModelView):
@@ -60,25 +60,25 @@ class ReportView(ModelView):
 class NodeView(ModelView):
     """A :mod:`flask_admin` view for PyBEL Nodes."""
 
-    column_exclude_list = ['blob', 'sha512']
+    column_exclude_list = ['blob', 'md5']
 
 
 class EdgeView(ModelView):
     """A :mod:`flask_admin` view for PyBEL Edges."""
 
-    column_exclude_list = ['blob', 'sha512']
+    column_exclude_list = ['blob', 'md5']
 
 
 class CitationView(ModelView):
     """A :mod:`flask_admin` view for citations."""
 
-    column_exclude_list = ['blob', 'sha512']
+    column_exclude_list = ['blob', 'md5']
 
 
 class EvidenceView(ModelView):
     """A :mod:`flask_admin` for evidences."""
 
-    column_exclude_list = ['blob', 'sha512']
+    column_exclude_list = ['blob', 'md5']
 
 
 class ExperimentView(ModelView):

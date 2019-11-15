@@ -949,7 +949,7 @@ def get_paths(query_id, source_id, target_id):
         paths = nx.all_simple_paths(network, source=source, target=target, cutoff=cutoff)
         return jsonify([
             [
-                node.sha512
+                node.md5
                 for node in path
             ]
             for path in paths
@@ -971,7 +971,7 @@ def get_paths(query_id, source_id, target_id):
         shortest_path = nx.shortest_path(network, source=source, target=network.neighbors(source)[0])
 
     return jsonify([
-        node.sha512
+        node.md5
         for node in shortest_path
     ])
 
@@ -995,7 +995,7 @@ def get_random_paths(query_id):
     path = get_random_path(graph)
 
     return jsonify([
-        node.sha512
+        node.md5
         for node in path
     ])
 
@@ -1029,7 +1029,7 @@ def get_nodes_by_betweenness_centrality(query_id, node_number):
     bw_dict = nx.betweenness_centrality(graph)
 
     return jsonify([
-        node.sha512
+        node.md5
         for node, score in sorted(bw_dict.items(), key=itemgetter(1), reverse=True)[:node_number]
     ])
 
@@ -1410,7 +1410,7 @@ def search_edge_by_hash(edge_hash: str):
         required: true
         type: string
     """
-    edges = manager.session.query(Edge).filter(Edge.sha512.startswith(edge_hash))
+    edges = manager.session.query(Edge).filter(Edge.md5.startswith(edge_hash))
 
     return jsonify([
         edge.to_json(include_id=True)
@@ -1687,7 +1687,7 @@ def get_node_suggestion():
     return jsonify([
         {
             "text": node.bel,
-            "id": node.sha512,
+            "id": node.md5,
         }
         for node in nodes
     ])
@@ -2180,7 +2180,7 @@ def get_analysis(query_id: int, experiment_id: int):
     data = pickle.loads(experiment.result)
     results = [
         {
-            'node': node.sha512,
+            'node': node.md5,
             'data': data[node],
         }
         for node in graph
@@ -2216,7 +2216,7 @@ def get_analysis_median(query_id: int, experiment_id: int):
     data = pickle.loads(experiment.result)
     # position 3 is the 'median' score
     results = {
-        node.sha512: data[node][3]
+        node.md5: data[node][3]
         for node in graph
         if node in data
     }

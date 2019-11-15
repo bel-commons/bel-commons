@@ -57,8 +57,8 @@
 
                                 <dt>Hash</dt>
                                 <dd>
-                                    <a href="{{ url_for('dbs.get_edge_by_hash', edge_hash=em.sha512) }}">
-                                        <code>{{ em.sha512[:10] }}</code>
+                                    <a href="{{ url_for('dbs.get_edge_by_hash', edge_hash=em.md5) }}">
+                                        <code>{{ em.md5 }}</code>
                                     </a>
                                 </dd>
 

@@ -44,7 +44,7 @@ def view_parser():
         return render_template('parser.html', form=form, current_user=current_user)
 
     source_bytes = form.file.data.stream.read()
-    source_sha512 = hashlib.sha512(source_bytes).hexdigest()
+    source_md5 = hashlib.md5(source_bytes).hexdigest()
 
     # check if another one has the same hash + settings
 
@@ -52,7 +52,7 @@ def view_parser():
         user=current_user,
         source_name=form.file.data.filename,
         source=source_bytes,
-        source_hash=source_sha512,
+        source_hash=source_md5,
         encoding=form.encoding.data,
         public=form.public.data,
         allow_nested=form.allow_nested.data,
