@@ -2,7 +2,7 @@
 
 """A command line application for managing BEL Commons.
 
-Run with ``python -m bel_commons`` or simply as ``pybel-web``.
+Run with ``python -m bel_commons`` or simply as ``bel-commons``.
 """
 
 import datetime
@@ -18,6 +18,7 @@ import click
 from flask import Flask
 from tqdm import tqdm
 
+from bio2bel import get_version as get_bio2bel_version
 from pybel import BELGraph, from_bel_script
 from pybel.cli import connection_option, graph_pickle_argument
 from pybel.manager.models import (
@@ -35,6 +36,7 @@ from .models import (
     EdgeComment, EdgeVote, Experiment, NetworkOverlap, Omic, Project, Report, Role, User, UserQuery,
     projects_networks, projects_users, users_networks,
 )
+from .version import get_version as get_bel_commons_version
 
 logger = logging.getLogger('bel_commons')
 
@@ -107,14 +109,15 @@ def make_gunicorn_app(app: Flask, host: str, port: str, workers: int):
 
 
 _main_help = f"""BEL Commons Command Line Interface on {sys.executable}
-with PyBEL v{pybel_version()} and PyBEL Tools v{pybel_tools_get_version()}
+with PyBEL v{pybel_version()}, PyBEL Tools v{pybel_tools_get_version()},
+Bio2BEL v{get_bio2bel_version()}, and BEL Commons v{get_bel_commons_version()}
 """
 
 
 @click.group(help=_main_help)
 @click.version_option()
 def main():
-    """Run the PyBEL-Web command line interface."""
+    """Run the BEL Commons command line interface."""
 
 
 @main.command()

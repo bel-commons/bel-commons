@@ -31,7 +31,7 @@ class BELCommonsConfig(EasyConfig):
     FILES = CONFIG_FILE_PATHS
 
     #: The Flask app secret key.
-    SECRET_KEY: str
+    SECRET_KEY: str = str(os.urandom(8))
 
     #: Flask app debug mode
     DEBUG: bool = False
