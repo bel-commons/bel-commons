@@ -15,6 +15,7 @@ from flask_security import current_user, login_required, roles_required
 import pybel
 import pybel.struct.query
 import pybel_tools
+from bio2bel import get_version as get_bio2bel_version
 from pybel.manager.models import Citation, Edge, Evidence, Namespace, NamespaceEntry
 from pybel.struct.grouping.annotations import get_subgraphs_by_annotation
 from pybel.struct.mutation import collapse_to_genes, remove_associations, remove_isolated_nodes, remove_pathologies
@@ -103,6 +104,8 @@ def home():
         blueprints=set(current_app.blueprints),
         pybel_version=pybel.get_version(),
         pybel_tools_version=pybel_tools.get_version(),
+        bio2bel_version=get_bio2bel_version(),
+        bel_commons_version=get_bel_commons_version(),
     )
 
 
