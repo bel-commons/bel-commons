@@ -8,7 +8,10 @@ from typing import Optional
 
 from flask import Response, jsonify, send_file
 
-from pybel import BELGraph, to_bel_script_lines, to_bytes, to_csv, to_graphml, to_gsea, to_jgif, to_nodelink, to_sif
+from pybel import (
+    BELGraph, to_bel_script_lines, to_bytes, to_csv, to_cx, to_graphml, to_gsea, to_jgif, to_nodelink,
+    to_sif,
+)
 from pybel.canonicalize import edge_to_bel
 from pybel.constants import (
     CAUSAL_DECREASE_RELATIONS, CAUSAL_INCREASE_RELATIONS, DECREASES, FUSION, INCREASES, MEMBERS, RELATION,
@@ -16,18 +19,18 @@ from pybel.constants import (
 )
 from pybel.struct.summary import get_pubmed_identifiers
 
-try:
-    from pybel_cx import to_cx
-except ImportError:
-    to_cx = None
-
 __all__ = [
     'to_json_custom',
     'serve_network',
 ]
 
 
-def to_json_custom(graph: BELGraph, id_key: str = 'id', source_key: str = 'source', target_key: str = 'target'):
+def to_json_custom(
+    graph: BELGraph,
+    id_key: str = 'id',
+    source_key: str = 'source',
+    target_key: str = 'target',
+):
     """Prepare JSON for the biological network explorer.
 
     :param graph: A BEL graph
@@ -96,7 +99,7 @@ def serve_network(graph: BELGraph, serve_format: Optional[str] = None) -> Respon
     elif serve_format in {'nl', 'nodelink', 'json'}:
         return jsonify(to_nodelink(graph))
 
-    elif serve_format == 'cx' and to_cx is not None:
+    elif serve_format == 'cx':
         return jsonify(to_cx(graph))
 
     elif serve_format == 'jgif':
