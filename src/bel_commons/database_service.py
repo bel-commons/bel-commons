@@ -1074,7 +1074,7 @@ def get_query_summary(query_id):
     graph = manager.cu_get_graph_from_query_id_or_404(query_id)
     rv['time'] = time.time() - t
 
-    if graph is not None and graph.node:
+    if graph is not None and 0 < graph.number_of_nodes():
         rv['status'] = True
         rv['payload'] = graph.summary_dict()
     else:
