@@ -15,6 +15,7 @@ from flask_security import current_user, login_required, roles_required
 import pybel
 import pybel.struct.query
 import pybel_tools
+from bio2bel import get_version as get_bio2bel_version
 from pybel.manager.models import Citation, Edge, Evidence, Namespace, NamespaceEntry
 from pybel.struct.grouping.annotations import get_subgraphs_by_annotation
 from pybel.struct.mutation import collapse_to_genes, remove_associations, remove_isolated_nodes, remove_pathologies
@@ -29,13 +30,14 @@ from .core.proxies import celery, flask_bio2bel, manager
 from .explorer_toolbox import get_explorer_toolbox
 from .manager_utils import next_or_jsonify
 from .models import EdgeComment, EdgeVote, Experiment, Omic, Report, User
-from .utils import calculate_overlap_info, get_version as get_bel_commons_version
+from .utils import calculate_overlap_info
+from .version import get_version as get_bel_commons_version
 
 __all__ = [
     'ui_blueprint',
 ]
 
-log = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 ui_blueprint = Blueprint('ui', __name__)
 
@@ -100,6 +102,10 @@ def home():
         database_histogram=hist,
         manager=manager,
         blueprints=set(current_app.blueprints),
+        pybel_version=pybel.get_version(),
+        pybel_tools_version=pybel_tools.get_version(),
+        bio2bel_version=get_bio2bel_version(),
+        bel_commons_version=get_bel_commons_version(),
     )
 
 
@@ -269,7 +275,7 @@ def vote_edge(edge_hash: str, vote: int):
 def view_query(query_id: int):
     """Render a single query page."""
     query = manager.cu_get_query_by_id_or_404(query_id)
-    log.debug(f'got query {query_id}: {query}')
+    logger.debug(f'got query {query_id}: {query}')
     return render_template(
         'query/query.html',
         query=query,
@@ -477,7 +483,7 @@ def view_about():
                 continue
             summaries[name] = m.summarize()
         except Exception:
-            log.exception(f'Could not summarize {name}')
+            logger.exception(f'Could not summarize {name}')
 
     return render_template(
         'meta/about.html',
@@ -694,9 +700,9 @@ def freedom():
 @roles_required('admin')
 def nuke():
     """Destroy the database and recreates it."""
-    log.info('nuking database')
+    logger.info('nuking database')
     manager.drop_all(checkfirst=True)
-    log.info('   the dust settles')
+    logger.info('   the dust settles')
     return next_or_jsonify('nuked the database')
 
 

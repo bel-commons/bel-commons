@@ -2,14 +2,16 @@
 
 """Utilities for rendering BEL graphs via the response."""
 
-import logging
 from io import BytesIO, StringIO
 from operator import methodcaller
 from typing import Optional
 
 from flask import Response, jsonify, send_file
 
-from pybel import BELGraph, to_bel_lines, to_bytes, to_csv, to_graphml, to_gsea, to_jgif, to_json, to_sif
+from pybel import (
+    BELGraph, to_bel_script_lines, to_bytes, to_csv, to_cx, to_graphml, to_gsea, to_jgif, to_nodelink,
+    to_sif,
+)
 from pybel.canonicalize import edge_to_bel
 from pybel.constants import (
     CAUSAL_DECREASE_RELATIONS, CAUSAL_INCREASE_RELATIONS, DECREASES, FUSION, INCREASES, MEMBERS, RELATION,
@@ -17,20 +19,18 @@ from pybel.constants import (
 )
 from pybel.struct.summary import get_pubmed_identifiers
 
-try:
-    from pybel_cx import to_cx
-except ImportError:
-    to_cx = None
-
 __all__ = [
     'to_json_custom',
     'serve_network',
 ]
 
-log = logging.getLogger(__name__)
 
-
-def to_json_custom(graph: BELGraph, id_key: str = 'id', source_key: str = 'source', target_key: str = 'target'):
+def to_json_custom(
+    graph: BELGraph,
+    id_key: str = 'id',
+    source_key: str = 'source',
+    target_key: str = 'target',
+):
     """Prepare JSON for the biological network explorer.
 
     :param graph: A BEL graph
@@ -45,7 +45,7 @@ def to_json_custom(graph: BELGraph, id_key: str = 'id', source_key: str = 'sourc
     result['nodes'] = []
     for i, node in enumerate(sorted(graph, key=methodcaller('as_bel'))):
         data = node.copy()
-        data[id_key] = node.sha512
+        data[id_key] = node.md5
         data['bel'] = node.as_bel()
         if any(attr in data for attr in (VARIANTS, FUSION, MEMBERS)):
             data['cname'] = data['bel']
@@ -97,9 +97,9 @@ def serve_network(graph: BELGraph, serve_format: Optional[str] = None) -> Respon
         return jsonify(to_json_custom(graph))
 
     elif serve_format in {'nl', 'nodelink', 'json'}:
-        return jsonify(to_json(graph))
+        return jsonify(to_nodelink(graph))
 
-    elif serve_format == 'cx' and to_cx is not None:
+    elif serve_format == 'cx':
         return jsonify(to_cx(graph))
 
     elif serve_format == 'jgif':
@@ -115,7 +115,7 @@ def serve_network(graph: BELGraph, serve_format: Optional[str] = None) -> Respon
         )
 
     elif serve_format == 'bel':
-        data = '\n'.join(to_bel_lines(graph))
+        data = '\n'.join(to_bel_script_lines(graph))
         return Response(data, mimetype='text/plain')
 
     elif serve_format == 'graphml':

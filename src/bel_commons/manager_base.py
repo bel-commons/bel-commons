@@ -26,7 +26,7 @@ __all__ = [
     'iter_recent_public_networks',
 ]
 
-log = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 def sanitize_annotation(annotation_list: List[str]) -> Mapping[str, List[str]]:
@@ -75,15 +75,15 @@ class WebManagerBase(Manager):
     def iter_networks_with_permission(self, user: User) -> Iterable[Network]:
         """Get an iterator over all the networks from all the sources."""
         if not user.is_authenticated:
-            log.debug('getting only public networks for anonymous user')
+            logger.debug('getting only public networks for anonymous user')
             yield from iter_recent_public_networks(self)
 
         elif user.is_admin:
-            log.debug('getting all recent networks for admin')
+            logger.debug('getting all recent networks for admin')
             yield from self.list_recent_networks()
 
         else:
-            log.debug(f'getting all networks for user [{user}]')
+            logger.debug(f'getting all networks for user [{user}]')
             yield from user.iter_available_networks()
             yield from iter_recent_public_networks(self)
 
@@ -237,7 +237,7 @@ class WebManagerBase(Manager):
         )
 
         if uncached_networks:
-            log.debug('caching overlaps for network [id=%s]', network)
+            logger.debug('caching overlaps for network [id=%s]', network)
 
             for other_network in uncached_networks:
                 other_network_nodes = set(node.id for node in other_network.nodes)
@@ -248,21 +248,24 @@ class WebManagerBase(Manager):
 
             self.session.commit()
 
-            log.debug('cached overlaps for network [id=%s] in %.2f seconds', network, time.time() - t)
+            logger.debug('cached overlaps for network [id=%s] in %.2f seconds', network, time.time() - t)
 
         return rv
 
-    def get_top_overlaps(self, network: Network, user: User, number: int = 10) -> List[Tuple[Network, float]]:
+    def get_top_overlaps(self, network: Network, user: User, n: Optional[int] = 10) -> List[Tuple[Network, float]]:
         """Get the top n most overlapping networks with the given network."""
         overlap_counter = self.get_node_overlaps(network)
         allowed_network_ids = self.get_network_ids_with_permission(user)
 
         overlaps = [
-            (network, v)
-            for network_id, (network, v) in sorted(overlap_counter.items(), key=lambda t: t[1][1], reverse=True)
+            (other_network, v)
+            for network_id, (other_network, v) in sorted(overlap_counter.items(), key=lambda t: t[1][1], reverse=True)
             if network_id in allowed_network_ids and v > 0.0
         ]
-        return overlaps[:number]
+
+        if n is not None:
+            return overlaps[:n]
+        return overlaps
 
     def get_recent_reports(self, weeks: int = 2) -> Iterable[str]:
         """Get reports from the last two weeks.
@@ -291,11 +294,11 @@ class WebManagerBase(Manager):
                 yield f'\tWarnings: {a.number_warnings}'
             else:
                 yield f'\tUploads: {count}'
-                yield '\tVersion: {} -> {}'.format(a.network.version, b.network.version)
-                yield '\tNodes: {} {:+d} {}'.format(a.number_nodes, b.number_nodes - a.number_nodes, b.number_nodes)
-                yield '\tEdges: {} {:+d} {}'.format(a.number_edges, b.number_edges - a.number_edges, b.number_edges)
-                yield '\tWarnings: {} {:+d} {}'.format(a.number_warnings, b.number_warnings - a.number_warnings,
-                                                       b.number_warnings)
+                yield f'\tVersion: {a.network.version} -> {b.network.version}'
+                yield f'\tNodes: {a.number_nodes} {b.number_nodes - a.number_nodes:+d} {b.number_nodes}'
+                yield f'\tEdges: {a.number_edges} {b.number_edges - a.number_edges:+d} {b.number_edges}'
+                yield f'\tWarnings: {a.number_warnings} {b.number_warnings - a.number_warnings:+d} {b.number_warnings}'
+
             yield ''
 
     def convert_seed_value(self, key: str, form: werkzeug.datastructures.ImmutableMultiDict, value: str):
@@ -339,7 +342,6 @@ class WebManagerBase(Manager):
             {
                 "type": seed_method,
                 'data': self.convert_seed_value(seed_method, form, seed_data_argument),
-
             }
             for seed_method, seed_data_argument in pairs
             if form.getlist(seed_data_argument)
@@ -362,8 +364,6 @@ class WebManagerBase(Manager):
 
 def iter_recent_public_networks(manager: Manager) -> Iterable[Network]:
     """Iterate over the recent networks from that have been made public."""
-    return (
-        network
-        for network in manager.list_recent_networks()
-        if network.report and network.report.public
-    )
+    for network in manager.list_recent_networks():
+        if network.report and network.report.public:
+            yield network

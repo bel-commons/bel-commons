@@ -22,7 +22,7 @@ from pybel.constants import NAMESPACE, NAMESPACE_DOMAIN_OTHER
 from pybel.manager.citation_utils import enrich_citation_model, get_pubmed_citation_response
 from pybel.manager.models import Author, Citation, Edge, NamespaceEntry, Network, Node, network_edge
 from pybel.struct import get_random_path, get_subgraph_by_annotations
-from pybel.struct.pipeline.decorators import deprecated, no_arguments_map
+from pybel.struct.pipeline.decorators import no_arguments_map
 from pybel.struct.pipeline.exc import MissingPipelineFunctionError
 from pybel.struct.query import Query
 from pybel.struct.summary import get_pubmed_identifiers
@@ -44,7 +44,7 @@ __all__ = [
     'api_blueprint',
 ]
 
-log = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 # TODO add url_prefix='/api'
 api_blueprint = Blueprint('dbs', __name__)
@@ -303,7 +303,7 @@ def drop_networks():
       200:
         description: All networks were dropped
     """
-    log.info('dropping all networks')
+    logger.info('dropping all networks')
 
     for network_id, in manager.session.query(Network.id).all():
         drop_network_helper(network_id)
@@ -358,7 +358,7 @@ def namespaces_by_network(network_id: int):
       200:
         description: The namespaces described in this network
     """
-    log.info('network_id: %s', network_id)
+    logger.info('network_id: %s', network_id)
     abort(501)
 
 
@@ -379,7 +379,7 @@ def annotations_by_network(network_id: int):
       200:
         description: The annotations referenced by the network
     """
-    log.info('network_id: %s', network_id)
+    logger.info('network_id: %s', network_id)
     abort(501)
 
 
@@ -400,7 +400,7 @@ def citations_by_network(network_id: int):
       200:
         description: The citations referenced by the edges in the network
     """
-    log.info('network_id: %s', network_id)
+    logger.info('network_id: %s', network_id)
     abort(501)
 
 
@@ -475,7 +475,7 @@ def drop_network_helper(network_id: int) -> Response:
     """Drop a network."""
     network = manager.cu_owner_get_network_by_id_or_404(network_id=network_id)
     redirect_arg = request.args.get('next')
-    log.info(f'dropping network {network_id}')
+    logger.info(f'dropping network {network_id}')
 
     try:
         manager.drop_network(network)
@@ -935,8 +935,8 @@ def get_paths(query_id, source_id, target_id):
     cutoff = request.args.get('cutoff', default=7, type=int)
 
     if source not in network or target not in network:
-        log.info('Source/target node not in network')
-        log.info('Nodes in network: %s', network.nodes())
+        logger.info('Source/target node not in network')
+        logger.info('Nodes in network: %s', network.nodes())
         abort(500, 'Source/target node not in network')
 
     if undirected:
@@ -949,7 +949,7 @@ def get_paths(query_id, source_id, target_id):
         paths = nx.all_simple_paths(network, source=source, target=target, cutoff=cutoff)
         return jsonify([
             [
-                node.sha512
+                node.md5
                 for node in path
             ]
             for path in paths
@@ -958,7 +958,7 @@ def get_paths(query_id, source_id, target_id):
     try:
         shortest_path = nx.shortest_path(network, source=source, target=target)
     except nx.NetworkXNoPath:
-        log.debug(f'No paths between {source} and {target}')
+        logger.debug(f'No paths between {source} and {target}')
 
         # Returns normal message if it is not a random call from graph_controller.js
         if RANDOM_PATH not in request.args:
@@ -971,7 +971,7 @@ def get_paths(query_id, source_id, target_id):
         shortest_path = nx.shortest_path(network, source=source, target=network.neighbors(source)[0])
 
     return jsonify([
-        node.sha512
+        node.md5
         for node in shortest_path
     ])
 
@@ -995,7 +995,7 @@ def get_random_paths(query_id):
     path = get_random_path(graph)
 
     return jsonify([
-        node.sha512
+        node.md5
         for node in path
     ])
 
@@ -1029,7 +1029,7 @@ def get_nodes_by_betweenness_centrality(query_id, node_number):
     bw_dict = nx.betweenness_centrality(graph)
 
     return jsonify([
-        node.sha512
+        node.md5
         for node, score in sorted(bw_dict.items(), key=itemgetter(1), reverse=True)[:node_number]
     ])
 
@@ -1074,7 +1074,7 @@ def get_query_summary(query_id):
     graph = manager.cu_get_graph_from_query_id_or_404(query_id)
     rv['time'] = time.time() - t
 
-    if graph is not None and graph.node:
+    if graph is not None and 0 < graph.number_of_nodes():
         rv['status'] = True
         rv['payload'] = graph.summary_dict()
     else:
@@ -1410,7 +1410,7 @@ def search_edge_by_hash(edge_hash: str):
         required: true
         type: string
     """
-    edges = manager.session.query(Edge).filter(Edge.sha512.startswith(edge_hash))
+    edges = manager.session.query(Edge).filter(Edge.md5.startswith(edge_hash))
 
     return jsonify([
         edge.to_json(include_id=True)
@@ -1687,7 +1687,7 @@ def get_node_suggestion():
     return jsonify([
         {
             "text": node.bel,
-            "id": node.sha512,
+            "id": node.md5,
         }
         for node in nodes
     ])
@@ -1710,7 +1710,7 @@ def get_pipeline_function_names():
     return jsonify([
         p.replace("_", " ").capitalize()
         for p in no_arguments_map
-        if p not in deprecated and q in p.replace("_", " ").casefold()
+        if q in p.replace("_", " ").casefold()
     ])
 
 
@@ -1879,7 +1879,7 @@ def add_pipeline_entry(query_id: int, name: str, *args, **kwargs) -> Response:
     try:
         qo = query.build_appended(name, *args, **kwargs)
     except MissingPipelineFunctionError:
-        log.error('missing pipeline function: %s', name)
+        logger.error('missing pipeline function: %s', name)
         return abort(403, f'Invalid function name: {name}')
 
     if current_user.is_authenticated:
@@ -2180,7 +2180,7 @@ def get_analysis(query_id: int, experiment_id: int):
     data = pickle.loads(experiment.result)
     results = [
         {
-            'node': node.sha512,
+            'node': node.md5,
             'data': data[node],
         }
         for node in graph
@@ -2216,7 +2216,7 @@ def get_analysis_median(query_id: int, experiment_id: int):
     data = pickle.loads(experiment.result)
     # position 3 is the 'median' score
     results = {
-        node.sha512: data[node][3]
+        node.md5: data[node][3]
         for node in graph
         if node in data
     }

@@ -22,7 +22,7 @@ from bel_commons.resources.constants import (
 )
 from bel_repository import BELRepository
 from bio2bel import AbstractManager
-from pybel import from_path, from_pickle, to_pickle
+from pybel import from_bel_script, from_pickle, to_pickle
 from pybel.manager import Manager
 from pybel.manager.models import Network
 from pybel.struct import get_subgraphs_by_annotation, strip_annotations
@@ -33,7 +33,7 @@ __all__ = [
     'load_bms',
 ]
 
-log = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 neurommsig_sample_networks = [
     'Low density lipoprotein subgraph',
@@ -52,7 +52,7 @@ def upload_pickles(directory: str, manager: Manager, blacklist: Optional[Set[str
     graphs = repo.get_graphs(manager=manager)
     for name, graph in graphs.items():
         if blacklist and name in blacklist:
-            log.info(f'skipping {name}: {graph}')
+            logger.info(f'skipping {name}: {graph}')
             continue
         network = insert_graph(manager, graph, public=True, use_tqdm=True)
         results.append(network)
@@ -63,13 +63,13 @@ def write_manifest(directory: str, networks: List[Network]) -> None:
     """Write the manifest to the given directory."""
     manifest_path = os.path.join(directory, 'manifest.json')
 
-    log.info('generating manifest for %s', directory)
+    logger.info('generating manifest for %s', directory)
     manifest_data = [
         network.to_json(include_id=True)
         for network in networks
     ]
 
-    log.info('writing manifest to %s', manifest_path)
+    logger.info('writing manifest to %s', manifest_path)
     with open(manifest_path, 'w') as file:
         json.dump(manifest_data, file, indent=2)
 
@@ -80,7 +80,7 @@ def upload_bel_directory(directory: str, manager: Manager, blacklist: Optional[L
     :param blacklist: An optional list of file names not to use. NO FILE EXTENSIONS
     """
     if not (os.path.exists(directory) and os.path.isdir(directory)):
-        log.warning('directory does not exist: %s', directory)
+        logger.warning('directory does not exist: %s', directory)
         return
 
     if blacklist is not None and not isinstance(blacklist, (set, tuple, list)):
@@ -93,11 +93,11 @@ def upload_bel_directory(directory: str, manager: Manager, blacklist: Optional[L
 def upload_neurommsig_graphs(manager: Manager):
     """Only upload NeuroMMSig Sample Networks."""
     if not (os.path.exists(alzheimer_directory) and os.path.isdir(alzheimer_directory)):
-        log.warning('directory does not exist: %s', alzheimer_directory)
+        logger.warning('directory does not exist: %s', alzheimer_directory)
         return
 
     if not os.path.exists(neurommsig_directory):
-        log.info('created neurommsig directory: %s', neurommsig_directory)
+        logger.info('created neurommsig directory: %s', neurommsig_directory)
         os.makedirs(neurommsig_directory)
 
     path = os.path.join(alzheimer_directory, 'alzheimers.bel')
@@ -106,7 +106,7 @@ def upload_neurommsig_graphs(manager: Manager):
     if os.path.exists(gpickle_path):
         graph = from_pickle(gpickle_path)
     elif os.path.exists(path):
-        graph = from_path(path, manager=manager)
+        graph = from_bel_script(path, manager=manager)
         to_pickle(graph, gpickle_path)
     else:
         raise RuntimeError('missing NeuroMMSig source file: {}'.format(path))
@@ -147,7 +147,7 @@ def get_jgf_corresponding_gpickle_path(path: str) -> str:
 def upload_jgf_directory(directory: str, manager: Manager):
     """Upload CBN data to edge store."""
     if not (os.path.exists(directory) and os.path.isdir(directory)):
-        log.warning('directory does not exist: %s', directory)
+        logger.warning('directory does not exist: %s', directory)
         return
 
     t = time.time()
@@ -170,31 +170,31 @@ def upload_jgf_directory(directory: str, manager: Manager):
             insert_graph(manager, graph, public=True, use_tqdm=True)
         except OperationalError:
             manager.session.rollback()
-            log.info('could not insert %s', graph)
+            logger.info('could not insert %s', graph)
 
-    log.info('done in %.2f seconds', time.time() - t)
+    logger.info('done in %.2f seconds', time.time() - t)
 
 
 def upload_with_manager(bio2bel_manager: AbstractManager, manager: Manager) -> Optional[Network]:
     """Upload Bio2BEL data."""
     if bio2bel_manager is None:
-        log.info('skipping missing manager')
+        logger.info('skipping missing manager')
         return
 
     if not isinstance(bio2bel_manager, AbstractManager):
-        log.info('manager is not a Bio2BEL manager: %s', bio2bel_manager)
+        logger.info('manager is not a Bio2BEL manager: %s', bio2bel_manager)
         return
 
-    log.info('%s manager connection: %s', bio2bel_manager.module_name, bio2bel_manager.engine.url)
+    logger.info('%s manager connection: %s', bio2bel_manager.module_name, bio2bel_manager.engine.url)
 
     if not bio2bel_manager.is_populated():
-        log.info('populating %s', bio2bel_manager)
+        logger.info('populating %s', bio2bel_manager)
         bio2bel_manager.populate()
 
     try:
         graph = bio2bel_manager.to_bel()
     except AttributeError:
-        log.warning('%s has no to_bel function', bio2bel_manager)
+        logger.warning('%s has no to_bel function', bio2bel_manager)
         return
 
     return insert_graph(manager, graph, use_tqdm=True)
@@ -217,5 +217,5 @@ def load_bms(manager: Manager):
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(name)s - %(message)s")
-    log.setLevel(logging.INFO)
+    logger.setLevel(logging.INFO)
     load_bms(Manager())

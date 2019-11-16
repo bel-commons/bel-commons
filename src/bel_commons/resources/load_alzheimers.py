@@ -9,7 +9,7 @@ from typing import Optional
 from bel_commons.resources.load_networks import alzheimer_directory, upload_bel_directory
 from pybel.manager import Manager
 
-log = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 def main(manager: Optional[Manager] = None):
@@ -22,5 +22,5 @@ def main(manager: Optional[Manager] = None):
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(name)s - %(message)s")
-    log.setLevel(logging.INFO)
+    logger.setLevel(logging.INFO)
     main(Manager())

@@ -4,7 +4,7 @@
 
 import datetime
 import logging
-from typing import Dict, Iterable
+from typing import Dict, Iterable, Optional
 
 from flask import Flask, g, render_template
 from flask_admin import Admin
@@ -25,7 +25,7 @@ from .constants import SENTRY_DSN
 from .manager_utils import insert_graph
 from .models import EdgeComment, EdgeVote, Experiment, NetworkOverlap, Report, Role, User, UserQuery
 
-log = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 logging.getLogger('urllib3.connectionpool').setLevel(logging.WARNING)
 
 
@@ -86,7 +86,7 @@ def register_users_from_manifest(user_datastore: SQLAlchemyUserDatastore, manife
         email = user_manifest['email']
         user = user_datastore.find_user(email=email)
         if user is None:
-            log.info(f'creating user: {email}')
+            logger.info(f'creating user: {email}')
             user = user_datastore.create_user(
                 confirmed_at=datetime.datetime.now(),
                 email=email,
@@ -96,12 +96,12 @@ def register_users_from_manifest(user_datastore: SQLAlchemyUserDatastore, manife
 
         for role_name in user_manifest.get('roles', []):
             if user_datastore.add_role_to_user(user, role_name):
-                log.info(f'registered {user} as {role_name}')
+                logger.info(f'registered {user} as {role_name}')
 
     user_datastore.commit()
 
 
-def register_error_handlers(app: Flask, sentry: Sentry) -> None:  # noqa: D202
+def register_error_handlers(app: Flask, *, sentry: Optional[Sentry] = None) -> None:  # noqa: D202
     """Register the 500 and 403 error handlers."""
 
     @app.errorhandler(500)
@@ -110,7 +110,7 @@ def register_error_handlers(app: Flask, sentry: Sentry) -> None:  # noqa: D202
 
         Run a rollback and send some information to Sentry.
         """
-        if SENTRY_DSN in app.config:
+        if sentry is not None and SENTRY_DSN in app.config:
             kwargs = dict(
                 event_id=g.sentry_event_id,
                 public_dsn=sentry.client.get_public_dsn('https'),
@@ -130,14 +130,14 @@ def register_examples(manager: Manager, user_datastore: SQLAlchemyUserDatastore)
     """Insert example graphs."""
     for graph in (sialic_acid_graph, egf_graph, statin_graph, homology_graph):
         if not manager.has_name_version(graph.name, graph.version):
-            log.info('uploading public example graph: %s', graph)
+            logger.info('uploading public example graph: %s', graph)
             insert_graph(manager, graph, public=True)
 
     test_user = user_datastore.find_user(email='test@example.com')
     if test_user:
         for graph in (braf_graph,):
             if not manager.has_name_version(graph.name, graph.version):
-                log.info('uploading internal example graph: %s', graph)
+                logger.info('uploading internal example graph: %s', graph)
                 insert_graph(manager, graph, user=test_user, public=False)
 
 

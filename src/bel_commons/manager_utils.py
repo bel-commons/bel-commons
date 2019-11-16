@@ -26,11 +26,8 @@ from pybel_tools.filters import remove_nodes_by_namespace
 from pybel_tools.generation import generate_bioprocess_mechanisms
 from pybel_tools.integration import overlay_type_data
 from pybel_tools.mutation import rewire_variants_to_genes
-from pybel_tools.summary import BELGraphSummary
 from .constants import LABEL
 from .models import Experiment, Omic, Report, User
-
-log = logging.getLogger(__name__)
 
 __all__ = [
     'fill_out_report',
@@ -40,6 +37,8 @@ __all__ = [
     'run_heat_diffusion_helper',
     'next_or_jsonify',
 ]
+
+logger = logging.getLogger(__name__)
 
 
 def fill_out_report(graph: BELGraph, network: Network, report: Report) -> None:
@@ -60,16 +59,16 @@ def fill_out_report(graph: BELGraph, network: Network, report: Report) -> None:
     report.number_components = nx.number_weakly_connected_components(graph)
     report.network_density = nx.density(graph)
     report.average_degree = average_degree
-    report.dump_calculations(BELGraphSummary.from_graph(graph))
+    report.dump_calculations(graph)
     report.completed = True
 
 
 def insert_graph(
-        manager: Manager,
-        graph: BELGraph,
-        user: Union[int, User] = 1,
-        public: bool = False,
-        use_tqdm: bool = False,
+    manager: Manager,
+    graph: BELGraph,
+    user: Union[int, User] = 1,
+    public: bool = False,
+    use_tqdm: bool = False,
 ) -> Network:
     """Insert a graph and also make a report.
 
@@ -81,7 +80,7 @@ def insert_graph(
     :raises: TypeError
     """
     if manager.has_name_version(graph.name, graph.version):
-        log.info('database already has %s', graph)
+        logger.info('database already has %s', graph)
         return manager.get_network_by_name_version(graph.name, graph.version)
 
     network = manager.insert_graph(graph, use_tqdm=use_tqdm)
@@ -105,14 +104,14 @@ def insert_graph(
 
 
 def create_omic(
-        data,
-        gene_column: str,
-        data_column: str,
-        description: str,
-        source_name: str,
-        sep: str,
-        public: bool = False,
-        user: Optional[User] = None,
+    data,
+    gene_column: str,
+    data_column: str,
+    description: str,
+    source_name: str,
+    sep: str,
+    public: bool = False,
+    user: Optional[User] = None,
 ) -> Omic:
     """Create an omics model."""
     df = pd.read_csv(data, sep=sep)
@@ -140,11 +139,11 @@ def create_omic(
 
 
 def calculate_scores(
-        graph: BELGraph,
-        data: Mapping[str, float],
-        runs: int,
-        use_tqdm: bool = False,
-        tqdm_kwargs: Optional[Mapping[str, Any]] = None,
+    graph: BELGraph,
+    data: Mapping[str, float],
+    runs: int,
+    use_tqdm: bool = False,
+    tqdm_kwargs: Optional[Mapping[str, Any]] = None,
 ) -> Mapping[BaseEntity, Tuple]:
     """Calculate heat diffusion scores.
 
@@ -172,33 +171,33 @@ def calculate_scores(
 
 
 def run_heat_diffusion_helper(
-        manager: Manager,
-        experiment: Experiment,
-        use_tqdm: bool = False,
-        tqdm_kwargs: Optional[Mapping[str, Any]] = None,
+    manager: Manager,
+    experiment: Experiment,
+    use_tqdm: bool = False,
+    tqdm_kwargs: Optional[Mapping[str, Any]] = None,
 ) -> None:
     """Run the Heat Diffusion Workflow on an experiment and store information back into original experiment."""
     t = time.time()
 
-    log.info('getting data from omic %s', experiment.omic)
+    logger.info('getting data from omic %s', experiment.omic)
     data = experiment.omic.get_source_dict()
 
-    log.info('executing query %s', experiment.query)
+    logger.info('executing query %s', experiment.query)
     graph = experiment.query.run(manager)
 
-    log.info('calculating scores for query [id=%d] with omic %s with %d permutations', experiment.query.id,
-             experiment.omic, experiment.permutations)
+    logger.info('calculating scores for query [id=%d] with omic %s with %d permutations', experiment.query.id,
+                experiment.omic, experiment.permutations)
     scores = calculate_scores(graph, data, experiment.permutations, use_tqdm=use_tqdm, tqdm_kwargs=tqdm_kwargs)
     experiment.dump_results(scores)
     experiment.time = time.time() - t
 
 
 def next_or_jsonify(
-        message: str,
-        *args,
-        status: int = 200,
-        category: str = 'message',
-        **kwargs,
+    message: str,
+    *args,
+    status: int = 200,
+    category: str = 'message',
+    **kwargs,
 ) -> Response:
     """Wrap a redirect if the ``next`` argument is set in the request otherwise sends JSON feedback.
 

@@ -18,7 +18,7 @@ __all__ = [
     'FlaskBio2BEL',
 ]
 
-log = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 class FlaskBio2BEL:
@@ -66,7 +66,7 @@ class FlaskBio2BEL:
         except ImportError:
             pass
         else:
-            log.debug('Using Bio2BEL ChEBI')
+            logger.debug('Using Bio2BEL ChEBI')
             self.chebi_manager = bio2bel_chebi.Manager(connection=self.connection)
             self.chebi_manager.create_all()
             in_place_transformation(self.chebi_manager.enrich_chemical_hierarchy)
@@ -76,7 +76,7 @@ class FlaskBio2BEL:
         except ImportError:
             pass
         else:
-            log.debug('Using Bio2BEL HGNC')
+            logger.debug('Using Bio2BEL HGNC')
             self.hgnc_manager = bio2bel_hgnc.Manager(connection=self.connection)
             self.hgnc_manager.create_all()
             in_place_transformation(self.hgnc_manager.enrich_genes_with_families)
@@ -87,7 +87,7 @@ class FlaskBio2BEL:
         except ImportError:
             pass
         else:
-            log.debug('Using Bio2BEL miRTarBase')
+            logger.debug('Using Bio2BEL miRTarBase')
             self.mirtarbase_manager = bio2bel_mirtarbase.Manager(connection=self.connection)
             self.mirtarbase_manager.create_all()
             in_place_transformation(self.mirtarbase_manager.enrich_mirnas)
@@ -98,7 +98,7 @@ class FlaskBio2BEL:
         except ImportError:
             pass
         else:
-            log.debug('Using Bio2BEL ExPASy')
+            logger.debug('Using Bio2BEL ExPASy')
             self.expasy_manager = bio2bel_expasy.Manager(connection=self.connection)
             self.expasy_manager.create_all()
             in_place_transformation(self.expasy_manager.enrich_proteins_with_enzyme_families)
@@ -109,7 +109,7 @@ class FlaskBio2BEL:
         except ImportError:
             pass
         else:
-            log.debug('Using Bio2BEL GO')
+            logger.debug('Using Bio2BEL GO')
             self.go_manager = bio2bel_go.Manager(connection=self.connection)
             in_place_transformation(self.go_manager.enrich_bioprocesses)
 
@@ -118,7 +118,7 @@ class FlaskBio2BEL:
         except ImportError:
             pass
         else:
-            log.debug('Using Bio2BEL Entrez')
+            logger.debug('Using Bio2BEL Entrez')
             self.entrez_manager = bio2bel_entrez.Manager(connection=self.connection)
             self.entrez_manager.create_all()
 
@@ -127,7 +127,7 @@ class FlaskBio2BEL:
         except ImportError:
             pass
         else:
-            log.debug('Using Bio2BEL InterPro')
+            logger.debug('Using Bio2BEL InterPro')
             self.interpro_manager = bio2bel_interpro.Manager(connection=self.connection)
             self.interpro_manager.create_all()
 
@@ -136,7 +136,7 @@ class FlaskBio2BEL:
         except ImportError:
             pass
         else:
-            log.debug('Using Bio2BEL CTD')
+            logger.debug('Using Bio2BEL CTD')
             self.ctd_manager = bio2bel_ctd.Manager(connection=self.connection)
             self.ctd_manager.create_all()
             in_place_transformation(self.ctd_manager.enrich_graph_genes)
@@ -146,7 +146,7 @@ class FlaskBio2BEL:
         except ImportError:
             pass
         else:
-            log.debug('Using Bio2BEL HMDB')
+            logger.debug('Using Bio2BEL HMDB')
             self.hmdb_manager = bio2bel_hmdb.Manager(connection=self.connection)
             self.hmdb_manager.create_all()
 
@@ -155,7 +155,7 @@ class FlaskBio2BEL:
         except ImportError:
             pass
         else:
-            log.debug('Using Bio2BEL HMDD')
+            logger.debug('Using Bio2BEL HMDD')
             self.hmdd_manager = bio2bel_hmdd.Manager(connection=self.connection)
             self.hmdd_manager.create_all()
 
@@ -164,7 +164,7 @@ class FlaskBio2BEL:
         except ImportError:
             pass
         else:
-            log.debug('Using Bio2BEL mir2disease')
+            logger.debug('Using Bio2BEL mir2disease')
             self.mir2disease_manager = bio2bel_mir2disease.Manager(connection=self.connection)
             self.mir2disease_manager.create_all()
 
@@ -173,7 +173,7 @@ class FlaskBio2BEL:
         except ImportError:
             pass
         else:
-            log.debug('Using Bio2BEL DrugBank')
+            logger.debug('Using Bio2BEL DrugBank')
             self.drugbank_manager = bio2bel_drugbank.Manager(connection=self.connection)
             self.drugbank_manager.create_all()
 
@@ -182,7 +182,7 @@ class FlaskBio2BEL:
         except ImportError:
             pass
         else:
-            log.debug('Using Bio2BEL PhosphoSitePlus')
+            logger.debug('Using Bio2BEL PhosphoSitePlus')
             self.phosphosite_manager = bio2bel_phosphosite.Manager(connection=self.connection)
             self.phosphosite_manager.create_all()
 
@@ -191,7 +191,7 @@ class FlaskBio2BEL:
         except ImportError:
             pass
         else:
-            log.debug('Using Bio2BEL SIDER')
+            logger.debug('Using Bio2BEL SIDER')
             self.sider_manager = bio2bel_sider.Manager(connection=self.connection)
             self.sider_manager.create_all()
 
@@ -200,7 +200,7 @@ class FlaskBio2BEL:
         except ImportError:
             pass
         else:
-            log.debug('Using Bio2BEL MeSH')
+            logger.debug('Using Bio2BEL MeSH')
             self.mesh_manager = bio2bel_mesh.Manager(connection=self.connection)
             self.mesh_manager.create_all()
 
@@ -209,7 +209,7 @@ class FlaskBio2BEL:
         except ImportError:
             pass
         else:
-            log.debug('Using Bio2BEL MGI')
+            logger.debug('Using Bio2BEL MGI')
             self.mgi_manager = bio2bel_mgi.Manager(connection=self.connection)
             self.mgi_manager.create_all()
 
@@ -218,7 +218,7 @@ class FlaskBio2BEL:
         except ImportError:
             pass
         else:
-            log.debug('Using Bio2BEL RGD')
+            logger.debug('Using Bio2BEL RGD')
             self.rgd_manager = bio2bel_rgd.Manager(connection=self.connection)
             self.rgd_manager.create_all()
 
@@ -227,7 +227,7 @@ class FlaskBio2BEL:
         except ImportError:
             pass
         else:
-            log.debug('Using Bio2BEL CONSO')
+            logger.debug('Using Bio2BEL CONSO')
             self.conso_manager = conso.manager.Manager()
 
         self.manager_dict.update({

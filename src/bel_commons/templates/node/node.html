@@ -41,11 +41,11 @@
                                 Classes: {{ node.out_edges.filter_by(relation='isA').count() }} |
                                 Children: {{ node.in_edges.filter_by(relation='isA').count() }} |
 
-                                <a href="{{ url_for('ui.view_explorer_node', node_hash=node.sha512) }}">Explore</a>
+                                <a href="{{ url_for('ui.view_explorer_node', node_hash=node.md5) }}">Explore</a>
 
                                 {% if current_user.is_authenticated and current_user.is_admin %}
                                     |
-                                    <a href="{{ url_for('dbs.get_node_by_hash', node_hash=node.sha512) }}">JSON</a>
+                                    <a href="{{ url_for('dbs.get_node_by_hash', node_hash=node.md5) }}">JSON</a>
                                 {% endif %}
                             </small>
                         </span>
@@ -57,7 +57,7 @@
                             <ul>
                                 {% for node_member in node_members %}
                                     <li>
-                                        <a href="{{ url_for('ui.view_node', node_hash=node_member.target.sha512) }}">
+                                        <a href="{{ url_for('ui.view_node', node_hash=node_member.target.md5) }}">
                                             {{ node_member.target.bel }}
                                         </a>
                                     </li>

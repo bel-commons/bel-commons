@@ -9,22 +9,15 @@ from flask import abort, request
 
 from pybel import BELGraph
 from pybel.struct.summary import get_annotation_values_by_annotation, get_annotations, get_pubmed_identifiers
-from .version import VERSION
 
 __all__ = [
-    'get_version',
     'calculate_overlap_info',
     'get_tree_annotations',
     'add_edge_filter',
     'return_or_404',
 ]
 
-log = logging.getLogger(__name__)
-
-
-def get_version() -> str:
-    """Get the current BEL Commons version string."""
-    return VERSION
+logger = logging.getLogger(__name__)
 
 
 def calculate_overlap_info(g1: BELGraph, g2: BELGraph):

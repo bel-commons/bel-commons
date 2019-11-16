@@ -249,17 +249,19 @@ class UserQuery(Base):
             user=user,
         )
 
-    @staticmethod
-    def from_project(project: Project, user: User) -> UserQuery:
+    @classmethod
+    def from_project(cls, project: Project, user: User) -> UserQuery:
         """Build a query from a project."""
-        return UserQuery.from_networks(networks=project.networks, user=user)
+        return UserQuery.from_networks(
+            networks=project.networks,
+            user=user,
+        )
 
     @staticmethod
     def from_query(manager: Manager, query: pybel.struct.query.Query, user: User) -> UserQuery:
         """Build an ORM query from a PyBEL query."""
-        q = Query.from_query(manager, query)
         return UserQuery(
-            query=q,
+            query=Query.from_query(manager, query),
             user=user,
         )
 
@@ -349,7 +351,7 @@ class Omic(Base):
     gene_column = Column(Text, nullable=False)
     data_column = Column(Text, nullable=False)
 
-    user_id = Column(Integer, ForeignKey('{}.id'.format(USER_TABLE_NAME)))
+    user_id = Column(Integer, ForeignKey(f'{User.__tablename__}.id'))
     user = relationship(User, backref=backref('omics', lazy='dynamic'))
 
     def __repr__(self) -> str:  # noqa: D105
@@ -475,7 +477,7 @@ class Report(Base):
 
     task_uuid = Column(String(36), nullable=True, doc='The celery queue UUID')
 
-    user_id = Column(Integer, ForeignKey('{}.id'.format(USER_TABLE_NAME)), doc='The user who uploaded the network')
+    user_id = Column(Integer, ForeignKey(f'{User.__tablename__}.id'), doc='The user who uploaded the network')
     user = relationship(User, backref=backref('reports', lazy='dynamic'))
 
     created = Column(DateTime, default=datetime.datetime.utcnow, doc='The date and time of upload')
@@ -489,6 +491,7 @@ class Report(Base):
     allow_nested = Column(Boolean, default=False)
     citation_clearing = Column(Boolean, default=False)
     infer_origin = Column(Boolean, default=False)
+    identifier_validation = Column(Boolean, default=True)
 
     number_nodes = Column(Integer, nullable=True)
     number_edges = Column(Integer, nullable=True)
@@ -516,9 +519,10 @@ class Report(Base):
         """Decode the lines stored in this."""
         return codecs.decode(self.source, self.encoding or 'utf-8').split('\n')
 
-    def dump_calculations(self, calculations: BELGraphSummary) -> None:
+    def dump_calculations(self, graph: BELGraph) -> None:
         """Store a summary calculations dictionary."""
-        self.calculations = pickle.dumps(calculations)
+        calculations = BELGraphSummary.from_graph(graph)
+        self.calculations = pickle.dumps(calculations, protocol=pickle.HIGHEST_PROTOCOL)
 
     def get_calculations(self) -> BELGraphSummary:
         """Get the summary calculations dictionary from this network."""

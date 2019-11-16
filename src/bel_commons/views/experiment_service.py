@@ -28,7 +28,7 @@ __all__ = [
     'experiment_blueprint',
 ]
 
-log = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 experiment_blueprint = Blueprint('analysis', __name__, url_prefix='/experiment')
 
@@ -185,7 +185,7 @@ def view_query_uploader(query_id: int):
 
     t = time.time()
 
-    log.info(
+    logger.info(
         'running heat diffusion workflow on %s with %d trials',
         form.file.data.filename,
         form.permutations.data,
@@ -205,7 +205,7 @@ def view_query_uploader(query_id: int):
     except pandas.errors.ParserError:
         flask.flash('Malformed differential gene expression file. Check it is formatted consistently.',
                     category='warning')
-        log.exception('Malformed differential gene expression file.')
+        logger.exception('Malformed differential gene expression file.')
         return redirect(url_for('.view_query_uploader', query_id=query_id))
 
     experiment = Experiment(
@@ -219,7 +219,7 @@ def view_query_uploader(query_id: int):
     manager.session.add(experiment)
     manager.session.commit()
 
-    log.debug('stored data for analysis in %.2f seconds', time.time() - t)
+    logger.debug('stored data for analysis in %.2f seconds', time.time() - t)
 
     task = celery.send_task('run-heat-diffusion', args=[
         current_app.config['SQLALCHEMY_DATABASE_URI'],
@@ -250,7 +250,7 @@ def download_experiment_comparison(experiment_ids: List[int]):
 
     :param experiment_ids: The identifiers of experiments to compare
     """
-    log.info('working on experiments: %s', experiment_ids)
+    logger.info('working on experiments: %s', experiment_ids)
 
     clusters = request.args.get('clusters', type=int)
     normalize = request.args.get('normalize', type=int, default=0)
@@ -338,8 +338,8 @@ def get_dataframe_from_experiments(experiments: Iterable[Experiment], *, normali
         df[data_columns] = df[data_columns].apply(lambda x: (x - np.min(x)) / (np.max(x) - np.min(x)))
 
     if clusters is not None:
-        log.info('using %d-means clustering', clusters)
-        log.info('using seed: %s', seed)
+        logger.info('using %d-means clustering', clusters)
+        logger.info('using seed: %s', seed)
         km = KMeans(n_clusters=clusters, random_state=seed)
         km.fit(df[data_columns])
         df['Group'] = km.labels_ + 1

@@ -23,10 +23,10 @@
 
         <div class="panel panel-default">
             <div class="panel-body">
-                <a class="btn btn-default" href="{{ url_for('ui.view_node', node_hash=edge.source.sha512) }}">
+                <a class="btn btn-default" href="{{ url_for('ui.view_node', node_hash=edge.source.md5) }}">
                     View Subject <span class="glyphicon glyphicon-new-window"></span>
                 </a>
-                <a class="btn btn-default" href="{{ url_for('ui.view_node', node_hash=edge.target.sha512) }}">
+                <a class="btn btn-default" href="{{ url_for('ui.view_node', node_hash=edge.target.md5) }}">
                     View Object <span class="glyphicon glyphicon-new-window"></span>
                 </a>
 
@@ -36,12 +36,12 @@
 
                         {% if vote is none or vote.agreed is none %}
                             <a class="btn btn-default"
-                               href="{{ url_for('ui.vote_edge', edge_hash=edge.sha512, vote=1) }}">
+                               href="{{ url_for('ui.vote_edge', edge_hash=edge.md5, vote=1) }}">
                                 <span class="glyphicon glyphicon-thumbs-up"></span> Agree <span
                                     class="badge">{{ edge.votes.filter_by(agreed=True).count() }}</span>
                             </a>
                             <a class="btn btn-default"
-                               href="{{ url_for('ui.vote_edge', edge_hash=edge.sha512, vote=0) }}">
+                               href="{{ url_for('ui.vote_edge', edge_hash=edge.md5, vote=0) }}">
                                 <span class="glyphicon glyphicon glyphicon-thumbs-down"></span> Disagree <span
                                     class="badge">{{ edge.votes.filter_by(agreed=False).count() }}</span>
                             </a>
@@ -51,13 +51,13 @@
                                     class="badge">{{ edge.votes.filter_by(agreed=True).count() }}</span>
                             </a>
                             <a class="btn btn-default"
-                               href="{{ url_for('ui.vote_edge', edge_hash=edge.sha512, vote=0) }}">
+                               href="{{ url_for('ui.vote_edge', edge_hash=edge.md5, vote=0) }}">
                                 <span class="glyphicon glyphicon glyphicon-thumbs-down"></span> Disagree <span
                                     class="badge">{{ edge.votes.filter_by(agreed=False).count() }}</span>
                             </a>
                         {% else %}
                             <a class="btn btn-default"
-                               href="{{ url_for('ui.vote_edge', edge_hash=edge.sha512, vote=1) }}">
+                               href="{{ url_for('ui.vote_edge', edge_hash=edge.md5, vote=1) }}">
                                 <span class="glyphicon glyphicon-thumbs-up"></span> Agree <span
                                     class="badge">{{ edge.votes.filter_by(agreed=True).count() }}</span>
                             </a>
@@ -91,9 +91,9 @@
                         <h4>Related Edges <span class="badge">{{ (related_edges|length) - 1 }}</span></h4>
                         <ul>
                             {% for related_edge in related_edges %}
-                                {% if related_edge.sha512 != edge.sha512 %}
+                                {% if related_edge.md5 != edge.md5 %}
                                     <li>
-                                        <a href="{{ url_for('ui.view_edge', edge_hash=related_edge.sha512) }}">
+                                        <a href="{{ url_for('ui.view_edge', edge_hash=related_edge.md5) }}">
                                             {{ related_edge.bel }}
                                         </a>
                                     </li>

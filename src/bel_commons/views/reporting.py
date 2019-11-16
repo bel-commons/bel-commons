@@ -3,7 +3,6 @@
 """This module helps make summary pages."""
 
 import datetime
-import logging
 from collections import Counter, OrderedDict
 
 from flask import Blueprint, render_template, request
@@ -16,8 +15,6 @@ from ..models import EdgeComment, EdgeVote, Experiment, Report
 __all__ = [
     'reporting_blueprint',
 ]
-
-log = logging.getLogger(__name__)
 
 reporting_blueprint = Blueprint('reporting', __name__, url_prefix='/reporting')
 

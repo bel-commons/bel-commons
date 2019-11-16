@@ -2,7 +2,6 @@
 
 """A Flask route factory for a stateful BEL parser API endpoint."""
 
-import logging
 import time
 from uuid import uuid4
 
@@ -14,8 +13,6 @@ from pybel.parser import BELParser
 __all__ = [
     'build_parser_service',
 ]
-
-log = logging.getLogger(__name__)
 
 METADATA_TIME_ADDED = 'added'
 METADATA_IP = 'ip'

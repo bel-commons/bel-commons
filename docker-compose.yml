@@ -8,18 +8,18 @@ services:
     volumes:
      - .:/app
     environment:
-      PYBEL_CONNECTION: postgresql://pybeluser:pybelpassword@database:5432/pybeldb
+      PYBEL_CONNECTION: postgresql://pybeluser:pybelpassword@database14:5432/pybel14
       CELERY_BROKER_URL: amqp://broker
       CELERY_BACKEND_URL: redis://result_backend
-      SECRET_KEY: ${SECRET_KEY}
-      SECURITY_PASSWORD_SALT: ${SECURITY_PASSWORD_SALT}
+      BEL_COMMONS_SECRET_KEY: ${SECRET_KEY}
+      BEL_COMMONS_SECURITY_PASSWORD_SALT: ${SECURITY_PASSWORD_SALT}
     restart: always
     command: gunicorn -b 0.0.0.0:5000 bel_commons.wsgi:app --log-level=INFO
     # add more workers later -w ${PYBEL_GUNICORN_NUMBER_WORKERS}
     ports:
       - 80:5000
     depends_on:
-     - database
+     - database14
      - broker
      - result_backend
      - worker
@@ -29,7 +29,7 @@ services:
     volumes:
      - .:/app
     environment:
-      PYBEL_CONNECTION: postgresql://pybeluser:pybelpassword@database:5432/pybeldb
+      PYBEL_CONNECTION: postgresql://pybeluser:pybelpassword@database14:5432/pybel14
       CELERY_BROKER_URL: amqp://broker
       CELERY_BACKEND_URL: redis://result_backend
       SECRET_KEY: ${SECRET_KEY}
@@ -37,16 +37,16 @@ services:
     restart: always
     command: celery worker -A bel_commons.celery_worker.celery -l INFO
     depends_on:
-     - database
+     - database14
      - broker
      - result_backend
 
-  database:
+  database14:
     image: postgres:11.1
     environment:
       POSTGRES_USER: pybeluser
       POSTGRES_PASSWORD: pybelpassword
-      POSTGRES_DB: pybeldb
+      POSTGRES_DB: pybel14
     ports:
       - 5432:5432
 

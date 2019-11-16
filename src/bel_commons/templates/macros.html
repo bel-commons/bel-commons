@@ -1,7 +1,7 @@
 {% macro render_node_list_item(node) -%}
     <div class="list-group-item">
         <h4 class="list-group-item-heading">
-            <a href="{{ url_for('ui.view_node', node_hash=node.sha512) }}">{{ node.bel }}</a>
+            <a href="{{ url_for('ui.view_node', node_hash=node.md5) }}">{{ node.bel }}</a>
         </h4>
         <div class="list-group-item-text">
             In-Edges: {{ node.in_edges.count() }} |
@@ -25,8 +25,8 @@
                 Children: {{ node_children_count }} |
             {% endif %}
 
-            <a href="{{ url_for('ui.view_explorer_node', node_hash=node.sha512) }}">Explore Neighborhood</a> |
-            <a href="{{ url_for('dbs.get_node_by_hash', node_hash=node.sha512) }}">Download JSON</a>
+            <a href="{{ url_for('ui.view_explorer_node', node_hash=node.md5) }}">Explore Neighborhood</a> |
+            <a href="{{ url_for('dbs.get_node_by_hash', node_hash=node.md5) }}">Download JSON</a>
         </div>
     </div>
 {%- endmacro %}
@@ -42,14 +42,14 @@
 {% macro render_edge_list_item(edge, show_evidence=True, show_networks=True) -%}
     <div class="list-group-item">
         <h4 class="list-group-item-heading">
-            <a href="{{ url_for('ui.view_edge', edge_hash=edge.sha512) }}">{{ edge.bel }}</a>
+            <a href="{{ url_for('ui.view_edge', edge_hash=edge.md5) }}">{{ edge.bel }}</a>
 
             <span class="pull-right">
                 <small class="text-muted">
-                    <a href="{{ url_for('ui.view_node', node_hash=edge.source.sha512) }}">
+                    <a href="{{ url_for('ui.view_node', node_hash=edge.source.md5) }}">
                         View Subject <span class="glyphicon glyphicon-new-window"></span>
                     </a> |
-                    <a href="{{ url_for('ui.view_node', node_hash=edge.target.sha512) }}">
+                    <a href="{{ url_for('ui.view_node', node_hash=edge.target.md5) }}">
                         View Object <span class="glyphicon glyphicon-new-window"></span>
                     </a>
                 </small>
