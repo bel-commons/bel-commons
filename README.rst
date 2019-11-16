@@ -45,6 +45,15 @@ or PostgreSQL and install their corresponding connectors:
 .. code-block:: sh
 
     $ python3 -m pip install psycopg2-binary
+    
+Run with Docker
+---------------
+Install docker and run:
+
+.. code-block:: sh
+
+    $ docker-compose up
+
 
 License
 -------
