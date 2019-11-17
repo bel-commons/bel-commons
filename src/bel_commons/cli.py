@@ -27,8 +27,6 @@ from pybel.manager.models import (
 )
 from pybel.version import get_version as pybel_version
 from pybel_tools.version import get_version as pybel_tools_get_version
-from .application import create_application
-from .config import BELCommonsConfig
 from .core.models import Assembly, Query, assembly_network
 from .manager import WebManager
 from .manager_utils import insert_graph
@@ -124,30 +122,19 @@ def main():
 @click.option('--host', type=str, default='0.0.0.0', help='Flask host.', show_default=True)
 @click.option('--port', type=int, default=5000, help='Flask port.', show_default=True)
 @click.option('-v', '--debug', count=True, help="Turn on debugging. More v's, more debugging")
-@click.option('--config', help='Additional configuration in a INI file')
-@click.option('--enable-parser', is_flag=True)
-@click.option('-e', '--register-examples', is_flag=True, help='Ensure examples')
 @click.option('--with-gunicorn', is_flag=True)
 @click.option('-w', '--workers', type=int, default=number_of_workers(), help='Number of workers')
-def run(host, port, debug, config, enable_parser, register_examples, with_gunicorn, workers):
+def run(host, port, debug, with_gunicorn: bool, workers: int):
     """Run the web application."""
     _set_debug_param(debug)
 
-    bel_commons_config = BELCommonsConfig.load(
-        register_examples=bool(register_examples),
-        enable_parser=bool(enable_parser),
-        _additional_files=[config] if config is not None else None,
-    )
-
-    app = create_application(
-        bel_commons_config=bel_commons_config,
-    )
+    from bel_commons.wsgi import flask_app
 
     if with_gunicorn:
-        gunicorn_app = make_gunicorn_app(app, host, port, workers)
+        gunicorn_app = make_gunicorn_app(flask_app, host, port, workers)
         gunicorn_app.run()
     else:
-        app.run(host=host, port=port)
+        flask_app.run(host=host, port=port)
 
 
 @main.command()
@@ -156,16 +143,22 @@ def run(host, port, debug, config, enable_parser, register_examples, with_gunico
 @click.option('--debug', default='INFO', type=click.Choice(['INFO', 'DEBUG']))
 def worker(concurrency, broker, debug):
     """Run the celery worker."""
-    from .celery_worker import celery
-    from celery.bin import worker
+    from bel_commons.wsgi import flask_app, celery_app
 
-    pybel_worker = worker.worker(app=celery)
-    pybel_worker.run(
-        broker=broker,
-        loglevel=debug,
-        traceback=True,
-        concurrency=concurrency,
-    )
+    if celery_app is None:
+        click.secho('Celery is not configured', fg='red')
+        return sys.exit(1)
+
+    with flask_app.app_context():
+        from celery.bin import worker
+
+        pybel_worker = worker.worker(app=celery_app)
+        pybel_worker.run(
+            broker=broker,
+            loglevel=debug,
+            traceback=True,
+            concurrency=concurrency,
+        )
 
 
 @main.group()

@@ -15,6 +15,7 @@ from flask_security import current_user, login_required, roles_required
 import pybel
 import pybel.struct.query
 import pybel_tools
+from bel_commons.wsgi import celery_app, manager
 from bio2bel import get_version as get_bio2bel_version
 from pybel.manager.models import Citation, Edge, Evidence, Namespace, NamespaceEntry
 from pybel.struct.grouping.annotations import get_subgraphs_by_annotation
@@ -26,7 +27,6 @@ from pybel_tools.biogrammar.double_edges import summarize_completeness
 from pybel_tools.summary.error_summary import calculate_error_by_annotation
 from .constants import SQLALCHEMY_DATABASE_URI
 from .core.models import Query
-from .core.proxies import celery, flask_bio2bel, manager
 from .explorer_toolbox import get_explorer_toolbox
 from .manager_utils import next_or_jsonify
 from .models import EdgeComment, EdgeVote, Experiment, Omic, Report, User
@@ -628,7 +628,7 @@ def view_query_comparison(query_1_id: int, query_2_id: int):
 @ui_blueprint.route('/debug-celery')
 def debug_celery():
     """Send a debug task to celery."""
-    task = celery.send_task('debug-task')
+    task = celery_app.send_task('debug-task')
     flash('Task sent: {task}'.format(task=task))
     return redirect(url_for('ui.home'))
 

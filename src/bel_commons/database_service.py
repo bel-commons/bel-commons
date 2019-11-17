@@ -16,6 +16,7 @@ from flask import Blueprint, Response, abort, current_app, flash, jsonify, make_
 from flask_security import current_user, login_required, roles_required
 from sqlalchemy import func, or_
 
+from bel_commons.wsgi import manager
 from bel_resources import write_annotation, write_namespace
 from pybel import BELGraph, get_version as get_pybel_version
 from pybel.constants import NAMESPACE, NAMESPACE_DOMAIN_OTHER
@@ -34,7 +35,7 @@ from pybel_tools.summary import (
 )
 from .constants import AND, BLACK_LIST, PATHOLOGY_FILTER, PATHS_METHOD, RANDOM_PATH, UNDIRECTED
 from .core import models
-from .core.proxies import flask_bio2bel, manager
+from .core.proxies import flask_bio2bel
 from .manager_utils import fill_out_report, next_or_jsonify
 from .models import EdgeComment, Project, Report, User, UserQuery
 from .send_utils import serve_network, to_json_custom

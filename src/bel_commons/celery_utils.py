@@ -36,7 +36,6 @@ def parse_graph(report: Report, manager: Manager, task: Task) -> BELGraph:
         graph=graph,
         lines=lines,
         manager=manager,
-        allow_nested=report.allow_nested,
         citation_clearing=report.citation_clearing,
         no_identifier_validation=not report.identifier_validation,
     )

@@ -27,14 +27,14 @@ class PyBELSQLAlchemy(SQLAlchemy):
     manager_cls: Type[Manager] = Manager
 
     #: The actual manager (automatically built)
-    manager: manager_cls
+    _manager: manager_cls
 
     def init_app(self, app: Flask) -> None:
         """Initialize a Flask app."""
         super().init_app(app)
 
-        self.manager = self.manager_cls(engine=self.engine, session=self.session)
-        self.manager.bind()
+        self._manager = self.manager_cls(engine=self.engine, session=self.session)
+        self._manager.bind()
 
     @classmethod
     def get_manager_proxy(cls) -> Type[Manager]:
@@ -43,9 +43,4 @@ class PyBELSQLAlchemy(SQLAlchemy):
 
     @classmethod
     def _get_manager_ca(cls) -> Type[Manager]:
-        return cls.get_manager(current_app)
-
-    @staticmethod
-    def get_manager(app: Flask) -> Type[Manager]:
-        """Get the manager from this app."""
-        return get_state(app).db.manager
+        return cls.manager(current_app)

@@ -21,13 +21,12 @@ from celery.utils.log import get_task_logger
 from flask import render_template
 from sqlalchemy.exc import IntegrityError, OperationalError
 
-from bel_commons.application import create_application
 from bel_commons.celery_utils import parse_graph
 from bel_commons.constants import MAIL_DEFAULT_SENDER, integrity_message
-from bel_commons.core.celery import PyBELCelery
 from bel_commons.manager import WebManager
 from bel_commons.manager_utils import fill_out_report, insert_graph, run_heat_diffusion_helper
 from bel_commons.models import Report, User
+from bel_commons.wsgi import celery_app, flask_app
 from bel_resources.exc import ResourceError
 from pybel import BELGraph, from_nodelink, to_bytes
 from pybel.constants import METADATA_CONTACT, METADATA_DESCRIPTION, METADATA_LICENSES
@@ -46,9 +45,7 @@ logging.getLogger('pybel.parser').setLevel(logging.CRITICAL)
 celery_logger.setLevel(logging.DEBUG)
 logger.setLevel(logging.DEBUG)
 
-app = create_application()
-mail = app.extensions.get('mail')
-celery = PyBELCelery.get_celery(app)
+mail = flask_app.extensions.get('mail')
 
 DEFAULT_METADATA = {
     METADATA_DESCRIPTION: {'Document description'},
@@ -57,7 +54,7 @@ DEFAULT_METADATA = {
 }
 
 
-@celery.task(name='debug-task')
+@celery_app.task(name='debug-task')
 def run_debug_task() -> int:
     """Run the debug task that sleeps for a trivial amount of time."""
     celery_logger.info('running celery debug task')
@@ -66,7 +63,7 @@ def run_debug_task() -> int:
     return 6 + 2
 
 
-@celery.task(bind=True, name='summarize-bel', ignore_result=True)
+@celery_app.task(bind=True, name='summarize-bel', ignore_result=True)
 def summarize_bel(task: Task, connection: str, report_id: int):
     """Parse a BEL script asynchronously and email feedback.
 
@@ -83,12 +80,12 @@ def summarize_bel(task: Task, connection: str, report_id: int):
     def make_mail(subject: str, body: str) -> None:
         """Send a mail with the given subject and body."""
         if mail:
-            with app.app_context():
+            with flask_app.app_context():
                 mail.send_message(
                     subject=subject,
                     recipients=[report.user.email],
                     body=body,
-                    sender=app.config[MAIL_DEFAULT_SENDER],
+                    sender=flask_app.config[MAIL_DEFAULT_SENDER],
                 )
 
     def finish_parsing(subject: str, body: str) -> str:
@@ -129,7 +126,7 @@ def summarize_bel(task: Task, connection: str, report_id: int):
     return 0
 
 
-@celery.task(bind=True, name='upload-bel')  # noqa: C901
+@celery_app.task(bind=True, name='upload-bel')  # noqa: C901
 def upload_bel(task: Task, connection: str, report_id: int, enrich_citations: bool = False):
     """Parse a BEL script asynchronously and send email feedback.
 
@@ -156,12 +153,12 @@ def upload_bel(task: Task, connection: str, report_id: int, enrich_citations: bo
         if not mail:
             return
 
-        with app.app_context():
+        with flask_app.app_context():
             mail.send_message(
                 subject=subject,
                 recipients=[report.user.email],
                 body=body,
-                sender=app.config[MAIL_DEFAULT_SENDER],
+                sender=flask_app.config[MAIL_DEFAULT_SENDER],
             )
 
     def finish_parsing(subject: str, body: str) -> str:
@@ -221,12 +218,12 @@ def upload_bel(task: Task, connection: str, report_id: int, enrich_citations: bo
                 for user in manager.session.query(User.email).filter(User.is_admin).all()
             ]
             if recipients:
-                with app.app_context():
-                    app.extensions['mail'].send_message(
+                with flask_app.app_context():
+                    flask_app.extensions['mail'].send_message(
                         subject='Possible attempted Espionage',
                         recipients=recipients,
                         body=f'User ({report.user.id} {report.user.email}) may have attempted espionage of {network}',
-                        sender=app.config[MAIL_DEFAULT_SENDER],
+                        sender=flask_app.config[MAIL_DEFAULT_SENDER],
                     )
 
             return finish_parsing(f'Upload Failed for {source_name}', message)
@@ -297,7 +294,7 @@ def upload_bel(task: Task, connection: str, report_id: int, enrich_citations: bo
         manager.session.close()
 
 
-@celery.task(name='run-heat-diffusion')
+@celery_app.task(name='run-heat-diffusion')
 def run_heat_diffusion(connection: str, experiment_id: int) -> int:
     """Run the heat diffusion workflow.
 
@@ -325,18 +322,18 @@ def run_heat_diffusion(connection: str, experiment_id: int) -> int:
     message = f'Experiment {experiment_id} on query {query_id} with {source_name} has completed.'
 
     if mail is not None:
-        with app.app_context():
+        with flask_app.app_context():
             mail.send_message(
                 subject=f'Heat Diffusion Workflow [{experiment_id}] is Complete',
                 recipients=[email],
                 body=message,
-                sender=app.config[MAIL_DEFAULT_SENDER],
+                sender=flask_app.config[MAIL_DEFAULT_SENDER],
             )
 
     return experiment_id
 
 
-@celery.task(name='upload-json')
+@celery_app.task(name='upload-json')
 def upload_json(connection: str, user_id: int, payload: Dict, public: bool = False):
     """Receive and process a JSON serialized BEL graph.
 
@@ -371,7 +368,7 @@ def send_summary_mail(graph: BELGraph, report: Report, time_difference: float):
     :param report:
     :param time_difference: The time difference to log
     """
-    with app.app_context():
+    with flask_app.app_context():
         html = render_template(
             'email_report.html',
             graph=graph,
@@ -386,7 +383,7 @@ def send_summary_mail(graph: BELGraph, report: Report, time_difference: float):
                 recipients=[report.user.email],
                 body=f'Below is the parsing report for {graph}, completed in {time_difference:.2f} seconds.',
                 html=html,
-                sender=app.config[MAIL_DEFAULT_SENDER],
+                sender=flask_app.config[MAIL_DEFAULT_SENDER],
             )
         else:
             path = os.path.join(os.path.expanduser('~'), 'Downloads', f'report_{report.id}.html')
