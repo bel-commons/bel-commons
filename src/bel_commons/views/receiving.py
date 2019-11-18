@@ -5,8 +5,9 @@
 from flask import Blueprint, abort, current_app, jsonify, request
 from flask_security.utils import verify_password
 
+from bel_commons.celery_worker import celery_app
 from bel_commons.constants import SQLALCHEMY_DATABASE_URI
-from bel_commons.core.proxies import celery, manager
+from bel_commons.core import manager
 from bel_commons.manager_utils import next_or_jsonify
 from bel_commons.models import User
 
@@ -29,7 +30,7 @@ def upload():
     # TODO assume https authentication and use this to assign user to receive network function
     payload = request.get_json()
     connection = current_app.config[SQLALCHEMY_DATABASE_URI]
-    task = celery.send_task('upload-json', args=[connection, user.id, payload, public])
+    task = celery_app.send_task('upload-json', args=[connection, user.id, payload, public])
     return next_or_jsonify('Sent async receive task', task_id=task.id)
 
 

@@ -16,12 +16,10 @@ import unittest
 from flask import url_for
 from flask_security import current_user
 
-from pybel.constants import PYBEL_CONNECTION
-from pybel.testing.cases import TemporaryCacheMixin
-from bel_commons.application import PyBELSQLAlchemy, create_application
 from bel_commons.database_service import api_blueprint
 from bel_commons.main_service import ui_blueprint
-from bel_commons.manager import WebManager
+from bel_commons.wsgi import flask_app
+from pybel.testing.cases import TemporaryCacheMixin
 
 log = logging.getLogger(__name__)
 
@@ -43,7 +41,7 @@ class WebTest(TemporaryCacheMixin):
 
         config = {
             'SECRET_KEY': TEST_SECRET_KEY,
-            PYBEL_CONNECTION: self.connection,
+            'SQLALCHEMY_URI': self.connection,
             'SECURITY_REGISTERABLE': True,
             'SECURITY_CONFIRMABLE': False,
             'SECURITY_SEND_REGISTER_EMAIL': False,
@@ -64,7 +62,7 @@ class WebTest(TemporaryCacheMixin):
             SERVER_NAME='localhost',
         ))
 
-        self.app = create_application(**config)
+        self.app = flask_app
 
         self.app.register_blueprint(ui_blueprint)
         self.app.register_blueprint(api_blueprint)
@@ -80,10 +78,6 @@ class WebTest(TemporaryCacheMixin):
 
         with self.app.app_context():
             self.manager.create_all()
-
-    @property
-    def manager(self) -> WebManager:
-        return PyBELSQLAlchemy.get_manager(self.app)
 
     @property
     def user_datastore(self):

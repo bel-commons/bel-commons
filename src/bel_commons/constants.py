@@ -2,6 +2,8 @@
 
 """Constants for BEL Commons."""
 
+from pybel.constants import METADATA_CONTACT, METADATA_DESCRIPTION, METADATA_LICENSES
+
 BEL_COMMONS_STARTUP_NOTIFY = 'BEL_COMMONS_STARTUP_NOTIFY'
 SENTRY_DSN = 'SENTRY_DSN'
 SWAGGER = 'SWAGGER'
@@ -47,4 +49,10 @@ SWAGGER_CONFIG = {
         'email': 'cthoyt@gmail.com',
     },
     'version': '0.1.0',
+}
+
+DEFAULT_METADATA = {
+    METADATA_DESCRIPTION: {'Document description'},
+    METADATA_CONTACT: {'your@email.com'},
+    METADATA_LICENSES: {'Document license'},
 }

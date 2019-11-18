@@ -51,10 +51,6 @@ class ParserForm(FlaskForm):
         DataRequired(),
         FileAllowed(['bel'], 'Only files with the *.bel extension are allowed')
     ])
-    allow_nested = BooleanField(
-        'My document contains <a href="http://pybel.readthedocs.io/en/latest/io.html#allow-'
-        'nested">nested statements</a>'
-    )
     disable_citation_clearing = BooleanField(
         'My document sometimes has evidences before citations - disable <a href="h'
         'ttp://pybel.readthedocs.io/en/latest/io.html#citation-clearing">citation '

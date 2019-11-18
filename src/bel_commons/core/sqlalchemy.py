@@ -4,48 +4,46 @@
 
 from __future__ import annotations
 
-import logging
-from typing import Type
-
 from flask import Flask, current_app
-from flask_sqlalchemy import SQLAlchemy, get_state
+from flask_security import SQLAlchemyUserDatastore
+from flask_sqlalchemy import SQLAlchemy
 from werkzeug.local import LocalProxy
 
-from pybel import Manager
+from bel_commons.manager import WebManager
 
 __all__ = [
     'PyBELSQLAlchemy',
+    'manager',
+    'user_datastore',
 ]
-
-logger = logging.getLogger(__name__)
 
 
 class PyBELSQLAlchemy(SQLAlchemy):
     """An extension of Flask-SQLAlchemy to support the BEL Commons manager."""
 
-    #: The class to use to build a manager.
-    manager_cls: Type[Manager] = Manager
-
-    #: The actual manager (automatically built)
-    manager: manager_cls
-
     def init_app(self, app: Flask) -> None:
         """Initialize a Flask app."""
         super().init_app(app)
 
-        self.manager = self.manager_cls(engine=self.engine, session=self.session)
-        self.manager.bind()
+        with app.app_context():
+            _manager = app.extensions['manager'] = WebManager(engine=self.engine, session=self.session)
+            _manager.bind()
 
-    @classmethod
-    def get_manager_proxy(cls) -> Type[Manager]:
-        """Get a proxy for the manager from this app."""
-        return LocalProxy(cls._get_manager_ca)
 
-    @classmethod
-    def _get_manager_ca(cls) -> Type[Manager]:
-        return cls.get_manager(current_app)
+def _get_manager() -> WebManager:
+    """Get the manager from the app."""
+    _manager = current_app.extensions.get('manager')
+    if _manager is None:
+        raise RuntimeError(
+            'The manager was not registered to the app yet.'
+            ' Make sure to call PyBELSQLAlchemy.init_app()',
+        )
+    return _manager
 
-    @staticmethod
-    def get_manager(app: Flask) -> Type[Manager]:
-        """Get the manager from this app."""
-        return get_state(app).db.manager
+
+def _get_user_datastore() -> SQLAlchemyUserDatastore:
+    return _get_manager().user_datastore
+
+
+manager = LocalProxy(_get_manager)
+user_datastore = LocalProxy(_get_user_datastore)

@@ -33,8 +33,8 @@ from pybel_tools.summary import (
     get_authors, get_incorrect_names_by_namespace, get_naked_names, get_undefined_namespace_names,
 )
 from .constants import AND, BLACK_LIST, PATHOLOGY_FILTER, PATHS_METHOD, RANDOM_PATH, UNDIRECTED
-from .core import models
-from .core.proxies import flask_bio2bel, manager
+from .core import manager, models
+from .core.proxies import flask_bio2bel
 from .manager_utils import fill_out_report, next_or_jsonify
 from .models import EdgeComment, Project, Report, User, UserQuery
 from .send_utils import serve_network, to_json_custom

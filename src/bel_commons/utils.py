@@ -3,18 +3,25 @@
 """Utilities for BEL Commons."""
 
 import logging
+import socket
+import time
+from getpass import getuser
 from typing import Dict, List, Optional, TypeVar
 
-from flask import abort, request
+import flask_mail
+from flask import Flask, abort, request
 
 from pybel import BELGraph
 from pybel.struct.summary import get_annotation_values_by_annotation, get_annotations, get_pubmed_identifiers
+from .constants import BEL_COMMONS_STARTUP_NOTIFY, MAIL_DEFAULT_SENDER, SERVER_NAME
+from .version import get_version
 
 __all__ = [
     'calculate_overlap_info',
     'get_tree_annotations',
     'add_edge_filter',
     'return_or_404',
+    'send_startup_mail',
 ]
 
 logger = logging.getLogger(__name__)
@@ -83,3 +90,34 @@ def return_or_404(x: Optional[X], message: str) -> X:
     if x is None:
         abort(404, message)
     return x
+
+
+def send_startup_mail(app: Flask) -> None:
+    """Send an email upon the app's startup."""
+    from bel_commons.ext import mail
+
+    mail_default_sender = app.config.get(MAIL_DEFAULT_SENDER)
+    notify = app.config.get(BEL_COMMONS_STARTUP_NOTIFY)
+    if notify:
+        logger.info(f'sending startup notification to {notify}')
+        send_message(
+            app=app,
+            mail=mail,
+            subject="BEL Commons Startup",
+            body="BEL Commons v{} was started on {} by {} at {}.\n\nDeployed to: {}".format(
+                get_version(),
+                socket.gethostname(),
+                getuser(),
+                time.asctime(),
+                app.config.get(SERVER_NAME),
+            ),
+            sender=mail_default_sender,
+            recipients=[notify],
+        )
+        logger.info(f'notified {notify}')
+
+
+def send_message(app: Flask, mail: flask_mail.Mail, *args, **kwargs) -> None:
+    """Send a message."""
+    with app.app_context():
+        mail.send_message(*args, **kwargs)

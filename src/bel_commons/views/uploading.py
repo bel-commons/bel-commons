@@ -9,7 +9,8 @@ import time
 from flask import Blueprint, current_app, flash, redirect, render_template, url_for
 from flask_security import current_user, login_required, roles_required
 
-from ..core.proxies import celery, manager
+from bel_commons.celery_worker import celery_app
+from bel_commons.core import manager
 from ..forms import ParserForm
 from ..models import Report
 
@@ -26,7 +27,7 @@ uploading_blueprint = Blueprint('parser', __name__)
 @roles_required('admin')
 def run_debug():
     """Run the debug task."""
-    task = celery.send_task('debug-task')
+    task = celery_app.send_task('debug-task')
     logger.info('Parse task from %s', task.id)
     flash(f'Queued Celery debug task: {task.id}.')
     return redirect(url_for('.view_parser'))
@@ -36,9 +37,7 @@ def run_debug():
 @login_required
 def view_parser():
     """Render the form for asynchronous parsing."""
-    form = ParserForm(
-        public=(not current_user.email.contains('@scai.fraunhofer.de')),
-    )
+    form = ParserForm()
 
     if not form.validate_on_submit():
         return render_template('parser.html', form=form, current_user=current_user)
@@ -55,7 +54,6 @@ def view_parser():
         source_hash=source_md5,
         encoding=form.encoding.data,
         public=form.public.data,
-        allow_nested=form.allow_nested.data,
         citation_clearing=(not form.disable_citation_clearing.data),
         infer_origin=form.infer_origin.data,
     )
@@ -77,11 +75,11 @@ def view_parser():
 
     connection = current_app.config['SQLALCHEMY_DATABASE_URI']
     if form.feedback.data:
-        task = celery.send_task('summarize-bel', args=[connection, report_id])
+        task = celery_app.send_task('summarize-bel', args=[connection, report_id])
         logger.info(f'Email summary task from {current_user_str}: report={report_id}/task={task.id}')
         flash(f'Queued email summary task {report_id} for {report_name}.')
     else:
-        task = celery.send_task('upload-bel', args=[connection, report_id])
+        task = celery_app.send_task('upload-bel', args=[connection, report_id])
         logger.info(f'Parse task from {current_user_str}: report={report_id}/task={task.id}')
         flash(f'Queued parsing task {report_id} for {report_name}.')
 

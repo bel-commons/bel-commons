@@ -18,8 +18,9 @@ from flask import Blueprint, current_app, make_response, redirect, render_templa
 from flask_security import current_user, login_required, roles_required
 from sklearn.cluster import KMeans
 
+from bel_commons.celery_worker import celery_app
+from bel_commons.core import manager
 from pybel_tools.analysis.heat import RESULT_LABELS
-from ..core.proxies import celery, manager
 from ..forms import DifferentialGeneExpressionForm
 from ..manager_utils import create_omic, next_or_jsonify
 from ..models import Experiment, Omic, UserQuery
@@ -221,7 +222,7 @@ def view_query_uploader(query_id: int):
 
     logger.debug('stored data for analysis in %.2f seconds', time.time() - t)
 
-    task = celery.send_task('run-heat-diffusion', args=[
+    task = celery_app.send_task('run-heat-diffusion', args=[
         current_app.config['SQLALCHEMY_DATABASE_URI'],
         experiment.id
     ])
