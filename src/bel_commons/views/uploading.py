@@ -9,7 +9,8 @@ import time
 from flask import Blueprint, current_app, flash, redirect, render_template, url_for
 from flask_security import current_user, login_required, roles_required
 
-from bel_commons.wsgi import celery_app, manager
+from bel_commons.celery_worker import celery_app
+from bel_commons.core import manager
 from ..forms import ParserForm
 from ..models import Report
 
@@ -53,7 +54,6 @@ def view_parser():
         source_hash=source_md5,
         encoding=form.encoding.data,
         public=form.public.data,
-        allow_nested=form.allow_nested.data,
         citation_clearing=(not form.disable_citation_clearing.data),
         infer_origin=form.infer_origin.data,
     )

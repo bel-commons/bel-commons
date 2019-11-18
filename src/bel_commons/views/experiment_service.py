@@ -18,7 +18,8 @@ from flask import Blueprint, current_app, make_response, redirect, render_templa
 from flask_security import current_user, login_required, roles_required
 from sklearn.cluster import KMeans
 
-from bel_commons.wsgi import celery_app, manager
+from bel_commons.celery_worker import celery_app
+from bel_commons.core import manager
 from pybel_tools.analysis.heat import RESULT_LABELS
 from ..forms import DifferentialGeneExpressionForm
 from ..manager_utils import create_omic, next_or_jsonify

@@ -143,7 +143,8 @@ def run(host, port, debug, with_gunicorn: bool, workers: int):
 @click.option('--debug', default='INFO', type=click.Choice(['INFO', 'DEBUG']))
 def worker(concurrency, broker, debug):
     """Run the celery worker."""
-    from bel_commons.wsgi import flask_app, celery_app
+    from bel_commons.wsgi import flask_app
+    from bel_commons.celery_worker import celery_app
 
     if celery_app is None:
         click.secho('Celery is not configured', fg='red')

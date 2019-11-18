@@ -11,16 +11,17 @@ from typing import Dict, List, Optional, TypeVar
 import flask_mail
 from flask import Flask, abort, request
 
-from bel_commons import get_version
-from bel_commons.constants import BEL_COMMONS_STARTUP_NOTIFY, MAIL_DEFAULT_SENDER, SERVER_NAME
 from pybel import BELGraph
 from pybel.struct.summary import get_annotation_values_by_annotation, get_annotations, get_pubmed_identifiers
+from .constants import BEL_COMMONS_STARTUP_NOTIFY, MAIL_DEFAULT_SENDER, SERVER_NAME
+from .version import get_version
 
 __all__ = [
     'calculate_overlap_info',
     'get_tree_annotations',
     'add_edge_filter',
     'return_or_404',
+    'send_startup_mail',
 ]
 
 logger = logging.getLogger(__name__)

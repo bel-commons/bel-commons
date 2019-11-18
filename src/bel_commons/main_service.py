@@ -15,7 +15,9 @@ from flask_security import current_user, login_required, roles_required
 import pybel
 import pybel.struct.query
 import pybel_tools
-from bel_commons.wsgi import celery_app, manager
+from bel_commons.celery_worker import celery_app
+from bel_commons.core import manager
+from bel_commons.ext import flask_bio2bel
 from bio2bel import get_version as get_bio2bel_version
 from pybel.manager.models import Citation, Edge, Evidence, Namespace, NamespaceEntry
 from pybel.struct.grouping.annotations import get_subgraphs_by_annotation

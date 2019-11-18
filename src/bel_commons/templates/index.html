@@ -66,6 +66,9 @@
                        data-btn-cancel-class="btn-danger">
                         Nuke Database
                     </a>
+                    <a class="btn btn-primary" href="{{ url_for('ui.debug_celery') }}">
+                        Debug Celery
+                    </a>
                 </div>
             </div>
         {% endif %}
