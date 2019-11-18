@@ -32,8 +32,8 @@ services:
       PYBEL_CONNECTION: postgresql://pybeluser:pybelpassword@database14:5432/pybel14
       CELERY_BROKER_URL: amqp://broker
       CELERY_BACKEND_URL: redis://result_backend
-      SECRET_KEY: ${SECRET_KEY}
-      SECURITY_PASSWORD_SALT: ${SECURITY_PASSWORD_SALT}
+      BEL_COMMONS_SECRET_KEY: ${SECRET_KEY}
+      BEL_COMMONS_SECURITY_PASSWORD_SALT: ${SECURITY_PASSWORD_SALT}
     restart: always
     command: celery worker -A bel_commons.wsgi.celery_app -l INFO
     depends_on:

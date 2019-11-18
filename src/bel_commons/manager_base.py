@@ -17,8 +17,10 @@ from pybel import Manager
 from pybel.manager.models import Edge, Namespace, Network
 from pybel_tools.utils import min_tanimoto_set_similarity
 from .constants import AND
-from .core.models import Assembly, Query
-from .models import EdgeComment, EdgeVote, Experiment, NetworkOverlap, Omic, Project, Report, Role, User
+from .models import (
+    Assembly, EdgeComment, EdgeVote, Experiment, NetworkOverlap, Omic, Project, Query, Report, Role,
+    User,
+)
 
 __all__ = [
     'WebManagerBase',

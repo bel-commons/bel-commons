@@ -14,6 +14,7 @@ from bel_commons.application_utils import (
     register_admin_service, register_error_handlers, register_examples,
     register_transformations, register_users_from_manifest,
 )
+from bel_commons.celery_utils import register_celery
 from bel_commons.config import BELCommonsConfig
 from bel_commons.constants import (
     MAIL_DEFAULT_SENDER, SENTRY_DSN, SQLALCHEMY_DATABASE_URI,
@@ -22,7 +23,7 @@ from bel_commons.constants import (
 from bel_commons.converters import IntListConverter, ListConverter
 from bel_commons.core import manager, user_datastore
 from bel_commons.database_service import api_blueprint
-from bel_commons.ext import bootstrap, db, flask_bio2bel, mail, security, swagger
+from bel_commons.ext import bio2bel, bootstrap, db, mail, security, swagger
 from bel_commons.forms import ExtendedRegisterForm
 from bel_commons.main_service import ui_blueprint
 from bel_commons.utils import send_startup_mail
@@ -63,7 +64,7 @@ flask_app.url_map.converters.update({
 bootstrap.init_app(flask_app)
 swagger.init_app(flask_app)
 db.init_app(flask_app)
-flask_bio2bel.init_app(flask_app)
+bio2bel.init_app(flask_app)
 
 if not bel_commons_config.USE_CELERY:
     celery_app = None
@@ -73,17 +74,7 @@ else:
     CELERY_BROKER_URL = 'CELERY_BROKER_URL'
     CELERY_RESULT_BACKEND = 'CELERY_RESULT_BACKEND'
     backend = flask_app.config.setdefault(CELERY_RESULT_BACKEND, f'db+{flask_app.config[SQLALCHEMY_DATABASE_URI]}')
-
-    # class AppTask(celery.task.Task):
-    #     """An app-specific celery task."""
-    #
-    #     def __call__(self, *args, **kwargs):
-    #         with flask_app.app_context():
-    #             return super().__call__(*args, **kwargs)
-    #
-    #
-    # celery_app.Task = AppTask
-    celery_app.conf.update(flask_app.config)
+    register_celery(flask_app=flask_app, celery_app=celery_app)
 
     # Add blueprint for test jobs
     flask_app.register_blueprint(celery_blueprint)

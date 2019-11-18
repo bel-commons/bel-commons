@@ -17,6 +17,6 @@ security = flask_security.Security()
 
 swagger = flasgger.Swagger()
 
-flask_bio2bel = FlaskBio2BEL()
+bio2bel = FlaskBio2BEL()
 
 db = PyBELSQLAlchemy()

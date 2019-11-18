@@ -11,7 +11,7 @@ from flask_admin import Admin
 from flask_security import SQLAlchemyUserDatastore
 from raven.contrib.flask import Sentry
 
-from bel_commons.core.models import Assembly, Query
+from bel_commons.models import Assembly, Query
 from pybel import BELGraph, Manager
 from pybel.examples import braf_graph, egf_graph, homology_graph, sialic_acid_graph, statin_graph
 from pybel.manager.models import Author, Citation, Edge, Evidence, Namespace, NamespaceEntry, Network, Node

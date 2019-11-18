@@ -14,9 +14,8 @@ import logging
 import os
 from typing import Any, Dict, List, Mapping, Optional
 
-from bel_commons.core.models import Query
 from bel_commons.manager_utils import run_heat_diffusion_helper
-from bel_commons.models import Experiment, Omic
+from bel_commons.models import Experiment, Omic, Query
 from bel_commons.resources.constants import BMS_BASE, OMICS_DATA_DIR
 from pybel.manager import Manager
 
@@ -57,10 +56,10 @@ def build_query(directory: str, manager: Manager) -> Query:
 
 
 def create_experiment(
-        query: Query,
-        directory: str,
-        manager: Manager,
-        permutations: Optional[int] = None,
+    query: Query,
+    directory: str,
+    manager: Manager,
+    permutations: Optional[int] = None,
 ) -> List[Experiment]:
     """Create experiment models.
 
@@ -92,10 +91,10 @@ def upload_experiments(experiments: List[Experiment], manager: Manager):
 
 
 def run_experiments(
-        experiments: List[Experiment],
-        manager: Manager,
-        use_tqdm: bool = True,
-        tqdm_kwargs: Optional[Mapping[str, Any]] = None,
+    experiments: List[Experiment],
+    manager: Manager,
+    use_tqdm: bool = True,
+    tqdm_kwargs: Optional[Mapping[str, Any]] = None,
 ) -> None:
     """Run experiments and commits after each."""
     logger.info('running %d experiments', len(experiments))
@@ -108,11 +107,11 @@ def run_experiments(
 
 
 def work_directory(
-        query: Query,
-        omic_directory: str,
-        manager: Manager,
-        permutations: Optional[int] = None,
-        use_tqdm: bool = True,
+    query: Query,
+    omic_directory: str,
+    manager: Manager,
+    permutations: Optional[int] = None,
+    use_tqdm: bool = True,
 ) -> None:
     """Make models, upload, and run experiments for all data in a given directory."""
     logger.info(f'making experiments for directory: {omic_directory}')
@@ -126,10 +125,10 @@ def work_directory(
 
 
 def work_group(
-        network_directory: str,
-        omics_directories: List[str],
-        manager: Manager,
-        permutations: Optional[int] = None,
+    network_directory: str,
+    omics_directories: List[str],
+    manager: Manager,
+    permutations: Optional[int] = None,
 ) -> None:
     """Make models, upload, and run experiments for all data in several directories.
 

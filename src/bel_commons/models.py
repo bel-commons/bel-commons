@@ -6,25 +6,35 @@ from __future__ import annotations
 
 import codecs
 import datetime
+import hashlib
 import itertools as itt
+import json
 import pickle
 from operator import attrgetter
-from typing import Any, Dict, Iterable, List, Mapping, Tuple
+from typing import Any, Dict, Iterable, List, Mapping, Optional, Tuple, Union
 
 from flask_security import RoleMixin, UserMixin
 from pandas import DataFrame
 from sqlalchemy import (
-    Boolean, Column, DateTime, Float, ForeignKey, Index, Integer, LargeBinary, String, Table, Text, UniqueConstraint,
+    Boolean, Column, DateTime, Float, ForeignKey, Index, Integer, LargeBinary, String, Table, Text,
+    UniqueConstraint,
 )
 from sqlalchemy.orm import backref, relationship
 
+import pybel.struct
 import pybel.struct.query
-from pybel import BELGraph, Manager
+from pybel import BELGraph, Manager, Pipeline
 from pybel.dsl import BaseEntity
 from pybel.manager.models import Base, Edge, LONGBLOB, Network
 from pybel.struct import union
+from pybel.struct.query import SEED_DATA, SEED_METHOD, Seeding
+from pybel.struct.query.constants import NODE_SEED_TYPES
+from pybel.tokens import parse_result_to_dsl
 from pybel_tools.summary import BELGraphSummary
-from .core.models import Query
+
+ASSEMBLY_TABLE_NAME = 'pybel_assembly'
+ASSEMBLY_NETWORK_TABLE_NAME = 'pybel_assembly_network'
+QUERY_TABLE_NAME = 'pybel_query'
 
 EXPERIMENT_TABLE_NAME = 'pybel_experiment'
 REPORT_TABLE_NAME = 'pybel_report'
@@ -42,6 +52,264 @@ OVERLAP_TABLE_NAME = 'pybel_overlap'
 OMICS_TABLE_NAME = 'pybel_omic'
 
 USER_QUERY_TABLE_NAME = 'pybel_user_query'
+
+assembly_network = Table(
+    ASSEMBLY_NETWORK_TABLE_NAME,
+    Base.metadata,
+    Column('network_id', Integer, ForeignKey(f'{Network.__tablename__}.id')),
+    Column('assembly_id', Integer, ForeignKey(f'{ASSEMBLY_TABLE_NAME}.id'))
+)
+
+
+class Assembly(Base):
+    """Describes an assembly of networks."""
+
+    __tablename__ = ASSEMBLY_TABLE_NAME
+    id = Column(Integer, primary_key=True)
+
+    created = Column(DateTime, default=datetime.datetime.utcnow, doc='The date and time of upload')
+
+    name = Column(String(255), unique=True, nullable=True)
+    md5 = Column(String(255), nullable=True, index=True)
+
+    networks = relationship(Network, secondary=assembly_network, backref=backref('assemblies', lazy='dynamic'))
+
+    def as_bel(self) -> BELGraph:
+        """Return a merged instance of all of the contained networks."""
+        return union(network.as_bel() for network in self.networks)
+
+    @classmethod
+    def from_networks(cls, networks: List[Network]) -> Assembly:
+        """Build an assembly from a list of networks."""
+        return Assembly(
+            networks=networks,
+            md5=cls.get_network_list_md5(networks),
+        )
+
+    @staticmethod
+    def get_network_list_md5(networks: List[Network]) -> str:
+        """Build a sorted tuple of the unique network identifiers and hash it with SHA-512."""
+        t = tuple(sorted({network.id for network in networks}))
+        return hashlib.md5(pickle.dumps(t)).hexdigest()
+
+    @staticmethod
+    def from_network(network: Network) -> Assembly:
+        """Build an assembly from a singular network."""
+        return Assembly.from_networks(networks=[network])
+
+    def to_json(self) -> Mapping:
+        """Return a JSON summary of this assembly."""
+        result = {
+            'networks': [
+                network.to_json()
+                for network in self.networks
+            ],
+        }
+
+        if self.name:
+            result['name'] = self.name
+
+        return result
+
+    def __repr__(self):  # noqa: D105
+        return '<Assembly {} with [{}]>'.format(
+            self.id,
+            ', '.join(str(network.id) for network in self.networks)
+        )
+
+    def __str__(self):  # noqa: D105
+        return ', '.join(map(str, self.networks))
+
+
+class Query(Base):
+    """Describes a :class:`pybel_tools.query.Query`."""
+
+    __tablename__ = QUERY_TABLE_NAME
+    id = Column(Integer, primary_key=True)
+
+    created = Column(DateTime, default=datetime.datetime.utcnow, doc='The date and time of upload')
+
+    assembly_id = Column(Integer, ForeignKey('{}.id'.format(Assembly.__tablename__)),
+                         doc='The network assembly used in this query')
+    assembly = relationship(Assembly, backref=backref('queries'))
+
+    seeding = Column(Text, doc="The stringified JSON of the list representation of the seeding")
+    pipeline = Column(Text, doc="Protocol list")
+
+    parent_id = Column(Integer, ForeignKey('{}.id'.format(__tablename__)), nullable=True)
+    parent = relationship('Query', remote_side=[id],
+                          backref=backref('children', lazy='dynamic', cascade="all, delete-orphan"))
+
+    @property
+    def networks(self) -> List[Network]:
+        """Get the networks from the contained assembly."""
+        return self.assembly.networks
+
+    @property
+    def network_ids(self) -> List[int]:
+        """Get the network identifiers from the contained assembly."""
+        return [network.id for network in self.assembly.networks]
+
+    def __repr__(self):  # noqa: D105
+        return '<Query id={}, seeding={}, pipeline={}>'.format(self.id, self.seeding_to_json(), self.pipeline_to_json())
+
+    """Seeding"""
+
+    def set_seeding_from_query(self, query: pybel.struct.query.Query) -> None:
+        """Set the seeding container from a PyBEL Query."""
+        self.seeding = query.seeding.dumps()
+
+    def get_seeding(self) -> Optional[Seeding]:
+        """Get the seeding container, if it has any entries."""
+        if self.seeding:
+            seeding_json = [
+                (
+                    {
+                        SEED_METHOD: entry[SEED_METHOD],
+                        SEED_DATA: [
+                            parse_result_to_dsl(node_dict)
+                            for node_dict in entry[SEED_DATA]
+                        ],
+                    }
+                    if entry[SEED_METHOD] in NODE_SEED_TYPES else
+                    entry
+                )
+                for entry in json.loads(self.seeding)
+            ]
+            return Seeding.from_json(seeding_json)
+
+    def seeding_to_json(self) -> Optional[List[Mapping]]:
+        """Return seeding json, if it has any entries."""
+        seeding = self.get_seeding()
+        if seeding:
+            return seeding.to_json()
+
+    def set_pipeline_from_query(self, query: pybel.struct.query.Query) -> None:
+        """Set the pipeline value from a PyBEL Tools query."""
+        self.pipeline = query.pipeline.dumps()
+
+    """Pipeline"""
+
+    def get_pipeline(self) -> Optional[Pipeline]:
+        """Get the pipeline, if it has any entries."""
+        if self.pipeline:
+            return Pipeline.loads(self.pipeline)
+
+    def pipeline_to_json(self) -> Optional[List[Mapping]]:
+        """Return the pipeline as json, if it has any entries."""
+        pipeline = self.get_pipeline()
+        if pipeline:
+            return pipeline.to_json()
+
+    def _get_query(self) -> pybel.struct.query.Query:
+        """Convert this object to a query object."""
+        if not hasattr(self, '_query'):
+            self._query = pybel.struct.query.Query(
+                network_ids=self.network_ids,
+                seeding=self.get_seeding(),
+                pipeline=self.get_pipeline(),
+            )
+
+        return self._query
+
+    def to_json(self, include_id: bool = True) -> Dict:
+        """Serialize this object to JSON.
+
+        :param include_id: Should the identifier be included?
+        """
+        result = self._get_query().to_json()
+
+        if include_id:
+            result['id'] = self.id
+
+        return result
+
+    def run(self, manager: Manager) -> Optional[BELGraph]:
+        """Run the enclosed query."""
+        return self._get_query().run(manager)
+
+    """Constructors"""
+
+    @staticmethod
+    def from_assembly(assembly: Assembly) -> Query:
+        """Build a query from an assembly."""
+        return Query(assembly=assembly)
+
+    @staticmethod
+    def from_networks(networks: List[Network]) -> Query:
+        """Build a query from a network."""
+        assembly = Assembly.from_networks(networks)
+        return Query.from_assembly(assembly)
+
+    @staticmethod
+    def from_network(network: Network) -> Query:
+        """Build a query from a network."""
+        return Query.from_networks(networks=[network])
+
+    @staticmethod
+    def from_query(manager: Manager, query: pybel.struct.query.Query) -> Query:
+        """Build an ORM query from a PyBEL query."""
+        networks = manager.get_networks_by_ids(query.network_ids)
+        result = Query.from_networks(networks)
+        result.set_seeding_from_query(query)
+        result.set_pipeline_from_query(query)
+        return result
+
+    @staticmethod
+    def from_query_args(
+        manager: Manager,
+        network_ids: List[int],
+        seeding: Optional[Seeding] = None,
+        pipeline: Optional[Pipeline] = None,
+    ) -> Query:
+        """Build an ORM model from the arguments for a PyBEL query."""
+        q = pybel.struct.query.Query(network_ids, seeding=seeding, pipeline=pipeline)
+        return Query.from_query(manager, q)
+
+    """Derived queries"""
+
+    def get_assembly_query(self) -> Query:
+        """Return a new query, just with the same assembly as this one."""
+        return Query(
+            assembly=self.assembly,
+            parent=self,
+        )
+
+    def build_appended(self, name, *args, **kwargs) -> Query:
+        """Build a new query with the given function appended to the current query's pipeline.
+
+        :param str name: Append function name
+        :param args: Append function positional arguments
+        :param kwargs: Append function keyword arguments
+        """
+        pipeline = self.get_pipeline() or Pipeline()
+        pipeline.append(name, *args, **kwargs)
+
+        return Query(
+            parent_id=self.id,
+            assembly=self.assembly,
+            seeding=self.seeding,
+            pipeline=pipeline.dumps(),
+        )
+
+    def add_seed_neighbors(self, nodes: Union[BaseEntity, Iterable[BaseEntity]]) -> Query:
+        """Add a seed by neighbors and return a new query."""
+        seeding = self.get_seeding() or Seeding()
+        seeding.append_neighbors(nodes)
+
+        return Query(
+            parent_id=self.id,
+            assembly=self.assembly,
+            seeding=seeding.dumps(),
+            pipeline=self.pipeline,
+        )
+
+    def get_ancestor(self) -> Query:
+        """Get the oldest ancestor of this query."""
+        if self.parent:
+            return self.get_ancestor(self.parent)
+        return self
+
 
 roles_users = Table(
     ROLE_USER_TABLE_NAME,

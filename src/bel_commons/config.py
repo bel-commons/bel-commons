@@ -8,13 +8,14 @@ Resources:
 - https://realpython.com/blog/python/dockerizing-flask-with-compose-and-machine-from-localhost-to-the-cloud/
 """
 
-import os
 from typing import Optional
 
 from dataclasses_json import dataclass_json
 from easy_config import EasyConfig
 
 from pybel.config import CONFIG_FILE_PATHS
+
+_DEFAULT_SECURITY_SALT = 'default_please_override'
 
 
 @dataclass_json
@@ -27,11 +28,11 @@ class BELCommonsConfig(EasyConfig):
     - RabbitMQ or another message broker supporting the AMQP protocol running on localhost
     """
 
-    NAME = 'bel-commons'
+    NAME = 'bel_commons'
     FILES = CONFIG_FILE_PATHS
 
     #: The Flask app secret key.
-    SECRET_KEY: str = str(os.urandom(8))
+    SECRET_KEY: str
 
     #: Flask app debug mode
     DEBUG: bool = False
@@ -58,7 +59,7 @@ class BELCommonsConfig(EasyConfig):
     #: What hash algorithm should we use for passwords
     SECURITY_PASSWORD_HASH: str = 'pbkdf2_sha512'
     #: What salt should to use to hash passwords
-    SECURITY_PASSWORD_SALT: str = str(os.urandom(8))
+    SECURITY_PASSWORD_SALT: str = _DEFAULT_SECURITY_SALT
 
     MAIL_SERVER: Optional[str] = None
 
@@ -68,6 +69,7 @@ class BELCommonsConfig(EasyConfig):
     register_users: Optional[str] = None
     register_admin: bool = True
     register_transformations: bool = True
+    WRITE_REPORTS: bool = False
 
     """Which parts of BEL Commons should run?"""
     enable_uploader: bool = True
@@ -76,11 +78,15 @@ class BELCommonsConfig(EasyConfig):
     enable_curation: bool = False
 
     def __post_init__(self) -> None:  # noqa: D105
-        if self.SECURITY_REGISTERABLE and not self.SECURITY_PASSWORD_SALT:
-            raise ValueError('Configuration is missing SECURITY_PASSWORD_SALT')
+        if self.SECURITY_REGISTERABLE:
+            if not self.SECURITY_PASSWORD_SALT:
+                raise RuntimeError('Configuration is missing SECURITY_PASSWORD_SALT')
 
-        if self.SECURITY_REGISTERABLE and self.SECURITY_SEND_REGISTER_EMAIL and not self.MAIL_SERVER:
-            raise ValueError('Configuration is missing MAIL_SERVER')
+            if self.SECURITY_PASSWORD_SALT == _DEFAULT_SECURITY_SALT:
+                raise RuntimeError('Configuration is missing SECURITY_PASSWORD_SALT')
+
+            if self.SECURITY_SEND_REGISTER_EMAIL and not self.MAIL_SERVER:
+                raise ValueError('Configuration is missing MAIL_SERVER')
 
 
 if __name__ == '__main__':

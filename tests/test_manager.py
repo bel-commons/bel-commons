@@ -6,15 +6,13 @@ import json
 import logging
 import time
 
-
 from werkzeug.exceptions import HTTPException
 
+from bel_commons.manager import iter_recent_public_networks
+from bel_commons.models import Assembly, EdgeComment, EdgeVote, Query, User
 from pybel.constants import INCREASES, PROTEIN, RELATION
 from pybel.manager.models import Edge, Node
 from pybel.testing.utils import n
-from bel_commons.core.models import Assembly, Query
-from bel_commons.manager import iter_recent_public_networks
-from bel_commons.models import EdgeComment, EdgeVote, User
 from tests.cases import TemporaryCacheMethodMixin
 from tests.utils import make_edge, make_network, make_report, upgrade_network
 

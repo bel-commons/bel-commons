@@ -27,12 +27,11 @@ from pybel.manager.models import (
 )
 from pybel.version import get_version as pybel_version
 from pybel_tools.version import get_version as pybel_tools_get_version
-from .core.models import Assembly, Query, assembly_network
 from .manager import WebManager
 from .manager_utils import insert_graph
 from .models import (
-    EdgeComment, EdgeVote, Experiment, NetworkOverlap, Omic, Project, Report, Role, User, UserQuery,
-    projects_networks, projects_users, users_networks,
+    Assembly, EdgeComment, EdgeVote, Experiment, NetworkOverlap, Omic, Project, Query, Report, Role,
+    User, UserQuery, assembly_network, projects_networks, projects_users, users_networks,
 )
 from .version import get_version as get_bel_commons_version
 

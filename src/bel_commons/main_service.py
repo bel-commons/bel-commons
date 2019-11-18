@@ -17,7 +17,7 @@ import pybel.struct.query
 import pybel_tools
 from bel_commons.celery_worker import celery_app
 from bel_commons.core import manager
-from bel_commons.ext import flask_bio2bel
+from bel_commons.ext import bio2bel
 from bio2bel import get_version as get_bio2bel_version
 from pybel.manager.models import Citation, Edge, Evidence, Namespace, NamespaceEntry
 from pybel.struct.grouping.annotations import get_subgraphs_by_annotation
@@ -28,10 +28,9 @@ from pybel.struct.query import QueryMissingNetworksError
 from pybel_tools.biogrammar.double_edges import summarize_completeness
 from pybel_tools.summary.error_summary import calculate_error_by_annotation
 from .constants import SQLALCHEMY_DATABASE_URI
-from .core.models import Query
 from .explorer_toolbox import get_explorer_toolbox
 from .manager_utils import next_or_jsonify
-from .models import EdgeComment, EdgeVote, Experiment, Omic, Report, User
+from .models import EdgeComment, EdgeVote, Experiment, Omic, Query, Report, User
 from .utils import calculate_overlap_info
 from .version import get_version as get_bel_commons_version
 
@@ -165,7 +164,7 @@ def view_nodes():
         count=count,
         limit=limit,
         offset=offset,
-        **flask_bio2bel.manager_dict
+        **bio2bel.manager_dict
     )
 
 
@@ -176,7 +175,7 @@ def view_node(node_hash: str):
     return render_template(
         'node/node.html',
         node=node,
-        **flask_bio2bel.manager_dict
+        **bio2bel.manager_dict
     )
 
 
@@ -478,7 +477,7 @@ def view_about():
 
     unpopulated = set()
     summaries = {}
-    for name, m in flask_bio2bel.manager_dict.items():
+    for name, m in bio2bel.manager_dict.items():
         try:
             if not m.is_populated():
                 unpopulated.add(name)
@@ -490,7 +489,7 @@ def view_about():
     return render_template(
         'meta/about.html',
         metadata=metadata,
-        managers=flask_bio2bel.manager_dict,
+        managers=bio2bel.manager_dict,
         unpopulated=unpopulated,
         summaries=summaries,
         blueprints=set(current_app.blueprints),

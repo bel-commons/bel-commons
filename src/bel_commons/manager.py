@@ -15,9 +15,8 @@ import pybel.struct.query
 from pybel import BELGraph
 from pybel.manager.models import Author, Citation, Edge, Evidence, Namespace, Network, Node
 from pybel_tools.summary import BELGraphSummary
-from .core.models import Query
 from .manager_base import WebManagerBase, iter_recent_public_networks, iter_unique_networks
-from .models import Experiment, Project, Report, User, UserQuery
+from .models import Experiment, Project, Query, Report, User, UserQuery
 from .utils import return_or_404
 
 __all__ = [

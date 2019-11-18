@@ -13,7 +13,7 @@ import logging
 import os
 import random
 import time
-from typing import Dict
+from typing import Dict, Mapping, Optional
 
 import requests.exceptions
 from celery import Celery
@@ -24,12 +24,12 @@ from flask import Blueprint, current_app, jsonify, render_template
 from sqlalchemy.exc import IntegrityError, OperationalError
 
 from bel_commons.celery_utils import parse_graph
-from bel_commons.constants import DEFAULT_METADATA, MAIL_DEFAULT_SENDER, integrity_message
+from bel_commons.constants import MAIL_DEFAULT_SENDER
 from bel_commons.manager import WebManager
 from bel_commons.manager_utils import fill_out_report, insert_graph, run_heat_diffusion_helper
-from bel_commons.models import Report, User
+from bel_commons.models import Report
 from bel_resources.exc import ResourceError
-from pybel import BELGraph, from_nodelink, to_bytes
+from pybel import BELGraph, from_nodelink
 from pybel.manager.citation_utils import enrich_pubmed_citations
 from pybel.parser.exc import InconsistentDefinitionError
 from pybel.struct.mutation import enrich_protein_and_rna_origins
@@ -38,6 +38,7 @@ from pybel_tools.summary import BELGraphSummary
 __all__ = [
     'celery_app',
     'celery_blueprint',
+    'celery_logger',
 ]
 
 celery_logger = get_task_logger(__name__)
@@ -89,236 +90,126 @@ def run_debug_task() -> int:
     return 6 + 2
 
 
-@celery_app.task(bind=True, name='summarize-bel', ignore_result=True)
-def summarize_bel(task: Task, connection: str, report_id: int):
-    """Parse a BEL script asynchronously and email feedback.
+@celery_app.task(bind=True)  # noqa: C901
+def parse(
+    task: Task,
+    source_name: str,
+    contents: str,
+    parse_kwargs: Optional[Mapping[str, bool]] = None,
+    user_id: Optional[int] = None,
+    enrich_citations: bool = True,
+):
+    """Parse a BEL document and store in the database."""
+    from .core import manager
 
-    :param task: The task that's being run. Automatically bound.
-    :param connection: A connection to build the manager
-    :param report_id: A report to parse
-    """
-    manager = WebManager(connection=connection)
-
-    t = time.time()
-    report = manager.get_report_by_id(report_id)  # FIXME race condition with database?
-    source_name = report.source_name
-
-    def make_mail(subject: str, body: str) -> None:
-        """Send a mail with the given subject and body."""
-        with current_app.app_context():
-            mail = current_app.extensions.get('mail')
-            if mail is not None:
-                mail.send_message(
-                    subject=subject,
-                    recipients=[report.user.email],
-                    body=body,
-                    sender=current_app.config[MAIL_DEFAULT_SENDER],
-                )
-
-    def finish_parsing(subject: str, body: str) -> str:
-        """Send a message and finish parsing."""
-        make_mail(subject, body)
-        report.message = body
-        manager.session.commit()
-        return body
-
-    try:
-        graph = parse_graph(report=report, manager=manager, task=task)
-
-    except (ResourceError, requests.exceptions.ConnectionError, requests.exceptions.HTTPError):
-        message = 'Connection to resource could not be established.'
-        return finish_parsing(f'Parsing Failed for {source_name}', message)
-
-    except InconsistentDefinitionError as e:
-        message = f'Parsing failed for {source_name} because {e.definition} was redefined on line {e.line_number}.'
-        return finish_parsing(f'Parsing Failed for {source_name}', message)
-
-    except Exception as e:
-        message = f'Parsing failed for {source_name} from a general error: {e}'
-        return finish_parsing(f'Parsing Failed for {source_name}', message)
-
-    time_difference = time.time() - t
-
-    send_summary_mail(graph, report, time_difference)
-
-    report.time = time_difference
-    report.completed = True
-    manager.session.add(report)
-    manager.session.commit()
-
-    celery_logger.info('finished in %.2f seconds', time.time() - t)
-
-    manager.session.close()
-
-    return 0
-
-
-@celery_app.task(bind=True, name='upload-bel')  # noqa: C901
-def upload_bel(task: Task, connection: str, report_id: int, enrich_citations: bool = False):
-    """Parse a BEL script asynchronously and send email feedback.
-
-    :param task: The task that's being run. Automatically bound.
-    :param connection: The connection string
-    :param report_id: Report identifier
-    :param enrich_citations:
-    """
     if not task.request.called_directly:
         task.update_state(state='STARTED')
 
-    manager = WebManager(connection=connection)
-
     t = time.time()
-    report = manager.get_report_by_id(report_id)
 
-    report_id = report.id
-    source_name = report.source_name
+    _encoding = 'utf-8'
+    source_bytes = contents.encode(_encoding)
 
-    celery_logger.info(f'Starting parse task for {source_name} (report {report_id})')
+    if parse_kwargs is None:
+        parse_kwargs = {}
 
-    def make_mail(subject: str, body: str) -> None:
-        """Send a mail with the given subject and body."""
-        with current_app.app_context():
-            mail = current_app.extensions.get('mail')
-            if mail is not None:
-                mail.send_message(
-                    subject=subject,
-                    recipients=[report.user.email],
-                    body=body,
-                    sender=current_app.config[MAIL_DEFAULT_SENDER],
-                )
+    parse_kwargs.setdefault('public', True)
+    parse_kwargs.setdefault('citation_clearing', True)
+    parse_kwargs.setdefault('infer_origin', True)
+    parse_kwargs.setdefault('identifier_validation', True)
 
-    def finish_parsing(subject: str, body: str) -> str:
-        make_mail(subject, body)
-        report.message = body
-        manager.session.commit()
-        return body
-
-    celery_logger.info('parsing graph')
+    report = Report(
+        user_id=user_id,
+        source_name=source_name,
+        source=source_bytes,
+        source_hash=hashlib.sha512(source_bytes).hexdigest(),
+        encoding=_encoding,
+        **parse_kwargs,
+    )
+    manager.session.add(report)
 
     try:
-        graph = parse_graph(report=report, manager=manager, task=task)
-
+        graph = parse_graph(
+            report=report,
+            manager=manager,
+            task=task,
+        )
     except (ResourceError, requests.exceptions.ConnectionError, requests.exceptions.HTTPError) as e:
-        message = f'Connection to resource could not be established: {e}'
-        return finish_parsing(f'Parsing Failed for {source_name}', message)
-
+        message = f'Parsing Failed for {source_name}. Connection to resource could not be established: {e}'
+        return finish_parsing(manager.session, report, 'Parsing Failed.', message)
     except InconsistentDefinitionError as e:
-        message = f'Parsing failed for {source_name} because {e.definition} was redefined on line {e.line_number}.'
-        return finish_parsing(f'Parsing Failed for {source_name}', message)
-
+        message = f'Parsing Failed for {source_name} because {e.definition} was redefined on line {e.line_number}'
+        return finish_parsing(manager.session, report, 'Parsing Failed.', message)
     except Exception as e:
-        message = f'Parsing failed for {source_name} from a general error: {e}'
-        return finish_parsing(f'Parsing Failed for {source_name}', message)
+        message = f'Parsing Failed for {source_name} from a general error: {e}'
+        return finish_parsing(manager.session, report, 'Parsing Failed.', message)
 
+    # Integrity checking
     if not graph.name:
-        message = f'Parsing failed for {source_name} because SET DOCUMENT Name was missing.'
-        return finish_parsing(f'Parsing Failed for {source_name}', message)
-
+        return finish_parsing(
+            manager.session, report,
+            'Parsing Failed.', f'Parsing Failed for {source_name} because SET DOCUMENT Name was missing.',
+        )
     if not graph.version:
-        message = f'Parsing failed for {source_name} because SET DOCUMENT Version was missing.'
-        return finish_parsing(f'Parsing Failed for {source_name}', message)
+        return finish_parsing(
+            manager.session, report,
+            'Parsing Failed.', f'Parsing Failed for {source_name} because SET DOCUMENT Version was missing.',
+        )
 
-    problem = {
-        key: value
-        for key, value in graph.document.items()
-        if key in DEFAULT_METADATA and value in DEFAULT_METADATA[key]
-    }
-
-    if problem:
-        message = f'{source_name} was rejected because it has "default" metadata: {problem}'
-        return finish_parsing(f'Rejected {source_name}', message)
-
-    send_summary_mail(graph, report, time.time() - t)
-
-    network = manager.get_network_by_name_version(graph.name, graph.version)
-
-    if network is not None:
-        message = integrity_message.format(graph.name, graph.version)
-
-        if network.report.user == report.user:  # This user is being a fool
-            return finish_parsing(f'Uploading Failed for {source_name}', message)
-
-        if hashlib.sha1(network.blob).hexdigest() != hashlib.sha1(to_bytes(graph)).hexdigest():
-            recipients = [
-                user.email
-                for user in manager.session.query(User.email).filter(User.is_admin).all()
-            ]
-            if recipients:
-                with current_app.app_context():
-                    mail = current_app.extensions.get('mail')
-                    if mail is not None:
-                        mail.send_message(
-                            subject='Possible attempted Espionage',
-                            recipients=recipients,
-                            body=f'User ({report.user.id} {report.user.email})'
-                                 f' may have attempted espionage of {network}',
-                            sender=current_app.config[MAIL_DEFAULT_SENDER],
-                        )
-
-            return finish_parsing(f'Upload Failed for {source_name}', message)
-
-        # Grant rights to this user
-        network.users.append(report.user)
-        manager.session.commit()
-
-        message = f'Granted rights for {network} to {report.user} after parsing {source_name}'
-        return finish_parsing(f'Granted Rights from {source_name}', message)
-
+    # Enrichment
     if report.infer_origin:
         enrich_protein_and_rna_origins(graph)
-
     if enrich_citations:
-        try:
-            enrich_pubmed_citations(manager, graph)  # FIXME send this as a follow-up task
+        enrich_pubmed_citations(manager, graph)
 
-        except (IntegrityError, OperationalError):  # just skip this if there's a problem
-            manager.session.rollback()
-            celery_logger.exception('problem with database while fixing citations')
+    send_graph_summary_mail(graph, report, time.time() - t)
 
-        except Exception:
-            celery_logger.exception('problem fixing citations')
-
-    upload_failed_text = f'Upload Failed for {source_name}'
-
+    # TODO split into second task
+    celery_logger.info(f'inserting {graph} with {manager.engine.url}')
     try:
-        celery_logger.info(f'inserting {graph} with {manager.engine.url}')
         network = manager.insert_graph(graph)
-
     except IntegrityError as e:
         manager.session.rollback()
-        celery_logger.exception('Integrity error')
-        return finish_parsing(upload_failed_text, str(e))
-
+        return finish_parsing(
+            manager.session, report,
+            'Upload Failed.', f'Upload Failed for {source_name}: {e}',
+        )
     except OperationalError:
         manager.session.rollback()
-        message = 'Database is locked. Unable to upload.'
-        return finish_parsing(upload_failed_text, message)
-
+        return finish_parsing(
+            manager.session, report,
+            'Upload Failed.', f'Upload Failed for {source_name} because database is locked',
+        )
     except Exception as e:
         manager.session.rollback()
-        return finish_parsing(upload_failed_text, str(e))
+        return finish_parsing(
+            manager.session, report,
+            'Upload Failed.', f'Upload Failed for {source_name}: {e}',
+        )
 
-    celery_logger.info(f'done storing [{network.id}]. starting to make report.')
+    # save in a variable because these get thrown away after commit
+    network_id = network.id
+    report_id = report.id
 
+    celery_logger.info(f'Stored network={network_id}.')
+
+    celery_logger.info(f'Filling report={report_id} for network={network_id}')
+
+    fill_out_report(graph=graph, network=network, report=report)
+    report.time = time.time() - t
+
+    celery_logger.info(f'Committing report={report_id} for network={network_id}')
     try:
-        fill_out_report(graph=graph, network=network, report=report)
-        report.time = time.time() - t
-
-        manager.session.add(report)
         manager.session.commit()
-
-        celery_logger.info(f'report #{report.id} complete [{network.id}]')
-        make_mail(f'Uploaded succeeded for {graph} ({source_name})',
-                  f'{source_name} ({graph}) is done parsing. Check the network list page.')
-
-        return {
-            'network_id': network.id,
-        }
     except Exception as e:
         manager.session.rollback()
-        make_mail(f'Report unsuccessful for {source_name}', str(e))
-        celery_logger.exception('Problem filling out report')
+        message = f'Problem filling out report={report_id} for {source_name}: {e}'
+        make_mail(report, 'Filling out report failed', message)
+        celery_logger.exception(message)
         return -1
+    else:
+        make_mail(report, 'Parsing succeeded', f'Parsing succeeded for {source_name}')
+        return dict(network_id=network_id, report_id=report_id)
     finally:
         manager.session.close()
 
@@ -391,7 +282,28 @@ def upload_json(connection: str, user_id: int, payload: Dict, public: bool = Fal
     return 0
 
 
-def send_summary_mail(graph: BELGraph, report: Report, time_difference: float):
+def finish_parsing(session, report: Report, subject: str, body: str) -> str:
+    """Add the message to the report and commit the current session."""
+    make_mail(report, subject, body)
+    report.message = body
+    session.commit()
+    return body
+
+
+def make_mail(report: Report, subject: str, body: str) -> None:
+    """Send a mail with the given subject and body."""
+    with current_app.app_context():
+        mail = current_app.extensions.get('mail')
+        if mail is not None:
+            mail.send_message(
+                subject=subject,
+                recipients=[report.user.email],
+                body=body,
+                sender=current_app.config[MAIL_DEFAULT_SENDER],
+            )
+
+
+def send_graph_summary_mail(graph: BELGraph, report: Report, time_difference: float) -> None:
     """Send a mail with a summary.
 
     :param graph:
@@ -416,7 +328,7 @@ def send_summary_mail(graph: BELGraph, report: Report, time_difference: float):
                 html=html,
                 sender=current_app.config[MAIL_DEFAULT_SENDER],
             )
-        else:
+        elif current_app.config['WRITE_REPORTS']:
             path = os.path.join(os.path.expanduser('~'), 'Downloads', f'report_{report.id}.html')
 
             try:
