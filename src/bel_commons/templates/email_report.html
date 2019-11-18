@@ -50,7 +50,7 @@
                     </tr>
                     </thead>
                     <tbody>
-                    {% for key, value in function_count.most_common() %}
+                    {% for key, value in summary.function_count.most_common() %}
                         <tr>
                             <td>{{ key }}</td>
                             <td>{{ value }}</td>
@@ -74,7 +74,7 @@
                     </tr>
                     </thead>
                     <tbody>
-                    {% for key, value in relation_count.most_common() %}
+                    {% for key, value in summary.relation_count.most_common() %}
                         <tr>
                             <td>{{ key }}</td>
                             <td>{{ value }}</td>
@@ -143,18 +143,18 @@
 
         <!-- Warnings -->
 
-        {% if unused_namespaces is defined and unused_namespaces|length > 0 %}
+        {% if summary.unused_namespaces is defined and summary.unused_namespaces|length > 0 %}
             <a id="unused-namespaces"></a>
             <div class="panel panel-warning">
                 <div class="panel-heading">
-                    <h3 class="panel-title">Unused Namespaces ({{ unused_namespaces|length }})</h3>
+                    <h3 class="panel-title">Unused Namespaces ({{ summary.unused_namespaces|length }})</h3>
                 </div>
                 <div class="panel-body">
                     <p>The source BEL script contained references to the following namespaces, but they were never
                         used. It is suggested to delete their definitions from the BEL script to improve readability
                         and parsing speed.</p>
                     <ul class="row">
-                        {% for unused_namespace in unused_namespaces|sort %}
+                        {% for unused_namespace in summary.unused_namespaces|sort %}
                             <li class="col-lg-3 col-md-4 col-sm-6">{{ unused_namespace }}</li>
                         {% endfor %}
                     </ul>
@@ -183,11 +183,11 @@
             </div>
         {% endif %}
 
-        {% if unused_annotations is defined and unused_annotations|length > 0 %}
+        {% if summary.unused_annotations is defined and summary.unused_annotations|length > 0 %}
             <a id="unused-annotations"></a>
             <div class="panel panel-warning">
                 <div class="panel-heading">
-                    <h3 class="panel-title">Unused Annotations ({{ unused_annotations|length }})</h3>
+                    <h3 class="panel-title">Unused Annotations ({{ summary.unused_annotations|length }})</h3>
                 </div>
                 <div class="panel-body">
                     <p>The source BEL script contained references to the following annotations, but they were never
@@ -196,7 +196,7 @@
                     <p><strong>Note:</strong> this may be due to errors occurring in all statements with these
                         annotations.</p>
                     <ul class="row">
-                        {% for unused_annotation in unused_annotations|sort %}
+                        {% for unused_annotation in summary.unused_annotations|sort %}
                             <li class="col-lg-3 col-md-4 col-sm-6">
                                 {{ unused_annotation }}
                             </li>
@@ -206,12 +206,12 @@
             </div>
         {% endif %}
 
-        {% if unused_list_annotation_values is defined and unused_list_annotation_values|length > 0 %}
+        {% if summary.unused_list_annotation_values is defined and summary.unused_list_annotation_values|length > 0 %}
             <a id="unused-list-annotations"></a>
             <div class="panel panel-warning">
                 <div class="panel-heading">
                     <h3 class="panel-title">
-                        Unused List Annotation Values ({{ unused_list_annotation_values|length }})
+                        Unused List Annotation Values ({{ summary.unused_list_annotation_values|length }})
                     </h3>
                 </div>
                 <div class="panel-body">
@@ -228,7 +228,7 @@
                     </tr>
                     </thead>
                     <tbody>
-                    {% for annotation, values in unused_list_annotation_values.items()|sort %}
+                    {% for annotation, values in summary.unused_list_annotation_values.items()|sort %}
                         <tr>
                             <td>{{ annotation }}</td>
                             <td>
@@ -249,11 +249,11 @@
 
         <!-- BEL Parser Errors -->
 
-        {% if syntax_errors|length > 0 %}
+        {% if summary.syntax_errors is defined and summary.syntax_errors|length > 0 %}
             <a id="graph-syntax-errors"></a>
             <div class="panel panel-danger panel-table">
                 <div class="panel-heading">
-                    <h3 class="panel-title">Syntax Errors ({{ syntax_errors|length }})</h3>
+                    <h3 class="panel-title">Syntax Errors ({{ summary.syntax_errors|length }})</h3>
                 </div>
                 <table class="table table-hover table-responsive table-striped">
                     <thead>
@@ -264,7 +264,7 @@
                     </tr>
                     </thead>
                     <tbody id="syntaxErrorTable">
-                    {% for _, exc, _ in syntax_errors %}
+                    {% for _, exc, _ in summary.syntax_errors %}
                         <tr>
                             <td>{{ exc.line_number }}</td>
                             <td><code>{{ exc.line }}</code></td>
@@ -306,7 +306,7 @@
             </div>
         {% endif %}
 
-        {% if error_groups is defined and error_groups|length > 0 %}
+        {% if summary.error_groups is defined and summary.error_groups|length > 0 %}
             <a id="error-groups"></a>
             <div class="panel panel-danger panel-table">
                 <div class="panel-heading">
@@ -320,7 +320,7 @@
                     </tr>
                     </thead>
                     <tbody>
-                    {% for label, count in error_groups %}
+                    {% for label, count in summary.error_groups %}
                         {% if count > 1 %}
                             <tr>
                                 <td><code>{{ label }}</code></td>
@@ -333,12 +333,12 @@
             </div>
         {% endif %}
 
-        {% if undefined_namespaces is defined and undefined_namespaces|length > 0 %}
+        {% if summary.undefined_namespaces is defined and summary.undefined_namespaces|length > 0 %}
             <a id="undefined-namespaces"></a>
             <div class="panel panel-danger">
                 <div class="panel-heading">
                     <h3 class="panel-title">
-                        Undefined Namespaces ({{ undefined_namespaces|length }})
+                        Undefined Namespaces ({{ summary.undefined_namespaces|length }})
                     </h3>
                 </div>
                 <div class="panel-body">
@@ -347,7 +347,7 @@
                         defined.
                     </p>
                     <ul class="row">
-                        {% for undefined_namespace in undefined_namespaces|sort %}
+                        {% for undefined_namespace in summary.undefined_namespaces|sort %}
                             <li class="col-lg-3 col-md-4 col-sm-6">
                                 {{ undefined_namespace }}
                             </li>
@@ -357,18 +357,18 @@
             </div>
         {% endif %}
 
-        {% if undefined_annotation is defined and undefined_annotations|length > 0 %}
+        {% if summary.undefined_annotation is defined and summary.undefined_annotations|length > 0 %}
             <a id="undefined-annotations"></a>
             <div class="panel panel-danger">
                 <div class="panel-heading">
-                    <h3 class="panel-title">Undefined Annotations ({{ undefined_annotations|length }})</h3>
+                    <h3 class="panel-title">Undefined Annotations ({{ summary.undefined_annotations|length }})</h3>
                 </div>
                 <div class="panel-body">
                     <p>The source BEL script contained references to the following annotations, but they were never
                         defined.
                     </p>
                     <ul class="row">
-                        {% for undefined_annotation in undefined_annotations|sort %}
+                        {% for undefined_annotation in summary.undefined_annotations|sort %}
                             <li class="col-lg-3 col-md-4 col-sm-6">
                                 {{ undefined_annotation }}
                             </li>
@@ -378,17 +378,17 @@
             </div>
         {% endif %}
 
-        {% if namespaces_with_incorrect_names is defined and namespaces_with_incorrect_names|length > 0 %}
+        {% if summary.namespaces_with_incorrect_names is defined and summary.namespaces_with_incorrect_names|length > 0 %}
             <a id="incorrect-namespaces"></a>
             <div class="panel panel-danger">
                 <div class="panel-heading">
                     <h3 class="panel-title">
-                        Namespaces with Incorrect Names ({{ namespaces_with_incorrect_names|length }})
+                        Namespaces with Incorrect Names ({{ summary.namespaces_with_incorrect_names|length }})
                     </h3>
                 </div>
                 <div class="panel-body">
                     <ul class="row">
-                        {% for namespace in namespaces_with_incorrect_names %}
+                        {% for namespace in summary.namespaces_with_incorrect_names %}
                             <li class="col-lg-3 col-md-4 col-sm-6">
                                 {{ namespace }}
                             </li>
