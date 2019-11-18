@@ -35,6 +35,7 @@ from pybel.constants import get_cache_connection
 __all__ = [
     'bel_commons_config',
     'flask_app',
+    'celery_app',
 ]
 
 logger = logging.getLogger(__name__)
