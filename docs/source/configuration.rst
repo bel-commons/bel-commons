@@ -23,5 +23,5 @@ already contains a setting for ``amqp://localhost``. Otherwise, an entry
 ``CELERY_BROKER_URL`` can be set.
 
 
-.. autoclass:: bel_commons.config.Config
+.. autoclass:: bel_commons.config.BELCommonsConfig
     :members:
