@@ -35,6 +35,7 @@ matrix:
   allow_failures:
     - env: TOXENV=xenon
     - env: TOXENV=mypy
+    - env: TOXENV=py
 
 before_script:
   - mysql -e 'CREATE DATABASE test CHARACTER SET utf8 COLLATE utf8_general_ci;'
