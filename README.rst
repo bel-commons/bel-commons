@@ -48,7 +48,13 @@ or PostgreSQL and install their corresponding connectors:
     
 Run with Docker
 ---------------
-Install docker and run:
+Create a file called '.env' and generate both SECRET_KEY and SECURITY_PASSWORD_SALT.
+
+.. code-block:: sh
+    SECRET_KEY=mypassword
+    SECURITY_PASSWORD_SALT=mypassword
+
+Run docker compose:
 
 .. code-block:: sh
 
