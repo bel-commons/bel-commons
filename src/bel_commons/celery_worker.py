@@ -157,10 +157,11 @@ def parse(
         )
 
     # Enrichment
+    enrich_pubmed_citations(manager, graph)  # this makes a commit so we need to store the identifier
+    report_id = report.id
+
     if report.infer_origin:
         enrich_protein_and_rna_origins(graph)
-    if enrich_citations:
-        enrich_pubmed_citations(manager, graph)
 
     send_graph_summary_mail(graph, report, time.time() - t)
 
@@ -189,7 +190,6 @@ def parse(
 
     # save in a variable because these get thrown away after commit
     network_id = network.id
-    report_id = report.id
 
     celery_logger.info(f'Stored network={network_id}.')
 
