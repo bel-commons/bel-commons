@@ -9,6 +9,15 @@ import flask_security
 
 from bel_commons.core import FlaskBio2BEL, PyBELSQLAlchemy
 
+__all__ = [
+    'bootstrap',
+    'mail',
+    'security',
+    'swagger',
+    'bio2bel',
+    'db',
+]
+
 bootstrap = flask_bootstrap.Bootstrap()
 
 mail = flask_mail.Mail()

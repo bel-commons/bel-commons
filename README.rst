@@ -11,8 +11,8 @@ If you find BEL Commons useful in your work, please consider citing [Hoyt2018]_ 
 .. [Hoyt2018] Hoyt, C. T., Domingo-Fernández, D., & Hofmann-Apitius, M. (2018). `BEL Commons: an environment for
               exploration and analysis of networks encoded in Biological Expression Language
               <https://doi.org/10.1093/database/bay126>`_. *Database*, 2018(3), 1–11.
-.. [Hoyt2017] Hoyt, C. T., Konotopez, A., & Ebeling, C., (2018). `PyBEL: a computational framework for Biological
-              Expression Language <https://doi.org/10.1093/bioinformatics/btx660>`_. *Bioinformatics (Oxford, England)*,
+.. [Hoyt2017] Hoyt, C. T., Konotopez, A., & Ebeling, C., (2017). `PyBEL: a computational framework for Biological
+              Expression Language <https://doi.org/10.1093/bioinformatics/btx660>`_. *Bioinformatics*,
               34(4), 703–704.
 
 System Requirements
@@ -28,7 +28,7 @@ Software
 
 Hardware
 ~~~~~~~~
-At least 2GB RAM for PyBEL's parser
+At least 2GB RAM for the PyBEL compiler
 
 Installation
 ------------
@@ -48,9 +48,10 @@ or PostgreSQL and install their corresponding connectors:
     
 Run with Docker
 ---------------
-Create a file called '.env' and generate both SECRET_KEY and SECURITY_PASSWORD_SALT.
+Create a file called ``.env`` and generate both ``SECRET_KEY`` and ``SECURITY_PASSWORD_SALT``.
 
 .. code-block:: sh
+
     SECRET_KEY=mypassword
     SECURITY_PASSWORD_SALT=mypassword
 
@@ -60,6 +61,10 @@ Run docker compose:
 
     $ docker-compose up
 
+Ports exposed:
+
+- 5002: BEL Commons web application
+- 5432: PostgreSQL database
 
 License
 -------

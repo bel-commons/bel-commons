@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
-"""Runs the Celery worker for BEL Commons.
+"""Holds the Celery worker for BEL Commons.
 
-Use: :code:`python3 -m celery -A bel_commons.celery_worker.celery worker` while also laughing at how ridiculously
-redundant this nomenclature is.
+Use: :code:`python3 -m celery worker -A bel_commons.wsgi.celery_app` to run such that it runs with
+the web application's configuration.
 """
 
 from __future__ import annotations

@@ -14,10 +14,10 @@ services:
       BEL_COMMONS_SECRET_KEY: ${SECRET_KEY}
       BEL_COMMONS_SECURITY_PASSWORD_SALT: ${SECURITY_PASSWORD_SALT}
     restart: always
-    command: gunicorn -b 0.0.0.0:5000 bel_commons.wsgi:flask_app --log-level=INFO
+    command: gunicorn -b 0.0.0.0:5002 bel_commons.wsgi:flask_app --log-level=INFO
     # add more workers later -w ${PYBEL_GUNICORN_NUMBER_WORKERS}
     ports:
-      - 80:5000
+      - 5002:5002
     depends_on:
      - database14
      - broker
