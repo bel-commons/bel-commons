@@ -311,6 +311,11 @@ def send_graph_summary_mail(graph: BELGraph, report: Report, time_difference: fl
     :param time_difference: The time difference to log
     """
     with current_app.app_context():
+        mail = current_app.extensions.get('mail')
+        write_reports = current_app.config['WRITE_REPORTS']
+        if not mail and not write_reports:
+            return
+
         html = render_template(
             'email_report.html',
             graph=graph,
@@ -319,7 +324,6 @@ def send_graph_summary_mail(graph: BELGraph, report: Report, time_difference: fl
             summary=BELGraphSummary.from_graph(graph),
         )
 
-        mail = current_app.extensions.get('mail')
         if mail is not None:
             mail.send_message(
                 subject=f'Parsing Report for {graph}',
