@@ -318,6 +318,13 @@
                                                     </a>
                                                 </li>
                                                 <li>
+                                                    <a href="{{ url_for('dbs.export_network', network_id=network.id, serve_format='graphml-umbrella') }}">
+                                                        <span class="glyphicon glyphicon-download"
+                                                              aria-hidden="true"></span>
+                                                        GraphML-Umbrella
+                                                    </a>
+                                                </li>
+                                                <li>
                                                     <a href="{{ url_for('dbs.export_network', network_id=network.id, serve_format='csv') }}">
                                                     <span class="glyphicon glyphicon-download"
                                                           aria-hidden="true"></span> CSV</a>
