@@ -120,7 +120,7 @@ def serve_network(graph: BELGraph, serve_format: Optional[str] = None) -> Respon
 
     elif serve_format == 'graphml':
         bio = BytesIO()
-        to_graphml(graph, bio)
+        to_graphml(graph, bio, schema='umbrella')
         bio.seek(0)
         return send_file(
             bio,
