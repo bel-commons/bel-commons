@@ -42,7 +42,7 @@ class BELCommonsConfig(EasyConfig):
     JSONIFY_PRETTYPRINT_REGULAR: bool = True
 
     #: Should celery be used?
-    USE_CELERY: bool = False
+    USE_CELERY: bool = True
 
     #: Celery broker URL. If it's running on redis, use ``CELERY_BROKER_URL = 'redis://XXX:6379'`` where XXX is the
     # name of the container in docker-compose or localhost if running locally.
