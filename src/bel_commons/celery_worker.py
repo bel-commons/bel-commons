@@ -115,7 +115,7 @@ def parse(
 
     parse_kwargs.setdefault('public', True)
     parse_kwargs.setdefault('citation_clearing', True)
-    parse_kwargs.setdefault('infer_origin', True)
+    parse_kwargs.setdefault('infer_origin', False)
     parse_kwargs.setdefault('identifier_validation', True)
 
     report = Report(
