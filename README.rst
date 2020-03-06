@@ -96,6 +96,10 @@ of `Charles Tapley Hoyt <https://github.com/cthoyt>`_ at `Fraunhofer SCAI <https
 partial support from the `IMI <https://www.imi.europa.eu/>`_ project,
 `AETIONOMY <http://www.aetionomy.eu/>`_.
 
+Disclaimer
+----------
+BEL Commons is a scientific web application that has been developed in an academic capacity, and thus comes with no warranty or guarantee of maintenance, support, or back-up of data.
+
 .. |build| image:: https://travis-ci.com/bel-commons/bel-commons.svg?branch=master
     :target: https://travis-ci.com/bel-commons/bel-commons
     :alt: Travis-CI Build Status
