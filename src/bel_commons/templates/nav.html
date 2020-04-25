@@ -9,7 +9,8 @@
                 <span class="icon-bar"></span>
             </button>
             <a class="navbar-brand" href="{{ url_for('ui.home') }}">
-                <img alt="BEL Commons" src="{{ url_for('static', filename='img/PyBEL-square-100.png') }}"></a>
+                <img alt="BEL Commons" src="{{ url_for('static', filename='img/PyBEL-square-100.png') }}">
+            </a>
         </div>
         <div class="navbar-collapse collapse" id="485848c5cd0b7dabdf24f858e4f3abbf21fdb984">
             <ul class="nav navbar-nav">
@@ -18,25 +19,15 @@
                 </li>
                 <li class="dropdown">
                     <a class="dropdown-toggle nav-header" data-toggle="dropdown" role="button" aria-haspopup="true"
-                       aria-expanded="false">SCAI Resources <span class="caret"></span></a>
+                       aria-expanded="false">BEL Links<span class="caret"></span></a>
                     <ul class="dropdown-menu">
-                        <li><a class="nav-header"
-                               href="http://belief.scai.fraunhofer.de/BeliefDashboard">BELIEF</a></li>
-                        <li><a class="nav-header" href="https://neurommsig.scai.fraunhofer.de/">NeuroMMSig</a></li>
-                        <li><a class="nav-header" href="https://compath.scai.fraunhofer.de/">ComPath</a></li>
-                        <li><a class="nav-header" href="https://pathme.scai.fraunhofer.de/">PathMe</a></li>
-                        <li>
-                            <a class="nav-header" href="https://arty.scai.fraunhofer.de/artifactory/bel/">
-                                BEL Resources
-                            </a>
-                        </li>
-                        <li>
-                            <a class="nav-header" href="http://academia.scaiview.com/academia/">SCAIView</a>
-                        </li>
+                        <li><a class="nav-header" href="https://language.bel.bio/">BEL Specification</a></li>
+                        <li><a class="nav-header" href="https://github.com/pybel/pybel">PyBEL</a></li>
+                        <li><a class="nav-header" href="https://github.com/bio2bel/bio2bel">Bio2BEL</a></li>
+                        <li><a class="nav-header" href="https://neurommsig.scai.fraunhofer.de">NeuroMMSig</a></li>
+                        <li><a class="nav-header" href="https://compath.scai.fraunhofer.de">ComPath</a></li>
+                        <li><a class="nav-header" href="https://pathme.scai.fraunhofer.de">PathMe</a></li>
                     </ul>
-                </li>
-                <li>
-                    <a href="{{ url_for('ui.view_legal') }}">Legal</a>
                 </li>
             </ul>
 
@@ -59,13 +50,13 @@
                 {% else %}
                     <li><a href="{{ url_for('security.login') }}">Log In</a></li>
                 {% endif %}
+                <!-- Your logo goes here!
                 <li>
-                    <a id="nav-scai-logo"
-                       href="https://www.scai.fraunhofer.de/en/business-research-areas/bioinformatics.html">
-                        <img alt="Fraunhofer SCAI"
-                             src="{{ url_for('static', filename='img/scai_logo.svg') }}">
+                    <a id="nav-logo" href="">
+                        <img src="" />
                     </a>
                 </li>
+                -->
             </ul>
         </div>
     </div>

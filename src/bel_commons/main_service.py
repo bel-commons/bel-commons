@@ -14,10 +14,6 @@ from flask_security import current_user, login_required, roles_required
 
 import pybel
 import pybel.struct.query
-import pybel_tools
-from bel_commons.celery_worker import celery_app
-from bel_commons.core import manager
-from bel_commons.ext import bio2bel
 from bio2bel import get_version as get_bio2bel_version
 from pybel.manager.models import Citation, Edge, Evidence, Namespace, NamespaceEntry
 from pybel.struct.grouping.annotations import get_subgraphs_by_annotation
@@ -25,12 +21,14 @@ from pybel.struct.mutation import collapse_to_genes, remove_associations, remove
 from pybel.struct.pipeline import Pipeline
 from pybel.struct.pipeline.exc import MissingPipelineFunctionError
 from pybel.struct.query import QueryMissingNetworksError
-from pybel_tools.biogrammar.double_edges import summarize_completeness
-from pybel_tools.summary.error_summary import calculate_error_by_annotation
+from .celery_worker import celery_app
 from .constants import SQLALCHEMY_DATABASE_URI
+from .core import manager
 from .explorer_toolbox import get_explorer_toolbox
+from .ext import bio2bel
 from .manager_utils import next_or_jsonify
 from .models import EdgeComment, EdgeVote, Experiment, Omic, Query, Report, User
+from .tools_compat import calculate_error_by_annotation, get_tools_version, summarize_completeness
 from .utils import calculate_overlap_info
 from .version import get_version as get_bel_commons_version
 
@@ -104,7 +102,7 @@ def home():
         manager=manager,
         blueprints=set(current_app.blueprints),
         pybel_version=pybel.get_version(),
-        pybel_tools_version=pybel_tools.get_version(),
+        tools_version=get_tools_version(),
         bio2bel_version=get_bio2bel_version(),
         bel_commons_version=get_bel_commons_version(),
     )
@@ -453,11 +451,6 @@ def view_name(name_id: int):
     )
 
 
-@ui_blueprint.route('/legal')
-def view_legal():
-    """Render the legal info."""
-    return render_template('meta/legal.html')
-
 
 @ui_blueprint.route('/about')
 def view_about():
@@ -465,7 +458,7 @@ def view_about():
     metadata = [
         ('Python Version', sys.version),
         ('PyBEL Version', pybel.get_version()),
-        ('PyBEL Tools Version', pybel_tools.get_version()),
+        ('PyBEL Tools Version', get_tools_version()),
         ('BEL Commons Version', get_bel_commons_version()),
         ('Deployed', time_instantiated),
     ]

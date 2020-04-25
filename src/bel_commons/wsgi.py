@@ -15,13 +15,13 @@ from bel_commons.application_utils import (
     register_transformations, register_users_from_manifest,
 )
 from bel_commons.celery_utils import register_celery
-from bel_commons.config import BELCommonsConfig
+from bel_commons.config import bel_commons_config
 from bel_commons.constants import (
     MAIL_DEFAULT_SENDER, SENTRY_DSN, SQLALCHEMY_DATABASE_URI,
     SQLALCHEMY_TRACK_MODIFICATIONS, SWAGGER, SWAGGER_CONFIG,
 )
 from bel_commons.converters import IntListConverter, ListConverter
-from bel_commons.core import manager, user_datastore
+from bel_commons.core import butler, manager, user_datastore
 from bel_commons.database_service import api_blueprint
 from bel_commons.ext import bio2bel, bootstrap, db, mail, security, swagger
 from bel_commons.forms import ExtendedRegisterForm
@@ -34,14 +34,11 @@ from bel_commons.views import (
 from pybel.constants import get_cache_connection
 
 __all__ = [
-    'bel_commons_config',
     'flask_app',
     'celery_app',
 ]
 
 logger = logging.getLogger(__name__)
-
-bel_commons_config = BELCommonsConfig.load()
 
 flask_app = Flask(__name__)
 flask_app.config.update(bel_commons_config.to_dict())
@@ -60,10 +57,16 @@ flask_app.url_map.converters.update({
     'list': ListConverter,
 })
 
-# Initialize extensions
+logger.info('Initializing Bootstrap (%s)', bootstrap.__class__)
 bootstrap.init_app(flask_app)
+
+logger.info('Initializing Swagger (%s)', swagger.__class__)
 swagger.init_app(flask_app)
+
+logger.info('Initializing Database (%s)', db.__class__)
 db.init_app(flask_app)
+
+logger.info('Initializing Bio2BEL (%s)', bio2bel.__class__)
 bio2bel.init_app(flask_app)
 
 if not bel_commons_config.USE_CELERY:
@@ -87,7 +90,7 @@ if bel_commons_config.MAIL_SERVER is not None:
     # Set Mail defaults
     flask_app.config.setdefault(
         MAIL_DEFAULT_SENDER,
-        ("BEL Commons", 'bel-commons@scai.fraunhofer.de'),
+        (bel_commons_config.MAIL_DEFAULT_SENDER_NAME, bel_commons_config.MAIL_DEFAULT_SENDER_EMAIL),
     )
 
     mail.init_app(flask_app)
@@ -132,6 +135,7 @@ if bel_commons_config.register_examples:
         register_examples(
             manager=manager,
             user_datastore=user_datastore,
+            butler=butler,
         )
 
 if bel_commons_config.register_admin:

@@ -3,20 +3,22 @@
 """Extensions to the PyBEL manager to support BEL Commons."""
 
 import logging
-import time
 from functools import lru_cache
-from typing import Iterable, List, Optional
+from typing import Iterable, List, Optional, Union
 
 import networkx
+import time
 from flask import Response, abort, current_app, render_template
 from flask_security import current_user
+from tqdm import tqdm
 
 import pybel.struct.query
 from pybel import BELGraph
 from pybel.manager.models import Author, Citation, Edge, Evidence, Namespace, Network, Node
-from pybel_tools.summary import BELGraphSummary
 from .manager_base import WebManagerBase, iter_recent_public_networks, iter_unique_networks
+from .manager_utils import fill_out_report
 from .models import Experiment, Project, Query, Report, User, UserQuery
+from .tools_compat import BELGraphSummary
 from .utils import return_or_404
 
 __all__ = [
@@ -435,3 +437,30 @@ class WebManager(_WebManager):
         q = pybel.struct.query.Query([network.id for network in node.networks])
         q.append_seeding_neighbors(node.as_bel())
         return self.build_query(q)
+
+    def sanitize(self, user: Union[None, str, User] = None, public: bool = False) -> None:
+        """Add reports for all networks that are missing reports."""
+        if user is None:
+            user = self.user_datastore.get_user(1)
+        elif isinstance(user, str):
+            user = self.user_datastore.find_user(email=user)
+
+        logger.info(f'Adding {user} as owner of unreported uploads')
+
+        for network in self._iter_unreported_networks():
+            logger.info(f'Sanitizing {network}')
+            report = Report(
+                network=network,
+                user=user,
+                public=public,
+                completed=True,
+            )
+            fill_out_report(network=network, report=report)
+            self.session.add(report)
+
+        self.session.commit()
+
+    def _iter_unreported_networks(self) -> Iterable[Network]:
+        for network in tqdm(self.list_networks(), desc='sanitizing networks', leave=False):
+            if network.report is None or network.report.number_nodes is None:
+                yield network

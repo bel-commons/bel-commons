@@ -9,31 +9,28 @@ corresponding to objects.
 from __future__ import annotations
 
 import logging
-import time
-from typing import Any, Mapping, Optional, Tuple, Union
+from typing import Any, Mapping, Optional, Tuple
 
 import networkx as nx
 import pandas as pd
+import time
 from flask import Response, abort, flash, jsonify, redirect, request
 
-from pybel import BELGraph, Manager
+from pybel import BELGraph, BaseEntity, Manager
 from pybel.constants import GENE
-from pybel.dsl import BaseEntity
 from pybel.manager.models import Network
-from pybel.struct.mutation import collapse_to_genes
-from pybel_tools.analysis.heat import calculate_average_scores_on_subgraphs
-from pybel_tools.filters import remove_nodes_by_namespace
-from pybel_tools.generation import generate_bioprocess_mechanisms
-from pybel_tools.integration import overlay_type_data
-from pybel_tools.mutation import rewire_variants_to_genes
+from pybel.struct import collapse_to_genes
 from .constants import LABEL
 from .models import Experiment, Omic, Report, User
+from .tools_compat import (
+    calculate_average_scores_on_subgraphs, generate_bioprocess_mechanisms, overlay_type_data,
+    remove_nodes_by_namespace, rewire_variants_to_genes,
+)
 
 __all__ = [
     'fill_out_report',
     'insert_graph',
     'create_omic',
-    'calculate_scores',
     'run_heat_diffusion_helper',
     'next_or_jsonify',
 ]
@@ -41,8 +38,11 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 
-def fill_out_report(graph: BELGraph, network: Network, report: Report) -> None:
+def fill_out_report(*, network: Network, report: Report, graph: Optional[BELGraph] = None) -> None:
     """Fill out the report for the network."""
+    if graph is None:
+        graph = network.as_bel()
+
     number_nodes = graph.number_of_nodes()
 
     try:
@@ -66,7 +66,7 @@ def fill_out_report(graph: BELGraph, network: Network, report: Report) -> None:
 def insert_graph(
     manager: Manager,
     graph: BELGraph,
-    user: Union[int, User] = 1,
+    user: User,
     public: bool = False,
     use_tqdm: bool = False,
 ) -> Network:
@@ -85,15 +85,7 @@ def insert_graph(
 
     network = manager.insert_graph(graph, use_tqdm=use_tqdm)
 
-    report = Report(public=public)
-
-    if user:
-        if isinstance(user, int):
-            report.user_id = user
-        elif isinstance(user, User):
-            report.user = user
-        else:
-            raise TypeError(f'invalid user: {user.__class__}: {user}')
+    report = Report(public=public, user=user or butler)
 
     fill_out_report(graph=graph, network=network, report=report)
 
@@ -136,38 +128,6 @@ def create_omic(
         result.user = user
 
     return result
-
-
-def calculate_scores(
-    graph: BELGraph,
-    data: Mapping[str, float],
-    runs: int,
-    use_tqdm: bool = False,
-    tqdm_kwargs: Optional[Mapping[str, Any]] = None,
-) -> Mapping[BaseEntity, Tuple]:
-    """Calculate heat diffusion scores.
-
-    :param graph: A BEL graph
-    :param data: A dictionary of {name: data}
-    :param runs: The number of permutations
-    :param use_tqdm:
-    :return: A dictionary of {pybel node: results tuple} from
-     :py:func:`pybel_tools.analysis.ucmpa.calculate_average_scores_on_subgraphs`
-    """
-    remove_nodes_by_namespace(graph, {'MGI', 'RGD'})
-    collapse_to_genes(graph)
-    rewire_variants_to_genes(graph)
-
-    overlay_type_data(graph, data, LABEL, GENE, 'HGNC', overwrite=False, impute=0)
-
-    candidate_mechanisms = generate_bioprocess_mechanisms(graph, LABEL)
-    return calculate_average_scores_on_subgraphs(
-        candidate_mechanisms,
-        LABEL,
-        runs=runs,
-        use_tqdm=use_tqdm,
-        tqdm_kwargs=tqdm_kwargs,
-    )
 
 
 def run_heat_diffusion_helper(
@@ -216,4 +176,36 @@ def next_or_jsonify(
         status=status,
         message=message,
         **kwargs
+    )
+
+
+def calculate_scores(
+    graph: BELGraph,
+    data: Mapping[str, float],
+    runs: int,
+    use_tqdm: bool = False,
+    tqdm_kwargs: Optional[Mapping[str, Any]] = None,
+) -> Mapping[BaseEntity, Tuple]:
+    """Calculate heat diffusion scores.
+
+    :param graph: A BEL graph
+    :param data: A dictionary of {name: data}
+    :param runs: The number of permutations
+    :param use_tqdm:
+    :return: A dictionary of {pybel node: results tuple} from
+     :py:func:`pybel_tools.analysis.ucmpa.calculate_average_scores_on_subgraphs`
+    """
+    remove_nodes_by_namespace(graph, {'MGI', 'RGD'})
+    collapse_to_genes(graph)
+    rewire_variants_to_genes(graph)
+
+    overlay_type_data(graph, data, LABEL, GENE, 'HGNC', overwrite=False, impute=0)
+
+    candidate_mechanisms = generate_bioprocess_mechanisms(graph, LABEL)
+    return calculate_average_scores_on_subgraphs(
+        candidate_mechanisms,
+        LABEL,
+        runs=runs,
+        use_tqdm=use_tqdm,
+        tqdm_kwargs=tqdm_kwargs,
     )

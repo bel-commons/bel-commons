@@ -9,8 +9,8 @@ from typing import Optional
 from flask import Response, jsonify, send_file
 
 from pybel import (
-    BELGraph, to_bel_script_lines, to_bytes, to_csv, to_cx, to_graphml, to_gsea, to_jgif, to_nodelink,
-    to_sif,
+    BELGraph, to_bel_script_lines, to_bytes, to_csv, to_cx, to_graphdati, to_graphml, to_gsea, to_indra_statements_json,
+    to_jgif, to_nodelink, to_sif, to_umbrella_nodelink,
 )
 from pybel.canonicalize import edge_to_bel
 from pybel.constants import (
@@ -99,11 +99,20 @@ def serve_network(graph: BELGraph, serve_format: Optional[str] = None) -> Respon
     elif serve_format in {'nl', 'nodelink', 'json'}:
         return jsonify(to_nodelink(graph))
 
+    elif serve_format == 'nodelink-umbrella':
+        return jsonify(to_umbrella_nodelink(graph))
+
+    elif serve_format == 'graphdati':
+        return jsonify(to_graphdati(graph))
+
     elif serve_format == 'cx':
         return jsonify(to_cx(graph))
 
     elif serve_format == 'jgif':
         return jsonify(to_jgif(graph))
+
+    elif serve_format == 'indra':
+        return jsonify(to_indra_statements_json(graph))
 
     elif serve_format == 'bytes':
         data = BytesIO(to_bytes(graph))

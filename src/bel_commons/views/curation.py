@@ -19,7 +19,7 @@ from wtforms.validators import DataRequired
 from bel_resources import parse_bel_resource, write_namespace
 from pybel import get_version as get_pybel_version
 from pybel.constants import NAMESPACE_DOMAIN_TYPES
-from pybel_tools.document_utils import write_boilerplate
+from ..tools_compat import write_boilerplate
 
 logger = logging.getLogger(__name__)
 

@@ -28,12 +28,12 @@ from bel_commons.constants import MAIL_DEFAULT_SENDER
 from bel_commons.manager import WebManager
 from bel_commons.manager_utils import fill_out_report, insert_graph, run_heat_diffusion_helper
 from bel_commons.models import Report
+from bel_commons.tools_compat import BELGraphSummary
 from bel_resources.exc import ResourceError
 from pybel import BELGraph, from_nodelink
 from pybel.manager.citation_utils import enrich_pubmed_citations
 from pybel.parser.exc import InconsistentDefinitionError
 from pybel.struct.mutation import enrich_protein_and_rna_origins
-from pybel_tools.summary import BELGraphSummary
 
 __all__ = [
     'celery_app',

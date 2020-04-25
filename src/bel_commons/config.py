@@ -8,12 +8,15 @@ Resources:
 - https://realpython.com/blog/python/dockerizing-flask-with-compose-and-machine-from-localhost-to-the-cloud/
 """
 
+import logging
 from typing import Optional
 
 from dataclasses_json import dataclass_json
 from easy_config import EasyConfig
 
 from pybel.config import CONFIG_FILE_PATHS
+
+logger = logging.getLogger(__name__)
 
 _DEFAULT_SECURITY_SALT = 'default_please_override'
 
@@ -33,6 +36,11 @@ class BELCommonsConfig(EasyConfig):
 
     #: The Flask app secret key.
     SECRET_KEY: str
+
+    #: Password for the butler account
+    BUTLER_PASSWORD: str
+    BUTLER_EMAIL: str = 'butler'
+    BUTLER_NAME: str = 'BEL Commons Butler'
 
     #: Flask app debug mode
     DEBUG: bool = False
@@ -62,9 +70,11 @@ class BELCommonsConfig(EasyConfig):
     SECURITY_PASSWORD_SALT: str = _DEFAULT_SECURITY_SALT
 
     MAIL_SERVER: Optional[str] = None
+    MAIL_DEFAULT_SENDER_NAME: str = 'BEL Commons'
+    MAIL_DEFAULT_SENDER_EMAIL: Optional[str] = None
 
     #: Should example graphs be automatically included?
-    register_examples: bool = False
+    register_examples: bool = True
     #: Path to user manifest file
     register_users: Optional[str] = None
     register_admin: bool = True
@@ -88,9 +98,8 @@ class BELCommonsConfig(EasyConfig):
             if self.SECURITY_SEND_REGISTER_EMAIL and not self.MAIL_SERVER:
                 raise ValueError('Configuration is missing MAIL_SERVER')
 
+        if self.MAIL_SERVER is not None and self.MAIL_DEFAULT_SENDER_EMAIL is None:
+            raise ValueError('MAIL_DEFAULT_SENDER_EMAIL must be set if MAIL_SERVER is set')
 
-if __name__ == '__main__':
-    import json
 
-    b = BELCommonsConfig.load()
-    print(json.dumps(b.to_dict(), indent=2))
+bel_commons_config = BELCommonsConfig.load()

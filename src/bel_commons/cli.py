@@ -10,15 +10,15 @@ import json
 import logging
 import multiprocessing
 import os
-import sys
-import time
-from typing import Iterable, Optional, TextIO
+from typing import Optional, TextIO
 
 import click
-from flask import Flask
-from tqdm import tqdm
-
+import sys
+import time
 from bio2bel import get_version as get_bio2bel_version
+from flask import Flask
+from tabulate import tabulate
+
 from pybel import BELGraph, from_bel_script
 from pybel.cli import connection_option, graph_pickle_argument
 from pybel.manager.models import (
@@ -26,23 +26,30 @@ from pybel.manager.models import (
     edge_annotation, edge_property, network_edge, network_node, node_modification,
 )
 from pybel.version import get_version as pybel_version
-from pybel_tools.version import get_version as pybel_tools_get_version
 from .manager import WebManager
 from .manager_utils import insert_graph
 from .models import (
     Assembly, EdgeComment, EdgeVote, Experiment, NetworkOverlap, Omic, Project, Query, Report, Role,
     User, UserQuery, assembly_network, projects_networks, projects_users, users_networks,
 )
+from .tools_compat import get_tools_version
 from .version import get_version as get_bel_commons_version
 
 logger = logging.getLogger('bel_commons')
 
 
-def _iterate_user_strings(manager_: WebManager) -> Iterable[str]:
+def _iterate_user_strings(manager_: WebManager) -> str:
     """Iterate over strings to print describing users."""
-    for user in manager_.session.query(User).all():
-        roles_ = ','.join(sorted(r.name for r in user.roles))
-        yield f'{user.id}\t{user.email}\t{user.password}\t{roles_}\t{user.name if user.name else ""}'
+    return [
+        (
+            user.id,
+            user.email,
+            user.password,
+            ','.join(sorted(r.name for r in user.roles)),
+            user.name or ''
+        )
+        for user in manager_.session.query(User).all()
+    ]
 
 
 def _set_logging_level(level: int) -> None:
@@ -106,7 +113,7 @@ def make_gunicorn_app(app: Flask, host: str, port: str, workers: int):
 
 
 _main_help = f"""BEL Commons Command Line Interface on {sys.executable}
-with PyBEL v{pybel_version()}, PyBEL Tools v{pybel_tools_get_version()},
+with PyBEL v{pybel_version()}, PyBEL Tools v{get_tools_version()},
 Bio2BEL v{get_bio2bel_version()}, and BEL Commons v{get_bel_commons_version()}
 """
 
@@ -213,40 +220,11 @@ def drop(manager: WebManager, user_dump):
     """Drop the database."""
     click.echo(f'Dumping users to {user_dump}')
     for s in _iterate_user_strings(manager):
-        click.echo(s, file=user_dump)
+        click.echo('\t'.join(s), file=user_dump)
     click.echo('Done dumping users')
     click.echo('Dropping database')
     manager.drop_all()
     click.echo('Done dropping database')
-
-
-@manage.command()
-@click.option('--email')
-@click.option('--public', is_flag=True)
-@click.pass_obj
-def sanitize(manager: WebManager, email: str, public: bool):
-    """Generate reports for all graphs missing them."""
-    if email:
-        user = manager.user_datastore.find_user(email=email)
-    else:
-        user = manager.user_datastore.get_user(1)
-
-    click.echo(f'Adding {user} as owner of unreported uploads')
-
-    for network in tqdm(manager.list_networks()):
-        if network.report is not None:
-            continue
-
-        click.echo(f'Sanitizing {network}')
-        report = Report(
-            network=network,
-            user=user,
-            public=public,
-            completed=True,
-        )
-        manager.session.add(report)
-
-    manager.session.commit()
 
 
 @manage.command()
@@ -289,22 +267,15 @@ def upload(manager: WebManager, graph: BELGraph, public: bool):
 @click.pass_obj
 def ls(manager: WebManager):
     """List network names, versions, and optionally, descriptions."""
-    for n in manager.list_networks():
-        click.echo('{}\t{}\t{}'.format(n.id, n.name, n.version))
+    manager.sanitize()
+    click.echo(tabulate(
+        [
+            (n.id, n.name, n.version, n.report.user, n.report.public, n.report.number_nodes, n.report.number_edges)
+            for n in manager.list_networks()
+        ],
+        headers=['id', 'name', 'version', 'owner', 'public', 'nodes', 'edges'],
+    ))
 
-
-@manage.group()
-def reports():
-    """Manage reports."""
-
-
-@reports.command()
-@click.pass_obj
-def ls(manager: WebManager):
-    """List reports."""
-    click.echo('id\tnetwork\tuser\tpublic')
-    for report in manager.session.query(Report).all():
-        click.echo(f'{report.id}\t{report.network}\t{report.user}\t{report.public}')
 
 
 @manage.group()
@@ -316,8 +287,10 @@ def users():
 @click.pass_obj
 def ls(manager: WebManager):
     """Lists all users."""
-    for s in _iterate_user_strings(manager):
-        click.echo(s)
+    click.echo(tabulate(
+        _iterate_user_strings(manager),
+        headers=['id', 'email', 'password', 'roles', 'name'],
+    ))
 
 
 @users.command()

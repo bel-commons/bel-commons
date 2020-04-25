@@ -11,7 +11,6 @@ from flask_admin import Admin
 from flask_security import SQLAlchemyUserDatastore
 from raven.contrib.flask import Sentry
 
-from bel_commons.models import Assembly, Query
 from pybel import BELGraph, Manager
 from pybel.examples import braf_graph, egf_graph, homology_graph, sialic_acid_graph, statin_graph
 from pybel.manager.models import Author, Citation, Edge, Evidence, Namespace, NamespaceEntry, Network, Node
@@ -23,7 +22,7 @@ from .admin_model_views import (
 )
 from .constants import SENTRY_DSN
 from .manager_utils import insert_graph
-from .models import EdgeComment, EdgeVote, Experiment, NetworkOverlap, Report, Role, User, UserQuery
+from .models import Assembly, EdgeComment, EdgeVote, Experiment, NetworkOverlap, Query, Report, Role, User, UserQuery
 
 logger = logging.getLogger(__name__)
 logging.getLogger('urllib3.connectionpool').setLevel(logging.WARNING)
@@ -126,12 +125,12 @@ def register_error_handlers(app: Flask, *, sentry: Optional[Sentry] = None) -> N
         return render_template('errors/403.html')
 
 
-def register_examples(manager: Manager, user_datastore: SQLAlchemyUserDatastore) -> None:
+def register_examples(manager: Manager, user_datastore: SQLAlchemyUserDatastore, butler: User) -> None:
     """Insert example graphs."""
     for graph in (sialic_acid_graph, egf_graph, statin_graph, homology_graph):
         if not manager.has_name_version(graph.name, graph.version):
             logger.info('uploading public example graph: %s', graph)
-            insert_graph(manager, graph, public=True)
+            insert_graph(manager, graph, user=butler, public=True)
 
     test_user = user_datastore.find_user(email='test@example.com')
     if test_user:

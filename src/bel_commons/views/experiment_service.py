@@ -2,9 +2,10 @@
 
 """A blueprint for differential gene expression (-omics) experiments and their analysis."""
 
+import csv
 import json
 import logging
-import time
+import pickle
 from collections import defaultdict
 from io import StringIO
 from operator import itemgetter
@@ -14,16 +15,17 @@ import flask
 import numpy as np
 import pandas as pd
 import pandas.errors
-from flask import Blueprint, current_app, make_response, redirect, render_template, request, url_for
+import time
+from flask import Blueprint, abort, current_app, make_response, redirect, render_template, request, url_for
 from flask_security import current_user, login_required, roles_required
 from sklearn.cluster import KMeans
 
-from bel_commons.celery_worker import celery_app
-from bel_commons.core import manager
-from pybel_tools.analysis.heat import RESULT_LABELS
+from ..celery_worker import celery_app
+from ..core import manager
 from ..forms import DifferentialGeneExpressionForm
 from ..manager_utils import create_omic, next_or_jsonify
 from ..models import Experiment, Omic, UserQuery
+from ..tools_compat import RESULT_LABELS
 
 __all__ = [
     'experiment_blueprint',
@@ -347,3 +349,43 @@ def get_dataframe_from_experiments(experiments: Iterable[Experiment], *, normali
         df = df.sort_values('Group')
 
     return df
+
+
+@experiment_blueprint.route('/download/<int:experiment_id>')
+@login_required
+def download_analysis(experiment_id: int):
+    """Download data from a given experiment as CSV.
+
+    ---
+    tags:
+      - experiment
+    parameters:
+      - name: experiment_id
+        in: path
+        description: The identifier of the experiment
+        required: true
+        type: integer
+        format: int32
+    responses:
+      200:
+        description: A CSV document with the results in it
+    """
+    experiment = manager.get_experiment_by_id_or_404(experiment_id)
+
+    if not current_user.has_experiment_rights(experiment):
+        abort(403)
+
+    si = StringIO()
+    cw = csv.writer(si)
+    csv_list = [('Namespace', 'Name') + tuple(RESULT_LABELS)]
+    experiment_data = pickle.loads(experiment.result)
+    csv_list.extend(
+        (namespace, name) + tuple(values)
+        for (_, namespace, name), values in experiment_data.items()
+    )
+    cw.writerows(csv_list)
+
+    output = make_response(si.getvalue())
+    output.headers["Content-Disposition"] = f'attachment; filename=experiment_{experiment_id}.csv'
+    output.headers["Content-type"] = "text/csv"
+    return output

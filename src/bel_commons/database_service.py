@@ -22,16 +22,12 @@ from pybel.constants import NAMESPACE, NAMESPACE_DOMAIN_OTHER
 from pybel.manager.citation_utils import enrich_citation_model, get_pubmed_citation_response
 from pybel.manager.models import Author, Citation, Edge, NamespaceEntry, Network, Node, network_edge
 from pybel.struct import get_random_path, get_subgraph_by_annotations
+from pybel.struct.filters import not_pathology
+from pybel.struct.mutation import get_subgraph_by_node_filter
 from pybel.struct.pipeline.decorators import no_arguments_map
 from pybel.struct.pipeline.exc import MissingPipelineFunctionError
 from pybel.struct.query import Query
 from pybel.struct.summary import get_pubmed_identifiers
-from pybel_tools.analysis.heat import RESULT_LABELS
-from pybel_tools.filters.node_filters import exclude_pathology_filter
-from pybel_tools.selection import get_subgraph_by_node_filter
-from pybel_tools.summary import (
-    get_authors, get_incorrect_names_by_namespace, get_naked_names, get_undefined_namespace_names,
-)
 from . import models
 from .constants import AND, BLACK_LIST, PATHOLOGY_FILTER, PATHS_METHOD, RANDOM_PATH, UNDIRECTED
 from .core import manager
@@ -39,6 +35,10 @@ from .ext import bio2bel
 from .manager_utils import fill_out_report, next_or_jsonify
 from .models import EdgeComment, Project, Report, User, UserQuery
 from .send_utils import serve_network, to_json_custom
+from .tools_compat import (
+    RESULT_LABELS, get_incorrect_names_by_namespace, get_naked_names,
+    get_undefined_namespace_names,
+)
 from .utils import add_edge_filter, get_tree_annotations
 
 __all__ = [
@@ -631,11 +631,14 @@ def export_network(network_id: int, serve_format: str) -> Response:
             type: string
             enum:
               - json
+              - nodelink-umbrekka
               - cx
               - jgif
               - bytes
+              - indra
               - bel
               - graphml
+              - graphml-umbrella
               - sif
               - csv
               - gsea
@@ -944,7 +947,7 @@ def get_paths(query_id, source_id, target_id):
         network = network.to_undirected()
 
     if remove_pathologies:
-        network = get_subgraph_by_node_filter(network, exclude_pathology_filter)
+        network = get_subgraph_by_node_filter(network, not_pathology)
 
     if method == 'all':
         paths = nx.all_simple_paths(network, source=source, target=target, cutoff=cutoff)
@@ -1228,8 +1231,8 @@ def get_all_authors(query_id):
         required: true
         type: integer
     """
-    graph = manager.cu_get_graph_from_query_id_or_404(query_id)
-    return jsonify(sorted(get_authors(graph)))
+    graph: BELGraph = manager.cu_get_graph_from_query_id_or_404(query_id)
+    return jsonify(sorted(graph.get_authors()))
 
 
 @api_blueprint.route('/api/author/suggestion/')
@@ -2258,44 +2261,6 @@ def drop_experiment_by_id(experiment_id: int):
     )
 
 
-@api_blueprint.route('/api/experiment/<int:experiment_id>/download')
-@login_required
-def download_analysis(experiment_id: int):
-    """Download data from a given experiment as CSV.
-
-    ---
-    tags:
-      - experiment
-    parameters:
-      - name: experiment_id
-        in: path
-        description: The identifier of the experiment
-        required: true
-        type: integer
-        format: int32
-    responses:
-      200:
-        description: A CSV document with the results in it
-    """
-    experiment = manager.get_experiment_by_id_or_404(experiment_id)
-
-    if not current_user.has_experiment_rights(experiment):
-        abort(403)
-
-    si = StringIO()
-    cw = csv.writer(si)
-    csv_list = [('Namespace', 'Name') + tuple(RESULT_LABELS)]
-    experiment_data = pickle.loads(experiment.result)
-    csv_list.extend(
-        (namespace, name) + tuple(values)
-        for (_, namespace, name), values in experiment_data.items()
-    )
-    cw.writerows(csv_list)
-
-    output = make_response(si.getvalue())
-    output.headers["Content-Disposition"] = f'attachment; filename=experiment_{experiment_id}.csv'
-    output.headers["Content-type"] = "text/csv"
-    return output
 
 
 ####################################

@@ -30,7 +30,7 @@ from pybel.struct import union
 from pybel.struct.query import SEED_DATA, SEED_METHOD, Seeding
 from pybel.struct.query.constants import NODE_SEED_TYPES
 from pybel.tokens import parse_result_to_dsl
-from pybel_tools.summary import BELGraphSummary
+from .tools_compat import BELGraphSummary
 
 ASSEMBLY_TABLE_NAME = 'pybel_assembly'
 ASSEMBLY_NETWORK_TABLE_NAME = 'pybel_assembly_network'

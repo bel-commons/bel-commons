@@ -1,7 +1,4 @@
 [flake8]
-ignore =
-    # Line too long, please.
-    # E501
 exclude =
     .tox,
     .git,
