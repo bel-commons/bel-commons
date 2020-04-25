@@ -6,6 +6,7 @@ import csv
 import json
 import logging
 import pickle
+import time
 from collections import defaultdict
 from io import StringIO
 from operator import itemgetter
@@ -15,7 +16,6 @@ import flask
 import numpy as np
 import pandas as pd
 import pandas.errors
-import time
 from flask import Blueprint, abort, current_app, make_response, redirect, render_template, request, url_for
 from flask_security import current_user, login_required, roles_required
 from sklearn.cluster import KMeans

@@ -451,7 +451,6 @@ def view_name(name_id: int):
     )
 
 
-
 @ui_blueprint.route('/about')
 def view_about():
     """Send the about page."""

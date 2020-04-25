@@ -91,7 +91,7 @@ def to_json_custom(
     return result
 
 
-def serve_network(graph: BELGraph, serve_format: Optional[str] = None) -> Response:
+def serve_network(graph: BELGraph, serve_format: Optional[str] = None) -> Response:  # noqa:C901
     """Help serialize a graph and download as a file."""
     if serve_format is None:
         return jsonify(to_json_custom(graph))

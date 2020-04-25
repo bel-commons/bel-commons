@@ -4,8 +4,53 @@ An environment for curating, validating, and exploring knowledge assemblies
 encoded in Biological Expression Language (BEL) to support elucidating
 disease-specific, mechanistic insight.
 
+Installation
+~~~~~~~~~~~~
+BEL Commons can be installed easily from `PyPI <https://pypi.python.org/pypi/bel_commons>`_ with the following code in
+your favorite shell:
+
+.. code-block:: sh
+
+    $ pip install bel_commons
+
+Get the latest code on `GitHub <https://github.com/bel-commons/bel-commons>`_
+with:
+
+.. code-block:: sh
+
+    $ python3 -m pip install git+https://github.com/bel-commons/bel-commons.git
+
+It's also suggested to use a relational database management system like PostgreSQL
+and install their corresponding connectors:
+
+.. code-block:: sh
+
+    $ python3 -m pip install psycopg2-binary
+
+Usage
+-----
+Run BEL Commons
+~~~~~~~~~~~~~~~
+A test server can be easily run with:
+
+.. code-block:: sh
+
+    $ bel-commons run
+
+A more powerful server like ``gunicorn`` can also be used like:
+
+.. code-block:: sh
+
+    $ gunicorn bel_commons.wsgi:flask_app
+
+Running with the Parser
+~~~~~~~~~~~~~~~~~~~~~~~
+To run the parser, you'll need an instance of a message queue like `RabbitMQ <https://www.rabbitmq.com>`_ (or
+any other message queue supported by `Celery <https://pypi.python.org/pypi/celery>`_), a results backend like
+`Redis <https://redis.io/>`_, and a worker. It's best to run in docker if you want to do this.
+
 Run with Docker
----------------
+~~~~~~~~~~~~~~~
 Clone this repo from GitHub
 
 .. code-block:: sh
@@ -31,43 +76,7 @@ Ports exposed:
 - 5002: BEL Commons web application
 - 5432: PostgreSQL database
 
-Running Locally
----------------
-Software Requirements
-~~~~~~~~~~~~~~~~~~~~~
-- `Python <https://www.python.org/>`_ 3.7+
-- `PostgreSQL <https://www.postgresql.org>`_
-- `RabbitMQ <https://www.rabbitmq.com>`_ (or other message queue supported
-  by `Celery <https://pypi.python.org/pypi/celery>`_)
-- `Redis <https://redis.io/>`_
 
-Hardware Requirements
-~~~~~~~~~~~~~~~~~~~~~
-At least 2GB RAM for the PyBEL compiler
-
-Installation
-~~~~~~~~~~~~
-Get the latest code on `GitHub <https://github.com/bel-commons/bel-commons>`_
-with:
-
-.. code-block:: sh
-
-    $ python3 -m pip install git+https://github.com/bel-commons/bel-commons.git
-
-It's also suggested to use a relational database management system like MySQL
-or PostgreSQL and install their corresponding connectors:
-
-.. code-block:: sh
-
-    $ python3 -m pip install psycopg2-binary
-
-
-License
--------
-This repository is under the `MIT License <https://github.com/bel-commons/bel-commons/blob/master/LICENSE>`_.
-
-Usage
------
 Reset the Database
 ~~~~~~~~~~~~~~~~~~
 For the times when you just have to burn it down and start over:

@@ -9,11 +9,11 @@ corresponding to objects.
 from __future__ import annotations
 
 import logging
+import time
 from typing import Any, Mapping, Optional, Tuple
 
 import networkx as nx
 import pandas as pd
-import time
 from flask import Response, abort, flash, jsonify, redirect, request
 
 from pybel import BELGraph, BaseEntity, Manager
@@ -85,7 +85,7 @@ def insert_graph(
 
     network = manager.insert_graph(graph, use_tqdm=use_tqdm)
 
-    report = Report(public=public, user=user or butler)
+    report = Report(public=public, user=user)
 
     fill_out_report(graph=graph, network=network, report=report)
 

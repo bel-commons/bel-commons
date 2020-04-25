@@ -3,11 +3,11 @@
 """Extensions to the PyBEL manager to support BEL Commons."""
 
 import logging
+import time
 from functools import lru_cache
 from typing import Iterable, List, Optional, Union
 
 import networkx
-import time
 from flask import Response, abort, current_app, render_template
 from flask_security import current_user
 from tqdm import tqdm

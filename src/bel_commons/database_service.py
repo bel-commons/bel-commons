@@ -35,10 +35,7 @@ from .ext import bio2bel
 from .manager_utils import fill_out_report, next_or_jsonify
 from .models import EdgeComment, Project, Report, User, UserQuery
 from .send_utils import serve_network, to_json_custom
-from .tools_compat import (
-    RESULT_LABELS, get_incorrect_names_by_namespace, get_naked_names,
-    get_undefined_namespace_names,
-)
+from .tools_compat import get_incorrect_names_by_namespace, get_naked_names, get_undefined_namespace_names
 from .utils import add_edge_filter, get_tree_annotations
 
 __all__ = [
@@ -2259,8 +2256,6 @@ def drop_experiment_by_id(experiment_id: int):
             'description': experiment.description,
         }
     )
-
-
 
 
 ####################################
