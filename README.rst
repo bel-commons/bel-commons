@@ -89,16 +89,21 @@ If you find BEL Commons useful in your work, please consider citing [Hoyt2018]_ 
               Expression Language <https://doi.org/10.1093/bioinformatics/btx660>`_. *Bioinformatics*,
               34(4), 703–704.
 
-Acknowledgement
----------------
-This package was originally developed with the results from the master's work
-of `Charles Tapley Hoyt <https://github.com/cthoyt>`_ at `Fraunhofer SCAI <https://www.scai.fraunhofer.de/>`_ with
-partial support from the `IMI <https://www.imi.europa.eu/>`_ project,
-`AETIONOMY <http://www.aetionomy.eu/>`_.
+Acknowledgements
+----------------
+Supporters
+~~~~~~~~~~
+This project has been supported by several organizations:
 
-Disclaimer
-----------
-BEL Commons is a scientific web application that has been developed in an academic capacity, and thus comes with no warranty or guarantee of maintenance, support, or back-up of data.
+- `University of Bonn <https://www.uni-bonn.de>`_
+- `Bonn Aachen International Center for IT <http://www.b-it-center.de>`_
+- `Fraunhofer Institute for Algorithms and Scientific Computing <https://www.scai.fraunhofer.de>`_
+- `Fraunhofer Center for Machine Learning <https://www.cit.fraunhofer.de/de/zentren/maschinelles-lernen.html>`_
+- `IMI <https://www.imi.europa.eu/>`_ (in the `AETIONOMY <http://www.aetionomy.eu/>`_ project)
+
+Logo
+~~~~
+The BEL Commons `logo <https://github.com/pybel/pybel-art>`_ was designed by `Scott Colby <https://github.com/scolby33>`_.
 
 .. |build| image:: https://travis-ci.com/bel-commons/bel-commons.svg?branch=master
     :target: https://travis-ci.com/bel-commons/bel-commons
