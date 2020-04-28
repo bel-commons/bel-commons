@@ -11,7 +11,6 @@ from flask_security import SQLAlchemyUserDatastore
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.local import LocalProxy
 
-from ..config import bel_commons_config
 from ..manager import WebManager
 from ..models import User
 
@@ -35,15 +34,18 @@ class PyBELSQLAlchemy(SQLAlchemy):
             _manager = app.extensions['manager'] = WebManager(engine=self.engine, session=self.session)
             _manager.bind()
 
-            _butler: User = _manager.user_datastore.find_user(email=bel_commons_config.BUTLER_EMAIL)
+            _butler_email = app.config['BUTLER_EMAIL']
+            _butler_name = app.config['BUTLER_EMAIL']
+            _butler_password = app.config['BUTLER_EMAIL']
+            _butler: User = _manager.user_datastore.find_user(email=_butler_email)
             if _butler is not None:
                 logger.debug('butler user: %s', _butler)
             if _butler is None:
-                logger.info('creating user: %s (%s)', bel_commons_config.BUTLER_NAME, bel_commons_config.BUTLER_EMAIL)
+                logger.info('creating user: %s (%s)', _butler_name, _butler_email)
                 _manager.user_datastore.create_user(
-                    email=bel_commons_config.BUTLER_EMAIL,
-                    name=bel_commons_config.BUTLER_NAME,
-                    password=bel_commons_config.BUTLER_PASSWORD,
+                    email=_butler_email,
+                    name=_butler_name,
+                    password=_butler_password,
                 )
                 _manager.user_datastore.commit()
 
@@ -67,4 +69,4 @@ def _get_user_datastore() -> SQLAlchemyUserDatastore:
 
 manager: WebManager = LocalProxy(_get_manager)
 user_datastore: SQLAlchemyUserDatastore = LocalProxy(_get_user_datastore)
-butler = LocalProxy(lambda: user_datastore.find_user(email=bel_commons_config.BUTLER_EMAIL))
+butler = LocalProxy(lambda: user_datastore.find_user(email=current_app.config['BUTLER_EMAIL']))

@@ -62,7 +62,7 @@ class BELCommonsConfig(EasyConfig):
     SECURITY_REGISTERABLE: bool = True
     SECURITY_CONFIRMABLE: bool = False
     SECURITY_SEND_REGISTER_EMAIL: bool = False
-    SECURITY_RECOVERABLE: bool = True
+    SECURITY_RECOVERABLE: bool = False
 
     #: What hash algorithm should we use for passwords
     SECURITY_PASSWORD_HASH: str = 'pbkdf2_sha512'
@@ -74,18 +74,19 @@ class BELCommonsConfig(EasyConfig):
     MAIL_DEFAULT_SENDER_EMAIL: Optional[str] = None
 
     #: Should example graphs be automatically included?
-    register_examples: bool = True
+    REGISTER_EXAMPLES: bool = False
     #: Path to user manifest file
-    register_users: Optional[str] = None
-    register_admin: bool = True
-    register_transformations: bool = True
+    REGISTER_USERS: Optional[str] = None
+    #: Register the Flask-Admin interface
+    REGISTER_ADMIN: bool = True
+    REGISTER_TRANSFORMATIONS: bool = True
     WRITE_REPORTS: bool = False
 
     """Which parts of BEL Commons should run?"""
-    enable_uploader: bool = True
-    enable_parser: bool = False
-    enable_analysis: bool = False
-    enable_curation: bool = False
+    ENABLE_UPLOADER: bool = False
+    ENABLE_PARSER: bool = False
+    ENABLE_ANALYSIS: bool = False
+    ENABLE_CURATION: bool = False
 
     def __post_init__(self) -> None:  # noqa: D105
         if self.SECURITY_REGISTERABLE:
@@ -100,6 +101,3 @@ class BELCommonsConfig(EasyConfig):
 
         if self.MAIL_SERVER is not None and self.MAIL_DEFAULT_SENDER_EMAIL is None:
             raise ValueError('MAIL_DEFAULT_SENDER_EMAIL must be set if MAIL_SERVER is set')
-
-
-bel_commons_config = BELCommonsConfig.load()

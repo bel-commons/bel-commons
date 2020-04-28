@@ -15,7 +15,7 @@ from bel_commons.application_utils import (
     register_transformations, register_users_from_manifest,
 )
 from bel_commons.celery_utils import register_celery
-from bel_commons.config import bel_commons_config
+from bel_commons.config import BELCommonsConfig
 from bel_commons.constants import (
     MAIL_DEFAULT_SENDER, SENTRY_DSN, SQLALCHEMY_DATABASE_URI,
     SQLALCHEMY_TRACK_MODIFICATIONS, SWAGGER, SWAGGER_CONFIG,
@@ -39,6 +39,8 @@ __all__ = [
 ]
 
 logger = logging.getLogger(__name__)
+
+bel_commons_config = BELCommonsConfig.load()
 
 flask_app = Flask(__name__)
 flask_app.config.update(bel_commons_config.to_dict())
@@ -117,12 +119,12 @@ register_error_handlers(flask_app, sentry=sentry)
 
 """ Initialize BEL Commons options """
 
-if bel_commons_config.register_transformations:
+if bel_commons_config.REGISTER_TRANSFORMATIONS:
     with flask_app.app_context():
         register_transformations(manager=manager)
 
-if bel_commons_config.register_users:
-    with open(bel_commons_config.register_users) as file:
+if bel_commons_config.REGISTER_USERS:
+    with open(bel_commons_config.REGISTER_USERS) as file:
         manifest = json.load(file)
     with flask_app.app_context():
         register_users_from_manifest(
@@ -130,7 +132,7 @@ if bel_commons_config.register_users:
             manifest=manifest,
         )
 
-if bel_commons_config.register_examples:
+if bel_commons_config.REGISTER_EXAMPLES:
     with flask_app.app_context():
         register_examples(
             manager=manager,
@@ -138,7 +140,7 @@ if bel_commons_config.register_examples:
             butler=butler,
         )
 
-if bel_commons_config.register_admin:
+if bel_commons_config.REGISTER_ADMIN:
     with flask_app.app_context():
         register_admin_service(
             app=flask_app,
@@ -152,23 +154,23 @@ flask_app.register_blueprint(help_blueprint)
 flask_app.register_blueprint(api_blueprint)
 flask_app.register_blueprint(reporting_blueprint)
 
-if bel_commons_config.enable_curation:
+if bel_commons_config.ENABLE_CURATION:
     flask_app.register_blueprint(curation_blueprint)
 
 if bel_commons_config.USE_CELERY:  # Requires celery!
     logger.info('registering celery-specific apps')
     flask_app.register_blueprint(receiving_blueprint)
 
-    if bel_commons_config.enable_uploader:
+    if bel_commons_config.ENABLE_UPLOADER:
         logger.info('registering uploading app')
         from bel_commons.views import uploading_blueprint
 
         flask_app.register_blueprint(uploading_blueprint)
 
-    if bel_commons_config.enable_analysis:
+    if bel_commons_config.ENABLE_ANALYSIS:
         flask_app.register_blueprint(experiment_blueprint)
 
-if bel_commons_config.enable_parser:
+if bel_commons_config.ENABLE_PARSER:
     logger.info('registering parser app')
     from bel_commons.views import build_parser_service
 

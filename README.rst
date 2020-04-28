@@ -64,6 +64,9 @@ Create a file called ``.env`` and generate both ``SECRET_KEY`` and ``SECURITY_PA
 
     SECRET_KEY=mypassword
     SECURITY_PASSWORD_SALT=mypassword
+    BUTLER_NAME="BEL Commons Butler"
+    BUTLER_EMAIL=bel@example.com
+    BUTLER_PASSWORD=butlerpassword
 
 Run docker compose:
 

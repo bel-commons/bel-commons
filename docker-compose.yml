@@ -13,6 +13,10 @@ services:
       CELERY_BACKEND_URL: redis://result_backend
       BEL_COMMONS_SECRET_KEY: ${SECRET_KEY}
       BEL_COMMONS_SECURITY_PASSWORD_SALT: ${SECURITY_PASSWORD_SALT}
+      BEL_COMMONS_BUTLER_EMAIL: ${BUTLER_EMAIL}
+      BEL_COMMONS_BUTLER_NAME: ${BUTLER_NAME}
+      BEL_COMMONS_BUTLER_PASSWORD: ${BUTLER_PASSWORD}
+      BEL_COMMONS_REGISTER_EXAMPLES: "false"
     restart: always
     command: gunicorn -b 0.0.0.0:5002 bel_commons.wsgi:flask_app --log-level=INFO
     ports:
@@ -33,6 +37,10 @@ services:
       CELERY_BACKEND_URL: redis://result_backend
       BEL_COMMONS_SECRET_KEY: ${SECRET_KEY}
       BEL_COMMONS_SECURITY_PASSWORD_SALT: ${SECURITY_PASSWORD_SALT}
+      BEL_COMMONS_BUTLER_EMAIL: ${BUTLER_EMAIL}
+      BEL_COMMONS_BUTLER_NAME: ${BUTLER_NAME}
+      BEL_COMMONS_BUTLER_PASSWORD: ${BUTLER_PASSWORD}
+      BEL_COMMONS_REGISTER_EXAMPLES: "false"
     restart: always
     command: celery worker -A bel_commons.wsgi.celery_app -l INFO
     depends_on:
