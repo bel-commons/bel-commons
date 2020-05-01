@@ -540,7 +540,7 @@ def _help_claim_network(network: Network, user: User) -> Optional[Report]:
 
     report = Report(
         user=user,
-        public=False,
+        public=current_app.config.get('DISALLOW_PRIVATE') or False,
         time=0.0,
     )
 

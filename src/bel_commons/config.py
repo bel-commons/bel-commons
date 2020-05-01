@@ -9,12 +9,14 @@ Resources:
 """
 
 import logging
-from typing import Optional
+from dataclasses import field
+from typing import Any, Mapping, Optional
 
 from dataclasses_json import dataclass_json
 from easy_config import EasyConfig
 
 from pybel.config import CONFIG_FILE_PATHS
+from pybel.constants import get_cache_connection
 
 logger = logging.getLogger(__name__)
 
@@ -48,6 +50,13 @@ class BELCommonsConfig(EasyConfig):
     TESTING: bool = False
 
     JSONIFY_PRETTYPRINT_REGULAR: bool = True
+
+    """Database and SQLAlchemy settings"""
+    SQLALCHEMY_TRACK_MODIFICATIONS: bool = False
+    SQLALCHEMY_DATABASE_URI: str = field(default_factory=get_cache_connection)
+
+    #: Should private network uploads be allowed?
+    DISALLOW_PRIVATE: bool = True
 
     #: Should celery be used?
     USE_CELERY: bool = True
@@ -88,7 +97,21 @@ class BELCommonsConfig(EasyConfig):
     ENABLE_ANALYSIS: bool = False
     ENABLE_CURATION: bool = False
 
+    SWAGGER_CONFIG: Mapping[str, Any] = field(default_factory=lambda: {
+        'title': 'BEL Commons API',
+        'description': 'This exposes the functions of PyBEL as a RESTful API',
+        'contact': {
+            'responsibleDeveloper': 'Charles Tapley Hoyt',
+            'email': 'cthoyt@gmail.com',
+        },
+        'version': '0.1.0',
+    })
+
     def __post_init__(self) -> None:  # noqa: D105
+        if self.SQLALCHEMY_DATABASE_URI is None:
+            self.SQLALCHEMY_DATABASE_URI = get_cache_connection()
+            logger.info(f'database: {self.self.SQLALCHEMY_DATABASE_URI}')
+
         if self.SECURITY_REGISTERABLE:
             if not self.SECURITY_PASSWORD_SALT:
                 raise RuntimeError('Configuration is missing SECURITY_PASSWORD_SALT')
@@ -101,3 +124,8 @@ class BELCommonsConfig(EasyConfig):
 
         if self.MAIL_SERVER is not None and self.MAIL_DEFAULT_SENDER_EMAIL is None:
             raise ValueError('MAIL_DEFAULT_SENDER_EMAIL must be set if MAIL_SERVER is set')
+
+    @classmethod
+    def load_dict(cls) -> Mapping[str, Any]:
+        """Get configuration as a dictionary."""
+        return cls.load().to_dict()

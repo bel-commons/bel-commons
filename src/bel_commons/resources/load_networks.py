@@ -197,7 +197,7 @@ def upload_with_manager(bio2bel_manager: AbstractManager, manager: Manager) -> O
         logger.warning('%s has no to_bel function', bio2bel_manager)
         return
 
-    return insert_graph(manager, graph, use_tqdm=True)
+    return insert_graph(manager, graph, public=True, use_tqdm=True)
 
 
 def load_cbn(manager: Manager):

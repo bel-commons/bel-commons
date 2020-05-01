@@ -113,10 +113,14 @@ def parse(
     if parse_kwargs is None:
         parse_kwargs = {}
 
-    parse_kwargs.setdefault('public', True)
     parse_kwargs.setdefault('citation_clearing', True)
     parse_kwargs.setdefault('infer_origin', False)
     parse_kwargs.setdefault('identifier_validation', True)
+
+    if current_app.config['DISALLOW_PRIVATE']:
+        parse_kwargs['public'] = True
+    else:
+        parse_kwargs.setdefault('public', True)
 
     report = Report(
         user_id=user_id,
@@ -272,8 +276,10 @@ def upload_json(connection: str, user_id: int, payload: Dict, public: bool = Fal
         celery_logger.exception('unable to parse JSON')
         return -1
 
+    public = current_app.config.get('DISALLOW_PRIVATE') or public
+
     try:
-        insert_graph(manager, graph, user, public=public)
+        insert_graph(manager=manager, graph=graph, user=user, public=public)
     except Exception:
         celery_logger.exception('unable to insert graph')
         manager.session.rollback()

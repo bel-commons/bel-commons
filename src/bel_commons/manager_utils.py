@@ -67,7 +67,7 @@ def insert_graph(
     manager: Manager,
     graph: BELGraph,
     user: User,
-    public: bool = False,
+    public: bool = True,
     use_tqdm: bool = False,
 ) -> Network:
     """Insert a graph and also make a report.

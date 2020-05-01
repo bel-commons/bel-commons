@@ -16,10 +16,7 @@ from bel_commons.application_utils import (
 )
 from bel_commons.celery_utils import register_celery
 from bel_commons.config import BELCommonsConfig
-from bel_commons.constants import (
-    MAIL_DEFAULT_SENDER, SENTRY_DSN, SQLALCHEMY_DATABASE_URI,
-    SQLALCHEMY_TRACK_MODIFICATIONS, SWAGGER, SWAGGER_CONFIG,
-)
+from bel_commons.constants import MAIL_DEFAULT_SENDER, SENTRY_DSN, SQLALCHEMY_DATABASE_URI
 from bel_commons.converters import IntListConverter, ListConverter
 from bel_commons.core import butler, manager, user_datastore
 from bel_commons.database_service import api_blueprint
@@ -31,7 +28,6 @@ from bel_commons.views import (
     curation_blueprint, experiment_blueprint, help_blueprint,
     receiving_blueprint, reporting_blueprint,
 )
-from pybel.constants import get_cache_connection
 
 __all__ = [
     'flask_app',
@@ -40,18 +36,15 @@ __all__ = [
 
 logger = logging.getLogger(__name__)
 
-bel_commons_config = BELCommonsConfig.load()
+log_path = 'web_log.txt'
+fh = logging.FileHandler(log_path)
+fh.setLevel(logging.DEBUG)
+logger.addHandler(fh)
+
+logger.info('logging to %s', log_path)
 
 flask_app = Flask(__name__)
-flask_app.config.update(bel_commons_config.to_dict())
-
-# Set SQLAlchemy defaults
-flask_app.config.setdefault(SQLALCHEMY_TRACK_MODIFICATIONS, False)
-flask_app.config[SQLALCHEMY_DATABASE_URI] = get_cache_connection()
-logger.info(f'database: {flask_app.config.get(SQLALCHEMY_DATABASE_URI)}')
-
-# Set Swagger defaults
-flask_app.config.setdefault(SWAGGER, SWAGGER_CONFIG)
+flask_app.config.update(BELCommonsConfig.load_dict())
 
 # Add converters
 flask_app.url_map.converters.update({
@@ -71,7 +64,7 @@ db.init_app(flask_app)
 logger.info('Initializing Bio2BEL (%s)', bio2bel.__class__)
 bio2bel.init_app(flask_app)
 
-if not bel_commons_config.USE_CELERY:
+if not flask_app.config.get('USE_CELERY'):
     celery_app = None
 else:
     from bel_commons.celery_worker import celery_app, celery_blueprint
@@ -86,13 +79,17 @@ else:
 
 """ Initialize Security """
 
-if bel_commons_config.MAIL_SERVER is not None:
-    logger.info(f'using mail server: {bel_commons_config.MAIL_SERVER}')
+mail_server = flask_app.config.get('MAIL_SERVER')
+if mail_server is not None:
+    logger.info('using mail server: %s', mail_server)
 
     # Set Mail defaults
     flask_app.config.setdefault(
         MAIL_DEFAULT_SENDER,
-        (bel_commons_config.MAIL_DEFAULT_SENDER_NAME, bel_commons_config.MAIL_DEFAULT_SENDER_EMAIL),
+        (
+            flask_app.config['MAIL_DEFAULT_SENDER_NAME'],
+            flask_app.config['MAIL_DEFAULT_SENDER_EMAIL'],
+        ),
     )
 
     mail.init_app(flask_app)
@@ -119,12 +116,13 @@ register_error_handlers(flask_app, sentry=sentry)
 
 """ Initialize BEL Commons options """
 
-if bel_commons_config.REGISTER_TRANSFORMATIONS:
+if flask_app.config.get('REGISTER_TRANSFORMATIONS'):
     with flask_app.app_context():
         register_transformations(manager=manager)
 
-if bel_commons_config.REGISTER_USERS:
-    with open(bel_commons_config.REGISTER_USERS) as file:
+register_users_path = flask_app.config.get('REGISTER_USERS')
+if register_users_path is not None:
+    with open(register_users_path) as file:
         manifest = json.load(file)
     with flask_app.app_context():
         register_users_from_manifest(
@@ -132,7 +130,7 @@ if bel_commons_config.REGISTER_USERS:
             manifest=manifest,
         )
 
-if bel_commons_config.REGISTER_EXAMPLES:
+if flask_app.config.get('REGISTER_EXAMPLES'):
     with flask_app.app_context():
         register_examples(
             manager=manager,
@@ -140,7 +138,7 @@ if bel_commons_config.REGISTER_EXAMPLES:
             butler=butler,
         )
 
-if bel_commons_config.REGISTER_ADMIN:
+if flask_app.config.get('REGISTER_ADMIN'):
     with flask_app.app_context():
         register_admin_service(
             app=flask_app,
@@ -154,23 +152,23 @@ flask_app.register_blueprint(help_blueprint)
 flask_app.register_blueprint(api_blueprint)
 flask_app.register_blueprint(reporting_blueprint)
 
-if bel_commons_config.ENABLE_CURATION:
+if flask_app.config.get('ENABLE_CURATION'):
     flask_app.register_blueprint(curation_blueprint)
 
-if bel_commons_config.USE_CELERY:  # Requires celery!
+if flask_app.config.get('USE_CELERY'):  # Requires celery!
     logger.info('registering celery-specific apps')
     flask_app.register_blueprint(receiving_blueprint)
 
-    if bel_commons_config.ENABLE_UPLOADER:
+    if flask_app.config.get('ENABLE_UPLOADER'):
         logger.info('registering uploading app')
         from bel_commons.views import uploading_blueprint
 
         flask_app.register_blueprint(uploading_blueprint)
 
-    if bel_commons_config.ENABLE_ANALYSIS:
+    if flask_app.config.get('ENABLE_ANALYSIS'):
         flask_app.register_blueprint(experiment_blueprint)
 
-if bel_commons_config.ENABLE_PARSER:
+if flask_app.config.get('ENABLE_PARSER'):
     logger.info('registering parser app')
     from bel_commons.views import build_parser_service
 
