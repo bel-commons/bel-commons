@@ -1,0 +1,33 @@
+# PyBEL
+pybel>=0.14.9,<0.15.0
+pybel-tools>=0.8.0,<0.9.0
+bio2bel>=0.3.0,<0.4.0
+# Utilities
+requests
+click
+tqdm
+easy-config
+dataclasses-json
+ols_client
+networkx>=2.1
+# Scientific Python Stack
+pandas
+scikit-learn
+numpy
+# Backend
+sqlalchemy
+celery[redis]
+psycopg2-binary
+# Web server
+flask>=1.0.0
+flask-bootstrap
+flask-wtf
+flask-security
+flask-admin
+flask-sqlalchemy
+email_validator
+werkzeug
+jsonschema
+flasgger
+raven
+gunicorn
