@@ -27,10 +27,8 @@ and install their corresponding connectors:
 
     $ python3 -m pip install psycopg2-binary
 
-Usage
------
-Run BEL Commons
-~~~~~~~~~~~~~~~
+Run with Manual Setup
+---------------------
 A test server can be easily run with:
 
 .. code-block:: sh
@@ -49,8 +47,8 @@ To run the parser, you'll need an instance of a message queue like `RabbitMQ <ht
 any other message queue supported by `Celery <https://pypi.python.org/pypi/celery>`_), a results backend like
 `Redis <https://redis.io/>`_, and a worker. It's best to run in docker if you want to do this.
 
-Run with Docker
-~~~~~~~~~~~~~~~
+Run with ``docker-compose``
+---------------------------
 Clone this repo from GitHub
 
 .. code-block:: sh
@@ -71,22 +69,33 @@ Create a file called ``.env`` and generate both ``SECRET_KEY`` and ``SECURITY_PA
 If you want to run BEL Commons so networks can be made private, then add ``DISALLOW_PRIVATE=false``. More
 documentation on what setting are possible can be found in
 
-Run docker compose:
+Run ``docker-compose``. If you don't have it, check the `docker-compose installation
+guide <https://docs.docker.com/compose/install/>`_:
 
 .. code-block:: sh
 
     $ docker-compose up
+
+If you want it to run in the background, use ``docker-compose up --detach``.
 
 Ports exposed:
 
 - 5002: BEL Commons web application
 - 5432: PostgreSQL database
 
+Figure our your container ID with:
+
+.. code-block:: bash
+
+    docker ps | grep bel
+
 Check the logs with:
 
 .. code-block:: bash
 
     docker exec -it <your container id> /usr/bin/tail -f web_log.txt
+
+Same can be done for ``celery_log.txt`` or ``worker_log.txt``.
 
 Make an existing user an admin with:
 

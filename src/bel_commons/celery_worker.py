@@ -42,7 +42,14 @@ __all__ = [
 ]
 
 celery_logger = get_task_logger(__name__)
+celery_fh = logging.FileHandler('celery_log.txt')
+celery_fh.setLevel(logging.DEBUG)
+celery_logger.addHandler(celery_fh)
+
 logger = logging.getLogger(__name__)
+logger_fh = logging.FileHandler('worker_log.txt')
+logger_fh.setLevel(logging.DEBUG)
+logger.addHandler(logger_fh)
 
 logging.basicConfig(level=logging.DEBUG)
 logging.getLogger('urllib3.connectionpool').setLevel(logging.ERROR)

@@ -99,3 +99,5 @@ manifest.json
 
 .mypy_cache
 web_log.txt
+celery_log.txt
+worker_log.txt
