@@ -68,6 +68,9 @@ Create a file called ``.env`` and generate both ``SECRET_KEY`` and ``SECURITY_PA
     BUTLER_EMAIL=bel@example.com
     BUTLER_PASSWORD=butlerpassword
 
+If you want to run BEL Commons so networks can be made private, then add ``DISALLOW_PRIVATE=false``. More
+documentation on what setting are possible can be found in
+
 Run docker compose:
 
 .. code-block:: sh
@@ -79,6 +82,17 @@ Ports exposed:
 - 5002: BEL Commons web application
 - 5432: PostgreSQL database
 
+Check the logs with:
+
+.. code-block:: bash
+
+    docker exec -it <your container id> /usr/bin/tail -f web_log.txt
+
+Make an existing user an admin with:
+
+.. code-block:: bash
+
+    docker exec -it <your container id> bel-commons manage users make-admin <user email>
 
 Reset the Database
 ~~~~~~~~~~~~~~~~~~

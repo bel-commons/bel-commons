@@ -47,7 +47,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'BEL Commons'
-copyright = '2016-2019, Charles Tapley Hoyt'
+copyright = '2016-2020, Charles Tapley Hoyt'
 author = 'Charles Tapley Hoyt'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -347,7 +347,6 @@ texinfo_documents = [
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3', None),
-    'networkx': ('https://networkx.github.io/', None),
     'pybel': ('https://pybel.readthedocs.io/en/latest/', None),
     'pybel_tools': ('https://pybel-tools.readthedocs.io/en/latest/', None),
 }
