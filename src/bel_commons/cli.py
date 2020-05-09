@@ -329,8 +329,10 @@ def rm(manager: WebManager, email: str):
 def make_admin(manager: WebManager, email: str):
     """Make a given user an admin."""
     ds = manager.user_datastore
+
     try:
-        ds.add_role_to_user(email, 'admin')
+        admin = ds.find_or_create_role('admin')
+        ds.add_role_to_user(email, ds)
         ds.commit()
     except Exception:
         logger.exception("Couldn't make admin")
