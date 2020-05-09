@@ -2,13 +2,14 @@ FROM python:3.8
 MAINTAINER Charles Tapley Hoyt "cthoyt@gmail.com"
 
 RUN pip install --upgrade pip
-RUN pip install git+https://github.com/pybel/pybel.git@3d46c69de95b36c4ff7fabede965e1e53d009d0f \
-  && pip install git+https://github.com/pybel/pybel-tools.git \
-  && pip install bio2bel
 
 # Install requirements, which don't really change
 COPY requirements.txt /tmp/
 RUN pip install --requirement /tmp/requirements.txt
+
+RUN pip install git+https://github.com/pybel/pybel.git@3d46c69de95b36c4ff7fabede965e1e53d009d0f \
+  && pip install git+https://github.com/pybel/pybel-tools.git \
+  && pip install bio2bel
 
 # Add and install BEL Commons code
 COPY . /app
