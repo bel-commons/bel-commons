@@ -34,6 +34,8 @@ class PyBELSQLAlchemy(SQLAlchemy):
             _manager = app.extensions['manager'] = WebManager(engine=self.engine, session=self.session)
             _manager.bind()
 
+            _admin = _manager.user_datastore.find_or_create_role('admin')
+
             _butler_email = app.config['BUTLER_EMAIL']
             _butler_name = app.config['BUTLER_EMAIL']
             _butler_password = app.config['BUTLER_EMAIL']
