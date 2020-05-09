@@ -7,7 +7,7 @@ RUN pip install --upgrade pip
 COPY requirements.txt /tmp/
 RUN pip install --requirement /tmp/requirements.txt
 
-RUN pip install git+https://github.com/pybel/pybel.git@3d46c69de95b36c4ff7fabede965e1e53d009d0f \
+RUN pip install git+https://github.com/pybel/pybel.git@dea6bfc732558c5f034040a28a08b3b727d5f937 \
   && pip install git+https://github.com/pybel/pybel-tools.git \
   && pip install bio2bel
 
