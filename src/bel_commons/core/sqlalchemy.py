@@ -49,7 +49,7 @@ class PyBELSQLAlchemy(SQLAlchemy):
                 )
                 _manager.user_datastore.commit()
 
-            _manager.sanitize(user=_butler)
+            _manager.sanitize(user=_butler, public=app.config['DISALLOW_PRIVATE'])
 
 
 def _get_manager() -> WebManager:

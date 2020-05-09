@@ -23,6 +23,7 @@ _explorer_toolbox = (
     ('enrich_unqualified', 'Enrich unqualified edges', 'Adds unqualified edges from the universe'),
     ('remove_associations', 'Remove Associations', 'Remove associative relations'),
     ('remove_pathologies', 'Remove Pathologies', 'Removes all pathology nodes'),
+    ('remove_biological_processes', 'Remove Biological Processes', 'Removes all biological process nodes'),
 )
 
 _bio2bel_functions = (

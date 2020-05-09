@@ -133,8 +133,17 @@
                             and visualization.{% endif %}
                         </p>
                         <p>
-                            <a href="{{ url_for('ui.view_networks') }}" class="btn btn-primary btn-block">
-                                Network Catalog
+                            <a href="{{ url_for('ui.view_networks') }}" class="btn btn-primary">
+                                Networks
+                            </a>
+                            <a href="{{ url_for('ui.view_nodes') }}" class="btn btn-primary">
+                                Nodes
+                            </a>
+                            <a href="{{ url_for('ui.view_edges') }}" class="btn btn-primary">
+                                Edges
+                            </a>
+                            <a href="{{ url_for('ui.view_citations') }}" class="btn btn-primary">
+                                Citations
                             </a>
                         </p>
                     </div>

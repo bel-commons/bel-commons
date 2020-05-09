@@ -18,23 +18,17 @@
 
         <div class="panel panel-default">
             <div class="panel-heading">
-                <div class="btn-group pull-right">
-                    <a class="btn btn-danger btn-xs" href="{{ url_for('dbs.drop_edges', next=url_for('ui.home')) }}"
-                       role="button" data-toggle="confirmation" data-btn-ok-icon="glyphicon glyphicon-share-alt"
-                       data-btn-ok-class="btn-success" data-btn-cancel-icon="glyphicon glyphicon-ban-circle"
-                       data-btn-cancel-class="btn-danger">
-                        Drop All
-                    </a>
-                </div>
                 <h3 class="panel-title">Edges</h3>
             </div>
             <div class="panel-body">
+                <form action="{{ url_for('ui.view_edges') }}">
                 <div class="input-group">
-                    <input type="text" class="form-control" placeholder="Search for edges...">
+                    <input type="text" class="form-control" placeholder="Search for edges..." name="search">
                     <span class="input-group-btn">
-                    <button class="btn btn-default" type="button">Go!</button>
-                </span>
+                            <input class="btn btn-default" type="submit">
+                        </span>
                 </div>
+            </form>
             </div>
         </div>
 

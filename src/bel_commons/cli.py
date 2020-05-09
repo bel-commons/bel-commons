@@ -22,8 +22,8 @@ from tabulate import tabulate
 from pybel import BELGraph, from_bel_script
 from pybel.cli import connection_option, graph_pickle_argument
 from pybel.manager.models import (
-    Author, Citation, Edge, Evidence, Modification, Namespace, NamespaceEntry, Network, Node, Property, author_citation,
-    edge_annotation, edge_property, network_edge, network_node, node_modification,
+    Author, Citation, Edge, Evidence, Namespace, NamespaceEntry, Network, Node, author_citation, edge_annotation,
+    network_edge, network_node,
 )
 from pybel.version import get_version as pybel_version
 from .manager import WebManager
@@ -275,7 +275,6 @@ def ls(manager: WebManager):
         ],
         headers=['id', 'name', 'version', 'owner', 'public', 'nodes', 'edges'],
     ))
-
 
 
 @manage.group()
@@ -658,14 +657,10 @@ def wasteland(manager: WebManager, drop_most: bool, drop_all: bool):
 
     if drop_most or drop_all:
         _drop_mn_table(manager, edge_annotation)
-        _drop_mn_table(manager, edge_property)
-        _drop_table(manager, Property)
         _drop_mn_table(manager, network_edge)
         _drop_table(manager, Edge)
 
         _drop_mn_table(manager, network_node)
-        _drop_mn_table(manager, node_modification)
-        _drop_table(manager, Modification)
         _drop_table(manager, Node)
 
         _drop_table(manager, Network)

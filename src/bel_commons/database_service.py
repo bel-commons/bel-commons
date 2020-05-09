@@ -1123,9 +1123,9 @@ def get_citation_by_id(citation_id):
 @api_blueprint.route('/api/citation/pubmed/<pubmed_identifier>/enrich')
 def enrich_citation_by_id(pubmed_identifier):
     """Enrich a citation in the database."""
-    citation = manager.get_citation_by_pmid_or_404(pubmed_identifier)
+    citation: Citation = manager.get_citation_by_pmid_or_404(pubmed_identifier)
 
-    if citation.name and citation.title:
+    if citation.is_enriched:
         return jsonify({
             'success': True,
             'payload': citation.to_json(include_id=True),

@@ -97,8 +97,8 @@ def run_debug_task() -> int:
     return 6 + 2
 
 
-@celery_app.task(bind=True)  # noqa: C901
-def parse(
+@celery_app.task(bind=True)
+def parse(  # noqa: C901
     task: Task,
     source_name: str,
     contents: str,

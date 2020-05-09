@@ -2,13 +2,13 @@
 
 """Utilities for testing BEL Commons."""
 
+import hashlib
 from typing import Optional
 
-
+from bel_commons.models import Report
 from pybel.constants import INCREASES, PROTEIN
 from pybel.manager import Edge, Network, Node
 from pybel.testing.utils import n
-from bel_commons.models import Report
 
 
 def make_network(name: str = None) -> Network:
@@ -34,7 +34,8 @@ def make_report(network: Network) -> Report:
 
 def make_node() -> Node:
     """Make a dummy node."""
-    return Node(type=PROTEIN, bel=f'p(HGNC:{n()})')
+    bel = f'p(HGNC:{n()})'
+    return Node(type=PROTEIN, bel=bel, md5=hashlib.md5(bel.encode('utf-8')).hexdigest(), data={})
 
 
 def make_edge(source: Optional[Node] = None, target: Optional[Node] = None) -> Edge:
@@ -43,9 +44,13 @@ def make_edge(source: Optional[Node] = None, target: Optional[Node] = None) -> E
         source = make_node()
     if target is None:
         target = make_node()
+
+    bel = f'{source.bel} increases {target.bel}'
     return Edge(
         source=source,
         target=target,
         relation=INCREASES,
-        bel=f'{source.bel} increases {target.bel}',
+        bel=bel,
+        data={},
+        md5=hashlib.md5(bel.encode('utf-8')).hexdigest(),
     )

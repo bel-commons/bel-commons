@@ -19,9 +19,9 @@ from flask_security import current_user
 from bel_commons.database_service import api_blueprint
 from bel_commons.main_service import ui_blueprint
 from bel_commons.wsgi import flask_app
-from pybel.testing.cases import TemporaryCacheMixin
+from tests.cases import TemporaryCacheMixin
 
-log = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 TEST_USER_EMAIL = 'test@example.com'
 TEST_USER_PASSWORD = 'password'

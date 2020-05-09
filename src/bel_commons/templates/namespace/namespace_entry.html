@@ -21,24 +21,24 @@
         </ol>
 
         <div class="page-header">
-            <h1><code>{{ namespace_entry.name }}</code></h1>
+            <h1>{{ namespace_entry.name }}</h1>
         </div>
 
         <div class="panel panel-default">
             <div class="panel-body">
                 <dl class="dl-horizontal">
-                    <dt>Name</dt>
-                    <dd>{{ namespace_entry.name }}</dd>
-                    <dt>Namespace Keyword</dt>
-                    <dd>{{ namespace_entry.namespace.keyword }}</dd>
                     <dt>Namespace</dt>
                     <dd>
                         <a href="{{ url_for('ui.view_namespace', namespace_id=namespace_entry.namespace.id) }}">
-                            {{ namespace_entry.namespace.name }}
+                            {{ namespace_entry.namespace.keyword }}
                         </a>
                     </dd>
-                    <dt>Namespace Version</dt>
-                    <dd>{{ namespace_entry.namespace.version }}</dd>
+                    <dt>CURIE</dt>
+                    <dd>{{ namespace_entry.namespace.keyword }}:{{ namespace_entry.identifier }}</dd>
+                    {% if  namespace_entry.namespace.version %}
+                        <dt>Namespace Version</dt>
+                        <dd>{{ namespace_entry.namespace.version }}</dd>
+                    {% endif %}
                     {% if namespace_entry.namespace.url %}
                         <dt>Namespace URL</dt>
                         <dd>
@@ -53,6 +53,17 @@
                 </dl>
             </div>
         </div>
+
+        {% set nodes = namespace_entry.nodes.limit(5).all() %}
+        {% if nodes|length > 0 %}
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Sample Nodes <span class="badge">{{ namespace_entry.nodes.count() }}</span>
+                    </h3>
+                </div>
+                {{ pbw.render_node_list(nodes) }}
+            </div>
+        {% endif %}
 
         {% set edges = namespace_entry.edges.limit(5).all() %}
         {% if edges|length > 0 %}

@@ -20,25 +20,51 @@
         <div class="panel panel-default">
             <div class="panel-heading">
                 <h3 class="panel-title">
-                    {{ citation.type }}: {{ citation.reference }}
+                    {% if citation.title %}
+                        {{ citation.title }}
+                    {% else %}
+                        {{ citation.db.lower() }}:{{ citation.db_id }}
+                    {% endif %}
                 </h3>
             </div>
             <div class="panel-body">
                 <dl class="dl-horizontal">
-                    <dt>Title</dt>
-                    <dd>{{ citation.title }}</dd>
-                    <dt>Journal</dt>
-                    <dd>{{ citation.name }}</dd>
-                    <dt>Volume</dt>
-                    <dd>{{ citation.volume }}</dd>
-                    <dt>Issue</dt>
-                    <dd>{{ citation.issue }}</dd>
-                    <dt>Pages</dt>
-                    <dd>{{ citation.pages }}</dd>
-                    <dt>Date</dt>
-                    <dd>{{ citation.date }}</dd>
-                    <dt>Authors</dt>
-                    <dd>{{ citation.authors|join(' | ') }}</dd>
+                    <dt>Reference</dt>
+                    <dd>
+                        {% if citation.db.lower() in ['pubmed', 'doi', 'pmc'] %}
+                            <a href="https://identifiers.org/{{ citation.db.lower() }}:{{ citation.db_id }}"
+                               target="_blank">{{ citation.db.lower() }}:{{ citation.db_id }}</a>
+                        {% elif citation.db.lower() == 'pubmed central' %}
+                            <a href="https://identifiers.org/pmc:{{ citation.db_id }}"
+                               target="_blank">pmc:{{ citation.db_id }}</a>
+                        {% else %}
+                            {{ citation.db }}:{{ citation.db_id }}
+                        {% endif %}
+                    </dd>
+                    {% if citation.journal %}
+                        <dt>Journal</dt>
+                        <dd><i>{{ citation.journal }}</i></dd>
+                    {% endif %}
+                    {% if citation.volume %}
+                        <dt>Volume</dt>
+                        <dd>{{ citation.volume }}</dd>
+                    {% endif %}
+                    {% if citation.issue %}
+                        <dt>Issue</dt>
+                        <dd>{{ citation.issue }}</dd>
+                    {% endif %}
+                    {% if citation.pages %}
+                        <dt>Pages</dt>
+                        <dd>{{ citation.pages }}</dd>
+                    {% endif %}
+                    {% if citation.date %}
+                        <dt>Date</dt>
+                        <dd>{{ citation.date }}</dd>
+                    {% endif %}
+                    {% if citation.authors %}
+                        <dt>Authors</dt>
+                        <dd>{{ citation.authors|join(' | ') }}</dd>
+                    {% endif %}
                 </dl>
             </div>
         </div>

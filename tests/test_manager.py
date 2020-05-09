@@ -34,8 +34,7 @@ class TestManager(TemporaryCacheMethodMixin):
     def test_manager_iter_recent_public_networks(self):
         """Test iteration of the latest public networks."""
         n1, n2, n3, n4 = networks = [make_network('Network {}'.format(i)) for i in range(1, 5)]
-
-        self.add_all(networks)
+        self.manager.session.add_all(networks)
 
         # skip making a report for the last one
         r1, r2, r3 = reports = [make_report(network) for network in (n1, n2, n3)]

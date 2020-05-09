@@ -135,7 +135,6 @@ def view_networks():
 
 
 @ui_blueprint.route('/node')
-@roles_required('admin')
 def view_nodes():
     """Render a page viewing all edges."""
     search = request.args.get('search')
@@ -162,7 +161,7 @@ def view_nodes():
         count=count,
         limit=limit,
         offset=offset,
-        **bio2bel.manager_dict
+        **bio2bel.manager_dict,
     )
 
 
@@ -241,10 +240,32 @@ def view_relations(source_hash: str, target_hash: str):
 
 
 @ui_blueprint.route('/edge')
-@roles_required('admin')
 def view_edges():
     """Render a page viewing all edges."""
-    return render_template('edge/edges.html', edges=manager.session.query(Edge).limit(15))
+    search = request.args.get('search')
+    edges = manager.session.query(Edge)
+    if search:
+        edges = edges.filter(Edge.bel.contains(search))
+        flask.flash(f'Searched for "{search}"')
+
+    count = edges.count()
+    logger.info('found %d edges with %s', count, search)
+
+    limit = request.args.get('limit', 10, type=int)
+    edges = edges.limit(limit)
+
+    offset = request.args.get('offset', 0, type=int)
+    if offset:
+        edges = edges.offset(offset)
+
+    return render_template(
+        'edge/edges.html',
+        edges=edges,
+        count=count,
+        limit=limit,
+        offset=offset,
+        **bio2bel.manager_dict,
+    )
 
 
 @ui_blueprint.route('/edge/<edge_hash>')
@@ -296,7 +317,6 @@ def view_queries():
 
 
 @ui_blueprint.route('/citation')
-@roles_required('admin')
 def view_citations():
     """Render the query catalog."""
     limit = request.args.get('limit', type=int, default=10)
