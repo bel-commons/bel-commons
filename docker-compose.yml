@@ -18,9 +18,9 @@ services:
       BEL_COMMONS_BUTLER_PASSWORD: ${BUTLER_PASSWORD}
       BEL_COMMONS_REGISTER_EXAMPLES: "false"
     restart: always
-    command: gunicorn -b 0.0.0.0:5002 bel_commons.wsgi:flask_app --log-level=INFO
+    command: gunicorn -b 0.0.0.0:80 bel_commons.wsgi:flask_app --log-level=INFO
     ports:
-      - 5002:5002
+      - 80:80
     depends_on:
      - database14
      - broker
