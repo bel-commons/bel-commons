@@ -69,6 +69,8 @@ Create a file called ``.env`` and generate both ``SECRET_KEY`` and ``SECURITY_PA
 If you want to run BEL Commons so networks can be made private, then add ``DISALLOW_PRIVATE=false``. More
 documentation on what setting are possible can be found in
 
+If you want to automatically add some example networks, then add ``REGISTER_EXAMPLES=true``.
+
 Run ``docker-compose``. If you don't have it, check the `docker-compose installation
 guide <https://docs.docker.com/compose/install/>`_:
 
