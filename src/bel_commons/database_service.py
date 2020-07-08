@@ -12,7 +12,7 @@ from operator import itemgetter
 from typing import Dict, Iterable, List, Mapping, Optional
 
 import networkx as nx
-from flask import Blueprint, Response, abort, current_app, flash, jsonify, make_response, redirect, request
+from flask import Response, abort, current_app, flash, jsonify, make_response, redirect, request
 from flask_security import current_user, login_required, roles_required
 from sqlalchemy import func, or_
 
@@ -36,7 +36,7 @@ from .manager_utils import fill_out_report, next_or_jsonify
 from .models import EdgeComment, Project, Report, User, UserQuery
 from .send_utils import serve_network, to_json_custom
 from .tools_compat import get_incorrect_names_by_namespace, get_naked_names, get_undefined_namespace_names
-from .utils import add_edge_filter, get_tree_annotations
+from .utils import SecurityConfigurableBlueprint as Blueprint, add_edge_filter, get_tree_annotations
 
 __all__ = [
     'api_blueprint',

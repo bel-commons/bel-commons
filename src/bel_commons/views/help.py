@@ -2,9 +2,11 @@
 
 """A blueprint containing help pages for BEL Commons."""
 
-from flask import Blueprint, current_app, redirect, render_template, url_for
+from flask import current_app, redirect, render_template, url_for
 
 from pybel.struct.pipeline.decorators import no_arguments_map
+
+from ..utils import SecurityConfigurableBlueprint as Blueprint
 
 __all__ = [
     'help_blueprint',

@@ -8,7 +8,7 @@ import re
 import time
 from io import StringIO
 
-from flask import Blueprint, make_response, render_template, request
+from flask import make_response, render_template, request
 from flask_security import current_user, login_required, roles_required
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileAllowed, FileField
@@ -20,6 +20,7 @@ from bel_resources import parse_bel_resource, write_namespace
 from pybel import get_version as get_pybel_version
 from pybel.constants import NAMESPACE_DOMAIN_TYPES
 from ..tools_compat import write_boilerplate
+from ..utils import SecurityConfigurableBlueprint as Blueprint
 
 logger = logging.getLogger(__name__)
 

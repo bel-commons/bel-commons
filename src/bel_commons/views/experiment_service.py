@@ -16,7 +16,7 @@ import flask
 import numpy as np
 import pandas as pd
 import pandas.errors
-from flask import Blueprint, abort, current_app, make_response, redirect, render_template, request, url_for
+from flask import abort, current_app, make_response, redirect, render_template, request, url_for
 from flask_security import current_user, login_required, roles_required
 from sklearn.cluster import KMeans
 
@@ -26,6 +26,7 @@ from ..forms import DifferentialGeneExpressionForm
 from ..manager_utils import create_omic, next_or_jsonify
 from ..models import Experiment, Omic, UserQuery
 from ..tools_compat import RESULT_LABELS
+from ..utils import SecurityConfigurableBlueprint as Blueprint
 
 __all__ = [
     'experiment_blueprint',

@@ -5,11 +5,12 @@
 import datetime
 from collections import Counter, OrderedDict
 
-from flask import Blueprint, render_template, request
+from flask import render_template, request
 from flask_security import roles_required
 
 from ..core import manager
 from ..models import EdgeComment, EdgeVote, Experiment, Query, Report
+from ..utils import SecurityConfigurableBlueprint as Blueprint
 
 __all__ = [
     'reporting_blueprint',

@@ -4,11 +4,12 @@
 
 import logging
 
-from flask import Blueprint, flash, redirect, render_template, url_for
+from flask import flash, redirect, render_template, url_for
 from flask_security import current_user, login_required, roles_required
 
 from bel_commons.celery_worker import run_debug_task
 from ..forms import ParserForm
+from ..utils import SecurityConfigurableBlueprint as Blueprint
 
 __all__ = [
     'uploading_blueprint',
@@ -16,6 +17,7 @@ __all__ = [
 
 logger = logging.getLogger(__name__)
 
+# Even though we use the SecurityConfigurableBlueprint, all of the endpoints here are locked down anyway
 uploading_blueprint = Blueprint('parser', __name__)
 
 

@@ -57,6 +57,8 @@ class BELCommonsConfig(EasyConfig):
 
     #: Should private network uploads be allowed?
     DISALLOW_PRIVATE: bool = True
+    #: Should all endpoints require authentication?
+    LOCKDOWN: bool = False
 
     #: Should celery be used?
     USE_CELERY: bool = True

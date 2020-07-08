@@ -9,7 +9,9 @@ from getpass import getuser
 from typing import Dict, List, Optional, TypeVar
 
 import flask_mail
-from flask import Flask, abort, request
+from flask import Blueprint, Flask, abort, request
+from flask.blueprints import BlueprintSetupState
+from flask_security import login_required
 
 from pybel import BELGraph
 from pybel.struct.summary import get_annotation_values_by_annotation, get_annotations, get_pubmed_identifiers
@@ -22,6 +24,7 @@ __all__ = [
     'add_edge_filter',
     'return_or_404',
     'send_startup_mail',
+    'SecurityConfigurableBlueprint',
 ]
 
 logger = logging.getLogger(__name__)
@@ -121,3 +124,22 @@ def send_message(app: Flask, mail: flask_mail.Mail, *args, **kwargs) -> None:
     """Send a message."""
     with app.app_context():
         mail.send_message(*args, **kwargs)
+
+
+class SecurityConfigurableBlueprint(Blueprint):
+    """Makes it possible to lock it all down, if you have to."""
+
+    def add_url_rule(self, rule, endpoint=None, view_func=None, **options):
+        """Wrap :meth:`Flask.add_url_rule` to enable automatic application of :func:`flask_security.login_required`."""
+        if endpoint:
+            assert "." not in endpoint, "Blueprint endpoints should not contain dots"
+        if view_func and hasattr(view_func, "__name__"):
+            assert "." not in view_func.__name__, "Blueprint view function name should not contain dots"
+
+        def _add_url_rule(s: BlueprintSetupState) -> None:
+            if s.app.config['LOCKDOWN']:
+                s.add_url_rule(rule, endpoint, login_required(view_func), **options)
+            else:
+                s.add_url_rule(rule, endpoint, view_func, **options)
+
+        self.record(_add_url_rule)

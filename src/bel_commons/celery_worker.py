@@ -20,7 +20,7 @@ from celery import Celery
 from celery.app.task import Task
 from celery.result import AsyncResult
 from celery.utils.log import get_task_logger
-from flask import Blueprint, current_app, jsonify, render_template
+from flask import current_app, jsonify, render_template
 from sqlalchemy.exc import IntegrityError, OperationalError
 
 from bel_commons.celery_utils import parse_graph
@@ -29,6 +29,7 @@ from bel_commons.manager import WebManager
 from bel_commons.manager_utils import fill_out_report, insert_graph, run_heat_diffusion_helper
 from bel_commons.models import Report
 from bel_commons.tools_compat import BELGraphSummary
+from bel_commons.utils import SecurityConfigurableBlueprint as Blueprint
 from bel_resources.exc import ResourceError
 from pybel import BELGraph, from_nodelink
 from pybel.manager.citation_utils import enrich_pubmed_citations

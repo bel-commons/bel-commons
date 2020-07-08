@@ -9,7 +9,7 @@ from collections import defaultdict
 from operator import itemgetter
 
 import flask
-from flask import Blueprint, current_app, flash, redirect, render_template, request, url_for
+from flask import current_app, flash, redirect, render_template, request, url_for
 from flask_security import current_user, login_required, roles_required
 
 import pybel
@@ -29,7 +29,7 @@ from .ext import bio2bel
 from .manager_utils import next_or_jsonify
 from .models import EdgeComment, EdgeVote, Experiment, Omic, Query, Report, User
 from .tools_compat import calculate_error_by_annotation, get_tools_version, summarize_completeness
-from .utils import calculate_overlap_info
+from .utils import SecurityConfigurableBlueprint as Blueprint, calculate_overlap_info
 from .version import get_version as get_bel_commons_version
 
 __all__ = [
