@@ -66,10 +66,13 @@ Create a file called ``.env`` and generate both ``SECRET_KEY`` and ``SECURITY_PA
     BUTLER_EMAIL=bel@example.com
     BUTLER_PASSWORD=butlerpassword
 
-If you want to run BEL Commons so networks can be made private, then add ``DISALLOW_PRIVATE=false``. More
-documentation on what setting are possible can be found in
+Other options:
 
-If you want to automatically add some example networks, then add ``REGISTER_EXAMPLES=true``.
+- If you want to run BEL Commons so networks can be made private, add ``DISALLOW_PRIVATE=false``.
+- If you want to disable self-serve user registration, add ``SECURITY_REGISTERABLE=false``.
+- If you want to run BEL Commons so none of the pages/endpoints are accessible without login, add
+  ``LOCKDOWN=true``.
+- If you want to automatically add some example networks, add ``REGISTER_EXAMPLES=true``.
 
 Run ``docker-compose``. If you don't have it, check the `docker-compose installation
 guide <https://docs.docker.com/compose/install/>`_:
