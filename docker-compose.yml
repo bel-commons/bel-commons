@@ -8,7 +8,7 @@ services:
     volumes:
      - .:/app
     environment:
-      PYBEL_CONNECTION: postgresql://pybeluser:pybelpassword@database14:5432/pybel14
+      PYBEL_CONNECTION: postgresql://pybeluser:pybelpassword@database15:5432/pybel15
       CELERY_BROKER_URL: amqp://broker
       CELERY_BACKEND_URL: redis://result_backend
       BEL_COMMONS_SECRET_KEY: ${SECRET_KEY}
@@ -27,7 +27,7 @@ services:
     ports:
       - 80:80
     depends_on:
-     - database14
+     - database15
      - broker
      - result_backend
      - worker
@@ -37,7 +37,7 @@ services:
     volumes:
      - .:/app
     environment:
-      PYBEL_CONNECTION: postgresql://pybeluser:pybelpassword@database14:5432/pybel14
+      PYBEL_CONNECTION: postgresql://pybeluser:pybelpassword@database15:5432/pybel15
       CELERY_BROKER_URL: amqp://broker
       CELERY_BACKEND_URL: redis://result_backend
       BEL_COMMONS_SECRET_KEY: ${SECRET_KEY}
@@ -49,16 +49,16 @@ services:
     restart: always
     command: celery worker -A bel_commons.wsgi.celery_app -l INFO
     depends_on:
-     - database14
+     - database15
      - broker
      - result_backend
 
-  database14:
+  database15:
     image: postgres:11.1
     environment:
       POSTGRES_USER: pybeluser
       POSTGRES_PASSWORD: pybelpassword
-      POSTGRES_DB: pybel14
+      POSTGRES_DB: pybel15
     ports:
       - 5432:5432
 
