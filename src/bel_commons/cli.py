@@ -99,9 +99,13 @@ def main():
 @click.option('--port', type=str, default='5111', help='Flask port.', show_default=True)
 @verbose_option
 @click.option('--with-gunicorn', is_flag=True)
+@click.option('--lockdown', is_flag=True)
 @click.option('-w', '--workers', type=int, default=number_of_workers(), help='Number of workers')
-def run(host: str, port: str, with_gunicorn: bool, workers: int):
+def run(host: str, port: str, with_gunicorn: bool, lockdown: bool, workers: int):
     """Run the web application."""
+    if lockdown:
+        os.environ['BEL_COMMONS_LOCKDOWN'] = 'true'
+
     from bel_commons.wsgi import flask_app
 
     if with_gunicorn:
