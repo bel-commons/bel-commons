@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import datetime
 import logging
 
 from flask import Flask, current_app
@@ -48,6 +49,8 @@ class PyBELSQLAlchemy(SQLAlchemy):
                     email=_butler_email,
                     name=_butler_name,
                     password=_butler_password,
+                    active=True,
+                    confirmed_at=datetime.datetime.now(),
                 )
                 _manager.user_datastore.commit()
 
@@ -55,17 +58,21 @@ class PyBELSQLAlchemy(SQLAlchemy):
 
             _admin_email = app.config.get('ADMIN_EMAIL')
             _admin_name = app.config.get('ADMIN_NAME')
-            _admin_password = app.config.get('ADMIN_EMAIL')
+            _admin_password = app.config.get('ADMIN_PASSWORD')
             if _admin_email and _admin_name and _admin_password:
-                _admin = _manager.user_datastore.find_user(email=_admin_email)
+                _admin: User = _manager.user_datastore.find_user(email=_admin_email)
                 if _admin is None:
-                    _manager.user_datastore.create_user(
+                    logger.info('Creating admin: %s (%s)', _admin_name, _admin_email)
+                    _admin = _manager.user_datastore.create_user(
                         email=_admin_email,
                         name=_admin_name,
                         password=_admin_password,
+                        active=True,
+                        confirmed_at=datetime.datetime.now(),
                     )
                     _manager.user_datastore.add_role_to_user(user=_admin, role=_admin_role)
                     _manager.user_datastore.commit()
+                logger.debug('admin user: %s (%s)', _admin_name, _admin_email)
 
 
 def _get_manager() -> WebManager:

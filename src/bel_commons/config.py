@@ -44,9 +44,9 @@ class BELCommonsConfig(EasyConfig):
     BUTLER_EMAIL: str = 'butler'
     BUTLER_NAME: str = 'BEL Commons Butler'
 
-    ADMIN_EMAIL: Optional[str] = None
-    ADMIN_PASSWORD: Optional[str] = None
-    ADMIN_NAME: Optional[str] = None
+    ADMIN_EMAIL: str = None
+    ADMIN_PASSWORD: str = None
+    ADMIN_NAME: str = None
 
     #: Flask app debug mode
     DEBUG: bool = False

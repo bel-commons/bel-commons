@@ -1,15 +1,15 @@
 FROM python:3.8
 MAINTAINER Charles Tapley Hoyt "cthoyt@gmail.com"
 
-RUN pip install --upgrade pip
-
 # Install requirements, which don't really change
 COPY requirements.txt /tmp/
-RUN pip install --requirement /tmp/requirements.txt
+RUN pip install --upgrade pip \
+  && pip install --requirement /tmp/requirements.txt
 
-RUN pip install git+https://github.com/pybel/pybel.git@6861346855e9ace4ddb7e64d1309daf6f630ba2e \
-  && pip install git+https://github.com/pybel/pybel-tools.git@5afd10987a5367b43061047354d998ffe333cecf \
-  && pip install bio2bel
+RUN pip install --upgrade pip \
+  && pip install git+https://github.com/pybel/pybel.git@1bc62c700777affec5ee9831aa7cf57dec14b0c9 \
+  && pip install git+https://github.com/bio2bel/bio2bel.git@9d058a2a14723bd1096785cb7bd1fefb2e2e273b \
+  && pip install git+https://github.com/pybel/pybel-tools.git@63cb84823b45fb823e3afe3817d123270d6a8a04
 
 # Add and install BEL Commons code
 COPY . /app

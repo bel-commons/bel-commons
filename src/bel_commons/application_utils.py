@@ -125,19 +125,28 @@ def register_error_handlers(app: Flask, *, sentry: Optional[Sentry] = None) -> N
         return render_template('errors/403.html')
 
 
-def register_examples(manager: Manager, user_datastore: SQLAlchemyUserDatastore, user_id: int) -> None:
+def register_examples(
+    manager: Manager,
+    user_datastore: SQLAlchemyUserDatastore,
+    user_id: int,
+    ground: bool = False,
+) -> None:
     """Insert example graphs."""
     for graph in (sialic_acid_graph, egf_graph, statin_graph, homology_graph):
+        if ground:
+            graph = graph.ground()
         if not manager.has_name_version(graph.name, graph.version):
             logger.info('[user=%s] uploading public example graph: %s', user_id, graph)
-            insert_graph(manager, graph.ground(), user=user_id, public=True)
+            insert_graph(manager, graph, user=user_id, public=True)
 
     test_user = user_datastore.find_user(email='test@example.com')
     if test_user:
         for graph in (braf_graph,):
+            if ground:
+                graph = graph.ground()
             if not manager.has_name_version(graph.name, graph.version):
                 logger.info('[user=%s] uploading internal example graph: %s', test_user.id, graph)
-                insert_graph(manager, graph.ground(), user=test_user, public=False)
+                insert_graph(manager, graph, user=test_user, public=False)
 
 
 def register_admin_service(app: Flask, manager: Manager) -> Admin:
