@@ -2,7 +2,7 @@
 
 """A blueprint for receiving uploads of graphs as JSON."""
 
-from flask import abort, current_app, jsonify, request
+from flask import Blueprint, abort, current_app, jsonify, request
 from flask_security.utils import verify_password
 
 from bel_commons.celery_worker import celery_app
@@ -10,7 +10,6 @@ from bel_commons.constants import SQLALCHEMY_DATABASE_URI
 from bel_commons.core import manager
 from bel_commons.manager_utils import next_or_jsonify
 from bel_commons.models import User
-from bel_commons.utils import SecurityConfigurableBlueprint as Blueprint
 
 __all__ = [
     'receiving_blueprint',
