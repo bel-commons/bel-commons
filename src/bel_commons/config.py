@@ -44,6 +44,10 @@ class BELCommonsConfig(EasyConfig):
     BUTLER_EMAIL: str = 'butler'
     BUTLER_NAME: str = 'BEL Commons Butler'
 
+    ADMIN_EMAIL: Optional[str] = None
+    ADMIN_PASSWORD: Optional[str] = None
+    ADMIN_NAME: Optional[str] = None
+
     #: Flask app debug mode
     DEBUG: bool = False
     #: Flask app testing mode
@@ -85,7 +89,7 @@ class BELCommonsConfig(EasyConfig):
     MAIL_DEFAULT_SENDER_EMAIL: Optional[str] = None
 
     #: Should example graphs be automatically included?
-    REGISTER_EXAMPLES: bool = False
+    REGISTER_EXAMPLES: bool = True
     #: Path to user manifest file
     REGISTER_USERS: Optional[str] = None
     #: Register the Flask-Admin interface

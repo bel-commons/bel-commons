@@ -2523,7 +2523,7 @@ def list_all_network_overview():
             }
         })
 
-        for target_network_id, (target_network, overlap) in overlap.items():
+        for target_network_id, (_, overlap) in overlap.items():
             overlap = int(100 * overlap)
 
             if overlap < cutoff:

@@ -32,8 +32,8 @@ from bel_commons.tools_compat import BELGraphSummary
 from bel_commons.utils import SecurityConfigurableBlueprint as Blueprint
 from bel_resources.exc import ResourceError
 from pybel import BELGraph, from_nodelink
+from pybel.exceptions import InconsistentDefinitionError
 from pybel.manager.citation_utils import enrich_pubmed_citations
-from pybel.parser.exc import InconsistentDefinitionError
 from pybel.struct.mutation import enrich_protein_and_rna_origins
 
 __all__ = [
@@ -277,6 +277,8 @@ def upload_json(connection: str, user_id: int, payload: Dict, public: bool = Fal
     """
     manager = WebManager(connection=connection)
     user = manager.get_user_by_id(user_id)
+    if user is None:
+        raise ValueError('missing user')
 
     try:
         graph = from_nodelink(payload)
@@ -287,7 +289,7 @@ def upload_json(connection: str, user_id: int, payload: Dict, public: bool = Fal
     public = current_app.config.get('DISALLOW_PRIVATE') or public
 
     try:
-        insert_graph(manager=manager, graph=graph, user=user, public=public)
+        insert_graph(manager=manager, graph=graph, user=user_id, public=public)
     except Exception:
         celery_logger.exception('unable to insert graph')
         manager.session.rollback()

@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import Any, Mapping, Optional, Tuple
+from typing import Any, Mapping, Optional, Tuple, Union
 
 import networkx as nx
 import pandas as pd
@@ -66,7 +66,7 @@ def fill_out_report(*, network: Network, report: Report, graph: Optional[BELGrap
 def insert_graph(
     manager: Manager,
     graph: BELGraph,
-    user: User,
+    user: Union[int, User],
     public: bool = True,
     use_tqdm: bool = False,
 ) -> Network:
@@ -85,7 +85,9 @@ def insert_graph(
 
     network = manager.insert_graph(graph, use_tqdm=use_tqdm)
 
-    report = Report(public=public, user=user)
+    if isinstance(user, User):
+        user = user.id
+    report = Report(public=public, user_id=user)
 
     fill_out_report(graph=graph, network=network, report=report)
 

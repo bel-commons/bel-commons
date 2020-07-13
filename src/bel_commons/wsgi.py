@@ -135,7 +135,7 @@ if flask_app.config.get('REGISTER_EXAMPLES'):
         register_examples(
             manager=manager,
             user_datastore=user_datastore,
-            butler=butler,
+            user_id=butler.id,
         )
 
 if flask_app.config.get('REGISTER_ADMIN'):
@@ -146,6 +146,9 @@ if flask_app.config.get('REGISTER_ADMIN'):
         )
 
 """ Register blueprints"""
+
+if flask_app.config['LOCKDOWN']:
+    logger.info('running in lockdown mode')
 
 flask_app.register_blueprint(ui_blueprint)
 flask_app.register_blueprint(help_blueprint)

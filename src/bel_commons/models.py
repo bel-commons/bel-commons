@@ -13,10 +13,10 @@ import pickle
 from operator import attrgetter
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Tuple, Union
 
+import pandas as pd
 from flask_security import RoleMixin, UserMixin
-from pandas import DataFrame
 from sqlalchemy import (
-    Boolean, Column, DateTime, Float, ForeignKey, Index, Integer, LargeBinary, String, Table, Text,
+    Boolean, Column, DateTime, Float, ForeignKey, Index, Integer, JSON, LargeBinary, String, Table, Text,
     UniqueConstraint,
 )
 from sqlalchemy.orm import backref, relationship
@@ -57,7 +57,7 @@ assembly_network = Table(
     ASSEMBLY_NETWORK_TABLE_NAME,
     Base.metadata,
     Column('network_id', Integer, ForeignKey(f'{Network.__tablename__}.id')),
-    Column('assembly_id', Integer, ForeignKey(f'{ASSEMBLY_TABLE_NAME}.id'))
+    Column('assembly_id', Integer, ForeignKey(f'{ASSEMBLY_TABLE_NAME}.id', ondelete='CASCADE'))
 )
 
 
@@ -89,8 +89,8 @@ class Assembly(Base):
     @staticmethod
     def get_network_list_md5(networks: List[Network]) -> str:
         """Build a sorted tuple of the unique network identifiers and hash it with SHA-512."""
-        t = tuple(sorted({network.id for network in networks}))
-        return hashlib.md5(pickle.dumps(t)).hexdigest()
+        t = ','.join(map(str, sorted({network.id for network in networks})))
+        return hashlib.md5(t.encode('utf8')).hexdigest()  # noqa: S303
 
     @staticmethod
     def from_network(network: Network) -> Assembly:
@@ -614,7 +614,7 @@ class Omic(Base):
     description = Column(Text, nullable=True, doc='A description of the purpose of the analysis')
 
     source_name = Column(Text, doc='The name of the source file')
-    source = Column(LargeBinary(LONGBLOB), doc='The source document holding the data')
+    source = Column(JSON, nullable=False, doc='The source document holding the data')
 
     gene_column = Column(Text, nullable=False)
     data_column = Column(Text, nullable=False)
@@ -637,13 +637,13 @@ class Omic(Base):
 
         return self.source_name
 
-    def set_source_df(self, df: DataFrame) -> None:
+    def set_source_df(self, df: pd.DataFrame) -> None:
         """Set the source with a DataFrame by pickling it."""
-        self.source = pickle.dumps(df)
+        self.source = df.to_dict()
 
-    def get_source_df(self) -> DataFrame:
+    def get_source_df(self) -> pd.DataFrame:
         """Load the pickled pandas DataFrame from the source file."""
-        return pickle.loads(self.source)
+        return pd.DataFrame.from_dict(self.source)
 
     def get_source_dict(self) -> Mapping[str, float]:
         """Get a dictionary from gene to value."""
@@ -699,13 +699,13 @@ class Experiment(Base):
     type = Column(String(8), nullable=False, default='CMPA', index=True,
                   doc='Analysis type. CMPA (Heat Diffusion), RCR, etc.')
     permutations = Column(Integer, nullable=False, default=100, doc='Number of permutations performed')
-    result = Column(LargeBinary(LONGBLOB), doc='The result python dictionary')
+    result = Column(JSON, doc='The result python dictionary')
 
     completed = Column(Boolean, default=False)
     time = Column(Float, nullable=True)
 
-    def get_source_df(self) -> DataFrame:
-        """Load the pickled pandas DataFrame from the source file."""
+    def get_source_df(self) -> pd.DataFrame:
+        """Load the jsonified pandas DataFrame from the source file."""
         return self.omic.get_source_df()
 
     def dump_results(self, scores: Mapping[BaseEntity, Tuple]) -> None:
@@ -713,12 +713,18 @@ class Experiment(Base):
 
         :param scores: The scores to store in this experiment
         """
-        self.result = pickle.dumps(scores)
+        self.result = {
+            {'node': node, 'scores': s}
+            for node, s in scores.items()
+        }
         self.completed = True
 
     def get_results_df(self) -> Mapping[BaseEntity, Tuple]:
         """Load the pickled pandas DataFrame back into an object."""
-        return pickle.loads(self.result)
+        return {
+            parse_result_to_dsl(d['node']): d['scores']
+            for d in self.result
+        }
 
     def get_data_list(self) -> List[Tuple[BaseEntity, Tuple]]:
         """Load the data into a usable list."""
@@ -769,7 +775,7 @@ class Report(Base):
     average_degree = Column(Float, nullable=True)
     number_components = Column(Integer, nullable=True)
     number_warnings = Column(Integer, nullable=True)
-    calculations = Column(LargeBinary(LONGBLOB), nullable=True, doc='A place to store a pickle of random stuf')
+    calculations = Column(LargeBinary(LONGBLOB), nullable=True, doc='A place to store a pickle of random stuff')
 
     message = Column(Text, nullable=True, doc='Error message')
     completed = Column(Boolean, nullable=True)

@@ -13,6 +13,13 @@ exclude =
     *.egg-info,
     .cache,
     .eggs
+ignore =
+   # Complaining about assert statements
+   S101
+   # Complains about random number generators
+   S311
+   # Complains about pickles
+   S301, S403
 max-line-length = 120
 max-complexity = 15
 import-order-style = pycharm

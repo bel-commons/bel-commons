@@ -10,24 +10,22 @@ import json
 import logging
 import multiprocessing
 import os
+import sys
 from typing import Optional, TextIO
 
 import click
-import sys
-import time
 from bio2bel import get_version as get_bio2bel_version
 from flask import Flask
+from pyobo.cli_utils import verbose_option
 from tabulate import tabulate
 
-from pybel import BELGraph, from_bel_script
-from pybel.cli import connection_option, graph_pickle_argument
+from pybel.cli import connection_option
 from pybel.manager.models import (
     Author, Citation, Edge, Evidence, Namespace, NamespaceEntry, Network, Node, author_citation, edge_annotation,
     network_edge, network_node,
 )
 from pybel.version import get_version as pybel_version
 from .manager import WebManager
-from .manager_utils import insert_graph
 from .models import (
     Assembly, EdgeComment, EdgeVote, Experiment, NetworkOverlap, Omic, Project, Query, Report, Role,
     User, UserQuery, assembly_network, projects_networks, projects_users, users_networks,
@@ -50,34 +48,6 @@ def _iterate_user_strings(manager_: WebManager) -> str:
         )
         for user in manager_.session.query(User).all()
     ]
-
-
-def _set_logging_level(level: int) -> None:
-    logging.basicConfig(level=level, format="%(asctime)s - %(levelname)s - %(name)s - %(message)s", datefmt='%H:%M:%S')
-
-    pybel_logger = logging.getLogger('pybel')
-    pybel_logger.setLevel(level)
-
-    pbt_logger = logging.getLogger('pybel_tools')
-    pbt_logger.setLevel(level)
-
-    pbw_logger = logging.getLogger('bel_commons')
-    pbw_logger.setLevel(level)
-
-    logging.getLogger('bio2bel_hgnc').setLevel(level)
-    logging.getLogger('bio2bel_mirtarbase').setLevel(level)
-    logging.getLogger('bio2bel_chebi').setLevel(level)
-
-
-def _set_debug_param(debug: int) -> None:
-    if debug == 1:
-        _set_logging_level(logging.INFO)
-        logger.info('Logging at logging.INFO')
-    elif debug == 2:
-        _set_logging_level(logging.DEBUG)
-        logger.info('Logging at logging.DEBUG')
-
-    logging.getLogger('passlib.registry').setLevel(logging.WARNING)
 
 
 def number_of_workers() -> int:
@@ -126,14 +96,12 @@ def main():
 
 @main.command()
 @click.option('--host', type=str, default='0.0.0.0', help='Flask host.', show_default=True)
-@click.option('--port', type=int, default=5000, help='Flask port.', show_default=True)
-@click.option('-v', '--debug', count=True, help="Turn on debugging. More v's, more debugging")
+@click.option('--port', type=str, default='5111', help='Flask port.', show_default=True)
+@verbose_option
 @click.option('--with-gunicorn', is_flag=True)
 @click.option('-w', '--workers', type=int, default=number_of_workers(), help='Number of workers')
-def run(host, port, debug, with_gunicorn: bool, workers: int):
+def run(host: str, port: str, with_gunicorn: bool, workers: int):
     """Run the web application."""
-    _set_debug_param(debug)
-
     from bel_commons.wsgi import flask_app
 
     if with_gunicorn:
@@ -240,27 +208,6 @@ def freedom(manager: WebManager):
 @manage.group()
 def networks():
     """Parse, upload, and manage networks."""
-
-
-@networks.command()
-@click.option('-p', '--path', type=click.Path(file_okay=True, dir_okay=False, exists=True))
-@click.option('--public', is_flag=True)
-@click.pass_obj
-def parse(manager: WebManager, path: str, public: bool):
-    """Parses a BEL script and uploads."""
-    t = time.time()
-    graph = from_bel_script(path, manager=manager)
-    logger.info('parsing done in %.2f seconds', time.time() - t)
-    insert_graph(manager, graph, public=public, use_tqdm=True)
-
-
-@networks.command()
-@graph_pickle_argument
-@click.option('--public', is_flag=True)
-@click.pass_obj
-def upload(manager: WebManager, graph: BELGraph, public: bool):
-    """Upload a graph."""
-    insert_graph(manager, graph, public=public, use_tqdm=True)
 
 
 @networks.command()  # noqa:F811

@@ -131,10 +131,10 @@ class SecurityConfigurableBlueprint(Blueprint):
 
     def add_url_rule(self, rule, endpoint=None, view_func=None, **options):
         """Wrap :meth:`Flask.add_url_rule` to enable automatic application of :func:`flask_security.login_required`."""
-        if endpoint:
-            assert "." not in endpoint, "Blueprint endpoints should not contain dots"
-        if view_func and hasattr(view_func, "__name__"):
-            assert "." not in view_func.__name__, "Blueprint view function name should not contain dots"
+        if endpoint and "." in endpoint:
+            raise ValueError("Blueprint endpoints should not contain dots")
+        if view_func and hasattr(view_func, "__name__") and "." in view_func.__name__:
+            raise ValueError("Blueprint view function name should not contain dots")
 
         def _add_url_rule(s: BlueprintSetupState) -> None:
             if s.app.config['LOCKDOWN']:

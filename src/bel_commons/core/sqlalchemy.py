@@ -34,15 +34,15 @@ class PyBELSQLAlchemy(SQLAlchemy):
             _manager = app.extensions['manager'] = WebManager(engine=self.engine, session=self.session)
             _manager.bind()
 
-            _admin = _manager.user_datastore.find_or_create_role('admin')
+            _admin_role = _manager.user_datastore.find_or_create_role('admin')
 
             _butler_email = app.config['BUTLER_EMAIL']
-            _butler_name = app.config['BUTLER_EMAIL']
-            _butler_password = app.config['BUTLER_EMAIL']
             _butler: User = _manager.user_datastore.find_user(email=_butler_email)
             if _butler is not None:
                 logger.debug('butler user: %s', _butler)
             if _butler is None:
+                _butler_name = app.config['BUTLER_NAME']
+                _butler_password = app.config['BUTLER_PASSWORD']
                 logger.info('creating user: %s (%s)', _butler_name, _butler_email)
                 _manager.user_datastore.create_user(
                     email=_butler_email,
@@ -52,6 +52,20 @@ class PyBELSQLAlchemy(SQLAlchemy):
                 _manager.user_datastore.commit()
 
             _manager.sanitize(user=_butler, public=app.config['DISALLOW_PRIVATE'])
+
+            _admin_email = app.config.get('ADMIN_EMAIL')
+            _admin_name = app.config.get('ADMIN_NAME')
+            _admin_password = app.config.get('ADMIN_EMAIL')
+            if _admin_email and _admin_name and _admin_password:
+                _admin = _manager.user_datastore.find_user(email=_admin_email)
+                if _admin is None:
+                    _manager.user_datastore.create_user(
+                        email=_admin_email,
+                        name=_admin_name,
+                        password=_admin_password,
+                    )
+                    _manager.user_datastore.add_role_to_user(user=_admin, role=_admin_role)
+                    _manager.user_datastore.commit()
 
 
 def _get_manager() -> WebManager:

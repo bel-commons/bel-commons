@@ -49,15 +49,6 @@ extract_useful_subgraph = Pipeline.from_functions([
 ])
 
 
-def _format_big_number(n: int) -> str:
-    if n > 1000000:
-        return '{}M'.format(int(round(n / 1000000)))
-    elif n > 1000:
-        return '{}K'.format(int(round(n / 1000)))
-    else:
-        return str(n)
-
-
 def redirect_to_view_explorer_query(query: Query) -> flask.Response:
     """Return the response for the biological network explorer in a given query to :func:`view_explorer_query`."""
     return redirect(url_for('ui.view_explorer_query', query_id=query.id))
