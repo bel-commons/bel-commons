@@ -17,7 +17,8 @@ from pybel.manager.models import Author, Citation, Edge, Evidence, Namespace, Na
 from pybel.struct.mutation import expand_node_neighborhood, expand_nodes_neighborhoods, infer_child_relations
 from pybel.struct.pipeline import in_place_transformation, uni_in_place_transformation
 from .admin_model_views import (
-    CitationView, EdgeView, EvidenceView, ExperimentView, ModelView, NamespaceView, NetworkView, NodeView, QueryView,
+    CitationView, EdgeView, EntityView, EvidenceView, ExperimentView, ModelView, NamespaceView, NetworkView, NodeView,
+    QueryView,
     ReportView, UserView, build_project_view,
 )
 from .constants import SENTRY_DSN
@@ -156,7 +157,7 @@ def register_admin_service(app: Flask, manager: Manager) -> Admin:
     admin.add_view(UserView(User, manager.session))
     admin.add_view(ModelView(Role, manager.session))
     admin.add_view(NamespaceView(Namespace, manager.session, category='Terminology'))
-    admin.add_view(ModelView(NamespaceEntry, manager.session, category='Terminology'))
+    admin.add_view(EntityView(NamespaceEntry, manager.session, category='Terminology'))
     admin.add_view(NetworkView(Network, manager.session, category='Network'))
     admin.add_view(NodeView(Node, manager.session))
     admin.add_view(EdgeView(Edge, manager.session, category='Edge'))

@@ -33,6 +33,7 @@ class NetworkView(ModelView):
     """Special view for PyBEL Networks."""
 
     column_exclude_list = ['blob', 'md5', 'authors', 'description', 'copyright', 'disclaimer', 'licenses']
+    column_searchable_list = ['name']
 
 
 class AnnotationView(ModelView):
@@ -45,6 +46,13 @@ class NamespaceView(ModelView):
     """Special view for PyBEL namespaces."""
 
     column_exclude_list = ['query_url', 'description', 'author', 'license', 'citation_description']
+    column_searchable_list = ['keyword', 'miriam_name', 'miriam_namespace']
+
+
+class EntityView(ModelView):
+    """Special view for PyBEL namespace entries."""
+
+    column_searchable_list = ['name', 'identifier']
 
 
 class ReportView(ModelView):
@@ -60,25 +68,29 @@ class ReportView(ModelView):
 class NodeView(ModelView):
     """A :mod:`flask_admin` view for PyBEL Nodes."""
 
-    column_exclude_list = ['blob', 'md5']
+    column_exclude_list = ['md5', 'data']
+    column_searchable_list = ['bel']
 
 
 class EdgeView(ModelView):
     """A :mod:`flask_admin` view for PyBEL Edges."""
 
-    column_exclude_list = ['blob', 'md5']
+    column_exclude_list = ['md5', 'data']
+    column_searchable_list = ['bel']
 
 
 class CitationView(ModelView):
     """A :mod:`flask_admin` view for citations."""
 
     column_exclude_list = ['blob', 'md5']
+    column_searchable_list = ['title']
 
 
 class EvidenceView(ModelView):
     """A :mod:`flask_admin` for evidences."""
 
     column_exclude_list = ['blob', 'md5']
+    column_searchable_list = ['text']
 
 
 class ExperimentView(ModelView):
@@ -91,6 +103,7 @@ class UserView(ModelView):
     """A :mod:`flask_admin` view for users."""
 
     column_exclude_list = ['password']
+    column_searchable_list = ['name']
 
 
 class QueryView(ModelView):
