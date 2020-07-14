@@ -100,11 +100,13 @@ def main():
 @verbose_option
 @click.option('--with-gunicorn', is_flag=True)
 @click.option('--lockdown', is_flag=True)
+@connection_option
 @click.option('-w', '--workers', type=int, default=number_of_workers(), help='Number of workers')
-def run(host: str, port: str, with_gunicorn: bool, lockdown: bool, workers: int):
+def run(host: str, port: str, with_gunicorn: bool, lockdown: bool, connection: str, workers: int):
     """Run the web application."""
     if lockdown:
         os.environ['BEL_COMMONS_LOCKDOWN'] = 'true'
+    os.environ['BEL_COMMONS_SQLALCHEMY_DATABASE_URI'] = connection
 
     from bel_commons.wsgi import flask_app
 
