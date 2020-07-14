@@ -82,7 +82,7 @@
                                 {% if node.namespace_entry.namespace.version %}
                                     <dt>Namespace Version</dt>
                                     <dd>{{ node.namespace_entry.namespace.version }}</dd>
-                                {% endifc %}
+                                {% endif %}
                                 {% if node.namespace_entry.namespace.url %}
                                     {% if not node.namespace_entry.namespace.url.startswith('_') %}
                                         <dt>Namespace URL</dt>
