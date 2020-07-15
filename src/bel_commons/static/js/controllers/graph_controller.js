@@ -252,17 +252,16 @@ function displayNodeInfo(node) {
 /**
  * Gets the best name for a node object
  * @param {object} node_data object
+ * @returns {string} canonical name of the node
  */
 function getCanonicalName(node_data) {
-    if (node_data.cname) {
-        return node_data.cname;
-    } else if (node_data.name) {
-        return node_data.name
+    if (node_data.concept && node_data.concept.name && !(node_data.variants || node_data.reactants || node_data.products || node_data.members)) {
+        return node_data.concept.name
     } else if (node_data.bel) {
         return node_data.bel
     } else {
         console.log('Undefined node: ' + node_data);
-        return 'UNDEFINED'
+        return "UNDEFINED";
     }
 }
 
