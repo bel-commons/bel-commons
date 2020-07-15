@@ -9,7 +9,7 @@ from collections import defaultdict
 from operator import itemgetter
 
 import flask
-from flask import current_app, flash, redirect, render_template, request, url_for
+from flask import Markup, current_app, flash, redirect, render_template, request, url_for
 from flask_security import current_user, login_required, roles_required
 
 import pybel
@@ -633,7 +633,8 @@ def view_query_comparison(query_1_id: int, query_2_id: int):
 def debug_celery():
     """Send a debug task to celery."""
     task = celery_app.send_task('debug-task')
-    flash('Task sent: {task}'.format(task=task))
+    url = url_for('task.check', uuid=str(task))
+    flash(Markup(f'Celery debug task sent. View at <code><a href="{url}">{task}</a></code>.'))
     return redirect(url_for('ui.home'))
 
 
