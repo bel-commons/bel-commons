@@ -86,6 +86,7 @@ def check(uuid: str):
         task_id=task.task_id,
         status=task.status,
         result=task.result,
+        info=task.info,
     )
 
 
