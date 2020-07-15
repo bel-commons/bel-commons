@@ -266,8 +266,8 @@ def run_heat_diffusion(connection: str, experiment_id: int) -> int:
     return experiment_id
 
 
-@celery_app.task(name='upload-json')
-def upload_json(connection: str, user_id: int, payload: Dict, public: bool = False):
+@celery_app.task(bind=True, name='upload-json')
+def upload_json(task: Task, connection: str, user_id: int, payload: Dict, public: bool = False):
     """Receive and process a JSON serialized BEL graph.
 
     :param connection: A connection to build the manager
@@ -282,17 +282,19 @@ def upload_json(connection: str, user_id: int, payload: Dict, public: bool = Fal
 
     try:
         graph = from_nodelink(payload)
-    except Exception:
+    except Exception as e:
         celery_logger.exception('unable to parse JSON')
+        task.update_state(state='FAILED', meta={'error': str(e)})
         return -1
 
     public = current_app.config.get('DISALLOW_PRIVATE') or public
 
     try:
         insert_graph(manager=manager, graph=graph, user=user_id, public=public)
-    except Exception:
+    except Exception as e:
         celery_logger.exception('unable to insert graph')
         manager.session.rollback()
+        task.update_state(state='FAILED', meta={'error': str(e)})
         return -2
 
     return 0
