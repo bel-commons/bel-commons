@@ -289,15 +289,15 @@ function displayEdgeInfo(edge) {
 
                 if (context.citation) {
                     edgeObject[sk] += '<dt>Citation</dt><dd>';
-                    if (context.citation.type === "PubMed") {
-                        edgeObject[sk] += '<a target="_blank" href="https://www.ncbi.nlm.nih.gov/pubmed/' + context.citation.reference + '" style="text-decoration: underline">PMID:' + context.citation.reference + ' <span class="glyphicon glyphicon-new-window"></a> | <a target="_blank" href="/citation/pubmed/' +
-                            context.citation.reference + '">See More Statements <span class="glyphicon glyphicon-search" aria-hidden="true"></span></a>';
-                    } else if (context.citation.type === "URL") {
-                        edgeObject[sk] += '<a target="_blank" href=' + context.citation.reference + " target='_blank' " +
-                            "style='text-decoration: underline'>" + context.citation.reference + "</a>";
+                    if (context.citation.namespace === "pubmed") {
+                        edgeObject[sk] += '<a target="_blank" href="https://www.ncbi.nlm.nih.gov/pubmed/' + context.citation.identifier + '" style="text-decoration: underline">pubmed:' + context.citation.identifier + ' <span class="glyphicon glyphicon-new-window"></a> | <a target="_blank" href="/citation/pubmed/' +
+                            context.citation.identifier + '">See More Statements <span class="glyphicon glyphicon-search" aria-hidden="true"></span></a>';
+                    } else if (context.citation.namespace === "URL") {
+                        edgeObject[sk] += '<a target="_blank" href=' + context.citation.identifier + " target='_blank' " +
+                            "style='text-decoration: underline'>" + context.citation.identifier + "</a>";
                     } else {
                         // TODO handle DOIs?
-                        edgeObject[sk] += context.citation.reference;
+                        edgeObject[sk] += context.citation.identifier;
                     }
 
                     // TODO add link to all edges from that citation
