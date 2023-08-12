@@ -15,7 +15,7 @@ from typing import Any, Mapping, Optional
 from dataclasses_json import dataclass_json
 from easy_config import EasyConfig
 
-from pybel.config import CONFIG_FILE_PATHS
+from pybel.config import _CONFIG_FILE_PATHS
 from pybel.constants import get_cache_connection
 
 logger = logging.getLogger(__name__)
@@ -34,7 +34,7 @@ class BELCommonsConfig(EasyConfig):
     """
 
     NAME = 'bel_commons'
-    FILES = CONFIG_FILE_PATHS
+    FILES = _CONFIG_FILE_PATHS
 
     #: The Flask app secret key.
     SECRET_KEY: str

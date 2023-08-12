@@ -170,7 +170,7 @@ def parse(  # noqa: C901
         )
 
     # Enrichment
-    enrich_pubmed_citations(manager, graph)  # this makes a commit so we need to store the identifier
+    enrich_pubmed_citations(manager=manager, graph=graph)  # this makes a commit so we need to store the identifier
     report_id = report.id
 
     if report.infer_origin:

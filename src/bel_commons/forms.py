@@ -5,7 +5,7 @@
 import logging
 from typing import Mapping
 
-from celery.task import Task
+from celery import Task
 from flask import flash
 from flask_security import RegisterForm, current_user
 from flask_security.forms import get_form_field_label

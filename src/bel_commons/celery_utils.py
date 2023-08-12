@@ -4,8 +4,7 @@
 
 from typing import Type
 
-from celery import Celery
-from celery.task import Task
+from celery import Celery, Task
 from flask import Flask
 
 from bel_commons.models import Report
